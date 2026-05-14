@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studijní materiály - Organizační chování</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>📚 Organizační chování - Studijní příprava</h1>
+            <button id="theme-toggle" aria-label="Přepnout téma">🌙</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Témata</h2>
+            <nav id="topic-nav"></nav>
+            <div class="progress-box">
+                <h3>Pokrok</h3>
+                <div id="progress-stats"></div>
+                <button id="reset-progress" class="btn-secondary">Resetovat pokrok</button>
+            </div>
+        </aside>
+
+        <main id="content">
+            <div class="welcome">
+                <h2>Vítejte ve studijní příručce!</h2>
+                <p>Tato příručka obsahuje 9 témat z předmětu Organizační chování. Pro každé téma najdete:</p>
+                <ul>
+                    <li><strong>📖 Teorie</strong> – přehledný výklad klíčových konceptů</li>
+                    <li><strong>✅ ABCD test</strong> – testové otázky s okamžitou zpětnou vazbou</li>
+                    <li><strong>💭 Otevřené otázky</strong> – pro hlubší procvičení</li>
+                </ul>
+                <p>Vyberte téma v menu vlevo a začněte se učit. Hodně štěstí u zkoušky! 🎓</p>
+                <div class="topic-grid" id="topic-grid"></div>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <p>Studijní materiály pro předmět 3PS212 - Organizační chování</p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
