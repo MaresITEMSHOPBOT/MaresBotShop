@@ -59,12 +59,25 @@ function renderTopicGrid() {
     if (!grid) return;
     grid.innerHTML = '';
     topicsData.forEach(topic => {
+        const tp = getTopicProgress(topic.id);
+        const answered = Object.keys(tp.abcdAnswered || {}).length;
+        const correct = Object.values(tp.abcdAnswered || {}).filter(v => v.correct).length;
+        const percent = topic.abcd.length ? Math.round((answered / topic.abcd.length) * 100) : 0;
+        const successRate = answered ? Math.round((correct / answered) * 100) : 0;
+
         const card = document.createElement('div');
         card.className = 'topic-card';
         card.innerHTML = `
             <div class="topic-card-icon">${topic.icon}</div>
             <h3>${topic.title}</h3>
             <p>${topic.description}</p>
+            <div class="topic-card-stats">
+                <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%;"></div></div>
+                <div class="topic-card-stat-text">
+                    <span>${answered}/${topic.abcd.length} otázek</span>
+                    ${answered > 0 ? `<span>Úspěšnost: <strong>${successRate}%</strong></span>` : ''}
+                </div>
+            </div>
         `;
         card.addEventListener('click', () => showTopic(topic.id));
         grid.appendChild(card);
@@ -121,13 +134,19 @@ function switchTab(tab) {
 function renderABCD(topic) {
     const container = document.getElementById('tab-abcd');
     const topicProg = getTopicProgress(topic.id);
+    const answered = Object.keys(topicProg.abcdAnswered).length;
+    const correct = Object.values(topicProg.abcdAnswered).filter(v => v.correct).length;
+    const wrong = answered - correct;
 
     const summaryHtml = `
         <div class="test-summary">
             <h3>ABCD Test - ${topic.title}</h3>
             <p>Odpovězte na ${topic.abcd.length} testových otázek. U každé hned uvidíte správnou odpověď a vysvětlení.</p>
-            <p id="score-display">Zodpovězeno: <strong id="answered-count">${Object.keys(topicProg.abcdAnswered).length}</strong> / ${topic.abcd.length} | Správně: <strong id="correct-count">${Object.values(topicProg.abcdAnswered).filter(v => v.correct).length}</strong></p>
-            <button class="btn-secondary" id="reset-test" style="width: auto; margin-top: 0.5rem;">Resetovat test</button>
+            <p id="score-display">Zodpovězeno: <strong id="answered-count">${answered}</strong> / ${topic.abcd.length} | Správně: <strong id="correct-count">${correct}</strong></p>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                <button class="btn-secondary" id="review-wrong" style="width: auto;" ${wrong === 0 ? 'disabled' : ''}>🔁 Opakovat chybné (${wrong})</button>
+                <button class="btn-secondary" id="reset-test" style="width: auto;">Resetovat test</button>
+            </div>
         </div>
         <div id="abcd-questions"></div>
     `;
@@ -138,6 +157,18 @@ function renderABCD(topic) {
             setTopicProgress(topic.id, { abcdAnswered: {} });
             renderABCD(topic);
         }
+    });
+
+    document.getElementById('review-wrong').addEventListener('click', () => {
+        const tp = getTopicProgress(topic.id);
+        const kept = {};
+        Object.entries(tp.abcdAnswered).forEach(([k, v]) => {
+            if (v.correct) kept[k] = v;
+        });
+        setTopicProgress(topic.id, { abcdAnswered: kept });
+        renderABCD(topic);
+        const firstUnanswered = document.querySelector('.answer-option:not(.disabled)');
+        if (firstUnanswered) firstUnanswered.scrollIntoView({ block: 'center', behavior: 'smooth' });
     });
 
     const questionsContainer = document.getElementById('abcd-questions');
@@ -384,7 +415,8 @@ document.getElementById('reset-progress').addEventListener('click', () => {
         progress = {};
         saveProgress();
         renderProgress();
-        if (currentTopic) showTopic(currentTopic);
+        renderTopicGrid();
+        if (currentTopic && currentTopic !== '__exam__') showTopic(currentTopic);
     }
 });
 

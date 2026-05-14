@@ -244,6 +244,25 @@ main {
     margin: 0;
 }
 
+.topic-card-stats {
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--border);
+}
+
+.topic-card-stat-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.4rem;
+}
+
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .topic-content h2 {
     color: var(--accent);
     margin-bottom: 0.5rem;
