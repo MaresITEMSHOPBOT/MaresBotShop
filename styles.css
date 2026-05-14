@@ -552,6 +552,17 @@ main {
     color: var(--accent);
 }
 
+kbd {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+    margin: 0 0.1rem;
+}
+
 footer {
     text-align: center;
     padding: 2rem;

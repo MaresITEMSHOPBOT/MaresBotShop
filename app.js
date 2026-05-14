@@ -277,6 +277,108 @@ function renderProgress() {
     `;
 }
 
+function startExamMode() {
+    currentTopic = '__exam__';
+    document.querySelectorAll('.topic-link').forEach(link => link.classList.remove('active'));
+
+    const allQuestions = [];
+    topicsData.forEach(topic => {
+        topic.abcd.forEach((q, idx) => {
+            allQuestions.push({ ...q, topicTitle: topic.title, topicIcon: topic.icon });
+        });
+    });
+
+    for (let i = allQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+    }
+
+    const examQuestions = allQuestions.slice(0, 30);
+    let answered = {};
+
+    const content = document.getElementById('content');
+    content.innerHTML = `
+        <div class="topic-content">
+            <h2>🎓 Souhrnný test</h2>
+            <p class="topic-meta">30 náhodných otázek ze všech 9 témat</p>
+            <div class="test-summary">
+                <h3>Příprava na zkoušku</h3>
+                <p>Otázky z různých témat v náhodném pořadí. U každé hned uvidíte správnou odpověď.</p>
+                <p id="score-display">Zodpovězeno: <strong id="answered-count">0</strong> / ${examQuestions.length} | Správně: <strong id="correct-count">0</strong></p>
+                <button class="btn" id="new-exam" style="width: auto; margin-top: 0.5rem;">Nový test</button>
+            </div>
+            <div id="exam-questions"></div>
+        </div>
+    `;
+
+    document.getElementById('new-exam').addEventListener('click', () => startExamMode());
+
+    const qContainer = document.getElementById('exam-questions');
+    const letters = ['A', 'B', 'C', 'D'];
+
+    examQuestions.forEach((question, qIdx) => {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        card.innerHTML = `
+            <div class="question-number">Otázka ${qIdx + 1} / ${examQuestions.length} • ${question.topicIcon} ${question.topicTitle}</div>
+            <div class="question-text">${question.q}</div>
+            <div class="answer-options" id="exam-options-${qIdx}"></div>
+            <div class="explanation" id="exam-explanation-${qIdx}" style="display: none;">
+                <div class="explanation-title">💡 Vysvětlení</div>
+                <div>${question.explanation}</div>
+            </div>
+        `;
+        qContainer.appendChild(card);
+
+        const optionsDiv = document.getElementById(`exam-options-${qIdx}`);
+        question.options.forEach((opt, optIdx) => {
+            const optDiv = document.createElement('div');
+            optDiv.className = 'answer-option';
+            optDiv.innerHTML = `<div class="answer-letter">${letters[optIdx]}</div><div>${opt}</div>`;
+            optDiv.addEventListener('click', () => {
+                if (answered[qIdx] !== undefined) return;
+                const isCorrect = optIdx === question.correct;
+                answered[qIdx] = { selected: optIdx, correct: isCorrect };
+
+                optionsDiv.querySelectorAll('.answer-option').forEach((o, idx) => {
+                    o.classList.add('disabled');
+                    if (idx === question.correct) o.classList.add('correct');
+                    if (idx === optIdx && !isCorrect) o.classList.add('incorrect');
+                });
+                document.getElementById(`exam-explanation-${qIdx}`).style.display = 'block';
+                document.getElementById('answered-count').textContent = Object.keys(answered).length;
+                document.getElementById('correct-count').textContent = Object.values(answered).filter(v => v.correct).length;
+            });
+            optionsDiv.appendChild(optDiv);
+        });
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('exam-mode-btn').addEventListener('click', startExamMode);
+
+document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+    const key = e.key.toLowerCase();
+    const map = { 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
+    if (!(key in map)) return;
+
+    const visibleOptions = document.querySelectorAll('.answer-option:not(.disabled)');
+    if (visibleOptions.length === 0) return;
+
+    const firstUnanswered = Array.from(document.querySelectorAll('.answer-options')).find(group => {
+        return group.querySelector('.answer-option:not(.disabled)');
+    });
+    if (!firstUnanswered) return;
+
+    const target = firstUnanswered.children[map[key]];
+    if (target && !target.classList.contains('disabled')) {
+        target.click();
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+});
+
 document.getElementById('reset-progress').addEventListener('click', () => {
     if (confirm('Opravdu chcete resetovat veškerý pokrok?')) {
         progress = {};
