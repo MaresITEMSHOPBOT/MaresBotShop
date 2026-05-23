@@ -2,6 +2,26 @@
 (function () {
     'use strict';
 
+    // Surface uncaught errors visibly so we can see what's broken
+    window.addEventListener('error', function (ev) {
+        try { showFatal(ev.message + '\n' + (ev.filename || '') + ':' + (ev.lineno || '') + ':' + (ev.colno || '')); } catch (e) {}
+    });
+    window.addEventListener('unhandledrejection', function (ev) {
+        try { showFatal('Promise rejection: ' + (ev.reason && ev.reason.message ? ev.reason.message : ev.reason)); } catch (e) {}
+    });
+    function showFatal(msg) {
+        let el = document.getElementById('w12-fatal');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'w12-fatal';
+            el.style.cssText = 'position:fixed;top:10px;right:10px;max-width:420px;background:#c62828;color:#fff;padding:12px 16px;border-radius:8px;font:13px/1.4 system-ui;z-index:99999;white-space:pre-wrap;box-shadow:0 6px 24px rgba(0,0,0,.4);cursor:pointer';
+            el.title = 'Klikni pro zavření';
+            el.onclick = () => el.remove();
+            document.body.appendChild(el);
+        }
+        el.textContent = '⚠ Chyba: ' + msg;
+    }
+
     // ---------- State ----------
     const state = {
         windows: new Map(),
@@ -103,11 +123,17 @@
     }
 
     // ---------- Boot sequence ----------
+    let booted = false;
     function boot() {
-        applyTheme();
-        applyWallpaper();
+        if (booted) return;
+        booted = true;
+        try {
+            applyTheme();
+            applyWallpaper();
+        } catch (e) { console.error('Theme apply failed', e); }
         setTimeout(() => {
-            $('boot-screen').classList.add('hidden');
+            const bs = $('boot-screen');
+            if (bs) bs.classList.add('hidden');
             showLockScreen();
         }, 1600);
     }
@@ -1368,7 +1394,12 @@
                 });
             } catch (err) {
                 if (token !== reqToken) return;
-                loading.textContent = 'Chyba: ' + err.message + ' — zkontroluj připojení.';
+                loading.innerHTML = '';
+                loading.append(
+                    make('div', { style: 'color:#ff6b6b;font-weight:500;margin-bottom:8px' }, '⚠ Nepodařilo se připojit k Wikipedii'),
+                    make('div', { style: 'font-size:12px;color:var(--text-mute);line-height:1.5' },
+                        'Důvod: ' + err.message + '. Možné příčiny: chybí internet, blokuje to adblocker, korporátní proxy nebo soubor je otevřen offline. Vyhledávání používá veřejné API ' +
+                        'cs.wikipedia.org/w/api.php přes HTTPS.'));
             }
         }
 
