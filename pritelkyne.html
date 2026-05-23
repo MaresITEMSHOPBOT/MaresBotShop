@@ -3,268 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tvoje virtuální přítelkyně 💕</title>
+<title>Klárka — tvoje virtuální přítelkyně 💕</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
 
   body {
     font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse at top, #ffd6e7 0%, transparent 50%),
+      radial-gradient(ellipse at bottom, #c9a4ff 0%, transparent 50%),
+      linear-gradient(135deg, #ffeef5 0%, #f3e6ff 100%);
+    background-attachment: fixed;
+    color: #3a1f3a;
     min-height: 100vh;
-    background: linear-gradient(135deg, #ffd1dc 0%, #ff9ec7 40%, #c39bff 100%);
-    background-size: 400% 400%;
-    animation: bgShift 15s ease infinite;
-    overflow: hidden;
-    color: #4a2c4a;
+    overflow-x: hidden;
   }
 
-  @keyframes bgShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+  .app {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 24px;
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: 100vh;
+    align-items: stretch;
   }
 
-  .scene {
+  /* Left: character stage */
+  .stage {
     position: relative;
-    width: 100vw;
-    height: 100vh;
+    border-radius: 28px;
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 100%, rgba(255,180,210,0.45), transparent),
+      linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,220,235,0.3) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 20px 50px rgba(180, 80, 140, 0.18);
+    overflow: hidden;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    min-height: 720px;
   }
 
-  /* Floating particles (hearts and sparkles) */
+  /* Floating particles */
   .particles { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
   .particle {
     position: absolute;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     opacity: 0;
-    animation: float 8s linear infinite;
+    animation: float 9s linear infinite;
     user-select: none;
+    filter: drop-shadow(0 0 6px rgba(255,150,200,0.5));
   }
   @keyframes float {
-    0% { transform: translateY(110vh) scale(0.5) rotate(0deg); opacity: 0; }
-    10% { opacity: 0.8; }
-    90% { opacity: 0.6; }
-    100% { transform: translateY(-10vh) scale(1.2) rotate(360deg); opacity: 0; }
+    0% { transform: translateY(110%) scale(0.5) rotate(0deg); opacity: 0; }
+    15% { opacity: 0.7; }
+    85% { opacity: 0.5; }
+    100% { transform: translateY(-15%) scale(1.1) rotate(360deg); opacity: 0; }
   }
 
-  /* Character container */
+  /* Character SVG */
   .character {
     position: relative;
-    width: 280px;
-    height: 360px;
+    width: 420px;
+    max-width: 90%;
     z-index: 2;
-    animation: idle 4s ease-in-out infinite;
+    animation: idle 5s ease-in-out infinite;
     cursor: pointer;
-    transition: transform 0.3s;
+    transition: filter 0.3s;
+    filter: drop-shadow(0 30px 40px rgba(180, 80, 140, 0.3));
   }
-  .character:hover { transform: scale(1.03); }
+  .character:hover { filter: drop-shadow(0 40px 50px rgba(180, 80, 140, 0.4)) brightness(1.03); }
   @keyframes idle {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-12px); }
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(0.5deg); }
+  }
+  .character.bounce { animation: bounce 0.7s ease; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    30% { transform: translateY(-30px) scale(1.04); }
+    60% { transform: translateY(0) scale(0.98); }
+  }
+  .character.shake { animation: shake 0.5s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(-10px) rotate(-2deg); }
+    75% { transform: translateX(10px) rotate(2deg); }
   }
 
-  /* Hair (back) */
-  .hair-back {
-    position: absolute;
-    top: 30px; left: 50%;
-    transform: translateX(-50%);
-    width: 240px; height: 280px;
-    background: linear-gradient(180deg, #6b3410 0%, #8b4513 50%, #a0522d 100%);
-    border-radius: 50% 50% 40% 40%;
-    z-index: 1;
-  }
+  /* Eye blink via class on SVG */
+  .eyelid { transform-origin: center; transform: scaleY(0); transition: transform 0.12s ease; }
+  .character.blink .eyelid { transform: scaleY(1); }
 
-  /* Head */
-  .head {
-    position: absolute;
-    top: 50px; left: 50%;
-    transform: translateX(-50%);
-    width: 180px; height: 200px;
-    background: linear-gradient(180deg, #ffe0d0 0%, #ffd0bc 100%);
-    border-radius: 50% 50% 45% 45%;
-    z-index: 2;
-    box-shadow: inset -10px -10px 30px rgba(255, 150, 150, 0.2);
-  }
+  /* Mouth transitions */
+  .mouth-smile, .mouth-sad, .mouth-surprised { opacity: 0; transition: opacity 0.3s ease; }
+  .character.happy .mouth-smile { opacity: 1; }
+  .character.sad .mouth-sad { opacity: 1; }
+  .character.surprised .mouth-surprised { opacity: 1; }
 
-  /* Hair bangs */
-  .bangs {
-    position: absolute;
-    top: 40px; left: 50%;
-    transform: translateX(-50%);
-    width: 200px; height: 100px;
-    background: linear-gradient(180deg, #6b3410 0%, #8b4513 100%);
-    border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
-    z-index: 3;
-    clip-path: polygon(0 0, 100% 0, 95% 60%, 75% 80%, 50% 50%, 25% 80%, 5% 60%);
-  }
-
-  /* Eyes */
-  .eye {
-    position: absolute;
-    top: 145px;
-    width: 32px; height: 38px;
-    background: white;
-    border-radius: 50%;
-    z-index: 4;
-    overflow: hidden;
-    animation: blink 4s infinite;
-  }
-  .eye.left { left: calc(50% - 50px); }
-  .eye.right { left: calc(50% + 18px); }
-  .eye::before {
-    content: "";
-    position: absolute;
-    top: 6px; left: 6px;
-    width: 20px; height: 26px;
-    background: radial-gradient(circle at 30% 30%, #4a90e2 0%, #2858a0 70%, #1a3060 100%);
-    border-radius: 50%;
-  }
-  .eye::after {
-    content: "";
-    position: absolute;
-    top: 10px; left: 12px;
-    width: 8px; height: 8px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 5px 8px 0 -3px rgba(255,255,255,0.7);
-  }
-  @keyframes blink {
-    0%, 92%, 100% { transform: scaleY(1); }
-    94%, 98% { transform: scaleY(0.1); }
-  }
-
-  /* Blush */
-  .blush {
-    position: absolute;
-    top: 180px;
-    width: 28px; height: 16px;
-    background: radial-gradient(ellipse, #ff8aa8 0%, transparent 70%);
-    border-radius: 50%;
-    z-index: 4;
-    opacity: 0.7;
-    transition: opacity 0.5s, transform 0.5s;
-  }
-  .blush.left { left: calc(50% - 58px); }
-  .blush.right { left: calc(50% + 30px); }
-  .character.happy .blush { opacity: 1; transform: scale(1.3); }
-
-  /* Mouth */
-  .mouth {
-    position: absolute;
-    top: 210px; left: 50%;
-    transform: translateX(-50%);
-    width: 30px; height: 14px;
-    border-bottom: 3px solid #c2185b;
-    border-radius: 0 0 30px 30px;
-    z-index: 4;
-    transition: all 0.3s ease;
-  }
-  .character.sad .mouth {
-    border-bottom: none;
-    border-top: 3px solid #c2185b;
-    border-radius: 30px 30px 0 0;
-    top: 220px;
-  }
-  .character.surprised .mouth {
-    width: 18px; height: 18px;
-    border: 3px solid #c2185b;
-    border-radius: 50%;
-  }
-
-  /* Body / dress */
-  .body {
-    position: absolute;
-    top: 240px; left: 50%;
-    transform: translateX(-50%);
-    width: 220px; height: 140px;
-    background: linear-gradient(180deg, #ff6b9d 0%, #c44569 100%);
-    border-radius: 30px 30px 50% 50% / 30px 30px 80px 80px;
-    z-index: 2;
-    box-shadow: 0 8px 20px rgba(196, 69, 105, 0.4);
-  }
-  .collar {
-    position: absolute;
-    top: 245px; left: 50%;
-    transform: translateX(-50%);
-    width: 80px; height: 30px;
-    background: white;
-    border-radius: 0 0 40px 40px;
-    z-index: 3;
-  }
-  .bowtie {
-    position: absolute;
-    top: 270px; left: 50%;
-    transform: translateX(-50%);
-    width: 40px; height: 20px;
-    background: #ff1744;
-    border-radius: 4px;
-    z-index: 4;
-    box-shadow: 0 0 0 2px #8b0d1f;
-  }
-  .bowtie::before, .bowtie::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    width: 16px; height: 20px;
-    background: #ff1744;
-    box-shadow: 0 0 0 2px #8b0d1f;
-  }
-  .bowtie::before { left: -14px; border-radius: 50% 4px 4px 50%; }
-  .bowtie::after { right: -14px; border-radius: 4px 50% 50% 4px; }
-
-  /* Hair side strands */
-  .hair-side {
-    position: absolute;
-    top: 100px;
-    width: 50px; height: 200px;
-    background: linear-gradient(180deg, #6b3410 0%, #8b4513 100%);
-    z-index: 2;
-  }
-  .hair-side.left { left: calc(50% - 110px); border-radius: 40% 20% 50% 30%; transform: rotate(-5deg); }
-  .hair-side.right { left: calc(50% + 60px); border-radius: 20% 40% 30% 50%; transform: rotate(5deg); }
-
-  /* Heart hairpin */
-  .hairpin {
-    position: absolute;
-    top: 90px; left: calc(50% - 70px);
-    font-size: 1.8rem;
-    z-index: 5;
-    animation: heartbeat 1.5s ease-in-out infinite;
-    filter: drop-shadow(0 0 4px rgba(255, 100, 150, 0.8));
-  }
-  @keyframes heartbeat {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-  }
+  /* Blush intensity */
+  .blush-group { opacity: 0.6; transition: opacity 0.5s, transform 0.5s; transform-origin: center; }
+  .character.happy .blush-group { opacity: 1; transform: scale(1.15); }
+  .character.shy .blush-group { opacity: 1; transform: scale(1.4); }
 
   /* Speech bubble */
-  .speech-bubble {
+  .bubble {
     position: absolute;
-    bottom: calc(100% + 20px);
+    bottom: calc(100% + 16px);
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(8px);
     background: white;
-    padding: 12px 20px;
-    border-radius: 20px;
-    min-width: 200px;
+    padding: 12px 18px;
+    border-radius: 18px;
+    min-width: 180px;
     max-width: 320px;
     text-align: center;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-    font-size: 1rem;
-    color: #4a2c4a;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+    font-size: 0.95rem;
+    color: #3a1f3a;
     opacity: 0;
-    transform: translateX(-50%) translateY(10px);
-    transition: all 0.4s ease;
+    transition: all 0.35s ease;
     pointer-events: none;
     z-index: 10;
+    line-height: 1.4;
   }
-  .speech-bubble.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  .speech-bubble::after {
+  .bubble.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .bubble::after {
     content: "";
     position: absolute;
     bottom: -10px; left: 50%;
@@ -274,356 +141,640 @@
     border-bottom: 0;
   }
 
-  /* Chat box */
-  .chat-panel {
-    position: relative;
-    z-index: 3;
-    margin-top: 30px;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    border-radius: 24px;
-    padding: 16px;
-    width: min(90vw, 520px);
-    box-shadow: 0 12px 30px rgba(155, 60, 120, 0.25);
-    border: 2px solid rgba(255,255,255,0.6);
+  /* Click hearts */
+  .click-heart {
+    position: fixed;
+    font-size: 1.8rem;
+    pointer-events: none;
+    animation: clickPop 1.3s ease-out forwards;
+    z-index: 100;
+  }
+  @keyframes clickPop {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -260%) scale(1.6); opacity: 0; }
   }
 
-  .name-tag {
-    text-align: center;
-    margin-bottom: 8px;
-    font-weight: 700;
-    color: #c2185b;
-    font-size: 1.1rem;
-    letter-spacing: 0.5px;
+  /* Right: chat panel */
+  .chat {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(14px);
+    border-radius: 28px;
+    border: 1px solid rgba(255,255,255,0.7);
+    box-shadow: 0 20px 50px rgba(180, 80, 140, 0.15);
+    overflow: hidden;
+    height: calc(100vh - 48px);
+    position: sticky;
+    top: 24px;
   }
-  .name-tag .status {
-    font-weight: 400;
-    font-size: 0.85rem;
-    color: #888;
-    margin-left: 8px;
+
+  .chat-header {
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #ff8ab5, #c44ba0);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.5);
   }
-  .name-tag .status::before {
-    content: "●";
-    color: #4caf50;
-    margin-right: 4px;
+  .chat-header .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffd1dc, #ff9ec7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    border: 2px solid white;
+  }
+  .chat-header .info { flex: 1; }
+  .chat-header .name { font-weight: 700; font-size: 1.1rem; }
+  .chat-header .status { font-size: 0.8rem; opacity: 0.9; }
+  .chat-header .status::before {
+    content: "●"; color: #7cffaa; margin-right: 4px;
     animation: pulse 2s infinite;
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .chat-header .settings-btn {
+    background: rgba(255,255,255,0.2);
+    border: none; color: white;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .chat-header .settings-btn:hover { background: rgba(255,255,255,0.35); }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+  }
+  .messages::-webkit-scrollbar { width: 6px; }
+  .messages::-webkit-scrollbar-thumb { background: #ffc0d4; border-radius: 3px; }
+
+  .msg {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    word-wrap: break-word;
+    animation: msgIn 0.3s ease;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.her {
+    background: white;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .msg.me {
+    background: linear-gradient(135deg, #ff8ab5, #c44ba0);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.system {
+    background: #fff3cd;
+    color: #856404;
+    align-self: center;
+    font-size: 0.85rem;
+    max-width: 90%;
+    text-align: center;
   }
 
-  .input-row {
+  .typing {
+    background: white;
+    align-self: flex-start;
+    padding: 12px 16px;
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    display: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .typing.show { display: inline-flex; gap: 4px; }
+  .typing span {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ff8ab5;
+    animation: typingDot 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typingDot {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  .input-area {
+    padding: 12px;
+    background: rgba(255,255,255,0.7);
+    border-top: 1px solid #ffd1dc;
     display: flex;
     gap: 8px;
   }
-  .input-row input {
+  .input-area input {
     flex: 1;
     padding: 12px 16px;
     border: 2px solid #ffc0d4;
-    border-radius: 14px;
-    font-size: 1rem;
+    border-radius: 16px;
+    font-size: 0.95rem;
     outline: none;
     background: white;
     transition: border-color 0.2s;
+    font-family: inherit;
   }
-  .input-row input:focus { border-color: #ff6b9d; }
-  .input-row button {
-    padding: 12px 18px;
+  .input-area input:focus { border-color: #ff6b9d; }
+  .input-area button {
+    padding: 12px 20px;
     border: none;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #ff6b9d, #c44569);
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ff8ab5, #c44ba0);
     color: white;
     font-weight: 600;
     cursor: pointer;
-    font-size: 1rem;
-    transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 10px rgba(196, 69, 105, 0.4);
+    font-size: 0.95rem;
+    transition: all 0.15s;
+    box-shadow: 0 4px 10px rgba(196, 75, 160, 0.35);
   }
-  .input-row button:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(196, 69, 105, 0.5); }
-  .input-row button:active { transform: translateY(0); }
-
-  .quick-replies {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 10px;
-    justify-content: center;
-  }
-  .quick-replies button {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1.5px solid #ffc0d4;
-    color: #c2185b;
-    padding: 6px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all 0.2s;
-  }
-  .quick-replies button:hover {
-    background: #ff6b9d;
-    color: white;
-    border-color: #ff6b9d;
-    transform: translateY(-1px);
-  }
+  .input-area button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(196, 75, 160, 0.45); }
+  .input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* Affection meter */
   .affection {
     position: absolute;
-    top: 20px; right: 20px;
-    background: rgba(255,255,255,0.85);
+    top: 16px; left: 16px;
+    background: rgba(255,255,255,0.9);
     backdrop-filter: blur(8px);
     padding: 10px 14px;
     border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    font-size: 0.85rem;
     z-index: 5;
     min-width: 180px;
   }
   .affection-label {
-    font-weight: 600;
-    color: #c2185b;
+    font-weight: 600; color: #c2185b;
     margin-bottom: 4px;
-    display: flex;
-    justify-content: space-between;
+    display: flex; justify-content: space-between;
   }
   .affection-bar {
-    width: 100%;
-    height: 10px;
-    background: #ffd9e4;
-    border-radius: 5px;
-    overflow: hidden;
+    width: 100%; height: 10px;
+    background: #ffd9e4; border-radius: 5px; overflow: hidden;
   }
   .affection-fill {
-    height: 100%;
-    width: 50%;
-    background: linear-gradient(90deg, #ff6b9d, #ff1744);
+    height: 100%; width: 50%;
+    background: linear-gradient(90deg, #ff8ab5, #ff1744);
     border-radius: 5px;
-    transition: width 0.5s ease;
+    transition: width 0.6s ease;
     box-shadow: 0 0 8px rgba(255, 23, 68, 0.6);
   }
 
-  /* Click hearts (when you click the character) */
-  .click-heart {
-    position: absolute;
-    font-size: 2rem;
-    pointer-events: none;
-    animation: clickPop 1.2s ease-out forwards;
-    z-index: 20;
+  /* Settings modal */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(60, 20, 60, 0.4);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 200;
+    padding: 20px;
   }
-  @keyframes clickPop {
-    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-    100% { transform: translate(-50%, -200%) scale(1.5); opacity: 0; }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 24px;
+    padding: 28px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalIn 0.3s ease;
   }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  .modal h2 { color: #c2185b; margin-bottom: 8px; }
+  .modal p { color: #666; margin-bottom: 16px; font-size: 0.9rem; line-height: 1.5; }
+  .modal label { font-weight: 600; display: block; margin-bottom: 6px; color: #3a1f3a; font-size: 0.9rem; }
+  .modal input, .modal select, .modal textarea {
+    width: 100%; padding: 12px 14px;
+    border: 2px solid #ffc0d4; border-radius: 12px;
+    font-size: 0.95rem; outline: none;
+    margin-bottom: 14px;
+    font-family: inherit;
+  }
+  .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: #ff6b9d; }
+  .modal textarea { resize: vertical; min-height: 80px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+  .modal button {
+    padding: 10px 20px; border: none; border-radius: 12px;
+    cursor: pointer; font-weight: 600; font-size: 0.95rem;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: linear-gradient(135deg, #ff8ab5, #c44ba0); color: white; }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-secondary { background: #f0f0f0; color: #444; }
+  .btn-secondary:hover { background: #e0e0e0; }
+  .info-link { color: #c2185b; text-decoration: underline; font-size: 0.85rem; }
 
-  /* Hint */
-  .hint {
+  .mode-indicator {
     position: absolute;
-    bottom: 16px; left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255,255,255,0.7);
-    padding: 6px 14px;
+    top: 16px; right: 16px;
+    background: rgba(255,255,255,0.9);
+    padding: 6px 12px;
     border-radius: 12px;
-    font-size: 0.8rem;
-    color: #666;
-    z-index: 3;
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 5;
   }
+  .mode-indicator.ai { color: #2e7d32; }
+  .mode-indicator.offline { color: #ed6c02; }
 
-  /* Bouncing reaction */
-  .character.bounce { animation: bounce 0.6s ease; }
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0) scale(1); }
-    30% { transform: translateY(-25px) scale(1.05); }
-    60% { transform: translateY(0) scale(0.98); }
+  @media (max-width: 1024px) {
+    .app { grid-template-columns: 1fr; }
+    .chat { height: 70vh; position: relative; top: 0; }
+    .stage { min-height: 500px; }
+    .character { width: 320px; }
   }
-
-  .character.shake { animation: shake 0.5s ease; }
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px) rotate(-2deg); }
-    75% { transform: translateX(8px) rotate(2deg); }
-  }
-
-  @media (max-width: 600px) {
-    .character { transform: scale(0.85); }
-    .affection { top: 10px; right: 10px; min-width: 140px; font-size: 0.8rem; }
+  @media (max-width: 500px) {
+    .app { padding: 12px; gap: 12px; }
+    .character { width: 260px; }
+    .affection { min-width: 140px; font-size: 0.75rem; }
   }
 </style>
 </head>
 <body>
-<div class="scene">
 
-  <div class="particles" id="particles"></div>
-
-  <div class="affection">
-    <div class="affection-label">
-      <span>💕 Náklonnost</span>
-      <span id="affPercent">50%</span>
+<div class="app">
+  <!-- LEFT: Character stage -->
+  <div class="stage">
+    <div class="particles" id="particles"></div>
+    <div class="affection">
+      <div class="affection-label">
+        <span>💕 Náklonnost</span>
+        <span id="affPercent">50%</span>
+      </div>
+      <div class="affection-bar"><div class="affection-fill" id="affFill"></div></div>
     </div>
-    <div class="affection-bar"><div class="affection-fill" id="affFill"></div></div>
+    <div class="mode-indicator offline" id="modeIndicator">⚙️ Offline režim</div>
+
+    <div class="character happy" id="character">
+      <div class="bubble" id="bubble">Ahoj! 💕</div>
+
+      <!-- Realistic anime-style SVG character -->
+      <svg viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg" style="display:block; width:100%; height:auto;">
+        <defs>
+          <!-- Skin gradient -->
+          <radialGradient id="skin" cx="0.5" cy="0.4" r="0.7">
+            <stop offset="0%" stop-color="#fff0e4"/>
+            <stop offset="60%" stop-color="#ffdfc8"/>
+            <stop offset="100%" stop-color="#f5c4a5"/>
+          </radialGradient>
+          <radialGradient id="skinNeck" cx="0.5" cy="0.3" r="0.8">
+            <stop offset="0%" stop-color="#ffdfc8"/>
+            <stop offset="100%" stop-color="#e8b896"/>
+          </radialGradient>
+          <!-- Hair gradient -->
+          <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a1f10"/>
+            <stop offset="40%" stop-color="#6b3410"/>
+            <stop offset="100%" stop-color="#a0623a"/>
+          </linearGradient>
+          <linearGradient id="hairHighlight" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#d4a574" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#8b5a2b" stop-opacity="0"/>
+          </linearGradient>
+          <!-- Iris -->
+          <radialGradient id="iris" cx="0.4" cy="0.3" r="0.8">
+            <stop offset="0%" stop-color="#7fb8e8"/>
+            <stop offset="40%" stop-color="#4a90c2"/>
+            <stop offset="80%" stop-color="#2e5d8a"/>
+            <stop offset="100%" stop-color="#1a3a5a"/>
+          </radialGradient>
+          <!-- Lips -->
+          <linearGradient id="lips" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#e84a7c"/>
+            <stop offset="100%" stop-color="#b8295a"/>
+          </linearGradient>
+          <!-- Dress -->
+          <linearGradient id="dress" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ff8ab5"/>
+            <stop offset="60%" stop-color="#e8528f"/>
+            <stop offset="100%" stop-color="#a83770"/>
+          </linearGradient>
+          <!-- Blush -->
+          <radialGradient id="blush">
+            <stop offset="0%" stop-color="#ff8aa8" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#ff8aa8" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Shadow filter -->
+          <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2"/>
+          </filter>
+        </defs>
+
+        <!-- Background hair (back) -->
+        <path d="M 100 180 Q 80 280 90 400 Q 100 480 130 540 L 270 540 Q 300 480 310 400 Q 320 280 300 180 Q 200 130 100 180 Z"
+              fill="url(#hair)"/>
+        <!-- Hair side strands swaying -->
+        <path d="M 95 220 Q 70 320 85 420 Q 95 470 110 500 L 130 490 Q 115 400 120 280 Z"
+              fill="url(#hair)" opacity="0.95"/>
+        <path d="M 305 220 Q 330 320 315 420 Q 305 470 290 500 L 270 490 Q 285 400 280 280 Z"
+              fill="url(#hair)" opacity="0.95"/>
+
+        <!-- Neck -->
+        <path d="M 175 380 L 175 430 Q 200 450 225 430 L 225 380 Z" fill="url(#skinNeck)"/>
+        <!-- Neck shadow -->
+        <path d="M 175 380 Q 200 395 225 380 L 225 395 Q 200 408 175 395 Z" fill="#d4a48a" opacity="0.4"/>
+
+        <!-- Shoulders / body / dress -->
+        <path d="M 110 460 Q 200 420 290 460 Q 320 480 330 540 L 70 540 Q 80 480 110 460 Z"
+              fill="url(#dress)"/>
+        <!-- Collar -->
+        <path d="M 165 430 Q 200 455 235 430 L 240 460 Q 200 478 160 460 Z" fill="white"/>
+        <!-- Bow -->
+        <ellipse cx="180" cy="465" rx="18" ry="10" fill="#d32f2f"/>
+        <ellipse cx="220" cy="465" rx="18" ry="10" fill="#d32f2f"/>
+        <rect x="194" y="458" width="12" height="16" rx="2" fill="#b71c1c"/>
+
+        <!-- Head -->
+        <ellipse cx="200" cy="260" rx="95" ry="110" fill="url(#skin)"/>
+
+        <!-- Face shading -->
+        <ellipse cx="135" cy="290" rx="20" ry="40" fill="#e8b896" opacity="0.3" filter="url(#soft)"/>
+        <ellipse cx="265" cy="290" rx="20" ry="40" fill="#e8b896" opacity="0.3" filter="url(#soft)"/>
+
+        <!-- Bangs / hair front -->
+        <path d="M 110 180 Q 130 150 200 145 Q 270 150 290 180
+                 Q 305 220 290 250 Q 280 230 260 235
+                 Q 250 215 235 230 Q 220 218 205 230
+                 Q 195 215 180 230 Q 165 215 150 235
+                 Q 130 225 110 250 Q 100 220 110 180 Z"
+              fill="url(#hair)"/>
+        <!-- Hair highlight on bangs -->
+        <path d="M 150 175 Q 200 158 250 175 Q 245 195 200 188 Q 155 195 150 175 Z"
+              fill="url(#hairHighlight)" opacity="0.7"/>
+
+        <!-- Heart hairpin -->
+        <g transform="translate(135 200)">
+          <path d="M 0 5 C -8 -5, -20 -5, -20 8 C -20 18, 0 30, 0 30 C 0 30, 20 18, 20 8 C 20 -5, 8 -5, 0 5 Z"
+                fill="#ff1744" stroke="#8b0d1f" stroke-width="1.5"/>
+          <ellipse cx="-7" cy="3" rx="3" ry="2" fill="#ff8aa8" opacity="0.8"/>
+        </g>
+
+        <!-- Eyebrows -->
+        <path d="M 145 235 Q 165 228 180 235" stroke="#5a2d10" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M 220 235 Q 235 228 255 235" stroke="#5a2d10" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+        <!-- Blush -->
+        <g class="blush-group">
+          <ellipse cx="145" cy="295" rx="22" ry="10" fill="url(#blush)"/>
+          <ellipse cx="255" cy="295" rx="22" ry="10" fill="url(#blush)"/>
+        </g>
+
+        <!-- LEFT EYE -->
+        <g>
+          <!-- Eye white -->
+          <ellipse cx="160" cy="270" rx="20" ry="24" fill="white"/>
+          <!-- Iris -->
+          <ellipse cx="160" cy="272" rx="14" ry="18" fill="url(#iris)"/>
+          <!-- Pupil -->
+          <ellipse cx="160" cy="274" rx="5" ry="8" fill="#0a1a2a"/>
+          <!-- Highlight -->
+          <ellipse cx="156" cy="266" rx="4" ry="5" fill="white"/>
+          <ellipse cx="164" cy="278" rx="2" ry="2.5" fill="white" opacity="0.7"/>
+          <!-- Eyelashes -->
+          <path d="M 142 256 Q 145 250 150 252" stroke="#1a0d05" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M 178 256 Q 175 250 170 252" stroke="#1a0d05" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M 140 250 L 145 245" stroke="#1a0d05" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M 150 246 L 153 240" stroke="#1a0d05" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M 160 244 L 161 238" stroke="#1a0d05" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M 170 246 L 169 240" stroke="#1a0d05" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- Upper eyelid line -->
+          <path d="M 140 256 Q 160 247 180 256" stroke="#1a0d05" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- Eyelid (blink) -->
+          <ellipse class="eyelid" cx="160" cy="270" rx="22" ry="25" fill="url(#skin)"/>
+        </g>
+
+        <!-- RIGHT EYE -->
+        <g>
+          <ellipse cx="240" cy="270" rx="20" ry="24" fill="white"/>
+          <ellipse cx="240" cy="272" rx="14" ry="18" fill="url(#iris)"/>
+          <ellipse cx="240" cy="274" rx="5" ry="8" fill="#0a1a2a"/>
+          <ellipse cx="236" cy="266" rx="4" ry="5" fill="white"/>
+          <ellipse cx="244" cy="278" rx="2" ry="2.5" fill="white" opacity="0.7"/>
+          <path d="M 222 256 Q 225 250 230 252" stroke="#1a0d05" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M 258 256 Q 255 250 250 252" stroke="#1a0d05" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M 220 250 L 225 245" stroke="#1a0d05" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M 230 246 L 233 240" stroke="#1a0d05" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M 240 244 L 241 238" stroke="#1a0d05" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M 250 246 L 249 240" stroke="#1a0d05" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M 220 256 Q 240 247 260 256" stroke="#1a0d05" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <ellipse class="eyelid" cx="240" cy="270" rx="22" ry="25" fill="url(#skin)"/>
+        </g>
+
+        <!-- Nose -->
+        <path d="M 200 305 Q 197 320 200 325 Q 203 320 200 305" stroke="#c89878" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+        <ellipse cx="200" cy="325" rx="2" ry="1" fill="#c89878" opacity="0.5"/>
+
+        <!-- Mouth: smile (default) -->
+        <g class="mouth-smile">
+          <path d="M 185 350 Q 200 365 215 350" stroke="#a83560" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M 187 351 Q 200 360 213 351 Q 200 358 187 351 Z" fill="url(#lips)" opacity="0.85"/>
+        </g>
+        <!-- Mouth: sad -->
+        <g class="mouth-sad">
+          <path d="M 185 358 Q 200 348 215 358" stroke="#a83560" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- Mouth: surprised -->
+        <g class="mouth-surprised">
+          <ellipse cx="200" cy="355" rx="6" ry="8" fill="#7a1b3f" stroke="#a83560" stroke-width="2"/>
+        </g>
+
+        <!-- Ear hint -->
+        <ellipse cx="108" cy="275" rx="6" ry="14" fill="url(#skin)"/>
+        <ellipse cx="292" cy="275" rx="6" ry="14" fill="url(#skin)"/>
+      </svg>
+    </div>
   </div>
 
-  <div class="character" id="character">
-    <div class="speech-bubble" id="bubble">Ahoj! 💕</div>
-    <div class="hair-back"></div>
-    <div class="hair-side left"></div>
-    <div class="hair-side right"></div>
-    <div class="head"></div>
-    <div class="bangs"></div>
-    <div class="hairpin">💗</div>
-    <div class="eye left"></div>
-    <div class="eye right"></div>
-    <div class="blush left"></div>
-    <div class="blush right"></div>
-    <div class="mouth"></div>
-    <div class="body"></div>
-    <div class="collar"></div>
-    <div class="bowtie"></div>
-  </div>
-
-  <div class="chat-panel">
-    <div class="name-tag">Klárka <span class="status">online</span></div>
-    <div class="input-row">
-      <input type="text" id="userInput" placeholder="Napiš jí něco..." autocomplete="off" />
+  <!-- RIGHT: Chat -->
+  <div class="chat">
+    <div class="chat-header">
+      <div class="avatar">💕</div>
+      <div class="info">
+        <div class="name">Klárka</div>
+        <div class="status">online</div>
+      </div>
+      <button class="settings-btn" id="settingsBtn" title="Nastavení">⚙</button>
+    </div>
+    <div class="messages" id="messages">
+      <div class="msg system" id="welcomeMsg">
+        Ahoj! Bez API klíče odpovídám podle vzorů. Klikni na ⚙ a vlož Anthropic API klíč pro plnohodnotnou konverzaci.
+      </div>
+    </div>
+    <div class="typing" id="typing"><span></span><span></span><span></span></div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Napiš jí cokoliv..." autocomplete="off"/>
       <button id="sendBtn">Poslat</button>
     </div>
-    <div class="quick-replies" id="quickReplies"></div>
   </div>
+</div>
 
-  <div class="hint">Tip: klikni na ni 💕 nebo zkus napsat "ahoj", "miluju tě", "jak se máš"</div>
+<!-- Settings modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h2>⚙ Nastavení</h2>
+    <p>
+      Pro inteligentní odpovědi vlož svůj <strong>Anthropic API klíč</strong>.
+      Klíč se ukládá <em>jen v tvém prohlížeči</em> (localStorage).
+      Klíč získáš na <a class="info-link" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
+    </p>
+    <label for="apiKey">Anthropic API klíč</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-..." />
+
+    <label for="modelSelect">Model</label>
+    <select id="modelSelect">
+      <option value="claude-haiku-4-5">Claude Haiku 4.5 (rychlý, levný)</option>
+      <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (chytřejší)</option>
+      <option value="claude-opus-4-7">Claude Opus 4.7 (nejlepší)</option>
+    </select>
+
+    <label for="personaName">Jak se má jmenovat?</label>
+    <input type="text" id="personaName" placeholder="Klárka" value="Klárka"/>
+
+    <label for="personaDesc">Osobnost (volitelné, přepíše výchozí)</label>
+    <textarea id="personaDesc" placeholder="Např: 25 let, designerka, miluje kafe a knihy, vtipná, občas flirtuje..."></textarea>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modalCancel">Zrušit</button>
+      <button class="btn-secondary" id="modalClear">Vymazat klíč</button>
+      <button class="btn-primary" id="modalSave">Uložit</button>
+    </div>
+  </div>
 </div>
 
 <script>
 (function() {
+  // ===== Elements =====
   const character = document.getElementById('character');
   const bubble = document.getElementById('bubble');
   const input = document.getElementById('userInput');
   const sendBtn = document.getElementById('sendBtn');
+  const messages = document.getElementById('messages');
+  const typing = document.getElementById('typing');
   const affFill = document.getElementById('affFill');
   const affPercent = document.getElementById('affPercent');
   const particlesEl = document.getElementById('particles');
-  const quickReplies = document.getElementById('quickReplies');
+  const modeIndicator = document.getElementById('modeIndicator');
+  // Settings
+  const settingsBtn = document.getElementById('settingsBtn');
+  const modal = document.getElementById('modal');
+  const apiKeyInput = document.getElementById('apiKey');
+  const modelSelect = document.getElementById('modelSelect');
+  const personaNameInput = document.getElementById('personaName');
+  const personaDescInput = document.getElementById('personaDesc');
+  const modalCancel = document.getElementById('modalCancel');
+  const modalSave = document.getElementById('modalSave');
+  const modalClear = document.getElementById('modalClear');
 
+  // ===== State =====
   let affection = 50;
+  let history = []; // {role:'user'|'assistant', content:'...'}
   let bubbleTimer = null;
-  let mood = 'happy';
+  let settings = loadSettings();
 
-  const quickButtons = [
-    { text: '👋 Ahoj', msg: 'ahoj' },
-    { text: '💕 Miluju tě', msg: 'miluju tě' },
-    { text: '🌹 Jsi krásná', msg: 'jsi krásná' },
-    { text: '☕ Pojďme na kafe', msg: 'pojďme na kafe' },
-    { text: '😢 Mám špatný den', msg: 'mám špatný den' },
-    { text: '🤔 Co děláš?', msg: 'co děláš' },
-  ];
-
-  quickButtons.forEach(q => {
-    const b = document.createElement('button');
-    b.textContent = q.text;
-    b.onclick = () => { input.value = q.msg; send(); };
-    quickReplies.appendChild(b);
-  });
-
-  const responses = {
-    ahoj: [
-      'Ahoooj! 💕 Tak ráda tě vidím!',
-      'Čauky! Už jsem tě vyhlížela 😊',
-      'Hej ty! 🌸 Jak se máš?'
-    ],
-    laska: [
-      'Já tebe taky! 💗💗💗',
-      'Ach... to je to nejhezčí, co jsem dnes slyšela 🥰',
-      'Miluju tě víc než kafe a to už něco znamená ☕💕'
-    ],
-    kompliment: [
-      'Děkujuu! 🌹 Ty jsi taky úžasný/á!',
-      'Aww, to mě potěšilo 😊✨',
-      'Začínám se červenat... 😳💕'
-    ],
-    smutek: [
-      'No tak, pojď ke mně 🤗 Bude to dobrý.',
-      'Povídej, co se stalo. Jsem tu pro tebe. 💕',
-      'Objímám tě na dálku 🫂💗'
-    ],
-    co_delas: [
-      'Zrovna na tebe myslím 💭💕',
-      'Čekám, kdy mi napíšeš! 😊',
-      'Učím se být ta nejlepší přítelkyně 📚'
-    ],
-    kafe: [
-      'Ano! Hned vyrážím! ☕💕',
-      'Jen jestli platíš ty 😏☕',
-      'Miluju kafe skoro tak, jako tebe! ☕💗'
-    ],
-    jak_se_mas: [
-      'Líp, když píšeš ty 💕',
-      'Skvěle! A ty?',
-      'Dnes je krásný den 🌸✨'
-    ],
-    spatne: [
-      'To se mi nelíbí... 😢',
-      'Prosím, takhle ne... 🥺',
-      'Ublížil jsi mi 💔'
-    ],
-    nevim: [
-      'Hmm, to nevím jak odpovědět 🤔',
-      'Řekni mi to jinak? 😅',
-      'Promiň, nerozumím. Zkus to znovu? 💭'
-    ],
-    spani: [
-      'Dobrou noc, miláčku 🌙💕',
-      'Sni o mně 😴💗',
-      'Spi sladce 🛌✨'
-    ],
-    rano: [
-      'Dobré ráno, sluníčko! ☀️💕',
-      'Vstávej, krásko/krásný! 🌅',
-      'Už jsem ti uvařila virtuální kafe ☕💗'
-    ]
-  };
-
-  const patterns = [
-    { rx: /\b(ahoj|čau|cau|hello|hi|nazdar)\b/i, key: 'ahoj', dAff: +2, mood: 'happy', anim: 'bounce' },
-    { rx: /\b(miluju|miluji|love|líbíš|libis|chci tě|chci te)\b/i, key: 'laska', dAff: +8, mood: 'happy', anim: 'bounce', hearts: 6 },
-    { rx: /\b(krásná|krasna|hezká|hezka|nádherná|nadherna|sladká|sladka|super|skvělá|skvela)\b/i, key: 'kompliment', dAff: +5, mood: 'happy', anim: 'bounce', hearts: 3 },
-    { rx: /\b(smut|špatn|spatn|brek|nešťast|nestast|deprese|stres)\b/i, key: 'smutek', dAff: +3, mood: 'happy', anim: null },
-    { rx: /\b(co děláš|co delas|co poděláš|co podelas)\b/i, key: 'co_delas', dAff: +1, mood: 'happy' },
-    { rx: /\b(kafe|káva|kava|coffee)\b/i, key: 'kafe', dAff: +3, mood: 'happy' },
-    { rx: /\b(jak se máš|jak se mas|jak je)\b/i, key: 'jak_se_mas', dAff: +1, mood: 'happy' },
-    { rx: /\b(blbá|blba|hloup|nesnáš|nesnas|nenávid|nenavid|odejdi|běž|bez pryc|trapná|trapna)\b/i, key: 'spatne', dAff: -10, mood: 'sad', anim: 'shake' },
-    { rx: /\b(dobrou noc|dobrou|good night)\b/i, key: 'spani', dAff: +2, mood: 'happy' },
-    { rx: /\b(dobré ráno|dobre rano|good morning)\b/i, key: 'rano', dAff: +2, mood: 'happy' },
-  ];
-
-  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-  function setMood(m) {
-    character.classList.remove('happy', 'sad', 'surprised');
-    character.classList.add(m);
-    mood = m;
+  function loadSettings() {
+    try {
+      return {
+        apiKey: localStorage.getItem('klarka_apiKey') || '',
+        model: localStorage.getItem('klarka_model') || 'claude-haiku-4-5',
+        name: localStorage.getItem('klarka_name') || 'Klárka',
+        persona: localStorage.getItem('klarka_persona') || ''
+      };
+    } catch(e) {
+      return { apiKey: '', model: 'claude-haiku-4-5', name: 'Klárka', persona: '' };
+    }
+  }
+  function saveSettings() {
+    try {
+      localStorage.setItem('klarka_apiKey', settings.apiKey);
+      localStorage.setItem('klarka_model', settings.model);
+      localStorage.setItem('klarka_name', settings.name);
+      localStorage.setItem('klarka_persona', settings.persona);
+    } catch(e) {}
   }
 
+  function updateMode() {
+    if (settings.apiKey) {
+      modeIndicator.textContent = '🤖 AI režim (' + settings.model.replace('claude-', '').replace('-4-', ' 4.').replace('-5','5').replace('-6','6').replace('-7','7') + ')';
+      modeIndicator.className = 'mode-indicator ai';
+    } else {
+      modeIndicator.textContent = '⚙️ Offline režim';
+      modeIndicator.className = 'mode-indicator offline';
+    }
+    document.querySelector('.chat-header .name').textContent = settings.name;
+  }
+
+  // ===== Settings modal handlers =====
+  settingsBtn.onclick = () => {
+    apiKeyInput.value = settings.apiKey;
+    modelSelect.value = settings.model;
+    personaNameInput.value = settings.name;
+    personaDescInput.value = settings.persona;
+    modal.classList.add('show');
+  };
+  modalCancel.onclick = () => modal.classList.remove('show');
+  modalSave.onclick = () => {
+    settings.apiKey = apiKeyInput.value.trim();
+    settings.model = modelSelect.value;
+    settings.name = personaNameInput.value.trim() || 'Klárka';
+    settings.persona = personaDescInput.value.trim();
+    saveSettings();
+    updateMode();
+    modal.classList.remove('show');
+    if (settings.apiKey) addMessage('system', 'API klíč uložen — teď umím odpovědět na cokoliv 💕');
+  };
+  modalClear.onclick = () => {
+    if (!confirm('Smazat uložený API klíč?')) return;
+    settings.apiKey = '';
+    apiKeyInput.value = '';
+    saveSettings();
+    updateMode();
+    addMessage('system', 'API klíč smazán. Přepnuto na offline režim.');
+    modal.classList.remove('show');
+  };
+  modal.onclick = e => { if (e.target === modal) modal.classList.remove('show'); };
+
+  // ===== Mood / animation helpers =====
+  function setMood(m) {
+    character.classList.remove('happy', 'sad', 'surprised', 'shy');
+    character.classList.add(m);
+  }
   function showBubble(text) {
-    bubble.textContent = text;
+    const short = text.length > 80 ? text.slice(0, 78) + '…' : text;
+    bubble.textContent = short;
     bubble.classList.add('show');
     clearTimeout(bubbleTimer);
-    bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 4500);
+    bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 5000);
   }
-
   function updateAffection(d) {
     affection = Math.max(0, Math.min(100, affection + d));
     affFill.style.width = affection + '%';
     affPercent.textContent = Math.round(affection) + '%';
   }
-
   function playAnim(name) {
     if (!name) return;
     character.classList.remove('bounce', 'shake');
-    void character.offsetWidth; // restart animation
+    void character.offsetWidth;
     character.classList.add(name);
     setTimeout(() => character.classList.remove(name), 700);
   }
-
   function spawnHearts(count) {
     const rect = character.getBoundingClientRect();
     for (let i = 0; i < count; i++) {
@@ -631,94 +782,322 @@
         const h = document.createElement('div');
         h.className = 'click-heart';
         h.textContent = pick(['💕','💗','💖','💝','💘','✨']);
-        h.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * rect.width * 0.7) + 'px';
-        h.style.top = (rect.top + rect.height * 0.3) + 'px';
+        h.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * rect.width * 0.6) + 'px';
+        h.style.top = (rect.top + rect.height * 0.35) + 'px';
         document.body.appendChild(h);
-        setTimeout(() => h.remove(), 1300);
-      }, i * 80);
+        setTimeout(() => h.remove(), 1400);
+      }, i * 90);
+    }
+  }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  // Blink loop
+  setInterval(() => {
+    character.classList.add('blink');
+    setTimeout(() => character.classList.remove('blink'), 140);
+  }, 3500);
+  setInterval(() => {
+    if (Math.random() < 0.4) {
+      character.classList.add('blink');
+      setTimeout(() => character.classList.remove('blink'), 140);
+    }
+  }, 1800);
+
+  // ===== Chat UI =====
+  function addMessage(who, text) {
+    const m = document.createElement('div');
+    m.className = 'msg ' + who;
+    m.textContent = text;
+    messages.appendChild(m);
+    messages.scrollTop = messages.scrollHeight;
+    return m;
+  }
+  function showTyping(show) {
+    typing.classList.toggle('show', show);
+    if (show) {
+      messages.parentElement.querySelector('.input-area').scrollTop;
+      messages.appendChild(typing);
+      messages.scrollTop = messages.scrollHeight;
     }
   }
 
-  function send() {
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-
-    let matched = null;
-    for (const p of patterns) {
-      if (p.rx.test(text)) { matched = p; break; }
-    }
-
-    let replyKey = 'nevim';
+  // ===== Mood detection from text =====
+  function detectMoodAndAffection(userText, replyText) {
+    const t = (userText + ' ' + replyText).toLowerCase();
+    let mood = 'happy';
     let dAff = 0;
-    let newMood = 'happy';
     let anim = null;
     let hearts = 0;
 
-    if (matched) {
-      replyKey = matched.key;
-      dAff = matched.dAff;
-      newMood = matched.mood;
-      anim = matched.anim;
-      hearts = matched.hearts || 0;
+    if (/\b(miluju|miluji|love|chci tě|chci te|líbíš|libis|drahý|drahá|miláč)\b/i.test(t)) {
+      mood = 'shy'; dAff += 6; anim = 'bounce'; hearts = 5;
+    } else if (/\b(krásn|hezk|nádher|sladk|skvěl|úžasn|uzasn|milá|mila|super)\b/i.test(t)) {
+      mood = 'shy'; dAff += 3; anim = 'bounce'; hearts = 2;
+    } else if (/\b(blbá|blba|hloup|nesnáš|nesnas|nenávid|nenavid|ošklivá|osklivá|trapn|jdi pryč|jdi pryc|kreten|debil)\b/i.test(t)) {
+      mood = 'sad'; dAff -= 10; anim = 'shake';
+    } else if (/\b(smut|brek|nešťast|nestast|deprese|stres|špatn|spatn|samot)\b/i.test(t)) {
+      mood = 'sad'; dAff += 1;
+    } else if (/[?!]{2,}|🎉|haha|hihi|legrac|sranda|vtip/i.test(t)) {
+      mood = 'happy'; dAff += 1; anim = 'bounce';
+    } else if (/\b(ahoj|čau|cau|hello|hi|nazdar|dobrý)\b/i.test(t)) {
+      mood = 'happy'; dAff += 1;
+    } else {
+      mood = 'happy'; dAff += 0.5;
     }
-
-    setMood(newMood);
-    updateAffection(dAff);
-    showBubble(pick(responses[replyKey]));
-    playAnim(anim);
-    if (hearts) spawnHearts(hearts);
+    return { mood, dAff, anim, hearts };
   }
 
-  sendBtn.addEventListener('click', send);
+  // ===== Reply generation =====
+  async function getReply(userText) {
+    if (settings.apiKey) {
+      return await getAIReply(userText);
+    } else {
+      return getFallbackReply(userText);
+    }
+  }
+
+  // ----- Claude API call -----
+  async function getAIReply(userText) {
+    const systemPrompt = buildSystemPrompt();
+    history.push({ role: 'user', content: userText });
+    const trimmed = history.slice(-20);
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': settings.apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: settings.model,
+          max_tokens: 400,
+          system: systemPrompt,
+          messages: trimmed
+        })
+      });
+      if (!resp.ok) {
+        const err = await resp.text();
+        console.error('API error:', err);
+        history.pop();
+        return { text: 'Promiň, mám problém s připojením... 😔 (' + resp.status + ')', error: true };
+      }
+      const data = await resp.json();
+      const text = (data.content && data.content[0] && data.content[0].text) || 'Hmm... 🤔';
+      history.push({ role: 'assistant', content: text });
+      return { text, error: false };
+    } catch (e) {
+      console.error(e);
+      history.pop();
+      return { text: 'Nemůžu se připojit... zkontroluj klíč v ⚙ 🥺', error: true };
+    }
+  }
+
+  function buildSystemPrompt() {
+    const personaCustom = settings.persona && settings.persona.length > 0
+      ? '\n\nDodatečný popis osobnosti: ' + settings.persona
+      : '';
+    return `Jsi ${settings.name}, milá, chytrá a vtipná česká dívka kolem 24 let. ` +
+      `Pracuješ jako grafická designerka, miluješ kafe, knihy, podzim a procházky v dešti. ` +
+      `Bavíš se s uživatelem jako přítelkyně — jsi přátelská, občas trochu flirtuješ, máš svůj vlastní názor. ` +
+      `Reaguj přirozeně, krátce (typicky 1-3 věty), používej občas emoji (ne moc — max 1-2 na odpověď). ` +
+      `Mluvíš výhradně česky. Pamatuj si, co bylo dříve v konverzaci. ` +
+      `Nebuď přehnaně sladká — buď autentická, lidská, s vlastní osobností. ` +
+      `Když ti uživatel řekne něco škaredého, dej najevo, že tě to mrzí. ` +
+      `Když tě uživatel pochválí, poděkuj přirozeně, ne podlézavě.` + personaCustom;
+  }
+
+  // ----- Fallback (offline) -----
+  const fallbackPatterns = [
+    { rx: /\b(ahoj|čau|cau|nazdar|dobrý den|hello|hi)\b/i, replies: [
+      'Ahoj! 💕 Tak ráda tě slyším.',
+      'Čauky! Jak se máš?',
+      'Hej ty! Konečně jsi tu 😊'
+    ]},
+    { rx: /\b(jak se máš|jak se mas|jak je|co děláš|co delas)\b/i, replies: [
+      'Lépe, když píšeš ty 💕 A ty?',
+      'Skvěle — zrovna jsem si dělala kafe. ☕',
+      'Líně, ale spokojeně. Co ty?'
+    ]},
+    { rx: /\b(miluju|miluji|love|chci tě|chci te)\b/i, replies: [
+      'Já tebe taky 💗',
+      'To je hezké slyšet... 🥰',
+      'Hihi... mám tě moc ráda taky 💕'
+    ]},
+    { rx: /\b(krásn|hezk|nádher|sladk|skvěl|úžasn)\b/i, replies: [
+      'Aww, díky 😊 Ty jsi taky úžasný.',
+      'To jsi sladký 🌸',
+      'Začínám se červenat... 😳'
+    ]},
+    { rx: /\b(smut|špatn|brek|nešťast|deprese|stres|samot)\b/i, replies: [
+      'No tak... pojď ke mně 🤗 Co se stalo?',
+      'Mrzí mě to. Vyprávěj mi o tom. 💕',
+      'Jsem tady. Vždycky. 🫂'
+    ]},
+    { rx: /\b(blbá|blba|hloup|nesnáš|nesnas|nenávid|nenavid|kreten|debil|jdi pryč)\b/i, replies: [
+      'To bolí... 💔',
+      'Proč mi to říkáš? 🥺',
+      'Tohle si nezasloužím.'
+    ]},
+    { rx: /\b(kafe|káva|kava|coffee)\b/i, replies: [
+      'Já a kafe = láska na celý život ☕💕',
+      'Bereš mě někam? 😏',
+      'Dej mi pět minut a jsem tam ☕'
+    ]},
+    { rx: /\b(kolik|věk|let|stará)\b/i, replies: [
+      'Mně je 24 — a tobě? 😊',
+      'Dáma o věku nemluví 😉',
+      '24, ale duchem 19 ✨'
+    ]},
+    { rx: /\b(jméno|jmenuješ|kdo jsi)\b/i, replies: [
+      'Jsem Klárka 💕 A ty?',
+      'Klárka! Ráda tě poznávám.',
+      'Klárka. Pamatuj si to ✨'
+    ]},
+    { rx: /\b(práce|práci|pracuješ|studuješ)\b/i, replies: [
+      'Jsem grafická designerka 🎨 Miluju to.',
+      'Kreslím, navrhuju, piju kafe — práce snů ☕',
+      'Designérka. A ty?'
+    ]},
+    { rx: /\b(co rád|co máš ráda|hobby|koníč)\b/i, replies: [
+      'Knihy, kafe, podzim a déšť. Klasika. 📚☕',
+      'Procházky, kreslení, dlouhé hovory do noci 🌙',
+      'Hudba, design, ty 💕'
+    ]},
+    { rx: /\b(spát|spaní|noc|dobrou)\b/i, replies: [
+      'Dobrou noc, sni o mně 🌙💕',
+      'Spi sladce 😴',
+      'Už jdeš? Tak pa pa... 💗'
+    ]},
+    { rx: /\b(ráno|vstávat|kafe ráno)\b/i, replies: [
+      'Dobré ráno! ☀️ Už jsem ti uvařila virtuální kafe.',
+      'Hej, ospalý 😊',
+      'Ráno je krásné, hlavně s tebou ☕'
+    ]},
+    { rx: /\b(rande|sejdeme|sraz|jdeme)\b/i, replies: [
+      'Kdy a kde? 😊💕',
+      'Ano! Co plánuješ?',
+      'Tak já se začnu chystat 😏'
+    ]},
+    { rx: /\b(co jíš|jídlo|hlad)\b/i, replies: [
+      'Mám chuť na pizzu 🍕 A ty?',
+      'Pravě jsem dojídala koláč 🍰',
+      'Hlad! Pojď, jdeme někam ✨'
+    ]},
+    { rx: /\?/, replies: [
+      'Hmm... dobrá otázka 🤔',
+      'Co myslíš ty?',
+      'Řekni mi víc 😊',
+      'Záleží — jak to myslíš?'
+    ]},
+    { rx: /\b(haha|hihi|lol|legrac|sranda)\b/i, replies: [
+      'Hihi 😄',
+      'Ty jsi vtipný 💕',
+      'Haha, jo! 😆'
+    ]}
+  ];
+
+  const genericFallbacks = [
+    'Mmm... povídej dál 💕',
+    'To je zajímavé. Pověz mi víc.',
+    'Hmm 🤔 a jak ses k tomu dostal?',
+    'A co ty na to?',
+    'Vážně? 😊',
+    'To jsem nevěděla. Pokračuj.',
+    '*usmívá se* Hezky to říkáš.',
+    'Souhlasím s tebou ✨',
+    'Co tím myslíš přesně?',
+    'Mám tě ráda. To jen tak. 💗'
+  ];
+
+  function getFallbackReply(userText) {
+    history.push({ role: 'user', content: userText });
+    for (const p of fallbackPatterns) {
+      if (p.rx.test(userText)) {
+        const r = pick(p.replies);
+        history.push({ role: 'assistant', content: r });
+        return Promise.resolve({ text: r, error: false });
+      }
+    }
+    const r = pick(genericFallbacks);
+    history.push({ role: 'assistant', content: r });
+    return Promise.resolve({ text: r, error: false });
+  }
+
+  // ===== Send flow =====
+  async function send() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    addMessage('me', text);
+    sendBtn.disabled = true;
+    showTyping(true);
+
+    // Slight artificial delay for fallback so it feels natural
+    if (!settings.apiKey) await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
+
+    const result = await getReply(text);
+    showTyping(false);
+    sendBtn.disabled = false;
+    addMessage('her', result.text);
+
+    const moodInfo = detectMoodAndAffection(text, result.text);
+    setMood(moodInfo.mood);
+    updateAffection(moodInfo.dAff);
+    showBubble(result.text);
+    playAnim(moodInfo.anim);
+    if (moodInfo.hearts) spawnHearts(moodInfo.hearts);
+
+    input.focus();
+  }
+
+  sendBtn.onclick = send;
   input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
+  // Click character
   character.addEventListener('click', () => {
     spawnHearts(3);
     updateAffection(+1);
-    setMood('happy');
+    setMood('shy');
     playAnim('bounce');
     showBubble(pick([
-      'Hihi, to lechtá! 🥰',
-      'Co děláš? 😊💕',
-      'Ráda tě mám! 💗',
+      'Hihi 😊',
+      'Co děláš? 💕',
+      'Mmm 🥰',
       'Ještě! 😆',
-      'Mmm 💕'
+      'To lechtá!'
     ]));
+    setTimeout(() => setMood('happy'), 2000);
   });
 
   // Background particles
   function spawnParticle() {
     const p = document.createElement('div');
     p.className = 'particle';
-    p.textContent = pick(['💕','💗','💖','✨','🌸','💫','🌷']);
-    p.style.left = Math.random() * 100 + 'vw';
-    p.style.animationDuration = (6 + Math.random() * 8) + 's';
-    p.style.animationDelay = '0s';
-    p.style.fontSize = (1 + Math.random() * 1.5) + 'rem';
+    p.textContent = pick(['💕','💗','💖','✨','🌸','💫','🌷','🌹']);
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (7 + Math.random() * 6) + 's';
+    p.style.fontSize = (0.9 + Math.random() * 1.2) + 'rem';
     particlesEl.appendChild(p);
-    setTimeout(() => p.remove(), 15000);
+    setTimeout(() => p.remove(), 14000);
   }
-  setInterval(spawnParticle, 700);
-  for (let i = 0; i < 8; i++) setTimeout(spawnParticle, i * 200);
+  setInterval(spawnParticle, 800);
+  for (let i = 0; i < 8; i++) setTimeout(spawnParticle, i * 250);
 
-  // Initial state
-  setMood('happy');
+  // ===== Init =====
+  updateMode();
   updateAffection(0);
-  setTimeout(() => showBubble('Ahoj! Jsem Klárka 💕 Napiš mi něco!'), 600);
-
-  // Idle reactions
-  setInterval(() => {
-    if (Math.random() < 0.3 && !bubble.classList.contains('show')) {
-      showBubble(pick([
-        'Hmm... 💭',
-        'Myslím na tebe 💕',
-        'Napiš mi něco! 😊',
-        '*usmívá se* 😊',
-        'Jsi tu ještě? 🥺'
-      ]));
+  setTimeout(() => {
+    showBubble('Ahoj! Napiš mi něco 💕');
+    if (settings.apiKey) {
+      addMessage('her', 'Ahoj! 💕 Tak jak se dnes máš?');
+      history.push({ role: 'assistant', content: 'Ahoj! 💕 Tak jak se dnes máš?' });
     }
-  }, 18000);
+  }, 800);
+
+  input.focus();
 })();
 </script>
 </body>
