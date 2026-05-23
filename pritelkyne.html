@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tvoje virtuální přítelkyně 💕</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffd1dc 0%, #ff9ec7 40%, #c39bff 100%);
+    background-size: 400% 400%;
+    animation: bgShift 15s ease infinite;
+    overflow: hidden;
+    color: #4a2c4a;
+  }
+
+  @keyframes bgShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .scene {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Floating particles (hearts and sparkles) */
+  .particles { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+  .particle {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: 0;
+    animation: float 8s linear infinite;
+    user-select: none;
+  }
+  @keyframes float {
+    0% { transform: translateY(110vh) scale(0.5) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(-10vh) scale(1.2) rotate(360deg); opacity: 0; }
+  }
+
+  /* Character container */
+  .character {
+    position: relative;
+    width: 280px;
+    height: 360px;
+    z-index: 2;
+    animation: idle 4s ease-in-out infinite;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .character:hover { transform: scale(1.03); }
+  @keyframes idle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  /* Hair (back) */
+  .hair-back {
+    position: absolute;
+    top: 30px; left: 50%;
+    transform: translateX(-50%);
+    width: 240px; height: 280px;
+    background: linear-gradient(180deg, #6b3410 0%, #8b4513 50%, #a0522d 100%);
+    border-radius: 50% 50% 40% 40%;
+    z-index: 1;
+  }
+
+  /* Head */
+  .head {
+    position: absolute;
+    top: 50px; left: 50%;
+    transform: translateX(-50%);
+    width: 180px; height: 200px;
+    background: linear-gradient(180deg, #ffe0d0 0%, #ffd0bc 100%);
+    border-radius: 50% 50% 45% 45%;
+    z-index: 2;
+    box-shadow: inset -10px -10px 30px rgba(255, 150, 150, 0.2);
+  }
+
+  /* Hair bangs */
+  .bangs {
+    position: absolute;
+    top: 40px; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 100px;
+    background: linear-gradient(180deg, #6b3410 0%, #8b4513 100%);
+    border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+    z-index: 3;
+    clip-path: polygon(0 0, 100% 0, 95% 60%, 75% 80%, 50% 50%, 25% 80%, 5% 60%);
+  }
+
+  /* Eyes */
+  .eye {
+    position: absolute;
+    top: 145px;
+    width: 32px; height: 38px;
+    background: white;
+    border-radius: 50%;
+    z-index: 4;
+    overflow: hidden;
+    animation: blink 4s infinite;
+  }
+  .eye.left { left: calc(50% - 50px); }
+  .eye.right { left: calc(50% + 18px); }
+  .eye::before {
+    content: "";
+    position: absolute;
+    top: 6px; left: 6px;
+    width: 20px; height: 26px;
+    background: radial-gradient(circle at 30% 30%, #4a90e2 0%, #2858a0 70%, #1a3060 100%);
+    border-radius: 50%;
+  }
+  .eye::after {
+    content: "";
+    position: absolute;
+    top: 10px; left: 12px;
+    width: 8px; height: 8px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 5px 8px 0 -3px rgba(255,255,255,0.7);
+  }
+  @keyframes blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    94%, 98% { transform: scaleY(0.1); }
+  }
+
+  /* Blush */
+  .blush {
+    position: absolute;
+    top: 180px;
+    width: 28px; height: 16px;
+    background: radial-gradient(ellipse, #ff8aa8 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: 4;
+    opacity: 0.7;
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .blush.left { left: calc(50% - 58px); }
+  .blush.right { left: calc(50% + 30px); }
+  .character.happy .blush { opacity: 1; transform: scale(1.3); }
+
+  /* Mouth */
+  .mouth {
+    position: absolute;
+    top: 210px; left: 50%;
+    transform: translateX(-50%);
+    width: 30px; height: 14px;
+    border-bottom: 3px solid #c2185b;
+    border-radius: 0 0 30px 30px;
+    z-index: 4;
+    transition: all 0.3s ease;
+  }
+  .character.sad .mouth {
+    border-bottom: none;
+    border-top: 3px solid #c2185b;
+    border-radius: 30px 30px 0 0;
+    top: 220px;
+  }
+  .character.surprised .mouth {
+    width: 18px; height: 18px;
+    border: 3px solid #c2185b;
+    border-radius: 50%;
+  }
+
+  /* Body / dress */
+  .body {
+    position: absolute;
+    top: 240px; left: 50%;
+    transform: translateX(-50%);
+    width: 220px; height: 140px;
+    background: linear-gradient(180deg, #ff6b9d 0%, #c44569 100%);
+    border-radius: 30px 30px 50% 50% / 30px 30px 80px 80px;
+    z-index: 2;
+    box-shadow: 0 8px 20px rgba(196, 69, 105, 0.4);
+  }
+  .collar {
+    position: absolute;
+    top: 245px; left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 30px;
+    background: white;
+    border-radius: 0 0 40px 40px;
+    z-index: 3;
+  }
+  .bowtie {
+    position: absolute;
+    top: 270px; left: 50%;
+    transform: translateX(-50%);
+    width: 40px; height: 20px;
+    background: #ff1744;
+    border-radius: 4px;
+    z-index: 4;
+    box-shadow: 0 0 0 2px #8b0d1f;
+  }
+  .bowtie::before, .bowtie::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 16px; height: 20px;
+    background: #ff1744;
+    box-shadow: 0 0 0 2px #8b0d1f;
+  }
+  .bowtie::before { left: -14px; border-radius: 50% 4px 4px 50%; }
+  .bowtie::after { right: -14px; border-radius: 4px 50% 50% 4px; }
+
+  /* Hair side strands */
+  .hair-side {
+    position: absolute;
+    top: 100px;
+    width: 50px; height: 200px;
+    background: linear-gradient(180deg, #6b3410 0%, #8b4513 100%);
+    z-index: 2;
+  }
+  .hair-side.left { left: calc(50% - 110px); border-radius: 40% 20% 50% 30%; transform: rotate(-5deg); }
+  .hair-side.right { left: calc(50% + 60px); border-radius: 20% 40% 30% 50%; transform: rotate(5deg); }
+
+  /* Heart hairpin */
+  .hairpin {
+    position: absolute;
+    top: 90px; left: calc(50% - 70px);
+    font-size: 1.8rem;
+    z-index: 5;
+    animation: heartbeat 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px rgba(255, 100, 150, 0.8));
+  }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  /* Speech bubble */
+  .speech-bubble {
+    position: absolute;
+    bottom: calc(100% + 20px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 12px 20px;
+    border-radius: 20px;
+    min-width: 200px;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    font-size: 1rem;
+    color: #4a2c4a;
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+    transition: all 0.4s ease;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .speech-bubble.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .speech-bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -10px; left: 50%;
+    transform: translateX(-50%);
+    border: 10px solid transparent;
+    border-top-color: white;
+    border-bottom: 0;
+  }
+
+  /* Chat box */
+  .chat-panel {
+    position: relative;
+    z-index: 3;
+    margin-top: 30px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 24px;
+    padding: 16px;
+    width: min(90vw, 520px);
+    box-shadow: 0 12px 30px rgba(155, 60, 120, 0.25);
+    border: 2px solid rgba(255,255,255,0.6);
+  }
+
+  .name-tag {
+    text-align: center;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: #c2185b;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+  }
+  .name-tag .status {
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: #888;
+    margin-left: 8px;
+  }
+  .name-tag .status::before {
+    content: "●";
+    color: #4caf50;
+    margin-right: 4px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+  }
+  .input-row input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #ffc0d4;
+    border-radius: 14px;
+    font-size: 1rem;
+    outline: none;
+    background: white;
+    transition: border-color 0.2s;
+  }
+  .input-row input:focus { border-color: #ff6b9d; }
+  .input-row button {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ff6b9d, #c44569);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 10px rgba(196, 69, 105, 0.4);
+  }
+  .input-row button:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(196, 69, 105, 0.5); }
+  .input-row button:active { transform: translateY(0); }
+
+  .quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    justify-content: center;
+  }
+  .quick-replies button {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1.5px solid #ffc0d4;
+    color: #c2185b;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .quick-replies button:hover {
+    background: #ff6b9d;
+    color: white;
+    border-color: #ff6b9d;
+    transform: translateY(-1px);
+  }
+
+  /* Affection meter */
+  .affection {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+    padding: 10px 14px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-size: 0.9rem;
+    z-index: 5;
+    min-width: 180px;
+  }
+  .affection-label {
+    font-weight: 600;
+    color: #c2185b;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .affection-bar {
+    width: 100%;
+    height: 10px;
+    background: #ffd9e4;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .affection-fill {
+    height: 100%;
+    width: 50%;
+    background: linear-gradient(90deg, #ff6b9d, #ff1744);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 8px rgba(255, 23, 68, 0.6);
+  }
+
+  /* Click hearts (when you click the character) */
+  .click-heart {
+    position: absolute;
+    font-size: 2rem;
+    pointer-events: none;
+    animation: clickPop 1.2s ease-out forwards;
+    z-index: 20;
+  }
+  @keyframes clickPop {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -200%) scale(1.5); opacity: 0; }
+  }
+
+  /* Hint */
+  .hint {
+    position: absolute;
+    bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.7);
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: #666;
+    z-index: 3;
+  }
+
+  /* Bouncing reaction */
+  .character.bounce { animation: bounce 0.6s ease; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    30% { transform: translateY(-25px) scale(1.05); }
+    60% { transform: translateY(0) scale(0.98); }
+  }
+
+  .character.shake { animation: shake 0.5s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px) rotate(-2deg); }
+    75% { transform: translateX(8px) rotate(2deg); }
+  }
+
+  @media (max-width: 600px) {
+    .character { transform: scale(0.85); }
+    .affection { top: 10px; right: 10px; min-width: 140px; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+
+  <div class="particles" id="particles"></div>
+
+  <div class="affection">
+    <div class="affection-label">
+      <span>💕 Náklonnost</span>
+      <span id="affPercent">50%</span>
+    </div>
+    <div class="affection-bar"><div class="affection-fill" id="affFill"></div></div>
+  </div>
+
+  <div class="character" id="character">
+    <div class="speech-bubble" id="bubble">Ahoj! 💕</div>
+    <div class="hair-back"></div>
+    <div class="hair-side left"></div>
+    <div class="hair-side right"></div>
+    <div class="head"></div>
+    <div class="bangs"></div>
+    <div class="hairpin">💗</div>
+    <div class="eye left"></div>
+    <div class="eye right"></div>
+    <div class="blush left"></div>
+    <div class="blush right"></div>
+    <div class="mouth"></div>
+    <div class="body"></div>
+    <div class="collar"></div>
+    <div class="bowtie"></div>
+  </div>
+
+  <div class="chat-panel">
+    <div class="name-tag">Klárka <span class="status">online</span></div>
+    <div class="input-row">
+      <input type="text" id="userInput" placeholder="Napiš jí něco..." autocomplete="off" />
+      <button id="sendBtn">Poslat</button>
+    </div>
+    <div class="quick-replies" id="quickReplies"></div>
+  </div>
+
+  <div class="hint">Tip: klikni na ni 💕 nebo zkus napsat "ahoj", "miluju tě", "jak se máš"</div>
+</div>
+
+<script>
+(function() {
+  const character = document.getElementById('character');
+  const bubble = document.getElementById('bubble');
+  const input = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const affFill = document.getElementById('affFill');
+  const affPercent = document.getElementById('affPercent');
+  const particlesEl = document.getElementById('particles');
+  const quickReplies = document.getElementById('quickReplies');
+
+  let affection = 50;
+  let bubbleTimer = null;
+  let mood = 'happy';
+
+  const quickButtons = [
+    { text: '👋 Ahoj', msg: 'ahoj' },
+    { text: '💕 Miluju tě', msg: 'miluju tě' },
+    { text: '🌹 Jsi krásná', msg: 'jsi krásná' },
+    { text: '☕ Pojďme na kafe', msg: 'pojďme na kafe' },
+    { text: '😢 Mám špatný den', msg: 'mám špatný den' },
+    { text: '🤔 Co děláš?', msg: 'co děláš' },
+  ];
+
+  quickButtons.forEach(q => {
+    const b = document.createElement('button');
+    b.textContent = q.text;
+    b.onclick = () => { input.value = q.msg; send(); };
+    quickReplies.appendChild(b);
+  });
+
+  const responses = {
+    ahoj: [
+      'Ahoooj! 💕 Tak ráda tě vidím!',
+      'Čauky! Už jsem tě vyhlížela 😊',
+      'Hej ty! 🌸 Jak se máš?'
+    ],
+    laska: [
+      'Já tebe taky! 💗💗💗',
+      'Ach... to je to nejhezčí, co jsem dnes slyšela 🥰',
+      'Miluju tě víc než kafe a to už něco znamená ☕💕'
+    ],
+    kompliment: [
+      'Děkujuu! 🌹 Ty jsi taky úžasný/á!',
+      'Aww, to mě potěšilo 😊✨',
+      'Začínám se červenat... 😳💕'
+    ],
+    smutek: [
+      'No tak, pojď ke mně 🤗 Bude to dobrý.',
+      'Povídej, co se stalo. Jsem tu pro tebe. 💕',
+      'Objímám tě na dálku 🫂💗'
+    ],
+    co_delas: [
+      'Zrovna na tebe myslím 💭💕',
+      'Čekám, kdy mi napíšeš! 😊',
+      'Učím se být ta nejlepší přítelkyně 📚'
+    ],
+    kafe: [
+      'Ano! Hned vyrážím! ☕💕',
+      'Jen jestli platíš ty 😏☕',
+      'Miluju kafe skoro tak, jako tebe! ☕💗'
+    ],
+    jak_se_mas: [
+      'Líp, když píšeš ty 💕',
+      'Skvěle! A ty?',
+      'Dnes je krásný den 🌸✨'
+    ],
+    spatne: [
+      'To se mi nelíbí... 😢',
+      'Prosím, takhle ne... 🥺',
+      'Ublížil jsi mi 💔'
+    ],
+    nevim: [
+      'Hmm, to nevím jak odpovědět 🤔',
+      'Řekni mi to jinak? 😅',
+      'Promiň, nerozumím. Zkus to znovu? 💭'
+    ],
+    spani: [
+      'Dobrou noc, miláčku 🌙💕',
+      'Sni o mně 😴💗',
+      'Spi sladce 🛌✨'
+    ],
+    rano: [
+      'Dobré ráno, sluníčko! ☀️💕',
+      'Vstávej, krásko/krásný! 🌅',
+      'Už jsem ti uvařila virtuální kafe ☕💗'
+    ]
+  };
+
+  const patterns = [
+    { rx: /\b(ahoj|čau|cau|hello|hi|nazdar)\b/i, key: 'ahoj', dAff: +2, mood: 'happy', anim: 'bounce' },
+    { rx: /\b(miluju|miluji|love|líbíš|libis|chci tě|chci te)\b/i, key: 'laska', dAff: +8, mood: 'happy', anim: 'bounce', hearts: 6 },
+    { rx: /\b(krásná|krasna|hezká|hezka|nádherná|nadherna|sladká|sladka|super|skvělá|skvela)\b/i, key: 'kompliment', dAff: +5, mood: 'happy', anim: 'bounce', hearts: 3 },
+    { rx: /\b(smut|špatn|spatn|brek|nešťast|nestast|deprese|stres)\b/i, key: 'smutek', dAff: +3, mood: 'happy', anim: null },
+    { rx: /\b(co děláš|co delas|co poděláš|co podelas)\b/i, key: 'co_delas', dAff: +1, mood: 'happy' },
+    { rx: /\b(kafe|káva|kava|coffee)\b/i, key: 'kafe', dAff: +3, mood: 'happy' },
+    { rx: /\b(jak se máš|jak se mas|jak je)\b/i, key: 'jak_se_mas', dAff: +1, mood: 'happy' },
+    { rx: /\b(blbá|blba|hloup|nesnáš|nesnas|nenávid|nenavid|odejdi|běž|bez pryc|trapná|trapna)\b/i, key: 'spatne', dAff: -10, mood: 'sad', anim: 'shake' },
+    { rx: /\b(dobrou noc|dobrou|good night)\b/i, key: 'spani', dAff: +2, mood: 'happy' },
+    { rx: /\b(dobré ráno|dobre rano|good morning)\b/i, key: 'rano', dAff: +2, mood: 'happy' },
+  ];
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function setMood(m) {
+    character.classList.remove('happy', 'sad', 'surprised');
+    character.classList.add(m);
+    mood = m;
+  }
+
+  function showBubble(text) {
+    bubble.textContent = text;
+    bubble.classList.add('show');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 4500);
+  }
+
+  function updateAffection(d) {
+    affection = Math.max(0, Math.min(100, affection + d));
+    affFill.style.width = affection + '%';
+    affPercent.textContent = Math.round(affection) + '%';
+  }
+
+  function playAnim(name) {
+    if (!name) return;
+    character.classList.remove('bounce', 'shake');
+    void character.offsetWidth; // restart animation
+    character.classList.add(name);
+    setTimeout(() => character.classList.remove(name), 700);
+  }
+
+  function spawnHearts(count) {
+    const rect = character.getBoundingClientRect();
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const h = document.createElement('div');
+        h.className = 'click-heart';
+        h.textContent = pick(['💕','💗','💖','💝','💘','✨']);
+        h.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * rect.width * 0.7) + 'px';
+        h.style.top = (rect.top + rect.height * 0.3) + 'px';
+        document.body.appendChild(h);
+        setTimeout(() => h.remove(), 1300);
+      }, i * 80);
+    }
+  }
+
+  function send() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+
+    let matched = null;
+    for (const p of patterns) {
+      if (p.rx.test(text)) { matched = p; break; }
+    }
+
+    let replyKey = 'nevim';
+    let dAff = 0;
+    let newMood = 'happy';
+    let anim = null;
+    let hearts = 0;
+
+    if (matched) {
+      replyKey = matched.key;
+      dAff = matched.dAff;
+      newMood = matched.mood;
+      anim = matched.anim;
+      hearts = matched.hearts || 0;
+    }
+
+    setMood(newMood);
+    updateAffection(dAff);
+    showBubble(pick(responses[replyKey]));
+    playAnim(anim);
+    if (hearts) spawnHearts(hearts);
+  }
+
+  sendBtn.addEventListener('click', send);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+  character.addEventListener('click', () => {
+    spawnHearts(3);
+    updateAffection(+1);
+    setMood('happy');
+    playAnim('bounce');
+    showBubble(pick([
+      'Hihi, to lechtá! 🥰',
+      'Co děláš? 😊💕',
+      'Ráda tě mám! 💗',
+      'Ještě! 😆',
+      'Mmm 💕'
+    ]));
+  });
+
+  // Background particles
+  function spawnParticle() {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = pick(['💕','💗','💖','✨','🌸','💫','🌷']);
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (6 + Math.random() * 8) + 's';
+    p.style.animationDelay = '0s';
+    p.style.fontSize = (1 + Math.random() * 1.5) + 'rem';
+    particlesEl.appendChild(p);
+    setTimeout(() => p.remove(), 15000);
+  }
+  setInterval(spawnParticle, 700);
+  for (let i = 0; i < 8; i++) setTimeout(spawnParticle, i * 200);
+
+  // Initial state
+  setMood('happy');
+  updateAffection(0);
+  setTimeout(() => showBubble('Ahoj! Jsem Klárka 💕 Napiš mi něco!'), 600);
+
+  // Idle reactions
+  setInterval(() => {
+    if (Math.random() < 0.3 && !bubble.classList.contains('show')) {
+      showBubble(pick([
+        'Hmm... 💭',
+        'Myslím na tebe 💕',
+        'Napiš mi něco! 😊',
+        '*usmívá se* 😊',
+        'Jsi tu ještě? 🥺'
+      ]));
+    }
+  }, 18000);
+})();
+</script>
+</body>
+</html>
