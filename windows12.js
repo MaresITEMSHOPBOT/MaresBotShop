@@ -26,20 +26,22 @@
         calculator: { name: 'Kalkulačka',      icon: '🧮', factory: createCalculator, w: 320, h: 460 },
         explorer:   { name: 'Průzkumník',      icon: '📁', factory: createExplorer,   w: 720, h: 480 },
         settings:   { name: 'Nastavení',       icon: '⚙️', factory: createSettings,   w: 760, h: 520 },
-        browser:    { name: 'Edge',            icon: '🌐', factory: createBrowser,    w: 800, h: 560 },
+        browser:    { name: 'Edge',            icon: '🌐', factory: createBrowser,    w: 880, h: 600 },
+        youtube:    { name: 'YouTube',         icon: '▶️', factory: createYouTube,    w: 920, h: 600 },
+        weather:    { name: 'Počasí',          icon: '🌤️', factory: createWeather,    w: 540, h: 520 },
         terminal:   { name: 'Terminal',        icon: '⌨️', factory: createTerminal,   w: 640, h: 400 },
-        paint:      { name: 'Malování',        icon: '🎨', factory: createPaint,      w: 720, h: 520 },
-        photos:     { name: 'Fotky',           icon: '🖼️', factory: createPhotos,     w: 640, h: 480 },
+        paint:      { name: 'Malování',        icon: '🎨', factory: createPaint,      w: 760, h: 540 },
+        photos:     { name: 'Fotky',           icon: '🖼️', factory: createPhotos,     w: 720, h: 520 },
         clock:      { name: 'Hodiny',          icon: '🕒', factory: createClock,      w: 460, h: 420 },
         about:      { name: 'O systému',       icon: 'ⓘ',  factory: createAbout,      w: 580, h: 480 },
         store:      { name: 'Microsoft Store', icon: '🛍️', factory: createStore,      w: 720, h: 520 },
         game:       { name: 'Piškvorky',       icon: '🎮', factory: createGame,       w: 360, h: 480 },
-        search:     { name: 'Hledat',          icon: '🔍', factory: createSearch,     w: 540, h: 360 }
+        search:     { name: 'Hledat',          icon: '🔍', factory: createSearch,     w: 560, h: 440 }
     };
 
-    const pinnedApps = ['notepad', 'calculator', 'explorer', 'browser', 'settings', 'paint',
-                        'terminal', 'photos', 'clock', 'store', 'game', 'about'];
-    const desktopApps = ['explorer', 'browser', 'notepad', 'calculator', 'paint', 'store'];
+    const pinnedApps = ['browser', 'youtube', 'notepad', 'calculator', 'explorer', 'paint',
+                        'photos', 'weather', 'terminal', 'settings', 'clock', 'store', 'game', 'about'];
+    const desktopApps = ['browser', 'youtube', 'explorer', 'photos', 'notepad', 'paint', 'store'];
 
     // ---------- Helpers ----------
     const $ = id => document.getElementById(id);
@@ -231,7 +233,7 @@
             pinned.append(tile);
         });
 
-        const recent = ['notepad', 'browser', 'photos', 'clock'];
+        const recent = ['youtube', 'browser', 'weather', 'photos'];
         recent.forEach(id => {
             const a = apps[id];
             if (!a) return;
@@ -289,7 +291,7 @@
     function renderTaskbarPinnedApps() {
         const c = $('tb-apps');
         c.innerHTML = '';
-        ['explorer', 'browser', 'notepad', 'paint'].forEach(id => {
+        ['browser', 'youtube', 'explorer', 'notepad', 'paint'].forEach(id => {
             const a = apps[id];
             if (!a) return;
             const btn = make('button', { class: 'tb-app', 'data-app': id, title: a.name }, a.icon);
@@ -777,6 +779,35 @@
             .replace(/'/g, '&#39;');
     }
 
+    // Trigger a real browser download for a Blob, string, or DataURL
+    function download(filename, content, mimeType) {
+        let blob;
+        if (content instanceof Blob) blob = content;
+        else blob = new Blob([content], { type: mimeType || 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.rel = 'noopener';
+        document.body.append(a);
+        a.click();
+        setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1500);
+    }
+
+    function extractYouTubeId(input) {
+        if (!input) return null;
+        const s = String(input).trim();
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtu\.be\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+            /^([a-zA-Z0-9_-]{11})$/
+        ];
+        for (const p of patterns) {
+            const m = s.match(p);
+            if (m) return m[1];
+        }
+        return null;
+    }
+
     // ====================================================================
     //                              APPS
     // ====================================================================
@@ -784,15 +815,63 @@
     // ---------- Notepad ----------
     function createNotepad(body) {
         const saved = localStorage.getItem('w12-notepad') || '';
+        const root = make('div', { style: 'display:flex;flex-direction:column;height:100%' });
+        const toolbar = make('div', {
+            style: 'padding:6px 8px;border-bottom:1px solid var(--glass-border);display:flex;gap:6px;align-items:center;flex-shrink:0'
+        });
+        const dlBtn = make('button', { class: 'explorer-tb-btn' }, '💾 Stáhnout .txt');
+        const openBtn = make('button', { class: 'explorer-tb-btn' }, '📂 Otevřít');
+        const newBtn = make('button', { class: 'explorer-tb-btn' }, '🆕 Nový');
+        const fileInput = make('input', { type: 'file', accept: '.txt,.md,.json,.csv,.log,text/*', style: 'display:none' });
+        const stats = make('span', { style: 'margin-left:auto;color:var(--text-mute);font-size:12px' });
+        toolbar.append(newBtn, openBtn, dlBtn, fileInput, stats);
+
         const ta = make('textarea', {
             spellcheck: 'false',
-            placeholder: 'Začněte psát...'
+            placeholder: 'Začněte psát...',
+            style: 'flex:1;width:100%;border:none;background:transparent;color:var(--text);padding:14px;resize:none;outline:none;font-family:Consolas,"Cascadia Code",monospace;font-size:14px;line-height:1.5'
         });
         ta.value = saved;
+        root.append(toolbar, ta);
+        body.append(root);
+
+        function updateStats() {
+            const t = ta.value;
+            const words = t.trim() ? t.trim().split(/\s+/).length : 0;
+            const lines = t ? t.split('\n').length : 0;
+            stats.textContent = 'Řádků: ' + lines + ' · Slov: ' + words + ' · Znaků: ' + t.length;
+        }
         ta.addEventListener('input', () => {
             localStorage.setItem('w12-notepad', ta.value);
+            updateStats();
         });
-        body.append(ta);
+        dlBtn.addEventListener('click', () => {
+            const name = prompt('Název souboru:', 'poznamky.txt') || 'poznamky.txt';
+            const fn = /\.[a-z0-9]+$/i.test(name) ? name : name + '.txt';
+            download(fn, ta.value, 'text/plain;charset=utf-8');
+            toast('Notepad', 'Soubor "' + fn + '" stažen.');
+        });
+        openBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (!f) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                ta.value = String(reader.result || '');
+                localStorage.setItem('w12-notepad', ta.value);
+                updateStats();
+                toast('Notepad', 'Otevřeno: ' + f.name);
+            };
+            reader.readAsText(f);
+            fileInput.value = '';
+        });
+        newBtn.addEventListener('click', () => {
+            if (ta.value && !confirm('Smazat aktuální text?')) return;
+            ta.value = '';
+            localStorage.setItem('w12-notepad', '');
+            updateStats();
+        });
+        updateStats();
     }
 
     // ---------- Calculator ----------
@@ -1147,92 +1226,437 @@
         render();
     }
 
-    // ---------- Browser ----------
-    function createBrowser(body) {
+    // ---------- Browser (real Wikipedia search + iframe view) ----------
+    function createBrowser(body, win, opts) {
         const root = make('div', { class: 'app-browser' });
         const toolbar = make('div', { class: 'browser-toolbar' });
-        const back = make('button', { class: 'browser-btn' }, '←');
-        const fwd = make('button', { class: 'browser-btn' }, '→');
-        const reload = make('button', { class: 'browser-btn' }, '⟳');
-        const url = make('input', { class: 'browser-url', value: 'edge://newtab' });
-        toolbar.append(back, fwd, reload, url);
+        const back = make('button', { class: 'browser-btn', title: 'Zpět' }, '←');
+        const fwd = make('button', { class: 'browser-btn', title: 'Vpřed' }, '→');
+        const reload = make('button', { class: 'browser-btn', title: 'Obnovit' }, '⟳');
+        const home = make('button', { class: 'browser-btn', title: 'Domů' }, '⌂');
+        const url = make('input', { class: 'browser-url', value: 'edge://newtab', spellcheck: 'false' });
+        const goBtn = make('button', { class: 'browser-btn', title: 'Přejít' }, '⏎');
+        toolbar.append(back, fwd, reload, home, url, goBtn);
         const content = make('div', { class: 'browser-content' });
         root.append(toolbar, content);
+        body.append(root);
 
-        const history = ['edge://newtab'];
+        const history = [{ kind: 'newtab' }];
         let idx = 0;
+        let reqToken = 0;
 
-        function render() {
-            url.value = history[idx];
-            content.innerHTML = '';
-            const u = history[idx];
-            if (u === 'edge://newtab' || u === '' || u === 'about:home') {
-                renderNewTab();
-            } else if (u === 'edge://about' || u === 'about') {
-                renderAbout();
-            } else {
-                renderSearchResults(u);
+        function displayUrl(t) {
+            if (t.kind === 'newtab') return 'edge://newtab';
+            if (t.kind === 'wiki-search') return 'cs.wikipedia.org/?search=' + t.query;
+            if (t.kind === 'wiki-article') return 'cs.wikipedia.org/wiki/' + t.title.replace(/ /g, '_');
+            if (t.kind === 'iframe') return t.url;
+            return '';
+        }
+
+        function parseInput(s) {
+            s = String(s || '').trim();
+            if (!s || s === 'edge://newtab' || s === 'about:home' || s === 'about:blank') return { kind: 'newtab' };
+            if (/^https?:\/\//i.test(s)) return { kind: 'iframe', url: s };
+            // Domain heuristic
+            if (/^[a-z0-9][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)+(\/.*)?$/i.test(s) && !/\s/.test(s)) {
+                return { kind: 'iframe', url: 'https://' + s };
             }
+            return { kind: 'wiki-search', query: s };
         }
-        function navigate(u) {
-            history.length = idx + 1;
-            history.push(u);
-            idx = history.length - 1;
-            render();
+
+        function navigate(target, push = true) {
+            if (typeof target === 'string') target = parseInput(target);
+            if (push) {
+                history.length = idx + 1;
+                history.push(target);
+                idx = history.length - 1;
+            }
+            url.value = displayUrl(target);
+            updateNavButtons();
+            render(target);
         }
-        back.addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
-        fwd.addEventListener('click', () => { if (idx < history.length - 1) { idx++; render(); } });
-        reload.addEventListener('click', render);
-        url.addEventListener('keydown', e => {
-            if (e.key === 'Enter') navigate(url.value.trim() || 'edge://newtab');
-        });
+
+        function updateNavButtons() {
+            back.disabled = idx <= 0;
+            fwd.disabled = idx >= history.length - 1;
+            back.style.opacity = back.disabled ? '.4' : '';
+            fwd.style.opacity = fwd.disabled ? '.4' : '';
+        }
+
+        function render(target) {
+            const token = ++reqToken;
+            content.style.padding = '';
+            content.innerHTML = '';
+            if (target.kind === 'newtab') return renderNewTab();
+            if (target.kind === 'wiki-search') return renderWikiSearch(target.query, token);
+            if (target.kind === 'wiki-article') return renderWikiArticle(target.title, token);
+            if (target.kind === 'iframe') return renderIframe(target.url);
+        }
+
+        back.addEventListener('click', () => { if (idx > 0) { idx--; url.value = displayUrl(history[idx]); updateNavButtons(); render(history[idx]); } });
+        fwd.addEventListener('click', () => { if (idx < history.length - 1) { idx++; url.value = displayUrl(history[idx]); updateNavButtons(); render(history[idx]); } });
+        reload.addEventListener('click', () => render(history[idx]));
+        home.addEventListener('click', () => navigate({ kind: 'newtab' }));
+        goBtn.addEventListener('click', () => navigate(url.value));
+        url.addEventListener('keydown', e => { if (e.key === 'Enter') navigate(url.value); });
+        url.addEventListener('focus', () => url.select());
 
         function renderNewTab() {
             const wrap = make('div', { class: 'browser-search' });
             wrap.append(make('div', { class: 'browser-search-logo' }, 'Hledej'));
-            const input = make('input', { class: 'browser-search-bar', placeholder: 'Hledat na webu' });
-            input.addEventListener('keydown', e => {
-                if (e.key === 'Enter') navigate(input.value.trim() || 'edge://newtab');
-            });
+            const input = make('input', { class: 'browser-search-bar', placeholder: 'Hledat ve Wikipedii nebo zadat URL...' });
+            input.addEventListener('keydown', e => { if (e.key === 'Enter') navigate(input.value); });
             wrap.append(input);
-            const sites = ['anthropic.com', 'github.com', 'wikipedia.org', 'duckduckgo.com'];
-            const list = make('div', { style: 'display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:24px' });
-            sites.forEach(s => {
-                const tile = make('button', {
-                    style: 'padding:14px 18px;background:var(--glass-light);border:1px solid var(--glass-border);border-radius:8px;color:var(--text);cursor:pointer;font-size:13px'
-                }, '🌐 ' + s);
-                tile.addEventListener('click', () => navigate(s));
-                list.append(tile);
+            setTimeout(() => input.focus(), 60);
+
+            const tiles = make('div', {
+                style: 'display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:30px;width:100%;max-width:560px'
             });
-            wrap.append(list);
-            content.append(wrap);
-        }
-        function renderAbout() {
-            const wrap = make('div', { class: 'browser-page' });
-            wrap.append(make('h1', {}, 'O Microsoft Edge'));
-            wrap.append(make('p', {}, 'Verze 138.0.0.0 (oficiální sestavení) (64bitová)'));
-            wrap.append(make('p', {}, 'Microsoft Edge je aktuální.'));
-            content.append(wrap);
-        }
-        function renderSearchResults(q) {
-            const wrap = make('div', { class: 'browser-page' });
-            wrap.append(make('h1', {}, 'Výsledky pro „' + q + '"'));
-            const results = [
-                { title: q + ' — Wikipedie', url: 'wikipedia.org/wiki/' + q, desc: 'Encyklopedický článek s detailními informacemi o tématu „' + q + '". Včetně historie, definice a souvisejících odkazů.' },
-                { title: 'Oficiální stránka — ' + q, url: q + '.com', desc: 'Domovská stránka. Najdete zde aktuální informace, novinky a kontaktní údaje.' },
-                { title: 'Návod: ' + q + ' krok za krokem', url: 'tutorial.example/' + q, desc: 'Podrobný průvodce pro začátečníky i pokročilé. Obsahuje praktické tipy a triky.' }
+            const links = [
+                { name: 'Wikipedia', target: { kind: 'wiki-search', query: 'Praha' }, icon: '📚' },
+                { name: 'YouTube',   target: 'https://www.youtube.com',                icon: '▶️' },
+                { name: 'GitHub',    target: 'https://github.com',                     icon: '🐙' },
+                { name: 'MDN',       target: 'https://developer.mozilla.org',          icon: '📖' },
+                { name: 'Anthropic', target: 'https://www.anthropic.com',              icon: '🤖' },
+                { name: 'archive.org', target: 'https://archive.org',                  icon: '🗄️' }
             ];
-            results.forEach(r => {
-                const item = make('div', { style: 'margin:20px 0' },
-                    make('a', { href: '#', style: 'font-size:18px;color:#4cc2ff;text-decoration:none' }, r.title),
-                    make('div', { style: 'font-size:12px;color:var(--text-mute);margin:3px 0' }, r.url),
-                    make('div', { style: 'font-size:14px;color:var(--text-dim);line-height:1.5' }, r.desc));
-                wrap.append(item);
+            links.forEach(l => {
+                const t = make('button', {
+                    style: 'padding:14px 10px;background:var(--glass-light);border:1px solid var(--glass-border);border-radius:8px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px'
+                }, make('span', { style: 'font-size:22px' }, l.icon), l.name);
+                t.addEventListener('click', () => navigate(l.target));
+                tiles.append(t);
             });
+            wrap.append(tiles);
             content.append(wrap);
         }
+
+        async function renderWikiSearch(query, token) {
+            const wrap = make('div', { class: 'browser-page' });
+            wrap.append(make('h1', {}, 'Hledání: „' + query + '"'));
+            const loading = make('div', { style: 'color:var(--text-mute);padding:14px 0' }, '⌛ Hledám ve Wikipedii...');
+            wrap.append(loading);
+            content.append(wrap);
+            try {
+                const r = await fetch('https://cs.wikipedia.org/w/api.php?action=opensearch&search=' +
+                    encodeURIComponent(query) + '&limit=10&namespace=0&format=json&origin=*');
+                if (token !== reqToken) return;
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const data = await r.json();
+                if (token !== reqToken) return;
+                loading.remove();
+                const titles = data[1] || [];
+                const descs = data[2] || [];
+                const urls = data[3] || [];
+                if (titles.length === 0) {
+                    wrap.append(make('div', { style: 'color:var(--text-mute);padding:14px' }, 'Nic nenalezeno.'));
+                    return;
+                }
+                titles.forEach((title, i) => {
+                    const item = make('div', {
+                        style: 'margin:18px 0;padding:8px;border-radius:6px;cursor:pointer'
+                    });
+                    item.append(
+                        make('div', { style: 'font-size:18px;color:#4cc2ff;text-decoration:underline' }, title),
+                        make('div', { style: 'font-size:12px;color:var(--text-mute);margin:3px 0' }, urls[i] || ''),
+                        make('div', { style: 'font-size:14px;color:var(--text-dim);line-height:1.5' }, descs[i] || '')
+                    );
+                    item.addEventListener('mouseenter', () => item.style.background = 'var(--glass-light)');
+                    item.addEventListener('mouseleave', () => item.style.background = '');
+                    item.addEventListener('click', () => navigate({ kind: 'wiki-article', title: title }));
+                    wrap.append(item);
+                });
+            } catch (err) {
+                if (token !== reqToken) return;
+                loading.textContent = 'Chyba: ' + err.message + ' — zkontroluj připojení.';
+            }
+        }
+
+        async function renderWikiArticle(title, token) {
+            const wrap = make('div', { class: 'browser-page' });
+            const loading = make('div', { style: 'color:var(--text-mute);padding:14px 0' }, '⌛ Načítám článek „' + title + '"...');
+            wrap.append(loading);
+            content.append(wrap);
+            try {
+                const r = await fetch('https://cs.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title.replace(/ /g, '_')));
+                if (token !== reqToken) return;
+                if (!r.ok) throw new Error('Článek nenalezen (HTTP ' + r.status + ')');
+                const data = await r.json();
+                if (token !== reqToken) return;
+                loading.remove();
+
+                const header = make('div', { style: 'display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap' });
+                if (data.thumbnail && data.thumbnail.source) {
+                    header.append(make('img', {
+                        src: data.thumbnail.source,
+                        style: 'max-width:240px;border-radius:6px;flex-shrink:0',
+                        alt: data.title
+                    }));
+                }
+                const right = make('div', { style: 'flex:1;min-width:280px' },
+                    make('h1', { style: 'margin-bottom:8px' }, data.title || title));
+                if (data.description) right.append(make('div', { style: 'color:var(--text-dim);font-style:italic;margin-bottom:12px' }, data.description));
+                if (data.extract) right.append(make('p', { style: 'font-size:14px;line-height:1.6;color:var(--text-dim);margin-bottom:14px' }, data.extract));
+
+                const actions = make('div', { style: 'display:flex;gap:10px;flex-wrap:wrap;margin-top:8px' });
+                const fullUrl = (data.content_urls && data.content_urls.desktop && data.content_urls.desktop.page) ||
+                    ('https://cs.wikipedia.org/wiki/' + encodeURIComponent(title.replace(/ /g, '_')));
+                const openExt = make('a', {
+                    href: fullUrl, target: '_blank', rel: 'noopener',
+                    style: 'padding:7px 14px;background:var(--accent);color:#fff;border-radius:4px;text-decoration:none;font-size:13px'
+                }, '📖 Plný článek ↗');
+                const dlBtn = make('button', {
+                    style: 'padding:7px 14px;background:var(--glass-light);border:1px solid var(--glass-border);color:var(--text);border-radius:4px;cursor:pointer;font-size:13px'
+                }, '💾 Stáhnout jako .txt');
+                dlBtn.addEventListener('click', () => {
+                    const txt = (data.title || title) + '\n' + '='.repeat((data.title || title).length) + '\n\n' +
+                                (data.description ? data.description + '\n\n' : '') +
+                                (data.extract || '') + '\n\nZdroj: ' + fullUrl;
+                    download((data.title || title).replace(/[^a-z0-9À-ſ-]+/gi, '_') + '.txt', txt, 'text/plain;charset=utf-8');
+                    toast('Edge', 'Článek stažen.');
+                });
+                actions.append(openExt, dlBtn);
+                right.append(actions);
+                header.append(right);
+                wrap.append(header);
+            } catch (err) {
+                if (token !== reqToken) return;
+                loading.textContent = 'Chyba: ' + err.message;
+            }
+        }
+
+        function renderIframe(srcUrl) {
+            content.style.padding = '0';
+            const info = make('div', {
+                style: 'padding:8px 14px;background:var(--glass-light);border-bottom:1px solid var(--glass-border);font-size:12px;color:var(--text-dim);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap'
+            });
+            const note = make('span', { style: 'flex:1' }, '🌐 ' + srcUrl);
+            const openExt = make('a', {
+                href: srcUrl, target: '_blank', rel: 'noopener',
+                style: 'color:#4cc2ff;text-decoration:none;font-weight:500'
+            }, 'Otevřít v nové kartě ↗');
+            info.append(note, openExt);
+
+            const frameWrap = make('div', { style: 'height:calc(100% - 36px);position:relative;background:#fff' });
+            const iframe = make('iframe', {
+                src: srcUrl,
+                style: 'width:100%;height:100%;border:none;background:#fff;display:block',
+                sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox',
+                referrerpolicy: 'no-referrer'
+            });
+            frameWrap.append(iframe);
+            content.append(info, frameWrap);
+        }
+
+        const initial = (opts && opts.target) ? opts.target : { kind: 'newtab' };
+        history.length = 0;
+        history.push(initial);
+        idx = 0;
+        url.value = displayUrl(initial);
+        updateNavButtons();
+        render(initial);
+    }
+
+    // ---------- YouTube (real video embed) ----------
+    function createYouTube(body) {
+        const root = make('div', { style: 'display:flex;flex-direction:column;height:100%;background:#0f0f0f;color:#fff' });
+
+        const topbar = make('div', { style: 'display:flex;align-items:center;gap:10px;padding:10px 14px;background:#212121;border-bottom:1px solid #303030;flex-shrink:0;flex-wrap:wrap' });
+        topbar.append(
+            make('span', { style: 'color:#ff0000;font-size:24px;font-weight:bold;line-height:1' }, '▶'),
+            make('span', { style: 'font-size:17px;font-weight:500' }, 'YouTube')
+        );
+        const search = make('input', {
+            style: 'flex:1;min-width:180px;padding:8px 16px;border:1px solid #303030;background:#121212;color:#fff;border-radius:20px;font-size:13px;outline:none',
+            placeholder: 'Vlož YouTube odkaz / ID nebo zadej dotaz...'
+        });
+        const playBtn = make('button', {
+            style: 'padding:8px 18px;background:#cc0000;color:#fff;border:none;border-radius:20px;cursor:pointer;font-size:13px;font-weight:500'
+        }, 'Přehrát');
+        topbar.append(search, playBtn);
+
+        const main = make('div', { style: 'flex:1;display:flex;overflow:hidden;min-height:0' });
+        const playerCol = make('div', { style: 'flex:1;display:flex;flex-direction:column;background:#000;min-width:0' });
+        const playerArea = make('div', { style: 'flex:1;display:flex;align-items:center;justify-content:center;background:#000;position:relative;min-height:0' });
+        const playerInfo = make('div', { style: 'padding:14px 18px;background:#181818;border-top:1px solid #303030;flex-shrink:0' });
+        const playerTitle = make('div', { style: 'font-size:17px;font-weight:500;margin-bottom:5px' }, 'Vyber video');
+        const playerMeta = make('div', { style: 'font-size:12px;color:#aaa' }, 'Klikni na video v seznamu vpravo, nebo vlož YouTube odkaz nahoře.');
+        playerInfo.append(playerTitle, playerMeta);
+        playerCol.append(playerArea, playerInfo);
+
+        const sidebar = make('div', { style: 'width:300px;min-width:300px;background:#181818;border-left:1px solid #303030;overflow-y:auto;flex-shrink:0' });
+        sidebar.append(make('div', { style: 'padding:12px 14px;font-size:13px;font-weight:500;border-bottom:1px solid #303030;background:#181818;position:sticky;top:0;z-index:1' }, '📺 Doporučená videa'));
+
+        main.append(playerCol, sidebar);
+        root.append(topbar, main);
         body.append(root);
-        render();
+
+        function play(v) {
+            playerArea.innerHTML = '';
+            const iframe = make('iframe', {
+                src: 'https://www.youtube.com/embed/' + v.id + '?autoplay=1&rel=0',
+                style: 'width:100%;height:100%;border:none',
+                allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+                allowfullscreen: 'true',
+                referrerpolicy: 'strict-origin-when-cross-origin'
+            });
+            playerArea.append(iframe);
+            playerTitle.textContent = v.title;
+            playerMeta.textContent = (v.author || 'YouTube') + (v.views ? ' · ' + v.views + ' zhlédnutí' : '');
+        }
+
+        const videos = [
+            { id: 'dQw4w9WgXcQ', title: 'Rick Astley — Never Gonna Give You Up',  author: 'Rick Astley',         views: '1,5 mld.' },
+            { id: 'kJQP7kiw5Fk', title: 'Luis Fonsi — Despacito ft. Daddy Yankee', author: 'LuisFonsiVEVO',       views: '8,6 mld.' },
+            { id: 'jNQXAC9IVRw', title: 'Me at the zoo (první YouTube video)',    author: 'jawed',                views: '350 mil.' },
+            { id: '9bZkp7q19f0', title: 'PSY — Gangnam Style',                    author: 'officialpsy',          views: '5,3 mld.' },
+            { id: 'fJ9rUzIMcZQ', title: 'Queen — Bohemian Rhapsody',              author: 'Queen Official',       views: '1,9 mld.' },
+            { id: 'YQHsXMglC9A', title: 'Adele — Hello',                          author: 'AdeleVEVO',            views: '3,4 mld.' },
+            { id: 'ktvTqknDobU', title: 'Imagine Dragons — Radioactive',          author: 'ImagineDragonsVEVO',   views: '2,2 mld.' },
+            { id: 'hT_nvWreIhg', title: 'OneRepublic — Counting Stars',           author: 'OneRepublicVEVO',      views: '4,1 mld.' },
+            { id: 'RgKAFK5djSk', title: 'Wiz Khalifa — See You Again',            author: 'Wiz Khalifa',          views: '6,2 mld.' },
+            { id: 'OPf0YbXqDm0', title: 'Mark Ronson — Uptown Funk ft. Bruno Mars', author: 'Mark Ronson',        views: '5,5 mld.' },
+            { id: 'JGwWNGJdvx8', title: 'Ed Sheeran — Shape of You',              author: 'Ed Sheeran',           views: '6,3 mld.' },
+            { id: 'CevxZvSJLk8', title: 'Katy Perry — Roar',                      author: 'KatyPerryVEVO',        views: '4,0 mld.' }
+        ];
+
+        videos.forEach(v => {
+            const card = make('div', {
+                style: 'display:flex;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid #2a2a2a;transition:background .12s'
+            });
+            const thumb = make('img', {
+                src: 'https://i.ytimg.com/vi/' + v.id + '/mqdefault.jpg',
+                style: 'width:120px;height:68px;object-fit:cover;border-radius:4px;flex-shrink:0;background:#303030',
+                loading: 'lazy', alt: ''
+            });
+            thumb.addEventListener('error', () => { thumb.style.background = '#303030'; thumb.removeAttribute('src'); });
+            const info = make('div', { style: 'flex:1;min-width:0;overflow:hidden' },
+                make('div', { style: 'font-size:13px;font-weight:500;line-height:1.3;margin-bottom:4px;max-height:36px;overflow:hidden' }, v.title),
+                make('div', { style: 'font-size:11px;color:#aaa;margin-bottom:2px' }, v.author),
+                make('div', { style: 'font-size:11px;color:#aaa' }, v.views + ' zhlédnutí'));
+            card.append(thumb, info);
+            card.addEventListener('mouseenter', () => card.style.background = '#272727');
+            card.addEventListener('mouseleave', () => card.style.background = '');
+            card.addEventListener('click', () => play(v));
+            sidebar.append(card);
+        });
+
+        function go() {
+            const q = search.value.trim();
+            if (!q) return;
+            const id = extractYouTubeId(q);
+            if (id) {
+                play({ id, title: 'Vlastní video', author: 'Z odkazu' });
+            } else {
+                // Use YouTube search via embed playlist (listType=search)
+                playerArea.innerHTML = '';
+                const iframe = make('iframe', {
+                    src: 'https://www.youtube.com/embed?listType=search&list=' + encodeURIComponent(q) + '&autoplay=1',
+                    style: 'width:100%;height:100%;border:none',
+                    allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+                    allowfullscreen: 'true'
+                });
+                playerArea.append(iframe);
+                playerTitle.textContent = 'Výsledky hledání: ' + q;
+                playerMeta.textContent = 'Hraje vyhledávací playlist z YouTube';
+            }
+        }
+        playBtn.addEventListener('click', go);
+        search.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+    }
+
+    // ---------- Weather (real data from Open-Meteo) ----------
+    function createWeather(body) {
+        const root = make('div', { style: 'height:100%;display:flex;flex-direction:column;padding:18px;gap:14px;overflow-y:auto' });
+        const search = make('div', { style: 'display:flex;gap:8px' });
+        const input = make('input', {
+            style: 'flex:1;padding:8px 14px;border:1px solid var(--glass-border);background:var(--glass-light);color:var(--text);border-radius:6px;font-size:13px;outline:none',
+            placeholder: 'Město (např. Praha, Brno, Ostrava)',
+            value: 'Praha'
+        });
+        const btn = make('button', {
+            style: 'padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px'
+        }, '🔍 Najít');
+        search.append(input, btn);
+
+        const current = make('div', {
+            style: 'background:linear-gradient(135deg,#4cc2ff,#0078d4);border-radius:10px;padding:22px;color:#fff;min-height:140px'
+        });
+        const forecast = make('div', { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:8px' });
+        const status = make('div', { style: 'font-size:12px;color:var(--text-mute)' });
+
+        root.append(search, current, forecast, status);
+        body.append(root);
+
+        const codeMap = {
+            0:  ['Jasno', '☀️'],  1:  ['Většinou jasno', '🌤️'], 2:  ['Polojasno', '⛅'], 3:  ['Zataženo', '☁️'],
+            45: ['Mlha', '🌫️'],  48: ['Námrazová mlha', '🌫️'],
+            51: ['Mrholení', '🌦️'], 53: ['Mrholení', '🌦️'], 55: ['Silné mrholení', '🌧️'],
+            61: ['Slabý déšť', '🌧️'], 63: ['Déšť', '🌧️'], 65: ['Silný déšť', '🌧️'],
+            71: ['Slabé sněžení', '🌨️'], 73: ['Sněžení', '❄️'], 75: ['Silné sněžení', '❄️'],
+            80: ['Přeháňky', '🌦️'], 81: ['Přeháňky', '🌦️'], 82: ['Silné přeháňky', '⛈️'],
+            95: ['Bouřka', '⛈️'], 96: ['Bouřka s kroupami', '⛈️'], 99: ['Silná bouřka', '⛈️']
+        };
+
+        async function load(city) {
+            current.innerHTML = '⌛ Načítám počasí pro „' + city + '"...';
+            forecast.innerHTML = '';
+            status.textContent = '';
+            try {
+                const gr = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' +
+                    encodeURIComponent(city) + '&count=1&language=cs&format=json');
+                if (!gr.ok) throw new Error('Geokódování selhalo');
+                const gd = await gr.json();
+                if (!gd.results || !gd.results.length) throw new Error('Město nenalezeno');
+                const loc = gd.results[0];
+
+                const wr = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + loc.latitude +
+                    '&longitude=' + loc.longitude +
+                    '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m' +
+                    '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7');
+                if (!wr.ok) throw new Error('Počasí selhalo');
+                const wd = await wr.json();
+
+                const c = wd.current;
+                const [desc, emoji] = codeMap[c.weather_code] || ['Neznámé', '❓'];
+                current.innerHTML = '';
+                current.append(
+                    make('div', { style: 'display:flex;align-items:center;gap:18px;flex-wrap:wrap' },
+                        make('div', { style: 'font-size:64px;line-height:1' }, emoji),
+                        make('div', { style: 'flex:1' },
+                            make('div', { style: 'font-size:42px;font-weight:300;line-height:1' }, Math.round(c.temperature_2m) + '°C'),
+                            make('div', { style: 'opacity:.9;margin-top:4px' }, desc),
+                            make('div', { style: 'font-size:13px;opacity:.85;margin-top:6px' },
+                                '📍 ' + loc.name + (loc.country ? ', ' + loc.country : '')))),
+                    make('div', { style: 'display:flex;gap:18px;margin-top:14px;font-size:12px;opacity:.92;flex-wrap:wrap' },
+                        make('div', {}, '🤚 Pocitově: ' + Math.round(c.apparent_temperature) + '°C'),
+                        make('div', {}, '💧 Vlhkost: ' + c.relative_humidity_2m + '%'),
+                        make('div', {}, '💨 Vítr: ' + Math.round(c.wind_speed_10m) + ' km/h')));
+
+                const days = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+                wd.daily.time.forEach((d, i) => {
+                    const date = new Date(d + 'T12:00:00');
+                    const [, dEmoji] = codeMap[wd.daily.weather_code[i]] || ['', '❓'];
+                    forecast.append(make('div', {
+                        style: 'background:var(--glass-light);border:1px solid var(--glass-border);border-radius:6px;padding:10px;text-align:center'
+                    },
+                        make('div', { style: 'font-size:12px;color:var(--text-dim);margin-bottom:4px' }, i === 0 ? 'Dnes' : days[date.getDay()]),
+                        make('div', { style: 'font-size:24px;line-height:1' }, dEmoji),
+                        make('div', { style: 'font-size:13px;margin-top:4px' }, Math.round(wd.daily.temperature_2m_max[i]) + '°'),
+                        make('div', { style: 'font-size:11px;color:var(--text-mute)' }, Math.round(wd.daily.temperature_2m_min[i]) + '°')));
+                });
+                status.textContent = 'Data: open-meteo.com · aktualizováno ' + formatTimeLong(new Date());
+            } catch (err) {
+                current.innerHTML = '';
+                current.append(
+                    make('div', { style: 'font-size:18px;margin-bottom:6px' }, '⚠️ Chyba'),
+                    make('div', { style: 'opacity:.9' }, err.message));
+            }
+        }
+
+        btn.addEventListener('click', () => load(input.value.trim() || 'Praha'));
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') load(input.value.trim() || 'Praha'); });
+        load('Praha');
     }
 
     // ---------- Terminal ----------
@@ -1386,10 +1810,20 @@
 
         const clearBtn = make('button', { class: 'explorer-tb-btn' }, '🗑️ Smazat');
         clearBtn.addEventListener('click', () => {
+            if (!confirm('Smazat celou kresbu?')) return;
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         });
-        toolbar.append(clearBtn);
+        const saveBtn = make('button', { class: 'explorer-tb-btn' }, '💾 Uložit PNG');
+        saveBtn.addEventListener('click', () => {
+            canvas.toBlob(blob => {
+                if (!blob) { toast('Chyba', 'Uložení selhalo.'); return; }
+                const name = 'kresba-' + Date.now() + '.png';
+                download(name, blob);
+                toast('Malování', 'Obrázek "' + name + '" stažen.');
+            }, 'image/png');
+        });
+        toolbar.append(clearBtn, saveBtn);
 
         function pos(e) {
             const r = canvas.getBoundingClientRect();
@@ -1418,29 +1852,99 @@
         ['mouseup', 'mouseleave'].forEach(ev => canvas.addEventListener(ev, () => drawing = false));
     }
 
-    // ---------- Photos ----------
+    // ---------- Photos (real images from Picsum) ----------
     function createPhotos(body) {
-        const root = make('div', { class: 'app-photos' });
-        const gradients = [
-            'linear-gradient(135deg, #ff6b6b, #ffa94d)',
-            'linear-gradient(135deg, #4cc2ff, #0078d4)',
-            'linear-gradient(135deg, #5a3fb8, #ff7eb6)',
-            'linear-gradient(135deg, #00d4aa, #ffd166)',
-            'linear-gradient(135deg, #232526, #414345)',
-            'linear-gradient(135deg, #2d0066, #ff7eb6)',
-            'linear-gradient(135deg, #003d2e, #00d4aa)',
-            'linear-gradient(135deg, #1e5fc4, #4cb1ff)',
-            'radial-gradient(circle at 30% 30%, #ffd166, #ff6b6b)',
-            'conic-gradient(from 0deg, #ff6b6b, #ffa94d, #ffd166, #00d4aa, #4cc2ff, #5a3fb8, #ff7eb6, #ff6b6b)',
-            'linear-gradient(135deg, #f43f5e, #8b5cf6)',
-            'linear-gradient(135deg, #06b6d4, #14b8a6)'
-        ];
-        gradients.forEach((g, i) => {
-            const t = make('div', { class: 'photo-thumb', style: 'background:' + g });
-            t.addEventListener('click', () => toast('Fotka #' + (i + 1), 'Otevřeno v náhledu.'));
-            root.append(t);
+        const wrap = make('div', { style: 'display:flex;flex-direction:column;height:100%' });
+        const toolbar = make('div', {
+            style: 'padding:8px 12px;border-bottom:1px solid var(--glass-border);display:flex;gap:8px;align-items:center;flex-shrink:0'
         });
-        body.append(root);
+        const title = make('span', { style: 'font-weight:500;flex:1' }, '🖼️ Fotky');
+        const refreshBtn = make('button', { class: 'explorer-tb-btn' }, '⟳ Nové fotky');
+        const viewerBtn = make('button', { class: 'explorer-tb-btn' }, '🌐 Picsum.photos');
+        toolbar.append(title, viewerBtn, refreshBtn);
+
+        const grid = make('div', {
+            style: 'flex:1;overflow-y:auto;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start'
+        });
+        wrap.append(toolbar, grid);
+        body.append(wrap);
+
+        async function downloadPhoto(fullUrl, seed) {
+            toast('Stahování', 'Připravuji fotku...');
+            try {
+                const r = await fetch(fullUrl);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const blob = await r.blob();
+                download('fotka-' + seed + '.jpg', blob);
+                toast('Fotky', 'Fotka stažena.');
+            } catch (err) {
+                toast('Chyba stahování', err.message);
+            }
+        }
+
+        function openLightbox(fullUrl, seed) {
+            const overlay = make('div', {
+                style: 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:30px'
+            });
+            const img = make('img', {
+                src: fullUrl,
+                style: 'max-width:90%;max-height:80%;border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.5);background:#222'
+            });
+            const buttons = make('div', { style: 'display:flex;gap:10px' });
+            const dl = make('button', { class: 'explorer-tb-btn', style: 'padding:8px 16px;font-size:13px' }, '💾 Stáhnout');
+            const close = make('button', { class: 'explorer-tb-btn', style: 'padding:8px 16px;font-size:13px' }, '✕ Zavřít');
+            buttons.append(dl, close);
+            overlay.append(img, buttons);
+            dl.addEventListener('click', () => downloadPhoto(fullUrl, seed));
+            close.addEventListener('click', () => overlay.remove());
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+            document.body.append(overlay);
+        }
+
+        function load() {
+            grid.innerHTML = '';
+            const base = Date.now();
+            for (let i = 0; i < 18; i++) {
+                const seed = base + i * 13 + Math.floor(Math.random() * 9999);
+                const thumb = 'https://picsum.photos/seed/' + seed + '/400/400';
+                const full = 'https://picsum.photos/seed/' + seed + '/1600/1600';
+
+                const card = make('div', {
+                    style: 'position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;cursor:pointer;background:var(--glass-light)'
+                });
+                const img = make('img', {
+                    src: thumb,
+                    style: 'width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s',
+                    loading: 'lazy',
+                    alt: 'Fotka ' + i
+                });
+                img.addEventListener('error', () => {
+                    img.style.display = 'none';
+                    card.append(make('div', { style: 'padding:20px;text-align:center;color:var(--text-mute);font-size:12px' }, 'Nepodařilo se načíst.'));
+                });
+                const ov = make('div', {
+                    style: 'position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(0,0,0,.75));opacity:0;transition:opacity .15s;display:flex;align-items:flex-end;padding:8px;gap:6px;flex-wrap:wrap'
+                });
+                const vBtn = make('button', {
+                    style: 'background:rgba(255,255,255,.95);color:#000;border:none;padding:5px 9px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:500'
+                }, '👁️ Zobrazit');
+                const dBtn = make('button', {
+                    style: 'background:rgba(76,194,255,.95);color:#000;border:none;padding:5px 9px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:500'
+                }, '💾 Stáhnout');
+                ov.append(vBtn, dBtn);
+                card.append(img, ov);
+                card.addEventListener('mouseenter', () => { ov.style.opacity = '1'; img.style.transform = 'scale(1.05)'; });
+                card.addEventListener('mouseleave', () => { ov.style.opacity = '0'; img.style.transform = ''; });
+                vBtn.addEventListener('click', e => { e.stopPropagation(); openLightbox(full, seed); });
+                dBtn.addEventListener('click', e => { e.stopPropagation(); downloadPhoto(full, seed); });
+                card.addEventListener('click', () => openLightbox(full, seed));
+                grid.append(card);
+            }
+        }
+
+        refreshBtn.addEventListener('click', load);
+        viewerBtn.addEventListener('click', () => window.open('https://picsum.photos/', '_blank', 'noopener'));
+        load();
     }
 
     // ---------- Clock ----------
@@ -1526,14 +2030,18 @@
 
         const grid = make('div', { class: 'store-grid' });
         const items = [
-            { name: 'Editor', icon: '📝', desc: 'Pokročilý editor textu', appId: 'notepad' },
-            { name: 'Studio Paint', icon: '🎨', desc: 'Kresli a maluj', appId: 'paint' },
+            { name: 'YouTube', icon: '▶️', desc: 'Sleduj videa online', appId: 'youtube' },
+            { name: 'Edge', icon: '🌐', desc: 'Prohlížeč s Wikipedia hledáním', appId: 'browser' },
+            { name: 'Počasí', icon: '🌤️', desc: 'Aktuální počasí a předpověď', appId: 'weather' },
+            { name: 'Foto+', icon: '🖼️', desc: 'Galerie se stahováním', appId: 'photos' },
+            { name: 'Editor', icon: '📝', desc: 'Textový editor s exportem', appId: 'notepad' },
+            { name: 'Studio Paint', icon: '🎨', desc: 'Kresli a exportuj PNG', appId: 'paint' },
             { name: 'PowerCalc', icon: '🧮', desc: 'Vědecká kalkulačka', appId: 'calculator' },
-            { name: 'Edge', icon: '🌐', desc: 'Rychlý prohlížeč', appId: 'browser' },
-            { name: 'Foto+', icon: '🖼️', desc: 'Prohlížeč fotografií', appId: 'photos' },
-            { name: 'Hodiny', icon: '🕒', desc: 'Časovače a budíky', appId: 'clock' },
+            { name: 'Průzkumník', icon: '📁', desc: 'Správce souborů', appId: 'explorer' },
+            { name: 'Hodiny', icon: '🕒', desc: 'Časová pásma', appId: 'clock' },
             { name: 'PowerShell', icon: '⌨️', desc: 'Příkazový řádek', appId: 'terminal' },
-            { name: 'Piškvorky', icon: '🎮', desc: 'Klasická hra X a O', appId: 'game' }
+            { name: 'Piškvorky', icon: '🎮', desc: 'Klasická hra X a O', appId: 'game' },
+            { name: 'O systému', icon: 'ⓘ', desc: 'Informace o Windows 12', appId: 'about' }
         ];
         items.forEach(it => {
             const card = make('div', { class: 'store-card' },
@@ -1605,38 +2113,121 @@
         init();
     }
 
-    // ---------- Search ----------
+    // ---------- Search (apps + real Wikipedia web search) ----------
     function createSearch(body) {
-        const root = make('div', { style: 'padding:18px;display:flex;flex-direction:column;gap:12px;height:100%' });
+        const root = make('div', { style: 'padding:14px;display:flex;flex-direction:column;gap:10px;height:100%;box-sizing:border-box' });
         const input = make('input', {
-            placeholder: 'Hledat aplikace…',
-            style: 'padding:9px 14px;border:1px solid var(--glass-border);background:var(--glass-light);color:var(--text);border-radius:6px;font-size:14px;outline:none'
+            placeholder: 'Hledat aplikace a web…',
+            style: 'padding:9px 14px;border:1px solid var(--glass-border);background:var(--glass-light);color:var(--text);border-radius:6px;font-size:14px;outline:none;flex-shrink:0'
         });
-        const results = make('div', { style: 'flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px' });
-        root.append(input, results);
+        const tabs = make('div', { style: 'display:flex;gap:4px;flex-shrink:0' });
+        const tabApps = make('button', { style: tabStyle(true) }, '📦 Aplikace');
+        const tabWeb = make('button', { style: tabStyle(false) }, '🌐 Web (Wikipedia)');
+        tabs.append(tabApps, tabWeb);
+        function tabStyle(active) {
+            return 'padding:6px 14px;border:1px solid var(--glass-border);border-radius:4px;background:' +
+                (active ? 'var(--accent)' : 'var(--glass-light)') + ';color:' +
+                (active ? '#fff' : 'var(--text)') + ';cursor:pointer;font-size:12px';
+        }
+        const results = make('div', { style: 'flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0' });
+        root.append(input, tabs, results);
+        body.append(root);
 
-        function render(q) {
+        let mode = 'apps';
+        let webToken = 0;
+
+        function setMode(m) {
+            mode = m;
+            tabApps.style = tabStyle(m === 'apps');
+            tabWeb.style = tabStyle(m === 'web');
+            run(input.value);
+        }
+        tabApps.addEventListener('click', () => setMode('apps'));
+        tabWeb.addEventListener('click', () => setMode('web'));
+
+        function run(q) {
+            if (mode === 'apps') renderApps(q);
+            else renderWeb(q);
+        }
+
+        function renderApps(q) {
             results.innerHTML = '';
+            const ql = (q || '').toLowerCase();
             const list = Object.entries(apps).filter(([, a]) =>
-                !q || a.name.toLowerCase().includes(q.toLowerCase()));
+                !ql || a.name.toLowerCase().includes(ql));
             if (list.length === 0) {
-                results.append(make('div', { style: 'color:var(--text-mute);padding:14px;text-align:center' }, 'Žádné výsledky'));
+                results.append(make('div', { style: 'color:var(--text-mute);padding:14px;text-align:center' }, 'Žádné aplikace nenalezeny'));
                 return;
             }
             list.forEach(([id, a]) => {
                 const it = make('div', {
                     style: 'padding:9px 12px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:13px'
-                }, make('span', { style: 'font-size:20px' }, a.icon), a.name);
+                }, make('span', { style: 'font-size:22px' }, a.icon), a.name);
                 it.addEventListener('mouseenter', () => it.style.background = 'var(--glass-light)');
                 it.addEventListener('mouseleave', () => it.style.background = '');
                 it.addEventListener('click', () => openApp(id));
                 results.append(it);
             });
         }
-        input.addEventListener('input', () => render(input.value));
-        render('');
+
+        async function renderWeb(q) {
+            results.innerHTML = '';
+            const query = (q || '').trim();
+            if (!query) {
+                results.append(make('div', { style: 'color:var(--text-mute);padding:14px;text-align:center' }, 'Začni psát a hledej ve Wikipedii.'));
+                return;
+            }
+            const token = ++webToken;
+            const loading = make('div', { style: 'color:var(--text-mute);padding:14px' }, '⌛ Hledám ve Wikipedii...');
+            results.append(loading);
+            try {
+                const r = await fetch('https://cs.wikipedia.org/w/api.php?action=opensearch&search=' +
+                    encodeURIComponent(query) + '&limit=10&namespace=0&format=json&origin=*');
+                if (token !== webToken) return;
+                const data = await r.json();
+                if (token !== webToken) return;
+                results.innerHTML = '';
+                const titles = data[1] || [];
+                const descs = data[2] || [];
+                if (!titles.length) {
+                    results.append(make('div', { style: 'color:var(--text-mute);padding:14px' }, 'Nic nenalezeno.'));
+                    return;
+                }
+                titles.forEach((title, i) => {
+                    const it = make('div', {
+                        style: 'padding:10px 12px;border-radius:6px;cursor:pointer;display:flex;gap:12px;align-items:flex-start'
+                    },
+                        make('span', { style: 'font-size:22px;margin-top:2px' }, '📚'),
+                        make('div', { style: 'flex:1;min-width:0' },
+                            make('div', { style: 'font-size:14px;color:#4cc2ff' }, title),
+                            make('div', { style: 'font-size:12px;color:var(--text-mute);margin-top:2px;line-height:1.4' }, descs[i] || '')));
+                    it.addEventListener('mouseenter', () => it.style.background = 'var(--glass-light)');
+                    it.addEventListener('mouseleave', () => it.style.background = '');
+                    it.addEventListener('click', () => {
+                        openApp('browser', { target: { kind: 'wiki-article', title } });
+                    });
+                    results.append(it);
+                });
+            } catch (err) {
+                if (token !== webToken) return;
+                results.innerHTML = '';
+                results.append(make('div', { style: 'color:#ff6b6b;padding:14px' }, 'Chyba: ' + err.message));
+            }
+        }
+
+        let debounce;
+        input.addEventListener('input', () => {
+            clearTimeout(debounce);
+            debounce = setTimeout(() => run(input.value), mode === 'web' ? 280 : 0);
+        });
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && mode === 'apps') {
+                const first = results.querySelector('div[style*="cursor:pointer"]');
+                if (first) first.click();
+            }
+        });
+        renderApps('');
         setTimeout(() => input.focus(), 100);
-        body.append(root);
     }
 
     // ---------- Init ----------
