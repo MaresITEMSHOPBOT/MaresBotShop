@@ -108,6 +108,35 @@ sieve for counting. `primegen.count_primes` now uses it by default
 (`method="sieve"` forces the old enumeration path). The same recurrence also
 gives the *sum* of primes (`primegen.prime_sum`).
 
+### Going one tier further: implementing LMO ourselves (`primegen/lmo.py`)
+
+We also implemented the real **Lagarias–Miller–Odlyzko** algorithm — the
+O(x^(2/3)) method the record-holders use. It rests on Meissel's identity
+`π(x) = φ(x,a) + a − 1 − P₂(x,a)` with `a = π(x^⅓)`, computing the hard `φ(x,a)`
+by the LMO **leaf decomposition**: *ordinary leaves* (n ≤ x^⅓, via a wheel
+`φ_tiny`) plus *special leaves* (n > x^⅓, summed with a **Fenwick tree** over a
+sieve of `[1, x^⅔]`). It is verified exact against the reference and the
+tabulated π(x) (`primegen.pi_lmo`, `count_primes(..., method="lmo")`).
+
+But here is the honest, measured result — the same lesson as Atkin-vs-Eratosthenes,
+now at the research frontier:
+
+| x | Lucy (Cython, O(x^¾)) | LMO (pure Python, O(x^⅔)) | LMO / Lucy |
+|--:|--:|--:|--:|
+| 10⁷ | ~0.0003 s | 0.37 s | ~1000× |
+| 10⁸ | ~0.002 s | 0.62 s | ~330× |
+| 10⁹ | ~0.009 s | 1.9 s | ~200× |
+| 10¹⁰ | ~0.048 s | 9.2 s | ~190× |
+
+LMO's **asymptotics are genuinely better** — measured per-decade growth ~4.8×
+(≈x^⅔) vs Lucy's ~5.1× (≈x^¾), and the ratio above *narrows* with x exactly as
+predicted. But in **pure Python** its constant factors (Fenwick queries, leaf
+loops) make it ~190× slower in wall-clock at 10¹⁰; the crossover where the better
+exponent actually wins lies astronomically far out (~10³⁰⁺). The takeaway, proven
+with numbers rather than asserted: **the right algorithm and the fast program are
+two different things** — to cash in LMO's advantage you must compile its hot loops
+to C, which is exactly what `primecount` does to reach π(10²⁹).
+
 ## So, which algorithm "finds primes"?
 
 - **Just the count π(x)** → the sublinear Meissel–Lehmer/Lucy counter

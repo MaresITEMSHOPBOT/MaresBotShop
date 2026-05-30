@@ -314,12 +314,15 @@ primegen/
 │   ├── factor.py            # factorization + arithmetic fns (composite structure)
 │   ├── algorithms.py        # trial/Sundaram/Atkin/incremental/AKS/Wilson/Lucas–Lehmer
 │   ├── primecount.py        # SUBLINEAR pi(x) (Meissel–Lehmer/Lucy) — no enumeration
+│   ├── _count.pyx           # Cython hot loop for the pi(x) counter
+│   ├── lmo.py               # Lagarias–Miller–Odlyzko pi(x) O(x^2/3) (the real algorithm)
 │   └── core.py              # public API with auto backend selection
 ├── tests/                   # correctness gate (cross-checks + π gates + factoring)
 ├── benchmarks/
 │   ├── benchmark.py         # measures every speed axis, emits these tables
 │   ├── compare_algorithms.py# races the different prime-finding algorithms
-│   └── count_scaling.py     # sublinear counter vs sieve (π(x) crossover)
+│   ├── count_scaling.py     # sublinear counter vs sieve (π(x) crossover)
+│   └── compare_counting.py  # Cython-Lucy vs pure-Python LMO (asymptotics vs constants)
 ├── explore/                 # empirical study of primes & composites (+ plots)
 └── webapp/index.html        # standalone in-browser prime finder (no server)
 ```

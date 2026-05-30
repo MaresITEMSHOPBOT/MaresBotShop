@@ -28,6 +28,7 @@ from .core import (
     primes,
 )
 from .algorithms import first_n_primes, lucas_lehmer, primes_incremental
+from .lmo import pi_lmo
 from .primecount import prime_count, prime_count_range, prime_sum
 from .factor import (
     divisors,
@@ -67,6 +68,7 @@ __all__ = [
     "prime_count",
     "prime_count_range",
     "prime_sum",
+    "pi_lmo",
     # misc
     "backends_available",
     "__version__",

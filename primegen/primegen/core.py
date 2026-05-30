@@ -72,6 +72,9 @@ def count_primes(a: int, b: Optional[int] = None, *, method: str = "auto",
         return 0
     if method in ("auto", "count"):
         return prime_count_range(lo, hi)
+    if method == "lmo":
+        from .lmo import pi_lmo
+        return pi_lmo(hi - 1) - pi_lmo(max(lo, 2) - 1)
     use_parallel = (hi - lo) > PARALLEL_THRESHOLD and (workers or mp.cpu_count()) > 1
     if use_parallel:
         return parallel_count(lo, hi, workers=workers, chunks_per_worker=4, backend=_BEST_BACKEND)
