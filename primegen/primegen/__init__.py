@@ -27,6 +27,7 @@ from .core import (
     prev_prime,
     primes,
 )
+from .algorithms import first_n_primes, lucas_lehmer, primes_incremental
 from .factor import (
     divisors,
     euler_phi,
@@ -57,6 +58,10 @@ __all__ = [
     "spf_sieve",
     "is_perfect",
     "is_carmichael",
+    # algorithm zoo
+    "primes_incremental",
+    "first_n_primes",
+    "lucas_lehmer",
     # misc
     "backends_available",
     "__version__",

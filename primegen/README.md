@@ -286,6 +286,7 @@ See [`explore/FINDINGS.md`](explore/FINDINGS.md) for the full annotated run and
 primegen/
 ├── PLAN.md                 # the upfront plan (written before coding)
 ├── README.md               # this file (measured results)
+├── ALGORITHMS.md           # tour of different prime-finding algorithms (measured)
 ├── build.sh                # build the Cython extension in place
 ├── setup.py / pyproject.toml
 ├── primegen/
@@ -298,14 +299,20 @@ primegen/
 │   ├── parallel.py          # multiprocessing across cores
 │   ├── bigprime.py          # gmpy2 / Miller–Rabin for huge integers
 │   ├── factor.py            # factorization + arithmetic fns (composite structure)
+│   ├── algorithms.py        # trial/Sundaram/Atkin/incremental/AKS/Wilson/Lucas–Lehmer
 │   └── core.py              # public API with auto backend selection
 ├── tests/                   # correctness gate (cross-checks + π gates + factoring)
-├── benchmarks/benchmark.py  # measures every axis, emits these tables
-└── explore/
-    ├── explore.py           # empirical study of primes & composites
-    ├── FINDINGS.md          # annotated run output
-    └── plots/               # PNT error, prime gaps, spf, ω(n), Ulam spiral
+├── benchmarks/
+│   ├── benchmark.py         # measures every speed axis, emits these tables
+│   └── compare_algorithms.py# races the different prime-finding algorithms
+├── explore/                 # empirical study of primes & composites (+ plots)
+└── webapp/index.html        # standalone in-browser prime finder (no server)
 ```
+
+For the comparison of *different* prime-finding algorithms (trial division,
+Sundaram, Atkin, incremental, AKS, Wilson, Lucas–Lehmer) and why a tuned
+Eratosthenes beats the asymptotically-faster Atkin in practice, see
+[`ALGORITHMS.md`](ALGORITHMS.md).
 
 ## 10. Limitations & honest caveats
 
