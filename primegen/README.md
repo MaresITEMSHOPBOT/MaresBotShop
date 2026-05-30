@@ -54,6 +54,13 @@ primegen.primes(10**6, 10**6 + 50)  # numpy int64 array
 primegen.nth_prime(100_000)         # 1299709
 primegen.is_prime(2**607 - 1)       # True  (183-digit Mersenne prime)
 primegen.next_prime(10**100)        # first prime above 10^100
+
+# composites are products of primes — factor them and probe their structure:
+primegen.factorize(360)             # [(2, 3), (3, 2), (5, 1)]
+primegen.factorize(2**67 - 1)       # [(193707721, 1), (761838257287, 1)]  (Cole, 1903)
+primegen.divisors(28)               # [1, 2, 4, 7, 14, 28]   (28 is perfect)
+primegen.euler_phi(10**6)           # 400000
+primegen.is_carmichael(561)         # True  (a composite that fools the Fermat test)
 ```
 
 Big ranges auto-parallelize across cores; huge single integers route to gmpy2.
@@ -203,9 +210,10 @@ counts:
 - π(10⁹)=**50847534** (slow gate: `pytest --run-slow`)
 - the compiled Cython loop is verified **byte-identical** to the pure-Python fallback
 - `nth_prime`, `is_prime`, `next_prime` checked against reference + known large primes
+- `factorize` reconstructs n exactly; perfect/Carmichael number sets verified
 
 ```bash
-pytest tests/            # 169 tests, ~2 s
+pytest tests/            # 179 tests, ~3 s
 pytest tests/ --run-slow # adds the π(10⁹) gate
 ```
 
@@ -235,7 +243,44 @@ explicitly out of scope. Within Python's reach, this implementation is close to
 the practical maximum: the hot loop is already compiled, cache-resident, and
 parallel.
 
-## 8. Project layout
+## 8. Exploring primes & composites
+
+Primes are the multiplicative **atoms**; every other integer is a **molecule** —
+a unique product of primes (Fundamental Theorem of Arithmetic). The toolkit is
+fast enough to *investigate* both empirically. Run:
+
+```bash
+python explore/explore.py     # prints findings, writes explore/FINDINGS.md + plots/
+```
+
+It computes real data (no assertions) and connects the number theory to the
+algorithms. Highlights, all measured:
+
+- **Why we sieve only to √n.** A composite's smallest prime factor is always
+  ≤ √n — verified for all 4,651,486 composites ≤ 5·10⁶ (0 exceptions). That is
+  exactly why the sieve is complete.
+- **Prime Number Theorem.** π(x) vs x/ln x vs Gauss's Li(x). Li's relative error
+  falls from 0.28 (x=10) to **0.00003 (x=10⁹)** — ~10× per decade — while x/ln x
+  stalls near 5–13%. ![PNT](explore/plots/pnt_error.png)
+- **Prime gaps.** Mean gap below 10⁷ is 15.05 (≈ ln x); 58,980 twin-prime pairs;
+  the gap histogram spikes at multiples of 6. ![gaps](explore/plots/prime_gaps.png)
+- **The shape of composites.** Each prime p "first-claims" ~1/p of the integers
+  no smaller prime took (2 → 54% of composites, 3 → 18%, …). A typical number has
+  only ~ln ln n ≈ 2.85 distinct prime factors at 10⁶ (Hardy–Ramanujan).
+- **Numbers that fool the algorithms** (the *why* behind `bigprime`):
+  - **Carmichael numbers** (561, 1105, 1729, …) are composite yet pass the
+    Fermat test for *every* coprime base — 561 fools all 319 of them. This is why
+    a Fermat test is unsafe.
+  - **Strong pseudoprimes**: 2047 = 23·89 fools Miller–Rabin base 2 but not base
+    3 — which is why a fixed witness set (2,3,5,…,37) is deterministic below
+    3.3·10²⁴, exactly what `bigprime` uses.
+  - **Pollard's rho** factors composites with small factors fast (2⁶⁷−1, F₅ =
+    641·6700417 in ms) but is hopeless on two huge primes — the basis of RSA.
+
+See [`explore/FINDINGS.md`](explore/FINDINGS.md) for the full annotated run and
+`explore/plots/` for all five figures (incl. the Ulam spiral).
+
+## 9. Project layout
 
 ```
 primegen/
@@ -252,12 +297,17 @@ primegen/
 │   ├── csieve.py            # loader (compiled or fallback) + bit-packed driver
 │   ├── parallel.py          # multiprocessing across cores
 │   ├── bigprime.py          # gmpy2 / Miller–Rabin for huge integers
+│   ├── factor.py            # factorization + arithmetic fns (composite structure)
 │   └── core.py              # public API with auto backend selection
-├── tests/                   # correctness gate (cross-checks + π gates)
-└── benchmarks/benchmark.py  # measures every axis, emits these tables
+├── tests/                   # correctness gate (cross-checks + π gates + factoring)
+├── benchmarks/benchmark.py  # measures every axis, emits these tables
+└── explore/
+    ├── explore.py           # empirical study of primes & composites
+    ├── FINDINGS.md          # annotated run output
+    └── plots/               # PNT error, prime gaps, spf, ω(n), Ulam spiral
 ```
 
-## 9. Limitations & honest caveats
+## 10. Limitations & honest caveats
 
 - Rates are for **counting** (the throughput metric). Materializing primes adds
   `unpackbits` + `nonzero` + concatenation cost, so `primes()` is slower than
@@ -266,4 +316,7 @@ primegen/
   macOS-default) startup overhead is higher and the parallel break-even N rises.
 - Above 3.3·10²⁴ the pure-Python primality fallback is probabilistic (gmpy2's
   BPSW test has no known counterexample); below it, exact.
+- `factorize` (trial division + Pollard's rho) is fast only when factors are
+  small-ish; it will **not** crack a product of two large primes (RSA-style
+  semiprimes) — that hardness is the point, not a bug.
 - Single-machine only — no distributed sieving.

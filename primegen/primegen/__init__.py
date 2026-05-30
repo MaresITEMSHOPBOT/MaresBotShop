@@ -27,16 +27,37 @@ from .core import (
     prev_prime,
     primes,
 )
+from .factor import (
+    divisors,
+    euler_phi,
+    factorize,
+    is_carmichael,
+    is_perfect,
+    num_divisors,
+    omega,
+    spf_sieve,
+)
 
 __version__ = "0.1.0"
 
 __all__ = [
+    # primes
     "primes",
     "count_primes",
     "nth_prime",
     "is_prime",
     "next_prime",
     "prev_prime",
+    # composites / factorization
+    "factorize",
+    "divisors",
+    "num_divisors",
+    "euler_phi",
+    "omega",
+    "spf_sieve",
+    "is_perfect",
+    "is_carmichael",
+    # misc
     "backends_available",
     "__version__",
 ]
