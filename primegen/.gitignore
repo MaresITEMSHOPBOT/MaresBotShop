@@ -1,0 +1,13 @@
+# Cython / C build artifacts (regenerate with ./build.sh)
+*.so
+*.pyd
+primegen/_sieve.c
+build/
+*.egg-info/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Benchmark scratch (results.md is committed intentionally)

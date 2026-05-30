@@ -1,0 +1,10 @@
+# Core (required for the numpy sieve backends)
+numpy>=1.20
+
+# Hot path (optional): compile primegen/_sieve.pyx for the bit-packed C inner loop.
+# Without it the package falls back to a pure-Python inner loop automatically.
+Cython>=3.0
+
+# Huge single numbers (optional): gmpy2 for big-integer Miller-Rabin / next_prime.
+# Without it primegen uses a pure-Python deterministic Miller-Rabin fallback.
+gmpy2>=2.1

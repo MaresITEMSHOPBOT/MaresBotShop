@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61", "wheel", "Cython>=3.0", "numpy>=1.20"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "primegen"
+version = "0.1.0"
+description = "Fast, honestly-benchmarked prime generation in Python (segmented bit-packed sieve, wheel factorization, numpy + Cython, multiprocessing, gmpy2)."
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ["numpy>=1.20"]
+
+[project.optional-dependencies]
+big = ["gmpy2>=2.1"]
+build = ["Cython>=3.0"]
+
+[tool.setuptools]
+packages = ["primegen"]
