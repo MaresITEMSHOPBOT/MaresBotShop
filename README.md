@@ -1,13 +1,24 @@
 # MaresBotShop
 
-Tento repozitář obsahuje:
+Tento repozitář obsahuje **FJORD°** — 3D e-shop s prémiovými nerezovými termoláhvemi
+— ve **třech variantách**, které všechny staví ze stejných 3D komponent:
 
-- **`storefront/`** — **FJORD°**, 3D e-shop s prémiovými nerezovými termoláhvemi.
-  Postaveno na **Shopify Hydrogen** (React Router 7 + React 18) s 3D ve **React Three
-  Fiber / Three.js** a animacemi v **GSAP + Lenis**. Tohle je hlavní výstup.
-- soubory v kořeni (`studium.html`, `app.js`, `data.js`, `styles.css`, `index.html`) —
-  starší studijní web k předmětu „organizační chování". S e-shopem nesouvisí a nechal
-  jsem je beze změny.
+| Co chci | Složka | Jak |
+|---|---|---|
+| **Spustit na PC v prohlížeči** | `web/` | `cd web && npm install && npm run dev` → `localhost:5173` |
+| **Nahrát do Shopify (motiv)** | `shopify-theme/` | zazipovat a nahrát v adminu, nebo `shopify theme push` |
+| **Headless Shopify (plný e-shop)** | `storefront/` | Hydrogen + `shopify hydrogen deploy` (Oxygen) |
+
+Společné 3D/UI jsou **React Three Fiber / Three.js** + **GSAP + Lenis**, tmavý
+prémiový styl, čeština, ceny v Kč.
+
+Ostatní soubory v kořeni (`studium.html`, `app.js`, `data.js`, `styles.css`,
+`index.html`) jsou starší studijní web k předmětu „organizační chování". S e-shopem
+nesouvisí a nechal jsem je beze změny.
+
+> Pozn. ke sdílení kódu: 3D komponenty žijí v `storefront/app/fjord/` a jejich
+> **kopie** je v `web/src/fjord/`. Když jednu upravíš, zkopíruj změnu i do druhé,
+> ať zůstanou synchronní. Záměrná duplikace umožňuje buildit každou variantu zvlášť.
 
 ---
 
@@ -40,21 +51,37 @@ Z rešerše (zdroje níže) vyšly nerezové termoláhve / termohrnky jako nejle
 
 ## Rychlý start
 
+### Nejjednodušší — samostatná verze v prohlížeči (`web/`)
+
+```bash
+cd web
+npm install
+npm run dev        # http://localhost:5173 (otevře prohlížeč)
+# nebo statický build:
+npm run build && npm run preview
+```
+
+### Headless Shopify (`storefront/`, Hydrogen)
+
 ```bash
 cd storefront
-npm install        # pokud ještě nemáš nainstalované závislosti
-npm run dev        # spustí Hydrogen dev na http://localhost:3000
+npm install
+npm run dev        # http://localhost:3000 (běží na mock.shop datech)
+npm run build      # produkční build (klient + SSR)
 ```
 
-Dev běží na **mock.shop** datech (žádný účet Shopify není potřeba). 3D landing se
-načítá na klientu; první (serverové) vykreslení obsahuje textový obsah pro SEO.
+3D landing se v Hydrogenu načítá na klientu; první (serverové) vykreslení obsahuje
+textový obsah pro SEO.
 
-Produkční build:
+### Shopify motiv k nahrání (`shopify-theme/`)
 
 ```bash
-npm run build
-npm run preview
+cd web && npm run build:shopify     # vyrobí bundle fjord.js + fjord.css
+# bundle se zkopíruje do shopify-theme/assets/ (viz shopify-theme/README.md)
 ```
+
+Pak v Shopify adminu **Online Store → Themes → Upload zip**, nebo `shopify theme push`.
+Podrobně: [`shopify-theme/README.md`](shopify-theme/README.md).
 
 ---
 

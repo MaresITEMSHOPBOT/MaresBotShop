@@ -1,0 +1,26 @@
+{
+  "name": "fjord-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "FJORD° – samostatná (browser) verze 3D e-shopu s termoláhvemi. Vite + React + React Three Fiber + GSAP.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "build:shopify": "vite build --config vite.shopify.config.js"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.105.6",
+    "@react-three/fiber": "^8.16.8",
+    "gsap": "^3.12.5",
+    "lenis": "^1.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.161.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.10"
+  }
+}

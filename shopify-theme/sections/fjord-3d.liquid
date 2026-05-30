@@ -1,0 +1,29 @@
+{% comment %}
+  FJORD° 3D landing jako Shopify sekce.
+  Připojí React + Three.js bundle (assets/fjord.js) do #fjord-root.
+  Sekci lze přidat na libovolnou stránku přes editor motivu.
+{% endcomment %}
+
+<div id="fjord-root"></div>
+
+{{ 'fjord.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'fjord.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "FJORD° 3D",
+  "tag": "section",
+  "class": "fjord-3d-section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "3D landing FJORD° (hero, konfigurátor, katalog, košík). Bundle se načítá z assets/fjord.js."
+    }
+  ],
+  "presets": [
+    {
+      "name": "FJORD° 3D"
+    }
+  ]
+}
+{% endschema %}
