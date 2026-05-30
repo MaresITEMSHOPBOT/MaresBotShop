@@ -98,7 +98,7 @@ hundreds of GB), the Cython counter strolls on — all results match known π(x)
 | x | Cython counter | π(x) | verified |
 |--:|--:|--:|:--:|
 | 10¹⁴ | **105 s** | 3,204,941,750,802 | ✓ measured |
-| 10¹⁵ | ~10 min (≈250 MB) | 29,844,570,422,669 | extrapolated |
+| 10¹⁵ | **529 s** (≈250 MB) | 29,844,570,422,669 | ✓ measured |
 
 The lead grows with x precisely because it is O(x^¾) vs O(x). This is the same
 *class* of algorithm the C++ tool `primecount` uses to reach π(10²⁹) — though it
