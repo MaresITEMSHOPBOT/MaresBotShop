@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hledač prvočísel — primegen</title>
+<style>
+  :root{
+    --bg:#0e1116; --card:#171c24; --card2:#1e2531; --line:#2a3340;
+    --txt:#e6edf3; --muted:#9aa7b4; --accent:#4cc2ff; --accent2:#ffb454;
+    --ok:#3fb950; --bad:#f85149; --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+  header{padding:28px 20px 10px;text-align:center;border-bottom:1px solid var(--line)}
+  header h1{margin:0;font-size:26px;letter-spacing:.3px}
+  header h1 .p{color:var(--accent)}
+  header p{margin:6px 0 0;color:var(--muted);font-size:14px}
+  main{max-width:920px;margin:0 auto;padding:18px 16px 60px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+  .tab{background:var(--card2);border:1px solid var(--line);color:var(--muted);
+    padding:8px 14px;border-radius:9px;cursor:pointer;font-size:14px}
+  .tab.active{color:var(--txt);border-color:var(--accent);background:#10202c}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:18px;margin:14px 0}
+  .card h2{margin:0 0 4px;font-size:18px}
+  .card .hint{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:12px;color:var(--muted)}
+  input,select{background:var(--card2);border:1px solid var(--line);color:var(--txt);
+    padding:9px 11px;border-radius:9px;font-size:15px;font-family:var(--mono);min-width:120px}
+  input:focus,select:focus{outline:none;border-color:var(--accent)}
+  button.go{background:var(--accent);color:#03263a;border:none;padding:10px 16px;
+    border-radius:9px;font-weight:700;cursor:pointer;font-size:14px}
+  button.go:hover{filter:brightness(1.08)}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);
+    padding:9px 14px;border-radius:9px;cursor:pointer;font-size:14px}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .presets button{background:var(--card2);border:1px solid var(--line);color:var(--muted);
+    padding:5px 10px;border-radius:7px;cursor:pointer;font-size:12px;font-family:var(--mono)}
+  .presets button:hover{border-color:var(--accent);color:var(--txt)}
+  .bar{height:8px;background:var(--card2);border-radius:6px;overflow:hidden;margin:14px 0 6px;display:none}
+  .bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .15s}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+  .stat{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+  .stat .k{font-size:12px;color:var(--muted)}
+  .stat .v{font-size:20px;font-family:var(--mono);margin-top:2px}
+  .stat .v.big{font-size:16px;word-break:break-all}
+  .result{margin-top:14px;background:#0b0f14;border:1px solid var(--line);border-radius:10px;
+    padding:12px;max-height:260px;overflow:auto;font-family:var(--mono);font-size:13px;color:#cfe8ff;white-space:pre-wrap;word-break:break-all}
+  .verdict{font-size:22px;font-weight:700;font-family:var(--mono)}
+  .verdict.ok{color:var(--ok)} .verdict.bad{color:var(--bad)}
+  .note{color:var(--muted);font-size:12px;margin-top:10px}
+  canvas{background:#0b0f14;border:1px solid var(--line);border-radius:10px;max-width:100%;height:auto;display:block;margin-top:12px}
+  .vizgrid{display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:740px){.vizgrid{grid-template-columns:1fr 1fr}}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:20px;border-top:1px solid var(--line)}
+  code{font-family:var(--mono);color:var(--accent2)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hledač <span class="p">prvočísel</span></h1>
+  <p>Vše běží přímo v prohlížeči — segmentové síto, Miller–Rabin a Pollardovo rho. Žádný server, funguje offline.</p>
+</header>
+
+<main>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="gen">🔢 Generátor</div>
+    <div class="tab" data-tab="calc">🧮 Jedno číslo</div>
+    <div class="tab" data-tab="viz">📊 Vizualizace</div>
+  </div>
+
+  <!-- ============ GENERÁTOR ============ -->
+  <section id="tab-gen">
+    <div class="card">
+      <h2>Najít prvočísla v rozsahu</h2>
+      <p class="hint">Spočítá π (počet prvočísel) v intervalu [od, do). Volitelně je všechna vypíše a nabídne ke stažení.</p>
+      <div class="row">
+        <div class="field"><label>Od</label><input id="gFrom" value="0"></div>
+        <div class="field"><label>Do (mez)</label><input id="gTo" value="1000000"></div>
+        <button class="go" id="gCount">Spočítat π</button>
+        <button class="go" id="gList" style="background:var(--accent2);color:#3a2600">Vypsat &amp; stáhnout</button>
+        <button class="ghost" id="gStop" disabled>Zastavit</button>
+      </div>
+      <div class="presets" id="gPresets">
+        <button data-to="1000">10³</button>
+        <button data-to="1000000">10⁶</button>
+        <button data-to="10000000">10⁷</button>
+        <button data-to="100000000">10⁸</button>
+        <button data-to="1000000000">10⁹ (pomalejší)</button>
+      </div>
+      <div class="bar" id="gBar"><i></i></div>
+      <div class="stats" id="gStats"></div>
+      <div class="result hidden" id="gResult"></div>
+      <p class="note" id="gNote"></p>
+    </div>
+  </section>
+
+  <!-- ============ JEDNO ČÍSLO ============ -->
+  <section id="tab-calc" class="hidden">
+    <div class="card">
+      <h2>Je to prvočíslo?</h2>
+      <p class="hint">Funguje i pro obří čísla (klidně 100+ cifer) díky Miller–Rabinovu testu nad BigInt.</p>
+      <div class="row">
+        <div class="field" style="flex:1"><label>Číslo</label><input id="cNum" value="1000000000000000003" style="width:100%"></div>
+        <button class="go" id="cTest">Otestovat</button>
+      </div>
+      <div id="cVerdict" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Rozklad na prvočísla</h2>
+      <p class="hint">Každé složené číslo je jednoznačný součin prvočísel. Pollardovo rho zvládne malé i středně velké faktory (ne ale součin dvou obřích prvočísel — to je princip RSA).</p>
+      <div class="row">
+        <div class="field" style="flex:1"><label>Číslo</label><input id="fNum" value="138073" style="width:100%"></div>
+        <button class="go" id="fGo">Rozložit</button>
+      </div>
+      <div class="result hidden" id="fResult"></div>
+    </div>
+
+    <div class="card">
+      <h2>Sousedi &amp; n-té prvočíslo</h2>
+      <div class="row">
+        <div class="field"><label>Číslo</label><input id="nNum" value="1000000"></div>
+        <button class="go" id="nNext">Další prvočíslo →</button>
+        <button class="go" id="nPrev">← Předchozí</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div class="field"><label>n (pořadí)</label><input id="nthN" value="10000"></div>
+        <button class="go" id="nthGo">Najít n-té prvočíslo</button>
+      </div>
+      <div class="stats" id="nStats"></div>
+    </div>
+  </section>
+
+  <!-- ============ VIZUALIZACE ============ -->
+  <section id="tab-viz" class="hidden">
+    <div class="card">
+      <h2>Vizualizace struktury prvočísel</h2>
+      <p class="hint">Ulamova spirála ukazuje, jak prvočísla padají na diagonály; histogram odhaluje, že nejčastější mezery jsou násobky 6.</p>
+      <div class="row">
+        <button class="go" id="vGo">Vykreslit</button>
+        <div class="field"><label>Histogram – mez</label><input id="vHistN" value="1000000"></div>
+      </div>
+      <div class="vizgrid">
+        <div><div style="color:var(--muted);font-size:13px;margin-top:14px">Ulamova spirála (241×241)</div>
+          <canvas id="ulam" width="482" height="482"></canvas></div>
+        <div><div style="color:var(--muted);font-size:13px;margin-top:14px">Histogram mezer mezi prvočísly</div>
+          <canvas id="gaps" width="440" height="300"></canvas></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Stejné algoritmy jako Python balíček <code>primegen</code> (segmentové síto · wheel · Miller–Rabin · Pollard rho),
+  přepsané do JavaScriptu pro běh v prohlížeči. 100 % offline.
+</footer>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const fmt = n => (typeof n === "bigint" ? n.toString() : Math.round(n)).toLocaleString("cs-CZ");
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- tabs ---------- */
+$("tabs").addEventListener("click", e => {
+  const t = e.target.closest(".tab"); if (!t) return;
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  ["gen","calc","viz"].forEach(name =>
+    $("tab-" + name).classList.toggle("hidden", name !== t.dataset.tab));
+});
+
+/* =========================================================
+   SIEVE  (odd-only, segmented, async with progress)
+   Mirrors primegen: store odds only, value v <-> odd index g=(v-1)/2.
+   ========================================================= */
+function simpleOddSieveUpto(limit){
+  // primes <= limit (small; used for the segment's base primes)
+  if (limit < 2) return [];
+  const half = (limit - 1) >> 1;             // odd value 2*half+1 <= limit
+  const comp = new Uint8Array(half + 1);     // comp[i]=1 means 2i+1 is composite
+  comp[0] = 1;                               // value 1 is not prime
+  for (let i = 1; (2*i+1)*(2*i+1) <= limit; i++){
+    if (!comp[i]){
+      const p = 2*i + 1;
+      for (let j = (p*p - 1) >> 1; j <= half; j += p) comp[j] = 1;
+    }
+  }
+  const primes = [2];
+  for (let i = 1; i <= half; i++) if (!comp[i]) primes.push(2*i + 1);
+  return primes;
+}
+
+let cancelFlag = false;
+
+async function generatePrimes(from, to, opts){
+  opts = opts || {};
+  const collect = !!opts.collect, cap = opts.cap || 2_000_000;
+  const onProgress = opts.onProgress || (()=>{});
+  const t0 = performance.now();
+  let count = 0;
+  const primes = [];
+  let truncated = false;
+
+  if (from <= 2 && to > 2){ count++; if (collect) primes.push(2); }
+
+  const lo2raw = Math.max(from, 3);
+  const lo2 = (lo2raw % 2 === 0) ? lo2raw + 1 : lo2raw;       // smallest odd >= from, >=3
+  let hiOdd = to - 1;
+  if (hiOdd % 2 === 0) hiOdd -= 1;                            // largest odd < to
+  if (hiOdd >= lo2){
+    const base = simpleOddSieveUpto(Math.floor(Math.sqrt(to - 1)));
+    const gStart = (lo2 - 1) / 2, gEnd = (hiOdd - 1) / 2 + 1;
+    const SEG = 1 << 20;                                      // 1,048,576 odds (~1 MB)
+    let seg = 0;
+    for (let g0 = gStart; g0 < gEnd; g0 += SEG){
+      if (cancelFlag) break;
+      const g1 = Math.min(g0 + SEG, gEnd);
+      const len = g1 - g0;
+      const buf = new Uint8Array(len).fill(1);
+      const segV0 = 2*g0 + 1, segV1 = 2*(g1 - 1) + 1;
+      for (let k = 1; k < base.length; k++){                 // skip base[0]==2
+        const p = base[k];
+        const pp = p*p;
+        if (pp > segV1) break;
+        let start = pp >= segV0 ? pp : segV0;
+        const r = start % p; if (r) start += (p - r);        // first multiple of p >= start
+        if (start % 2 === 0) start += p;                     // make it an odd multiple
+        let idx = (start - segV0) / 2;
+        for (; idx < len; idx += p) buf[idx] = 0;
+      }
+      for (let i = 0; i < len; i++){
+        if (buf[i]){
+          count++;
+          if (collect){
+            if (primes.length < cap) primes.push(2*(g0 + i) + 1);
+            else truncated = true;
+          }
+        }
+      }
+      if ((seg++ & 1) === 0){                                // yield ~every 2 segments
+        onProgress((g1 - gStart) / (gEnd - gStart));
+        await sleep(0);
+      }
+    }
+  }
+  onProgress(1);
+  return { count, primes, truncated, ms: performance.now() - t0, cancelled: cancelFlag };
+}
+
+/* ---------- generator UI ---------- */
+function setStats(el, items){
+  el.innerHTML = items.map(([k,v,big]) =>
+    `<div class="stat"><div class="k">${k}</div><div class="v${big?' big':''}">${v}</div></div>`).join("");
+}
+function parseIntSafe(s){ const n = Number(String(s).replace(/[\s_]/g,"")); return Number.isFinite(n)?Math.floor(n):NaN; }
+
+async function runGen(collect){
+  const from = parseIntSafe($("gFrom").value), to = parseIntSafe($("gTo").value);
+  $("gResult").classList.add("hidden"); $("gNote").textContent = "";
+  if (!(to > from) || from < 0){ $("gNote").textContent = "Zadej platný rozsah (Do > Od ≥ 0)."; return; }
+  if (to > 2e9){ $("gNote").textContent = "Mez je omezena na 2·10⁹ kvůli paměti prohlížeče."; return; }
+  cancelFlag = false;
+  $("gCount").disabled = $("gList").disabled = true; $("gStop").disabled = false;
+  $("gBar").style.display = "block";
+  const bar = $("gBar").firstElementChild;
+  const res = await generatePrimes(from, to, {
+    collect, cap: 2_000_000,
+    onProgress: p => bar.style.width = (p*100).toFixed(1) + "%"
+  });
+  $("gCount").disabled = $("gList").disabled = false; $("gStop").disabled = true;
+  setStats($("gStats"), [
+    ["π — počet prvočísel", fmt(res.count)],
+    ["čas", res.ms < 1000 ? Math.round(res.ms)+" ms" : (res.ms/1000).toFixed(2)+" s"],
+    ["rychlost", fmt(res.count / (res.ms/1000)) + " /s"],
+    ["interval", "["+fmt(from)+", "+fmt(to)+")"]
+  ]);
+  if (res.cancelled) $("gNote").textContent = "⏹ Zastaveno (výsledky jsou částečné).";
+  if (collect && !res.cancelled){
+    const head = res.primes.slice(0, 1000);
+    $("gResult").classList.remove("hidden");
+    $("gResult").textContent = head.join(", ") + (res.primes.length > 1000 ? " …" : "");
+    $("gNote").innerHTML = `Zobrazeno prvních ${fmt(Math.min(1000,res.primes.length))} z ${fmt(res.primes.length)} sebraných.` +
+      (res.truncated ? " ⚠ Seznam ořezán na 2 000 000 (pro úplný výčet zmenši rozsah)." : "") +
+      ` &nbsp; <a href="#" id="gDl">⬇ Stáhnout ${fmt(res.primes.length)} prvočísel (.txt)</a>`;
+    $("gDl").onclick = ev => {
+      ev.preventDefault();
+      const blob = new Blob([res.primes.join("\n")], {type:"text/plain"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = `prvocisla_${from}-${to}.txt`; a.click();
+    };
+  }
+}
+$("gCount").onclick = () => runGen(false);
+$("gList").onclick  = () => runGen(true);
+$("gStop").onclick  = () => { cancelFlag = true; };
+$("gPresets").onclick = e => { const b = e.target.closest("button"); if (b){ $("gTo").value = b.dataset.to; } };
+
+/* =========================================================
+   BIG-INTEGER TOOLS  (Miller–Rabin, Pollard's rho)
+   ========================================================= */
+function modpow(b, e, m){
+  b %= m; if (b < 0n) b += m;
+  let r = 1n;
+  while (e > 0n){ if (e & 1n) r = r * b % m; e >>= 1n; b = b * b % m; }
+  return r;
+}
+const MR_WITNESSES = [2n,3n,5n,7n,11n,13n,17n,19n,23n,29n,31n,37n];
+const DET_BOUND = 3317044064679887385961981n;   // 12-witness MR is exact below this
+function isPrimeBig(n){
+  n = BigInt(n);
+  if (n < 2n) return false;
+  for (const p of MR_WITNESSES){ if (n === p) return true; if (n % p === 0n) return false; }
+  let d = n - 1n, s = 0n;
+  while ((d & 1n) === 0n){ d >>= 1n; s++; }
+  for (const a of MR_WITNESSES){
+    if (a % n === 0n) continue;
+    let x = modpow(a, d, n);
+    if (x === 1n || x === n - 1n) continue;
+    let composite = true;
+    for (let i = 1n; i < s; i++){ x = x * x % n; if (x === n - 1n){ composite = false; break; } }
+    if (composite) return false;
+  }
+  return true;
+}
+function gcdBig(a, b){ if (a < 0n) a = -a; if (b < 0n) b = -b; while (b){ [a, b] = [b, a % b]; } return a; }
+function randBelow(n){ // small helper for rho seeds
+  return BigInt(2 + Math.floor(Math.random() * 1e6)) % (n - 1n) + 1n;
+}
+function pollardRho(n, budget){
+  if (n % 2n === 0n) return 2n;
+  let iters = 0;
+  while (true){
+    let x = randBelow(n), y = x, c = randBelow(n), d = 1n;
+    while (d === 1n){
+      x = (x*x + c) % n;
+      y = (y*y + c) % n; y = (y*y + c) % n;
+      d = gcdBig(x > y ? x - y : y - x, n);
+      if (++iters > budget) return 0n;          // give up (likely large prime factors)
+    }
+    if (d !== n) return d;
+  }
+}
+const SMALL_PRIMES = simpleOddSieveUpto(2000);
+function factorize(n, deadlineMs){
+  n = BigInt(n);
+  const f = {};
+  const add = (p) => { const k = p.toString(); f[k] = (f[k] || 0) + 1; };
+  for (const p of SMALL_PRIMES){ const P = BigInt(p); while (n % P === 0n){ add(P); n /= P; } if (P*P > n) break; }
+  let incomplete = false;
+  const deadline = performance.now() + (deadlineMs || 4000);
+  const stack = n > 1n ? [n] : [];
+  while (stack.length){
+    const m = stack.pop();
+    if (m === 1n) continue;
+    if (isPrimeBig(m)){ add(m); continue; }
+    if (performance.now() > deadline){ incomplete = true; add(m); continue; }
+    const d = pollardRho(m, 4_000_000);
+    if (d === 0n){ incomplete = true; add(m); continue; }
+    stack.push(d); stack.push(m / d);
+  }
+  return { factors: f, incomplete };
+}
+function nextPrime(n){ n = BigInt(n); if (n < 2n) return 2n; let c = n + 1n; while (!isPrimeBig(c)) c++; return c; }
+function prevPrime(n){ n = BigInt(n); if (n <= 2n) return null; let c = n - 1n; while (c >= 2n && !isPrimeBig(c)) c--; return c >= 2n ? c : null; }
+
+/* ---------- single-number UI ---------- */
+$("cTest").onclick = () => {
+  let n;
+  try { n = BigInt(String($("cNum").value).replace(/[\s_]/g,"")); }
+  catch { $("cVerdict").innerHTML = '<div class="note">Zadej celé číslo.</div>'; return; }
+  const prime = isPrimeBig(n);
+  const digits = (n < 0n ? -n : n).toString().length;
+  const exact = n < DET_BOUND;
+  $("cVerdict").innerHTML =
+    `<div class="verdict ${prime?'ok':'bad'}">${prime ? "✓ PRVOČÍSLO" : "✗ není prvočíslo"}</div>` +
+    `<div class="note">${fmt(digits)} cifer · ${exact ? "deterministicky ověřeno (n < 3,3·10²⁴)" :
+      "test Miller–Rabin (12 bází, pravděpodobnostní pro tak velká čísla — žádný známý protipříklad)"}</div>` +
+    (!prime && n > 1n ? `<div class="note">Tip: rozlož ho v sekci níže.</div>` : "");
+};
+
+$("fGo").onclick = async () => {
+  let n;
+  try { n = BigInt(String($("fNum").value).replace(/[\s_]/g,"")); }
+  catch { return; }
+  $("fResult").classList.remove("hidden");
+  $("fResult").textContent = "Počítám…";
+  await sleep(20);
+  if (n < 2n){ $("fResult").textContent = (n+"") + " nemá prvočíselný rozklad."; return; }
+  const { factors, incomplete } = factorize(n, 4000);
+  const parts = Object.keys(factors).map(p => [BigInt(p), factors[p]]).sort((a,b)=> a[0]<b[0]?-1:1);
+  const pretty = parts.map(([p,e]) => e > 1 ? `${p}^${e}` : `${p}`).join("  ×  ");
+  const isPrimeItself = parts.length === 1 && parts[0][1] === 1;
+  $("fResult").textContent =
+    `${fmt(n)} =\n\n${pretty}` +
+    (isPrimeItself ? "\n\n(je to samotné prvočíslo)" : "") +
+    (incomplete ? "\n\n⚠ Nepodařilo se plně rozložit v limitu (pravděpodobně součin velkých prvočísel — viz RSA)." : "");
+};
+
+$("nNext").onclick = () => {
+  try { const n = BigInt(String($("nNum").value).replace(/[\s_]/g,""));
+    setStats($("nStats"), [["další prvočíslo > "+fmt(n), fmt(nextPrime(n)), true]]); } catch {}
+};
+$("nPrev").onclick = () => {
+  try { const n = BigInt(String($("nNum").value).replace(/[\s_]/g,""));
+    const p = prevPrime(n);
+    setStats($("nStats"), [["předchozí prvočíslo < "+fmt(n), p===null?"žádné":fmt(p), true]]); } catch {}
+};
+$("nthGo").onclick = async () => {
+  const n = parseIntSafe($("nthN").value);
+  if (!(n >= 1)){ setStats($("nStats"), [["chyba","zadej n ≥ 1"]]); return; }
+  if (n > 5_000_000){ setStats($("nStats"), [["limit","n je omezeno na 5 000 000"]]); return; }
+  const small = [2,3,5,7,11];
+  if (n <= 5){ setStats($("nStats"), [[n+". prvočíslo", fmt(small[n-1])]]); return; }
+  const ln = Math.log(n);
+  const bound = Math.ceil(n * (ln + Math.log(ln))) + 10;     // proven upper bound
+  setStats($("nStats"), [["počítám…", "síto do "+fmt(bound)]]);
+  const res = await generatePrimes(2, bound + 1, { collect:true, cap:n + 10 });
+  setStats($("nStats"), [[fmt(n)+". prvočíslo", fmt(res.primes[n-1]), true],
+    ["čas", Math.round(res.ms)+" ms"]]);
+};
+
+/* =========================================================
+   VISUALIZATIONS
+   ========================================================= */
+function drawUlam(){
+  const cv = $("ulam"), ctx = cv.getContext("2d"), size = 241, px = cv.width / size;
+  ctx.fillStyle = "#0b0f14"; ctx.fillRect(0,0,cv.width,cv.height);
+  const primeset = new Set(simpleOddSieveUpto(size*size));
+  let x = (size-1)/2, y = (size-1)/2, dx = 0, dy = -1;
+  ctx.fillStyle = "#4cc2ff";
+  for (let i = 1; i <= size*size; i++){
+    if (x>=0 && x<size && y>=0 && y<size && primeset.has(i))
+      ctx.fillRect(x*px, y*px, Math.ceil(px), Math.ceil(px));
+    if (x === y || (x < y && x + y === size-1) || (x > y && x + y === size))
+      [dx, dy] = [-dy, dx];
+    x += dx; y += dy;
+  }
+}
+async function drawGaps(){
+  const N = Math.min(parseIntSafe($("vHistN").value) || 1e6, 5e6);
+  const res = await generatePrimes(2, N + 1, { collect:true, cap:5e6 });
+  const ps = res.primes, bins = {};
+  let maxGap = 0;
+  for (let i = 1; i < ps.length; i++){ const g = ps[i] - ps[i-1]; bins[g] = (bins[g]||0)+1; if (g>maxGap) maxGap = g; }
+  const cv = $("gaps"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height, pad = 30;
+  ctx.fillStyle = "#0b0f14"; ctx.fillRect(0,0,W,H);
+  const cap = Math.min(maxGap, 80);
+  let mx = 0; for (let g = 2; g <= cap; g += 2) mx = Math.max(mx, bins[g]||0);
+  const bw = (W - 2*pad) / (cap/2);
+  for (let g = 2, j = 0; g <= cap; g += 2, j++){
+    const h = (bins[g]||0)/mx * (H - 2*pad);
+    ctx.fillStyle = (g % 6 === 0) ? "#ffb454" : "#3a6ea5";   // highlight multiples of 6
+    ctx.fillRect(pad + j*bw, H - pad - h, Math.max(1,bw-1), h);
+  }
+  ctx.fillStyle = "#9aa7b4"; ctx.font = "11px sans-serif";
+  ctx.fillText("mezera →  (oranžová = násobky 6)", pad, H - 10);
+  ctx.fillText("π="+fmt(ps.length)+" do "+fmt(N), pad, 16);
+}
+$("vGo").onclick = async () => { drawUlam(); await drawGaps(); };
+
+/* draw visualizations once on first open */
+let vizDrawn = false;
+$("tabs").addEventListener("click", e => {
+  if (e.target.dataset && e.target.dataset.tab === "viz" && !vizDrawn){ vizDrawn = true; drawUlam(); drawGaps(); }
+});
+</script>
+</body>
+</html>
