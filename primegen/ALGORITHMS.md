@@ -82,13 +82,23 @@ Measured — sieve vs counter (verified against the tabulated π(x)):
 | 10¹⁰ | 3.75 s | **0.33 s** | 11.3× |
 | 10¹¹ | ~40 s (extrapolated) | **1.5 s** | ~25× |
 
-And where the sieve simply can't follow (it would take many minutes/hours and
-hundreds of GB), the counter strolls on — all results match known π(x):
+**Compiling the hot loop (Cython).** The whole DP is then ported to C
+(`primegen/_count.pyx`), removing numpy's per-prime temporary allocations — the
+fastest π(x) this package offers, ~2× over the numpy version, same recurrence:
 
-| x | sublinear counter | π(x) |
-|--:|--:|--:|
-| 10¹² | **7.9 s** | 37,607,912,018 |
-| 10¹³ | **41 s** | 346,065,536,839 |
+| x | numpy counter | **Cython counter** | speedup |
+|--:|--:|--:|--:|
+| 10¹¹ | 1.44 s | **0.68 s** | 2.1× |
+| 10¹² | 7.90 s | **3.73 s** | 2.1× |
+| 10¹³ | 37.8 s | **19.8 s** | 1.9× |
+
+And where the sieve simply can't follow (it would take many minutes/hours and
+hundreds of GB), the Cython counter strolls on — all results match known π(x):
+
+| x | Cython counter | π(x) | verified |
+|--:|--:|--:|:--:|
+| 10¹⁴ | **105 s** | 3,204,941,750,802 | ✓ measured |
+| 10¹⁵ | ~10 min (≈250 MB) | 29,844,570,422,669 | extrapolated |
 
 The lead grows with x precisely because it is O(x^¾) vs O(x). This is the same
 *class* of algorithm the C++ tool `primecount` uses to reach π(10²⁹) — though it

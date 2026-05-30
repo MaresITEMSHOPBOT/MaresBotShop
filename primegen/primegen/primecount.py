@@ -36,6 +36,21 @@ except ImportError:  # pragma: no cover
     np = None
     _HAVE_NUMPY = False
 
+try:  # compiled hot path (fastest); falls back transparently if not built
+    from . import _count as _count_c
+
+    _HAVE_CYTHON_COUNT = True
+except ImportError:  # pragma: no cover
+    _count_c = None
+    _HAVE_CYTHON_COUNT = False
+
+
+def count_impl() -> str:
+    """Which pi(x) backend ``prime_count`` will use: cython / numpy / python."""
+    if _HAVE_CYTHON_COUNT:
+        return "cython"
+    return "numpy" if _HAVE_NUMPY else "python"
+
 
 def prime_count_lucy(n: int) -> int:
     """pi(n) via the Lucy_Hedgehog recurrence (dict version — the clear reference)."""
@@ -115,7 +130,11 @@ def _prime_count_numpy(n: int) -> int:
 
 
 def prime_count(n: int) -> int:
-    """Return pi(n) sublinearly. Uses numpy when available, else a pure-Python array."""
+    """Return pi(n) sublinearly. Uses the compiled Cython counter when available,
+    then numpy, then a pure-Python array — all computing the identical recurrence."""
+    n = int(n)
+    if _HAVE_CYTHON_COUNT:
+        return _count_c.prime_count_c(n)
     if _HAVE_NUMPY:
         return _prime_count_numpy(n)
     return _prime_count_arrays_py(n)

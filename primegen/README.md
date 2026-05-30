@@ -12,7 +12,7 @@ tables below was measured, not assumed.
 |---|---|
 | Peak single-core | **56.7 M primes/s** (~985 M integers sieved/s) — Cython bit-packed, wheel mod 210 |
 | Peak 4 cores | **156.8 M primes/s** (3.70×, 92% parallel efficiency) |
-| **Counting π(x)** | **sublinear** Meissel–Lehmer: π(10¹²) in **~8 s**, π(10¹³) in ~41 s (1 thread) — the sieve can't reach these |
+| **Counting π(x)** | **sublinear** Meissel–Lehmer, hot loop in **Cython**: π(10¹²) in **~3.7 s**, π(10¹⁴) = 3,204,941,750,802 in **~105 s** (1 thread) — far beyond any sieve |
 | Huge integers | gmpy2 is **8–19× faster** than pure-Python Miller–Rabin (100–400 digits) |
 | Honest gap to C++ | for *listing* primes, primesieve does **~1e9/s on one core** (~18× this); for *counting*, both we and C++ use sublinear methods |
 
@@ -245,6 +245,16 @@ Closing the gap means rewriting the inner sieve in C++/assembly, which is
 explicitly out of scope. Within Python's reach, this implementation is close to
 the practical maximum: the hot loop is already compiled, cache-resident, and
 parallel.
+
+**And for *counting* π(x)?** Here the right move isn't a faster sieve at all but
+a *different algorithm* — the sublinear Meissel–Lehmer method (§ headline,
+[`ALGORITHMS.md`](ALGORITHMS.md)), whose hot loop we also compiled to Cython. It
+reaches π(10¹⁴) in ~105 s on one thread, where no sieve could. The world record
+holder, [`primecount`](https://github.com/kimwalisch/primecount) (C++), uses the
+same *class* of algorithm but the sharper Lagarias–Miller–Odlyzko /
+Deléglise–Rivat variants (O(x^⅔)) to reach **π(10²⁹)**. So: not the world's
+fastest — that's C++ — but the world-class *algorithm*, pushed to Python's
+practical limit, with the exact remaining gap stated rather than hidden.
 
 ## 8. Exploring primes & composites
 

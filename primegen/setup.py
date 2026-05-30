@@ -35,7 +35,14 @@ if HAVE_CYTHON and NUMPY_INCLUDE:
                 include_dirs=NUMPY_INCLUDE,
                 define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
                 extra_compile_args=["-O3", "-funroll-loops"],
-            )
+            ),
+            Extension(
+                "primegen._count",
+                ["primegen/_count.pyx"],
+                include_dirs=NUMPY_INCLUDE,
+                define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+                extra_compile_args=["-O3", "-funroll-loops"],
+            ),
         ],
         compiler_directives={"language_level": "3"},
     )
