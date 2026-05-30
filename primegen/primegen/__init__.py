@@ -28,6 +28,7 @@ from .core import (
     primes,
 )
 from .algorithms import first_n_primes, lucas_lehmer, primes_incremental
+from .primecount import prime_count, prime_count_range, prime_sum
 from .factor import (
     divisors,
     euler_phi,
@@ -62,6 +63,10 @@ __all__ = [
     "primes_incremental",
     "first_n_primes",
     "lucas_lehmer",
+    # sublinear counting (no enumeration)
+    "prime_count",
+    "prime_count_range",
+    "prime_sum",
     # misc
     "backends_available",
     "__version__",

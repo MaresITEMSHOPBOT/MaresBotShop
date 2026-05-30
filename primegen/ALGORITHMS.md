@@ -20,6 +20,7 @@ reference oracle, and **raced against the others** (run
 | **AKS** (2002) | deterministic, polynomial time, via (x+a)ⁿ ≡ xⁿ+a in (ℤ/n)[x]/(xʳ−1) | one number |
 | **Lucas–Lehmer** | Mₚ = 2ᵖ−1 prime iff sₚ₋₂ ≡ 0, s₀=4, sₖ₊₁=sₖ²−2 | Mersenne primes |
 | **Miller–Rabin / BPSW** | strong probable-prime test (see `bigprime.py`) | one number (huge) |
+| **Meissel–Lehmer / Lucy** | DP over the O(√x) values ⌊x/i⌋; sieve "lifted" to keys | **π(x) only**, sublinear |
 
 ## Measured race (this 4-core box, Python 3.11)
 
@@ -63,10 +64,47 @@ Lucas–Lehmer instantly identifies the exponents p ≤ 160 with 2ᵖ−1 prime:
 `[2, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127]`. Every largest-known-prime
 record for decades has been a Mersenne prime found exactly this way (GIMPS).
 
+## The real speedup: counting WITHOUT enumerating (sublinear π(x))
+
+Every sieve above must *visit* (almost) every integer up to x — that is ~O(x)
+work, no matter how tuned. But if you only need the **count** π(x), not the
+primes themselves, you can do far better. The Meissel–Lehmer combinatorial
+method — implemented here in its clean DP form (the "Lucy_Hedgehog" recurrence,
+`primegen/primecount.py`) — works only with the O(√x) distinct values ⌊x/i⌋ and
+computes π(x) in about **O(x^(3/4))** time and **O(√x)** memory, *without ever
+listing a prime*.
+
+Measured — sieve vs counter (verified against the tabulated π(x)):
+
+| x | tuned sieve (4 cores) | sublinear counter (1 thread) | speedup |
+|--:|--:|--:|--:|
+| 10⁹ | 0.33 s | **0.08 s** | 4.1× |
+| 10¹⁰ | 3.75 s | **0.33 s** | 11.3× |
+| 10¹¹ | ~40 s (extrapolated) | **1.5 s** | ~25× |
+
+And where the sieve simply can't follow (it would take many minutes/hours and
+hundreds of GB), the counter strolls on — all results match known π(x):
+
+| x | sublinear counter | π(x) |
+|--:|--:|--:|
+| 10¹² | **7.9 s** | 37,607,912,018 |
+| 10¹³ | **41 s** | 346,065,536,839 |
+
+The lead grows with x precisely because it is O(x^¾) vs O(x). This is the same
+*class* of algorithm the C++ tool `primecount` uses to reach π(10²⁹) — though it
+employs the more advanced Lagarias–Miller–Odlyzko / Deléglise–Rivat refinements
+(O(x^(2/3))). Our Lucy variant is simpler but already a categorical win over the
+sieve for counting. `primegen.count_primes` now uses it by default
+(`method="sieve"` forces the old enumeration path). The same recurrence also
+gives the *sum* of primes (`primegen.prime_sum`).
+
 ## So, which algorithm "finds primes"?
 
-- **All primes up to N** → Sieve of Eratosthenes, tuned (segmented + bit-packed +
-  wheel). That's `primegen.primes` / `primegen.count_primes`.
+- **Just the count π(x)** → the sublinear Meissel–Lehmer/Lucy counter
+  (`primegen.count_primes`, `primegen.prime_count`) — fastest by far, no
+  enumeration.
+- **All primes up to N (the values)** → Sieve of Eratosthenes, tuned (segmented +
+  bit-packed + wheel). That's `primegen.primes`.
 - **A stream of primes, no bound** → incremental sieve (`primegen.primes_incremental`).
 - **Is this one (possibly huge) number prime?** → Miller–Rabin / BPSW
   (`primegen.is_prime`, via gmpy2).

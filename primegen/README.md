@@ -12,12 +12,13 @@ tables below was measured, not assumed.
 |---|---|
 | Peak single-core | **56.7 M primes/s** (~985 M integers sieved/s) — Cython bit-packed, wheel mod 210 |
 | Peak 4 cores | **156.8 M primes/s** (3.70×, 92% parallel efficiency) |
-| π(10⁹) | 50,847,534 ✓ in ~0.32 s (4 cores) |
+| **Counting π(x)** | **sublinear** Meissel–Lehmer: π(10¹²) in **~8 s**, π(10¹³) in ~41 s (1 thread) — the sieve can't reach these |
 | Huge integers | gmpy2 is **8–19× faster** than pure-Python Miller–Rabin (100–400 digits) |
-| Honest gap to C++ | primesieve does **~1e9 primes/s on one core** → ~18× faster single-core than this |
+| Honest gap to C++ | for *listing* primes, primesieve does **~1e9/s on one core** (~18× this); for *counting*, both we and C++ use sublinear methods |
 
-> See [the realistic ceiling](#7-the-realistic-ceiling-vs-c) for why ~1e9/s
-> single-core needs C++/assembly and is out of scope here.
+> Two different jobs: **listing** primes (a sieve, ~1e8 primes/s here) vs
+> **counting** π(x) (a sublinear combinatorial method — see
+> [`ALGORITHMS.md`](ALGORITHMS.md)). See [the realistic ceiling](#7-the-realistic-ceiling-vs-c).
 
 ---
 
@@ -48,6 +49,8 @@ benchmark). Check what's active:
 import primegen
 
 primegen.count_primes(10**9)        # 50847534      (pi over [0, 10^9))
+primegen.count_primes(10**12)       # 37607912018   (~8 s, sublinear — no sieve could)
+primegen.prime_count(10**13)        # 346065536839  (counting without enumerating)
 primegen.count_primes(10**6, 10**7) # primes in [10^6, 10^7)
 primegen.primes(20).tolist()        # [2, 3, 5, 7, 11, 13, 17, 19]
 primegen.primes(10**6, 10**6 + 50)  # numpy int64 array
@@ -300,11 +303,13 @@ primegen/
 │   ├── bigprime.py          # gmpy2 / Miller–Rabin for huge integers
 │   ├── factor.py            # factorization + arithmetic fns (composite structure)
 │   ├── algorithms.py        # trial/Sundaram/Atkin/incremental/AKS/Wilson/Lucas–Lehmer
+│   ├── primecount.py        # SUBLINEAR pi(x) (Meissel–Lehmer/Lucy) — no enumeration
 │   └── core.py              # public API with auto backend selection
 ├── tests/                   # correctness gate (cross-checks + π gates + factoring)
 ├── benchmarks/
 │   ├── benchmark.py         # measures every speed axis, emits these tables
-│   └── compare_algorithms.py# races the different prime-finding algorithms
+│   ├── compare_algorithms.py# races the different prime-finding algorithms
+│   └── count_scaling.py     # sublinear counter vs sieve (π(x) crossover)
 ├── explore/                 # empirical study of primes & composites (+ plots)
 └── webapp/index.html        # standalone in-browser prime finder (no server)
 ```

@@ -22,6 +22,7 @@ from . import bigprime
 from .backends import DEFAULT_SEGMENT_ODDS, sieve_numpy
 from .csieve import HAVE_CYTHON, sieve_bitpacked
 from .parallel import parallel_count, parallel_primes
+from .primecount import prime_count_range
 
 # Above this many integers in the range, fan out across cores.
 PARALLEL_THRESHOLD = 50_000_000
@@ -52,16 +53,25 @@ def primes(a: int, b: Optional[int] = None, *, workers: Optional[int] = None) ->
     return np.asarray(_BEST_FN(lo, hi, wheel=210, collect=True), dtype=np.int64)
 
 
-def count_primes(a: int, b: Optional[int] = None, *, workers: Optional[int] = None) -> int:
+def count_primes(a: int, b: Optional[int] = None, *, method: str = "auto",
+                 workers: Optional[int] = None) -> int:
     """Number of primes in a range (``pi`` over the interval).
 
     ``count_primes(stop)`` -> ``pi(stop-1)``;  ``count_primes(start, stop)``
-    -> primes in ``[start, stop)``. Far cheaper than ``primes`` for big ranges
-    because nothing is materialized.
+    -> primes in ``[start, stop)``.
+
+    ``method``:
+      * ``"auto"`` / ``"count"`` (default): the **sublinear** combinatorial
+        counter (``primecount``) — ~O(x^(3/4)), no enumeration. Reaches
+        pi(10^12) in seconds and beats the sieve by orders of magnitude.
+      * ``"sieve"``: count by actually sieving (enumerates the primes). Useful
+        for cross-checking, or when you also want the primes themselves.
     """
     lo, hi = _normalize_bounds(a, b)
     if hi <= 2 or hi <= lo:
         return 0
+    if method in ("auto", "count"):
+        return prime_count_range(lo, hi)
     use_parallel = (hi - lo) > PARALLEL_THRESHOLD and (workers or mp.cpu_count()) > 1
     if use_parallel:
         return parallel_count(lo, hi, workers=workers, chunks_per_worker=4, backend=_BEST_BACKEND)
