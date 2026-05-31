@@ -223,6 +223,18 @@
         return card;
     }
 
+    function jackpotBar() {
+        var bar = el('div', 'jackpot-bar');
+        bar.innerHTML = '<div class="jp-bar-title">💰 PROGRESIVNÍ JACKPOTY</div><div class="jp-row">' +
+            Casino.Jackpots.TIERS.slice().reverse().map(function (t) {
+                return '<div class="jp-item jp-' + t + '"><span class="jp-name">' + Casino.Jackpots.LABEL[t] + '</span><b class="jp-val" data-t="' + t + '">🪙 ' + fmt(Casino.Jackpots.value(t)) + '</b></div>';
+            }).join('') + '</div><div class="jp-hint">Roste z každé sázky · vyhraj ho v Hold &amp; Win (🐷 Piggy Bank, 🐺 Wolf Gold)</div>';
+        return bar;
+    }
+    function updateJackpotEls() {
+        document.querySelectorAll('.jp-val[data-t]').forEach(function (e) { e.innerHTML = '🪙 ' + fmt(Casino.Jackpots.value(e.dataset.t)); });
+    }
+
     function renderLobby() {
         var a = Account.current(); if (!a) return;
         var scr = $('#screen-lobby');
@@ -238,6 +250,7 @@
             '<div class="hs"><label>Největší výhra</label><b>' + fmt(a.stats.biggest) + '</b></div>' +
             '</div>';
         scr.appendChild(hero);
+        if (Casino.Jackpots) scr.appendChild(jackpotBar());
 
         CATS.forEach(function (cat) {
             var entries = Casino.registry.filter(function (e) { return e.category === cat.id; });
@@ -404,6 +417,7 @@
 
         // aktualizace kreditu při změně
         Casino.bus.on('balance', function (b) { animateBalance(b); });
+        if (Casino.Jackpots) Casino.bus.on('jackpot', function () { updateJackpotEls(); });
 
         // odemkni zvuk na první interakci
         var unlock = function () { Casino.Sound.unlock(); document.removeEventListener('pointerdown', unlock); };

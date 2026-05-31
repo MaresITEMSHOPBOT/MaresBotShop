@@ -606,6 +606,41 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
 .promo-msg { font-size: 13px; font-weight: 700; min-height: 18px; margin-top: 8px; }
 .promo-msg.good { color: var(--green); } .promo-msg.bad { color: var(--red); }
 
+/* ==========================================================================
+   PROGRESIVNÍ JACKPOTY + HOLD & WIN
+   ========================================================================== */
+.jackpot-bar { margin: 0 0 22px; padding: 14px 16px; border-radius: 18px; background: linear-gradient(135deg, rgba(255,210,74,.16), rgba(255,93,177,.14)); border: 1px solid rgba(255,210,74,.4); box-shadow: 0 0 26px rgba(255,210,74,.18); }
+.jp-bar-title { text-align: center; font-weight: 900; letter-spacing: 2px; color: var(--gold); margin-bottom: 10px; font-size: 14px; }
+.jp-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.jp-item { text-align: center; padding: 10px 8px; border-radius: 14px; background: rgba(0,0,0,.32); border: 1px solid var(--border); }
+.jp-name { display: block; font-size: 11px; font-weight: 900; letter-spacing: 1px; }
+.jp-val { font-size: clamp(15px, 3vw, 22px); font-weight: 900; }
+.jp-grand .jp-name { color: #ff4d4d; } .jp-grand { border-color: rgba(255,77,77,.5); box-shadow: 0 0 16px rgba(255,77,77,.25); }
+.jp-major .jp-name { color: #ff9b21; } .jp-minor .jp-name { color: var(--cyan); } .jp-mini .jp-name { color: var(--green); }
+.jp-grand .jp-val { color: #ffd24a; } .jp-major .jp-val { color: #ffd24a; }
+.jp-hint { text-align: center; font-size: 11px; color: var(--muted); margin-top: 9px; }
+@media (max-width: 560px) { .jp-row { grid-template-columns: repeat(2, 1fr); } }
+
+.holdwin-overlay { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px; background: radial-gradient(circle, rgba(10,4,24,.86), rgba(6,2,16,.96)); animation: bwIn .3s ease; }
+.hw-head { font-size: clamp(14px, 3.4vw, 19px); font-weight: 900; letter-spacing: 1px; color: var(--gold); }
+.hw-head b { color: #fff; }
+.hw-jackpots { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.hw-jp { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 20px; background: rgba(0,0,0,.4); border: 1px solid var(--border); }
+.hw-jp b { color: var(--gold); }
+.hw-jp.jp-grand { border-color: rgba(255,77,77,.6); } .hw-jp.jp-major { border-color: rgba(255,155,33,.6); }
+.hw-grid { display: grid; grid-template-columns: repeat(var(--reels), 1fr); gap: 5px; width: 100%; max-width: 420px; }
+.hw-cell { aspect-ratio: 1; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; }
+.hw-cell.empty { background: rgba(255,255,255,.04); border: 1px dashed rgba(255,255,255,.12); }
+.hw-cell.coin { background: radial-gradient(circle at 50% 38%, rgba(255,210,74,.4), rgba(0,0,0,.35)); border: 1px solid var(--gold); box-shadow: inset 0 0 10px rgba(255,210,74,.3); }
+.hw-cell.new { animation: bwPop .35s cubic-bezier(.2,1.7,.4,1); }
+.hw-cell.jp { background: radial-gradient(circle at 50% 38%, rgba(255,77,77,.45), rgba(0,0,0,.4)); border-color: #ff4d4d; }
+.hw-cell.jp.jp-mini { border-color: var(--green); } .hw-cell.jp.jp-minor { border-color: var(--cyan); } .hw-cell.jp.jp-major { border-color: #ff9b21; }
+.hw-coin { font-size: clamp(16px, 4.5vw, 26px); line-height: 1; }
+.hw-val { font-weight: 900; color: var(--gold); font-size: clamp(9px, 2.4vw, 12px); }
+.hw-lab { font-weight: 900; font-size: clamp(8px, 2.2vw, 11px); letter-spacing: .5px; }
+.hw-total { font-size: clamp(15px, 4vw, 22px); font-weight: 900; }
+.hw-total b { color: var(--green); }
+
 </style>
 </head>
 <body>
@@ -977,6 +1012,66 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
                 { id: 'fish', icon: '🐟', name: 'Ryba (peněžní)', weight: 10, pays: { 3: 4, 4: 10, 5: 30 } },
                 { id: 'fisher', icon: '🎣', name: 'Rybář (Wild + sběrač)', weight: 6, wild: true, pays: { 3: 10, 4: 50, 5: 200 } },
                 { id: 'scatter', icon: '🎏', name: 'Návnada (Scatter)', weight: 3, scatter: true, pays: { 3: 2, 4: 5, 5: 25 } }
+            ]
+        },
+
+        /* ---- 10) Piggy Bank (5x3, Hold & Win s prasátky a jackpoty) ---- */
+        {
+            id: 'piggy',
+            type: 'lines',
+            name: 'Piggy Bank',
+            tagline: 'Sbírej mince v Hold & Win a trefuj jackpoty',
+            emoji: '🐷',
+            volatility: 'Vysoká',
+            rtp: 95,
+            reels: 5, rows: 3,
+            paylines: takeLines(LINES_5x3, 10),
+            theme: { a: '#ff7eb6', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #3a1530, #120512)' },
+            bets: [10, 20, 50, 100, 250, 500, 1000],
+            holdwin: {
+                trigger: 6, respins: 3, coinId: 'coin', buyCost: 120,
+                coinValues: [[2, 40], [3, 26], [5, 16], [8, 9], [12, 4], [20, 1.5], [30, 0.6], [75, 0.2]],
+                jpWeights: [['value', 940], ['mini', 46], ['minor', 11], ['major', 3]]
+            },
+            symbols: [
+                { id: 'corn', icon: '🌽', name: 'Kukuřice', weight: 24, pays: { 3: 5, 4: 15, 5: 40 } },
+                { id: 'hen', icon: '🐔', name: 'Slepice', weight: 22, pays: { 3: 5, 4: 15, 5: 40 } },
+                { id: 'sheep', icon: '🐑', name: 'Ovce', weight: 19, pays: { 3: 8, 4: 24, 5: 60 } },
+                { id: 'cow', icon: '🐮', name: 'Kráva', weight: 16, pays: { 3: 14, 4: 40, 5: 100 } },
+                { id: 'tractor', icon: '🚜', name: 'Traktor', weight: 12, pays: { 3: 24, 4: 80, 5: 250 } },
+                { id: 'pig', icon: '🐷', name: 'Prasátko', weight: 9, pays: { 3: 45, 4: 150, 5: 540 } },
+                { id: 'wild', icon: '💰', name: 'Pytel (Wild)', weight: 6, wild: true, pays: { 3: 70, 4: 260, 5: 1000 } },
+                { id: 'coin', icon: '🪙', name: 'Mince (Hold & Win)', weight: 12 }
+            ]
+        },
+
+        /* ---- 11) Wolf Gold (5x3, Hold & Win s vlkem, měsícem a jackpoty) ---- */
+        {
+            id: 'wolf',
+            type: 'lines',
+            name: 'Wolf Gold',
+            tagline: 'Vlci, úplněk a Hold & Win s jackpoty',
+            emoji: '🐺',
+            volatility: 'Vysoká',
+            rtp: 95,
+            reels: 5, rows: 3,
+            paylines: takeLines(LINES_5x3, 20),
+            theme: { a: '#f2b705', b: '#1a73ff', bg: 'radial-gradient(circle at 50% 0%, #20243a, #07030f)' },
+            bets: [20, 40, 100, 200, 400, 1000, 2000],
+            holdwin: {
+                trigger: 6, respins: 3, coinId: 'moon', buyCost: 100,
+                coinValues: [[2, 42], [3, 26], [5, 16], [8, 9], [12, 4], [20, 1.5], [30, 0.7], [60, 0.2]],
+                jpWeights: [['value', 945], ['mini', 42], ['minor', 10], ['major', 3]]
+            },
+            symbols: [
+                { id: 'w1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 4, 4: 12, 5: 30 } },
+                { id: 'w2', icon: '🟢', name: 'Zelená', weight: 22, pays: { 3: 4, 4: 12, 5: 30 } },
+                { id: 'w3', icon: '🟡', name: 'Žlutá', weight: 20, pays: { 3: 6, 4: 16, 5: 42 } },
+                { id: 'eagle', icon: '🦅', name: 'Orel', weight: 14, pays: { 3: 20, 4: 50, 5: 135 } },
+                { id: 'horse', icon: '🐎', name: 'Mustang', weight: 11, pays: { 3: 28, 4: 75, 5: 220 } },
+                { id: 'wolf', icon: '🐺', name: 'Vlk', weight: 8, pays: { 3: 55, 4: 185, 5: 680 } },
+                { id: 'wild', icon: '🌟', name: 'Wild', weight: 6, wild: true, pays: { 3: 80, 4: 300, 5: 1100 } },
+                { id: 'moon', icon: '🌕', name: 'Měsíc (Hold & Win)', weight: 12 }
             ]
         }
     ];
@@ -1546,6 +1641,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         /* ---- statistiky ---- */
         recordSpin: function (gameId, bet, win) {
             var a = Account.current(); if (!a) return;
+            if (Casino.Jackpots && bet > 0) Casino.Jackpots.grow(bet);  // jackpoty rostou ze sázek
             var s = a.stats;
             s.spins++; s.wagered += bet; s.won += win;
             if (win > s.biggest) s.biggest = win;
@@ -1560,6 +1656,45 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         }
     };
 
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
+/* ===== jackpot.js ===== */
+/* ==========================================================================
+   MARES CASINO – progresivní jackpoty (Mini / Minor / Major / Grand).
+   Rostou z každé sázky, sdílené globálně, ukládají se do localStorage.
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var KEY = 'mares-casino-jp-v1';
+    var TIERS = ['mini', 'minor', 'major', 'grand'];
+    var SEED = { mini: 500, minor: 2500, major: 12000, grand: 60000 };
+    var RATE = { mini: 0.004, minor: 0.0022, major: 0.0012, grand: 0.0006 };
+    var LABEL = { mini: 'MINI', minor: 'MINOR', major: 'MAJOR', grand: 'GRAND' };
+
+    var state = load();
+    function load() { try { var r = localStorage.getItem(KEY); if (r) { var p = JSON.parse(r); TIERS.forEach(function (t) { if (typeof p[t] !== 'number') p[t] = SEED[t]; }); return p; } } catch (e) { } return { mini: SEED.mini, minor: SEED.minor, major: SEED.major, grand: SEED.grand }; }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { } }
+
+    Casino.Jackpots = {
+        TIERS: TIERS, LABEL: LABEL, SEED: SEED,
+        all: function () { return state; },
+        value: function (t) { return Math.round(state[t] || SEED[t]); },
+        grow: function (bet) {
+            if (!bet || bet <= 0) return;
+            TIERS.forEach(function (t) { state[t] = (state[t] || SEED[t]) + bet * RATE[t]; });
+            save();
+            if (Casino.bus) Casino.bus.emit('jackpot', state);
+        },
+        win: function (t) {
+            var v = Math.round(state[t] || SEED[t]);
+            state[t] = SEED[t]; save();
+            if (Casino.bus) Casino.bus.emit('jackpot', state);
+            return v;
+        }
+    };
 })(typeof window !== 'undefined' ? window : global);
 
 </script>
@@ -1808,7 +1943,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         };
 
         // lišta funkcí: Ante Bet (vyšší šance) + Koupit bonus
-        if ((game.freeSpins && game.freeSpins.buyCost) || game.ante) {
+        if ((game.freeSpins && game.freeSpins.buyCost) || (game.holdwin && game.holdwin.buyCost) || game.ante) {
             var fb = el('div', 'feature-bar');
             if (game.ante) {
                 var anteBtn = el('button', 'feat-btn ante-btn', '⚡ Vyšší šance +' + Math.round((game.ante.mult - 1) * 100) + '%');
@@ -1818,7 +1953,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
                 };
                 fb.appendChild(anteBtn); this.anteBtn = anteBtn;
             }
-            if (game.freeSpins && game.freeSpins.buyCost) {
+            if ((game.freeSpins && game.freeSpins.buyCost) || (game.holdwin && game.holdwin.buyCost)) {
                 var buyBtn = el('button', 'feat-btn buy-btn', '');
                 buyBtn.onclick = function () { Casino.Sound.unlock(); self.buyBonus(); };
                 fb.appendChild(buyBtn); this.buyBtn = buyBtn;
@@ -1878,7 +2013,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         this.updateFeatureBar();
     };
     Machine.prototype.updateFeatureBar = function () {
-        if (this.buyBtn) this.buyBtn.textContent = '🛒 Koupit bonus (' + fmt(this.bet() * this.game.freeSpins.buyCost) + ')';
+        if (this.buyBtn) this.buyBtn.textContent = '🛒 Koupit bonus (' + fmt(this.bet() * (this.game.holdwin || this.game.freeSpins).buyCost) + ')';
         if (this.anteBtn) this.anteBtn.classList.toggle('on', !!this.ante);
         // ukaž efektivní sázku při Ante
         if (this.betEl) this.betEl.textContent = this.ante && this.game.ante ? fmt(this.effectiveBet()) : fmt(this.bet());
@@ -2116,8 +2251,17 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         }).then(function () {
             if (game.respin && !result.freeSpinsAwarded) return self.runRespins(grid, bet, betPerLine);
         }).then(function () {
+            if (game.holdwin && self.countCoins(grid) >= game.holdwin.trigger) {
+                return self.runHoldWin(grid, bet).then(function () { self.endSpin(); });
+            }
             return self.afterBaseSpin(result, bet);
         });
+    };
+
+    Machine.prototype.countCoins = function (grid) {
+        var id = this.game.holdwin.coinId, n = 0;
+        for (var r = 0; r < this.game.reels; r++) for (var y = 0; y < this.game.rows; y++) if (grid[r][y].id === id) n++;
+        return n;
     };
 
     /* ---------------- RESPIN (lepící se žolíci) ---------------- */
@@ -2337,20 +2481,122 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
     /* ---------------- nákup bonusu ---------------- */
     Machine.prototype.buyBonus = function () {
         if (this.spinning || this.fsMode) return;
-        var self = this, bet = this.bet(), cost = Math.round(bet * this.game.freeSpins.buyCost);
+        var self = this, bet = this.bet();
+        var cfg = this.game.holdwin || this.game.freeSpins;
+        var cost = Math.round(bet * cfg.buyCost);
+        var what = this.game.holdwin ? 'Hold & Win' : 'free spiny';
         Casino.UI.modal({
             title: '🛒 Koupit bonus',
-            body: 'Spustit free spiny okamžitě za <b>🪙 ' + fmt(cost) + '</b> kreditů? (' + this.game.freeSpins.buyCost +'× sázka)',
+            body: 'Spustit ' + what + ' okamžitě za <b>🪙 ' + fmt(cost) + '</b> kreditů? (' + cfg.buyCost + '× sázka)',
             actions: [{ label: 'Zrušit' }, { label: 'Koupit za ' + fmt(cost), primary: true, onClick: function () { self.doBuyBonus(bet, cost); } }]
         });
     };
     Machine.prototype.doBuyBonus = function (bet, cost) {
-        var self = this;
+        var self = this, game = this.game;
         if (!Casino.Account.debit(cost)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
-        Casino.Account.recordSpin(this.game.id, cost, 0);
+        Casino.Account.recordSpin(game.id, cost, 0);
         Casino.Sound.unlock();
         this.setBusy(true); this.clearWins(); this.winEl.textContent = '0';
-        this.runFreeSpins(bet, true).then(function () { self.endSpin(); });
+        if (game.holdwin) {
+            // vynuť mřížku s dostatkem mincí pro spuštění Hold & Win
+            var grid = Engine.generateLineGrid(game), placed = 0;
+            for (var r = 0; r < game.reels && placed < game.holdwin.trigger; r++) { grid[r][0] = { id: game.holdwin.coinId }; placed++; }
+            for (var r2 = 0; r2 < game.reels && placed < game.holdwin.trigger; r2++) { grid[r2][1] = { id: game.holdwin.coinId }; placed++; }
+            this.runHoldWin(grid, bet).then(function () { self.endSpin(); });
+        } else {
+            this.runFreeSpins(bet, true).then(function () { self.endSpin(); });
+        }
+    };
+
+    /* ---------------- HOLD & WIN (Piggy / Wolf, lepící se mince + jackpoty) ---------------- */
+    function assignCoin(game, bet) {
+        var kind = util.weightedValue(game.holdwin.jpWeights, Math.random);
+        if (kind === 'value') return { value: util.weightedValue(game.holdwin.coinValues, Math.random) };
+        return { jackpot: kind };
+    }
+    Machine.prototype.runHoldWin = function (grid, bet) {
+        var self = this, game = this.game, hw = game.holdwin;
+        this.fsMode = true;
+        Casino.Sound.freeSpins();
+        var total = game.reels * game.rows;       // počet pozic
+        var cells = new Array(total);             // null nebo {value} / {jackpot}
+        var locked = 0;
+        var idx = function (r, y) { return r * game.rows + y; };
+        for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) {
+            if (grid[r][y].id === hw.coinId) { cells[idx(r, y)] = assignCoin(game, bet); locked++; }
+        }
+        var ov = el('div', 'holdwin-overlay');
+        this.stage.appendChild(ov);
+        ov.innerHTML =
+            '<div class="hw-head">' + game.emoji + ' HOLD & WIN — respiny: <b class="hw-re">' + hw.respins + '</b></div>' +
+            '<div class="hw-jackpots">' + ['grand', 'major', 'minor', 'mini'].map(function (t) {
+                return '<span class="hw-jp jp-' + t + '">' + Casino.Jackpots.LABEL[t] + ' <b>' + fmt(Casino.Jackpots.value(t)) + '</b></span>';
+            }).join('') + '</div>' +
+            '<div class="hw-grid"></div>' +
+            '<div class="hw-total">Výhra: <b class="hw-sum">0</b></div>';
+        var gridEl = ov.querySelector('.hw-grid');
+        gridEl.style.setProperty('--reels', game.reels);
+
+        function valOf(c) { return c ? (c.value ? c.value * bet : 0) : 0; }
+        function render(flashSet) {
+            gridEl.innerHTML = '';
+            for (var yy = 0; yy < game.rows; yy++) for (var rr = 0; rr < game.reels; rr++) {
+                var c = cells[idx(rr, yy)];
+                var d = document.createElement('div');
+                d.className = 'hw-cell' + (c ? ' coin' : ' empty') + (c && c.jackpot ? ' jp jp-' + c.jackpot : '') + (flashSet && flashSet[idx(rr, yy)] ? ' new' : '');
+                if (c && c.jackpot) d.innerHTML = '<span class="hw-coin">' + game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon + '</span><span class="hw-lab">' + Casino.Jackpots.LABEL[c.jackpot] + '</span>';
+                else if (c) d.innerHTML = '<span class="hw-coin">' + game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon + '</span><span class="hw-val">' + fmt(c.value * bet) + '</span>';
+                gridEl.appendChild(d);
+            }
+        }
+        var reEl = ov.querySelector('.hw-re'), sumEl = ov.querySelector('.hw-sum');
+        function curSum() { var s = 0; for (var i = 0; i < total; i++) s += valOf(cells[i]); return s; }
+        render(null); sumEl.textContent = fmt(curSum());
+
+        var respins = hw.respins;
+        function step() {
+            if (self._destroyed) return Promise.resolve();
+            if (respins <= 0 || locked >= total) return Promise.resolve();
+            respins--;
+            Casino.Sound.spin();
+            // dober prázdné pozice
+            var flash = {}, gotNew = false;
+            for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) {
+                var i = idx(r, y);
+                if (cells[i]) continue;
+                // šance na novou minci v respinu
+                if (Math.random() < 0.2) { cells[i] = assignCoin(game, bet); locked++; flash[i] = true; gotNew = true; }
+            }
+            if (gotNew) { respins = hw.respins; Casino.Sound.reelStop(2); }
+            reEl.textContent = respins;
+            render(flash); sumEl.textContent = fmt(curSum());
+            return delay(self.turbo ? 320 : 620).then(step);
+        }
+
+        return delay(700).then(step).then(function () {
+            // vyhodnocení
+            var win = 0, tiers = {};
+            for (var i = 0; i < total; i++) {
+                var c = cells[i]; if (!c) continue;
+                if (c.value) win += c.value * bet;
+                else if (c.jackpot) tiers[c.jackpot] = true;
+            }
+            if (locked >= total) tiers.grand = true;   // plná mřížka = GRAND
+            var jpWin = 0, jpNames = [];
+            Object.keys(tiers).forEach(function (t) { var v = Casino.Jackpots.win(t); jpWin += v; jpNames.push(Casino.Jackpots.LABEL[t]); });
+            win += jpWin;
+            if (win > 0) { Casino.Account.credit(win); Casino.Account.recordSpin(game.id, 0, win); }
+            sumEl.textContent = fmt(win);
+            if (jpNames.length) { self.coinRain(); Casino.Sound.bigWinFanfare(); }
+            else if (win > bet * 10) { self.coinRain(); Casino.Sound.win(3); }
+            else Casino.Sound.win(2);
+            self.message('Hold & Win: +' + fmt(win) + (jpNames.length ? ' · JACKPOT ' + jpNames.join(', ') + '!' : ''));
+            self.winEl.textContent = fmt(win);
+            return delay(self.turbo ? 1300 : 2400);
+        }).then(function () {
+            self.fsMode = false;
+            ov.remove();
+        });
     };
 
     Machine.prototype.flashFsRetrigger = function () {
@@ -4881,6 +5127,18 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         return card;
     }
 
+    function jackpotBar() {
+        var bar = el('div', 'jackpot-bar');
+        bar.innerHTML = '<div class="jp-bar-title">💰 PROGRESIVNÍ JACKPOTY</div><div class="jp-row">' +
+            Casino.Jackpots.TIERS.slice().reverse().map(function (t) {
+                return '<div class="jp-item jp-' + t + '"><span class="jp-name">' + Casino.Jackpots.LABEL[t] + '</span><b class="jp-val" data-t="' + t + '">🪙 ' + fmt(Casino.Jackpots.value(t)) + '</b></div>';
+            }).join('') + '</div><div class="jp-hint">Roste z každé sázky · vyhraj ho v Hold &amp; Win (🐷 Piggy Bank, 🐺 Wolf Gold)</div>';
+        return bar;
+    }
+    function updateJackpotEls() {
+        document.querySelectorAll('.jp-val[data-t]').forEach(function (e) { e.innerHTML = '🪙 ' + fmt(Casino.Jackpots.value(e.dataset.t)); });
+    }
+
     function renderLobby() {
         var a = Account.current(); if (!a) return;
         var scr = $('#screen-lobby');
@@ -4896,6 +5154,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
             '<div class="hs"><label>Největší výhra</label><b>' + fmt(a.stats.biggest) + '</b></div>' +
             '</div>';
         scr.appendChild(hero);
+        if (Casino.Jackpots) scr.appendChild(jackpotBar());
 
         CATS.forEach(function (cat) {
             var entries = Casino.registry.filter(function (e) { return e.category === cat.id; });
@@ -5062,6 +5321,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
 
         // aktualizace kreditu při změně
         Casino.bus.on('balance', function (b) { animateBalance(b); });
+        if (Casino.Jackpots) Casino.bus.on('jackpot', function () { updateJackpotEls(); });
 
         // odemkni zvuk na první interakci
         var unlock = function () { Casino.Sound.unlock(); document.removeEventListener('pointerdown', unlock); };

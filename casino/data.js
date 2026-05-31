@@ -332,6 +332,66 @@
                 { id: 'fisher', icon: '🎣', name: 'Rybář (Wild + sběrač)', weight: 6, wild: true, pays: { 3: 10, 4: 50, 5: 200 } },
                 { id: 'scatter', icon: '🎏', name: 'Návnada (Scatter)', weight: 3, scatter: true, pays: { 3: 2, 4: 5, 5: 25 } }
             ]
+        },
+
+        /* ---- 10) Piggy Bank (5x3, Hold & Win s prasátky a jackpoty) ---- */
+        {
+            id: 'piggy',
+            type: 'lines',
+            name: 'Piggy Bank',
+            tagline: 'Sbírej mince v Hold & Win a trefuj jackpoty',
+            emoji: '🐷',
+            volatility: 'Vysoká',
+            rtp: 95,
+            reels: 5, rows: 3,
+            paylines: takeLines(LINES_5x3, 10),
+            theme: { a: '#ff7eb6', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #3a1530, #120512)' },
+            bets: [10, 20, 50, 100, 250, 500, 1000],
+            holdwin: {
+                trigger: 6, respins: 3, coinId: 'coin', buyCost: 120,
+                coinValues: [[2, 40], [3, 26], [5, 16], [8, 9], [12, 4], [20, 1.5], [30, 0.6], [75, 0.2]],
+                jpWeights: [['value', 940], ['mini', 46], ['minor', 11], ['major', 3]]
+            },
+            symbols: [
+                { id: 'corn', icon: '🌽', name: 'Kukuřice', weight: 24, pays: { 3: 5, 4: 15, 5: 40 } },
+                { id: 'hen', icon: '🐔', name: 'Slepice', weight: 22, pays: { 3: 5, 4: 15, 5: 40 } },
+                { id: 'sheep', icon: '🐑', name: 'Ovce', weight: 19, pays: { 3: 8, 4: 24, 5: 60 } },
+                { id: 'cow', icon: '🐮', name: 'Kráva', weight: 16, pays: { 3: 14, 4: 40, 5: 100 } },
+                { id: 'tractor', icon: '🚜', name: 'Traktor', weight: 12, pays: { 3: 24, 4: 80, 5: 250 } },
+                { id: 'pig', icon: '🐷', name: 'Prasátko', weight: 9, pays: { 3: 45, 4: 150, 5: 540 } },
+                { id: 'wild', icon: '💰', name: 'Pytel (Wild)', weight: 6, wild: true, pays: { 3: 70, 4: 260, 5: 1000 } },
+                { id: 'coin', icon: '🪙', name: 'Mince (Hold & Win)', weight: 12 }
+            ]
+        },
+
+        /* ---- 11) Wolf Gold (5x3, Hold & Win s vlkem, měsícem a jackpoty) ---- */
+        {
+            id: 'wolf',
+            type: 'lines',
+            name: 'Wolf Gold',
+            tagline: 'Vlci, úplněk a Hold & Win s jackpoty',
+            emoji: '🐺',
+            volatility: 'Vysoká',
+            rtp: 95,
+            reels: 5, rows: 3,
+            paylines: takeLines(LINES_5x3, 20),
+            theme: { a: '#f2b705', b: '#1a73ff', bg: 'radial-gradient(circle at 50% 0%, #20243a, #07030f)' },
+            bets: [20, 40, 100, 200, 400, 1000, 2000],
+            holdwin: {
+                trigger: 6, respins: 3, coinId: 'moon', buyCost: 100,
+                coinValues: [[2, 42], [3, 26], [5, 16], [8, 9], [12, 4], [20, 1.5], [30, 0.7], [60, 0.2]],
+                jpWeights: [['value', 945], ['mini', 42], ['minor', 10], ['major', 3]]
+            },
+            symbols: [
+                { id: 'w1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 4, 4: 12, 5: 30 } },
+                { id: 'w2', icon: '🟢', name: 'Zelená', weight: 22, pays: { 3: 4, 4: 12, 5: 30 } },
+                { id: 'w3', icon: '🟡', name: 'Žlutá', weight: 20, pays: { 3: 6, 4: 16, 5: 42 } },
+                { id: 'eagle', icon: '🦅', name: 'Orel', weight: 14, pays: { 3: 20, 4: 50, 5: 135 } },
+                { id: 'horse', icon: '🐎', name: 'Mustang', weight: 11, pays: { 3: 28, 4: 75, 5: 220 } },
+                { id: 'wolf', icon: '🐺', name: 'Vlk', weight: 8, pays: { 3: 55, 4: 185, 5: 680 } },
+                { id: 'wild', icon: '🌟', name: 'Wild', weight: 6, wild: true, pays: { 3: 80, 4: 300, 5: 1100 } },
+                { id: 'moon', icon: '🌕', name: 'Měsíc (Hold & Win)', weight: 12 }
+            ]
         }
     ];
 

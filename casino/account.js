@@ -141,6 +141,7 @@
         /* ---- statistiky ---- */
         recordSpin: function (gameId, bet, win) {
             var a = Account.current(); if (!a) return;
+            if (Casino.Jackpots && bet > 0) Casino.Jackpots.grow(bet);  // jackpoty rostou ze sázek
             var s = a.stats;
             s.spins++; s.wagered += bet; s.won += win;
             if (win > s.biggest) s.biggest = win;

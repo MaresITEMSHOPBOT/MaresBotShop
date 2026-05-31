@@ -179,7 +179,7 @@
         };
 
         // lišta funkcí: Ante Bet (vyšší šance) + Koupit bonus
-        if ((game.freeSpins && game.freeSpins.buyCost) || game.ante) {
+        if ((game.freeSpins && game.freeSpins.buyCost) || (game.holdwin && game.holdwin.buyCost) || game.ante) {
             var fb = el('div', 'feature-bar');
             if (game.ante) {
                 var anteBtn = el('button', 'feat-btn ante-btn', '⚡ Vyšší šance +' + Math.round((game.ante.mult - 1) * 100) + '%');
@@ -189,7 +189,7 @@
                 };
                 fb.appendChild(anteBtn); this.anteBtn = anteBtn;
             }
-            if (game.freeSpins && game.freeSpins.buyCost) {
+            if ((game.freeSpins && game.freeSpins.buyCost) || (game.holdwin && game.holdwin.buyCost)) {
                 var buyBtn = el('button', 'feat-btn buy-btn', '');
                 buyBtn.onclick = function () { Casino.Sound.unlock(); self.buyBonus(); };
                 fb.appendChild(buyBtn); this.buyBtn = buyBtn;
@@ -249,7 +249,7 @@
         this.updateFeatureBar();
     };
     Machine.prototype.updateFeatureBar = function () {
-        if (this.buyBtn) this.buyBtn.textContent = '🛒 Koupit bonus (' + fmt(this.bet() * this.game.freeSpins.buyCost) + ')';
+        if (this.buyBtn) this.buyBtn.textContent = '🛒 Koupit bonus (' + fmt(this.bet() * (this.game.holdwin || this.game.freeSpins).buyCost) + ')';
         if (this.anteBtn) this.anteBtn.classList.toggle('on', !!this.ante);
         // ukaž efektivní sázku při Ante
         if (this.betEl) this.betEl.textContent = this.ante && this.game.ante ? fmt(this.effectiveBet()) : fmt(this.bet());
@@ -487,8 +487,17 @@
         }).then(function () {
             if (game.respin && !result.freeSpinsAwarded) return self.runRespins(grid, bet, betPerLine);
         }).then(function () {
+            if (game.holdwin && self.countCoins(grid) >= game.holdwin.trigger) {
+                return self.runHoldWin(grid, bet).then(function () { self.endSpin(); });
+            }
             return self.afterBaseSpin(result, bet);
         });
+    };
+
+    Machine.prototype.countCoins = function (grid) {
+        var id = this.game.holdwin.coinId, n = 0;
+        for (var r = 0; r < this.game.reels; r++) for (var y = 0; y < this.game.rows; y++) if (grid[r][y].id === id) n++;
+        return n;
     };
 
     /* ---------------- RESPIN (lepící se žolíci) ---------------- */
@@ -708,20 +717,122 @@
     /* ---------------- nákup bonusu ---------------- */
     Machine.prototype.buyBonus = function () {
         if (this.spinning || this.fsMode) return;
-        var self = this, bet = this.bet(), cost = Math.round(bet * this.game.freeSpins.buyCost);
+        var self = this, bet = this.bet();
+        var cfg = this.game.holdwin || this.game.freeSpins;
+        var cost = Math.round(bet * cfg.buyCost);
+        var what = this.game.holdwin ? 'Hold & Win' : 'free spiny';
         Casino.UI.modal({
             title: '🛒 Koupit bonus',
-            body: 'Spustit free spiny okamžitě za <b>🪙 ' + fmt(cost) + '</b> kreditů? (' + this.game.freeSpins.buyCost +'× sázka)',
+            body: 'Spustit ' + what + ' okamžitě za <b>🪙 ' + fmt(cost) + '</b> kreditů? (' + cfg.buyCost + '× sázka)',
             actions: [{ label: 'Zrušit' }, { label: 'Koupit za ' + fmt(cost), primary: true, onClick: function () { self.doBuyBonus(bet, cost); } }]
         });
     };
     Machine.prototype.doBuyBonus = function (bet, cost) {
-        var self = this;
+        var self = this, game = this.game;
         if (!Casino.Account.debit(cost)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
-        Casino.Account.recordSpin(this.game.id, cost, 0);
+        Casino.Account.recordSpin(game.id, cost, 0);
         Casino.Sound.unlock();
         this.setBusy(true); this.clearWins(); this.winEl.textContent = '0';
-        this.runFreeSpins(bet, true).then(function () { self.endSpin(); });
+        if (game.holdwin) {
+            // vynuť mřížku s dostatkem mincí pro spuštění Hold & Win
+            var grid = Engine.generateLineGrid(game), placed = 0;
+            for (var r = 0; r < game.reels && placed < game.holdwin.trigger; r++) { grid[r][0] = { id: game.holdwin.coinId }; placed++; }
+            for (var r2 = 0; r2 < game.reels && placed < game.holdwin.trigger; r2++) { grid[r2][1] = { id: game.holdwin.coinId }; placed++; }
+            this.runHoldWin(grid, bet).then(function () { self.endSpin(); });
+        } else {
+            this.runFreeSpins(bet, true).then(function () { self.endSpin(); });
+        }
+    };
+
+    /* ---------------- HOLD & WIN (Piggy / Wolf, lepící se mince + jackpoty) ---------------- */
+    function assignCoin(game, bet) {
+        var kind = util.weightedValue(game.holdwin.jpWeights, Math.random);
+        if (kind === 'value') return { value: util.weightedValue(game.holdwin.coinValues, Math.random) };
+        return { jackpot: kind };
+    }
+    Machine.prototype.runHoldWin = function (grid, bet) {
+        var self = this, game = this.game, hw = game.holdwin;
+        this.fsMode = true;
+        Casino.Sound.freeSpins();
+        var total = game.reels * game.rows;       // počet pozic
+        var cells = new Array(total);             // null nebo {value} / {jackpot}
+        var locked = 0;
+        var idx = function (r, y) { return r * game.rows + y; };
+        for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) {
+            if (grid[r][y].id === hw.coinId) { cells[idx(r, y)] = assignCoin(game, bet); locked++; }
+        }
+        var ov = el('div', 'holdwin-overlay');
+        this.stage.appendChild(ov);
+        ov.innerHTML =
+            '<div class="hw-head">' + game.emoji + ' HOLD & WIN — respiny: <b class="hw-re">' + hw.respins + '</b></div>' +
+            '<div class="hw-jackpots">' + ['grand', 'major', 'minor', 'mini'].map(function (t) {
+                return '<span class="hw-jp jp-' + t + '">' + Casino.Jackpots.LABEL[t] + ' <b>' + fmt(Casino.Jackpots.value(t)) + '</b></span>';
+            }).join('') + '</div>' +
+            '<div class="hw-grid"></div>' +
+            '<div class="hw-total">Výhra: <b class="hw-sum">0</b></div>';
+        var gridEl = ov.querySelector('.hw-grid');
+        gridEl.style.setProperty('--reels', game.reels);
+
+        function valOf(c) { return c ? (c.value ? c.value * bet : 0) : 0; }
+        function render(flashSet) {
+            gridEl.innerHTML = '';
+            for (var yy = 0; yy < game.rows; yy++) for (var rr = 0; rr < game.reels; rr++) {
+                var c = cells[idx(rr, yy)];
+                var d = document.createElement('div');
+                d.className = 'hw-cell' + (c ? ' coin' : ' empty') + (c && c.jackpot ? ' jp jp-' + c.jackpot : '') + (flashSet && flashSet[idx(rr, yy)] ? ' new' : '');
+                if (c && c.jackpot) d.innerHTML = '<span class="hw-coin">' + game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon + '</span><span class="hw-lab">' + Casino.Jackpots.LABEL[c.jackpot] + '</span>';
+                else if (c) d.innerHTML = '<span class="hw-coin">' + game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon + '</span><span class="hw-val">' + fmt(c.value * bet) + '</span>';
+                gridEl.appendChild(d);
+            }
+        }
+        var reEl = ov.querySelector('.hw-re'), sumEl = ov.querySelector('.hw-sum');
+        function curSum() { var s = 0; for (var i = 0; i < total; i++) s += valOf(cells[i]); return s; }
+        render(null); sumEl.textContent = fmt(curSum());
+
+        var respins = hw.respins;
+        function step() {
+            if (self._destroyed) return Promise.resolve();
+            if (respins <= 0 || locked >= total) return Promise.resolve();
+            respins--;
+            Casino.Sound.spin();
+            // dober prázdné pozice
+            var flash = {}, gotNew = false;
+            for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) {
+                var i = idx(r, y);
+                if (cells[i]) continue;
+                // šance na novou minci v respinu
+                if (Math.random() < 0.2) { cells[i] = assignCoin(game, bet); locked++; flash[i] = true; gotNew = true; }
+            }
+            if (gotNew) { respins = hw.respins; Casino.Sound.reelStop(2); }
+            reEl.textContent = respins;
+            render(flash); sumEl.textContent = fmt(curSum());
+            return delay(self.turbo ? 320 : 620).then(step);
+        }
+
+        return delay(700).then(step).then(function () {
+            // vyhodnocení
+            var win = 0, tiers = {};
+            for (var i = 0; i < total; i++) {
+                var c = cells[i]; if (!c) continue;
+                if (c.value) win += c.value * bet;
+                else if (c.jackpot) tiers[c.jackpot] = true;
+            }
+            if (locked >= total) tiers.grand = true;   // plná mřížka = GRAND
+            var jpWin = 0, jpNames = [];
+            Object.keys(tiers).forEach(function (t) { var v = Casino.Jackpots.win(t); jpWin += v; jpNames.push(Casino.Jackpots.LABEL[t]); });
+            win += jpWin;
+            if (win > 0) { Casino.Account.credit(win); Casino.Account.recordSpin(game.id, 0, win); }
+            sumEl.textContent = fmt(win);
+            if (jpNames.length) { self.coinRain(); Casino.Sound.bigWinFanfare(); }
+            else if (win > bet * 10) { self.coinRain(); Casino.Sound.win(3); }
+            else Casino.Sound.win(2);
+            self.message('Hold & Win: +' + fmt(win) + (jpNames.length ? ' · JACKPOT ' + jpNames.join(', ') + '!' : ''));
+            self.winEl.textContent = fmt(win);
+            return delay(self.turbo ? 1300 : 2400);
+        }).then(function () {
+            self.fsMode = false;
+            ov.remove();
+        });
     };
 
     Machine.prototype.flashFsRetrigger = function () {
