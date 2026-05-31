@@ -385,3 +385,124 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
 @media (max-width: 380px) {
     .ctrl-cell.ctrl-balance { display: none; }
 }
+
+/* ==========================================================================
+   STOLNÍ / ARKÁDOVÉ HRY – společný rámec
+   ========================================================================== */
+.table-game { border-radius: 22px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--panel-solid); }
+.tg-stage { position: relative; padding: 18px 14px; text-align: center; overflow: hidden; min-height: 320px; }
+.tg-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; padding: 16px; background: rgba(0, 0, 0, .4); border-top: 1px solid var(--border); }
+
+/* sdílené velké akční tlačítko */
+.drop-btn, .cast-btn, .spin-roul, .deal-btn, .crash-btn, .play-btn, .fold-btn {
+    height: 52px; padding: 0 24px; border-radius: 14px; font-size: 16px; font-weight: 900; letter-spacing: .5px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #2a1700;
+    box-shadow: 0 6px 18px rgba(255, 155, 33, .4); transition: transform .12s, filter .12s;
+}
+.drop-btn:hover, .cast-btn:hover, .spin-roul:hover, .deal-btn:hover, .crash-btn:hover, .play-btn:hover, .fold-btn:hover { transform: translateY(-2px); }
+.drop-btn:active, .cast-btn:active, .spin-roul:active, .crash-btn:active { transform: scale(.97); }
+.cast-btn.busy, button:disabled { opacity: .55; pointer-events: none; }
+.ctrl-mini { height: 48px; padding: 0 16px; border-radius: 12px; background: rgba(255, 255, 255, .07); border: 1px solid var(--border); color: var(--text); font-weight: 800; }
+.ctrl-mini.on { background: rgba(124, 255, 107, .2); border-color: var(--green); color: var(--green); }
+
+/* ---------- PLINKO ---------- */
+.plinko-hist { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; min-height: 24px; margin-bottom: 8px; }
+.ph { font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 8px; }
+.plinko-canvas-holder { display: flex; justify-content: center; }
+.plinko-win { font-weight: 900; font-size: 18px; min-height: 24px; margin-top: 8px; }
+.risk-seg { display: flex; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.risk-seg button { padding: 12px 14px; background: rgba(255, 255, 255, .05); color: var(--muted); font-weight: 800; }
+.risk-seg button.on { background: var(--accent); color: #04121f; }
+
+/* ---------- CRASH ---------- */
+.crash-hist { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; min-height: 24px; margin-bottom: 6px; }
+.ch { font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 8px; border: 1px solid; background: rgba(0, 0, 0, .35); }
+.crash-canvas-holder { position: relative; display: flex; justify-content: center; }
+.crash-mult { position: absolute; top: 16px; left: 0; right: 0; text-align: center; font-size: clamp(30px, 9vw, 46px); font-weight: 900; text-shadow: 0 0 22px rgba(0, 0, 0, .6); pointer-events: none; }
+.auto-cash { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); background: rgba(255, 255, 255, .05); padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); }
+.auto-cash input[type=number] { width: 56px; background: rgba(0, 0, 0, .3); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px; font-weight: 700; }
+.crash-btn { min-width: 170px; }
+.crash-btn.cash { background: linear-gradient(135deg, #7CFF6B, #2bd44f); color: #06220f; box-shadow: 0 6px 18px rgba(43, 212, 79, .4); animation: spinPulse 1s infinite; }
+.crash-btn.done { background: rgba(255, 255, 255, .1); color: var(--muted); box-shadow: none; }
+
+/* ---------- RYBAŘENÍ ---------- */
+.fishing-scene { position: relative; height: 300px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: linear-gradient(180deg, #0c3656 0%, #062033 100%); }
+.fishing-scene::after { content: ''; position: absolute; left: 0; right: 0; top: 40px; height: 2px; background: rgba(255, 255, 255, .15); }
+.boat { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 36px; z-index: 4; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .5)); }
+.fish-line { position: absolute; top: 36px; left: 50%; width: 2px; height: 26px; background: rgba(255, 255, 255, .55); transform: translateX(-50%); transition: height .7s cubic-bezier(.4, .1, .3, 1); z-index: 3; }
+.fish-line.cast-down { height: 215px; }
+.fish-line.tug { animation: fishTug .35s ease; }
+@keyframes fishTug { 25% { height: 225px; } 60% { height: 205px; } }
+.hook { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); display: grid; place-items: center; }
+.hook-ico { font-size: 16px; }
+.hook-fish { font-size: 30px; position: absolute; top: 6px; filter: drop-shadow(0 0 8px rgba(255, 255, 255, .4)); }
+.deco-fish { position: absolute; font-size: 24px; animation: swim linear infinite; opacity: .8; z-index: 1; }
+.deco-fish.rev { animation-name: swimRev; }
+@keyframes swim { from { transform: translateX(-60px) scaleX(1); } to { transform: translateX(560px) scaleX(1); } }
+@keyframes swimRev { from { transform: translateX(560px) scaleX(-1); } to { transform: translateX(-60px) scaleX(-1); } }
+.catch-reveal { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 2px; background: radial-gradient(circle, rgba(6, 32, 51, .55), rgba(4, 18, 30, .92)); z-index: 6; }
+.catch-reveal.hidden { display: none; }
+.cr-ico { font-size: clamp(64px, 18vw, 100px); animation: bwPop .5s cubic-bezier(.2, 1.7, .4, 1); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .5)); }
+.catch-reveal.big .cr-ico { animation: bwPop .5s, bob 1.5s .5s infinite; }
+.cr-name { font-size: 22px; font-weight: 900; }
+.cr-mult { font-size: 24px; color: var(--gold); font-weight: 900; }
+.catch-reveal.junk .cr-mult { color: var(--muted); font-size: 16px; }
+.cr-win { font-size: 28px; color: var(--green); font-weight: 900; }
+
+/* ---------- DEALER (ruleta i poker) ---------- */
+.dealer-av { font-size: 36px; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .5)); }
+.speech { position: relative; background: #fff; color: #1a1030; padding: 9px 14px; border-radius: 14px; font-size: 13px; font-weight: 700; max-width: 320px; box-shadow: 0 4px 12px rgba(0, 0, 0, .4); }
+.speech::before { content: ''; position: absolute; left: -7px; top: 14px; border: 7px solid transparent; border-right-color: #fff; }
+.speech.hidden { display: none; }
+.speech.pop { animation: bwPop .3s cubic-bezier(.2, 1.6, .4, 1); }
+
+/* ---------- RULETA ---------- */
+.roul-top { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; margin-bottom: 8px; }
+.roul-top .dealer { display: flex; align-items: center; gap: 8px; }
+.roul-hist { display: flex; gap: 4px; flex-wrap: wrap; }
+.rh { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; }
+.rh.red { background: #d4213d; } .rh.black { background: #1c1c24; border: 1px solid rgba(255,255,255,.15); } .rh.green { background: #1ea65a; }
+.wheel-wrap { position: relative; display: inline-block; margin: 4px auto 2px; }
+.wheel-pointer { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); color: var(--gold); font-size: 20px; filter: drop-shadow(0 0 4px #000); z-index: 2; }
+.roul-board { display: grid; grid-template-columns: 0.8fr repeat(12, 1fr) 0.9fr; gap: 3px; max-width: 580px; margin: 10px auto 0; }
+.rb-cell { position: relative; min-height: 32px; display: grid; place-items: center; border-radius: 5px; font-size: 12px; font-weight: 800; cursor: pointer; border: 1px solid rgba(255, 255, 255, .12); transition: transform .1s; user-select: none; }
+.rb-cell:hover { outline: 2px solid var(--gold); z-index: 3; transform: scale(1.04); }
+.rb-cell.num.red { background: #b81d33; color: #fff; } .rb-cell.num.black { background: #18181f; color: #fff; } .rb-cell.num.green { background: #1ea65a; color: #fff; }
+.rb-cell.side { background: rgba(255, 255, 255, .06); font-size: 11px; color: var(--text); }
+.rb-cell.side.red { background: #b81d33; } .rb-cell.side.black { background: #18181f; }
+.rb-chip { position: absolute; bottom: 0; right: 0; font-size: 9px; font-weight: 900; background: var(--gold); color: #2a1700; padding: 1px 4px; border-radius: 8px; display: none; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.rb-chip.on { display: block; }
+.chip-row { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+.chip { width: 50px; height: 50px; border-radius: 50%; font-weight: 900; font-size: 12px; border: 3px dashed rgba(255, 255, 255, .55); background: radial-gradient(circle at 50% 35%, #3a3a44, #121218); color: #fff; transition: transform .12s; }
+.chip:hover { transform: scale(1.08); }
+.chip.on { border-color: var(--gold); box-shadow: 0 0 14px var(--gold); color: var(--gold); }
+.c-total { color: var(--gold); }
+
+/* ---------- POKER ---------- */
+.poker-dealer { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 4px; }
+.card-area { margin: 6px 0; }
+.card-area-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.card-row { display: flex; gap: 8px; justify-content: center; }
+.pcard { width: 62px; height: 88px; border-radius: 9px; background: #fff; color: #1a1030; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 5px 12px rgba(0, 0, 0, .45); position: relative; animation: cardIn .35s ease; }
+.pcard.red { color: #d4213d; }
+.pcard.down { background: repeating-linear-gradient(45deg, #3a2a6a, #3a2a6a 6px, #2a1c52 6px, #2a1c52 12px); border: 2px solid rgba(255, 255, 255, .25); color: transparent; }
+.pcard.down::after { content: '🎰'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 26px; opacity: .5; }
+.pc-v { font-size: 24px; line-height: 1; } .pc-s { font-size: 22px; line-height: 1; }
+@keyframes cardIn { from { transform: rotateY(90deg) translateY(-10px); opacity: 0; } }
+.poker-result { min-height: 42px; font-weight: 700; font-size: 14px; margin: 8px auto; max-width: 520px; opacity: 0; transition: opacity .2s; }
+.poker-result.show { opacity: 1; }
+.poker-result.good { color: var(--green); } .poker-result.bad { color: var(--red); }
+.poker-actions { display: flex; gap: 10px; }
+.play-btn { background: linear-gradient(135deg, #7CFF6B, #2bd44f); color: #06220f; box-shadow: 0 6px 18px rgba(43, 212, 79, .4); }
+.fold-btn { background: linear-gradient(135deg, #ff7a85, #e0394a); color: #2a0006; box-shadow: 0 6px 18px rgba(224, 57, 74, .4); }
+.pp-toggle { cursor: pointer; }
+
+@media (max-width: 560px) {
+    .roul-board { gap: 2px; }
+    .rb-cell { min-height: 26px; font-size: 10px; }
+    .chip { width: 44px; height: 44px; }
+    .pcard { width: 50px; height: 72px; }
+    .pc-v { font-size: 19px; } .pc-s { font-size: 17px; }
+    .speech { max-width: 220px; font-size: 12px; }
+    .drop-btn, .cast-btn, .spin-roul, .deal-btn, .crash-btn, .play-btn, .fold-btn { font-size: 14px; padding: 0 16px; }
+}

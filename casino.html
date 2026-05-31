@@ -394,6 +394,127 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
     .ctrl-cell.ctrl-balance { display: none; }
 }
 
+/* ==========================================================================
+   STOLNÍ / ARKÁDOVÉ HRY – společný rámec
+   ========================================================================== */
+.table-game { border-radius: 22px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--panel-solid); }
+.tg-stage { position: relative; padding: 18px 14px; text-align: center; overflow: hidden; min-height: 320px; }
+.tg-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; padding: 16px; background: rgba(0, 0, 0, .4); border-top: 1px solid var(--border); }
+
+/* sdílené velké akční tlačítko */
+.drop-btn, .cast-btn, .spin-roul, .deal-btn, .crash-btn, .play-btn, .fold-btn {
+    height: 52px; padding: 0 24px; border-radius: 14px; font-size: 16px; font-weight: 900; letter-spacing: .5px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #2a1700;
+    box-shadow: 0 6px 18px rgba(255, 155, 33, .4); transition: transform .12s, filter .12s;
+}
+.drop-btn:hover, .cast-btn:hover, .spin-roul:hover, .deal-btn:hover, .crash-btn:hover, .play-btn:hover, .fold-btn:hover { transform: translateY(-2px); }
+.drop-btn:active, .cast-btn:active, .spin-roul:active, .crash-btn:active { transform: scale(.97); }
+.cast-btn.busy, button:disabled { opacity: .55; pointer-events: none; }
+.ctrl-mini { height: 48px; padding: 0 16px; border-radius: 12px; background: rgba(255, 255, 255, .07); border: 1px solid var(--border); color: var(--text); font-weight: 800; }
+.ctrl-mini.on { background: rgba(124, 255, 107, .2); border-color: var(--green); color: var(--green); }
+
+/* ---------- PLINKO ---------- */
+.plinko-hist { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; min-height: 24px; margin-bottom: 8px; }
+.ph { font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 8px; }
+.plinko-canvas-holder { display: flex; justify-content: center; }
+.plinko-win { font-weight: 900; font-size: 18px; min-height: 24px; margin-top: 8px; }
+.risk-seg { display: flex; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.risk-seg button { padding: 12px 14px; background: rgba(255, 255, 255, .05); color: var(--muted); font-weight: 800; }
+.risk-seg button.on { background: var(--accent); color: #04121f; }
+
+/* ---------- CRASH ---------- */
+.crash-hist { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; min-height: 24px; margin-bottom: 6px; }
+.ch { font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 8px; border: 1px solid; background: rgba(0, 0, 0, .35); }
+.crash-canvas-holder { position: relative; display: flex; justify-content: center; }
+.crash-mult { position: absolute; top: 16px; left: 0; right: 0; text-align: center; font-size: clamp(30px, 9vw, 46px); font-weight: 900; text-shadow: 0 0 22px rgba(0, 0, 0, .6); pointer-events: none; }
+.auto-cash { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); background: rgba(255, 255, 255, .05); padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); }
+.auto-cash input[type=number] { width: 56px; background: rgba(0, 0, 0, .3); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px; font-weight: 700; }
+.crash-btn { min-width: 170px; }
+.crash-btn.cash { background: linear-gradient(135deg, #7CFF6B, #2bd44f); color: #06220f; box-shadow: 0 6px 18px rgba(43, 212, 79, .4); animation: spinPulse 1s infinite; }
+.crash-btn.done { background: rgba(255, 255, 255, .1); color: var(--muted); box-shadow: none; }
+
+/* ---------- RYBAŘENÍ ---------- */
+.fishing-scene { position: relative; height: 300px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: linear-gradient(180deg, #0c3656 0%, #062033 100%); }
+.fishing-scene::after { content: ''; position: absolute; left: 0; right: 0; top: 40px; height: 2px; background: rgba(255, 255, 255, .15); }
+.boat { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 36px; z-index: 4; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .5)); }
+.fish-line { position: absolute; top: 36px; left: 50%; width: 2px; height: 26px; background: rgba(255, 255, 255, .55); transform: translateX(-50%); transition: height .7s cubic-bezier(.4, .1, .3, 1); z-index: 3; }
+.fish-line.cast-down { height: 215px; }
+.fish-line.tug { animation: fishTug .35s ease; }
+@keyframes fishTug { 25% { height: 225px; } 60% { height: 205px; } }
+.hook { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); display: grid; place-items: center; }
+.hook-ico { font-size: 16px; }
+.hook-fish { font-size: 30px; position: absolute; top: 6px; filter: drop-shadow(0 0 8px rgba(255, 255, 255, .4)); }
+.deco-fish { position: absolute; font-size: 24px; animation: swim linear infinite; opacity: .8; z-index: 1; }
+.deco-fish.rev { animation-name: swimRev; }
+@keyframes swim { from { transform: translateX(-60px) scaleX(1); } to { transform: translateX(560px) scaleX(1); } }
+@keyframes swimRev { from { transform: translateX(560px) scaleX(-1); } to { transform: translateX(-60px) scaleX(-1); } }
+.catch-reveal { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 2px; background: radial-gradient(circle, rgba(6, 32, 51, .55), rgba(4, 18, 30, .92)); z-index: 6; }
+.catch-reveal.hidden { display: none; }
+.cr-ico { font-size: clamp(64px, 18vw, 100px); animation: bwPop .5s cubic-bezier(.2, 1.7, .4, 1); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .5)); }
+.catch-reveal.big .cr-ico { animation: bwPop .5s, bob 1.5s .5s infinite; }
+.cr-name { font-size: 22px; font-weight: 900; }
+.cr-mult { font-size: 24px; color: var(--gold); font-weight: 900; }
+.catch-reveal.junk .cr-mult { color: var(--muted); font-size: 16px; }
+.cr-win { font-size: 28px; color: var(--green); font-weight: 900; }
+
+/* ---------- DEALER (ruleta i poker) ---------- */
+.dealer-av { font-size: 36px; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .5)); }
+.speech { position: relative; background: #fff; color: #1a1030; padding: 9px 14px; border-radius: 14px; font-size: 13px; font-weight: 700; max-width: 320px; box-shadow: 0 4px 12px rgba(0, 0, 0, .4); }
+.speech::before { content: ''; position: absolute; left: -7px; top: 14px; border: 7px solid transparent; border-right-color: #fff; }
+.speech.hidden { display: none; }
+.speech.pop { animation: bwPop .3s cubic-bezier(.2, 1.6, .4, 1); }
+
+/* ---------- RULETA ---------- */
+.roul-top { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; margin-bottom: 8px; }
+.roul-top .dealer { display: flex; align-items: center; gap: 8px; }
+.roul-hist { display: flex; gap: 4px; flex-wrap: wrap; }
+.rh { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; }
+.rh.red { background: #d4213d; } .rh.black { background: #1c1c24; border: 1px solid rgba(255,255,255,.15); } .rh.green { background: #1ea65a; }
+.wheel-wrap { position: relative; display: inline-block; margin: 4px auto 2px; }
+.wheel-pointer { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); color: var(--gold); font-size: 20px; filter: drop-shadow(0 0 4px #000); z-index: 2; }
+.roul-board { display: grid; grid-template-columns: 0.8fr repeat(12, 1fr) 0.9fr; gap: 3px; max-width: 580px; margin: 10px auto 0; }
+.rb-cell { position: relative; min-height: 32px; display: grid; place-items: center; border-radius: 5px; font-size: 12px; font-weight: 800; cursor: pointer; border: 1px solid rgba(255, 255, 255, .12); transition: transform .1s; user-select: none; }
+.rb-cell:hover { outline: 2px solid var(--gold); z-index: 3; transform: scale(1.04); }
+.rb-cell.num.red { background: #b81d33; color: #fff; } .rb-cell.num.black { background: #18181f; color: #fff; } .rb-cell.num.green { background: #1ea65a; color: #fff; }
+.rb-cell.side { background: rgba(255, 255, 255, .06); font-size: 11px; color: var(--text); }
+.rb-cell.side.red { background: #b81d33; } .rb-cell.side.black { background: #18181f; }
+.rb-chip { position: absolute; bottom: 0; right: 0; font-size: 9px; font-weight: 900; background: var(--gold); color: #2a1700; padding: 1px 4px; border-radius: 8px; display: none; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.rb-chip.on { display: block; }
+.chip-row { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+.chip { width: 50px; height: 50px; border-radius: 50%; font-weight: 900; font-size: 12px; border: 3px dashed rgba(255, 255, 255, .55); background: radial-gradient(circle at 50% 35%, #3a3a44, #121218); color: #fff; transition: transform .12s; }
+.chip:hover { transform: scale(1.08); }
+.chip.on { border-color: var(--gold); box-shadow: 0 0 14px var(--gold); color: var(--gold); }
+.c-total { color: var(--gold); }
+
+/* ---------- POKER ---------- */
+.poker-dealer { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 4px; }
+.card-area { margin: 6px 0; }
+.card-area-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.card-row { display: flex; gap: 8px; justify-content: center; }
+.pcard { width: 62px; height: 88px; border-radius: 9px; background: #fff; color: #1a1030; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 5px 12px rgba(0, 0, 0, .45); position: relative; animation: cardIn .35s ease; }
+.pcard.red { color: #d4213d; }
+.pcard.down { background: repeating-linear-gradient(45deg, #3a2a6a, #3a2a6a 6px, #2a1c52 6px, #2a1c52 12px); border: 2px solid rgba(255, 255, 255, .25); color: transparent; }
+.pcard.down::after { content: '🎰'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 26px; opacity: .5; }
+.pc-v { font-size: 24px; line-height: 1; } .pc-s { font-size: 22px; line-height: 1; }
+@keyframes cardIn { from { transform: rotateY(90deg) translateY(-10px); opacity: 0; } }
+.poker-result { min-height: 42px; font-weight: 700; font-size: 14px; margin: 8px auto; max-width: 520px; opacity: 0; transition: opacity .2s; }
+.poker-result.show { opacity: 1; }
+.poker-result.good { color: var(--green); } .poker-result.bad { color: var(--red); }
+.poker-actions { display: flex; gap: 10px; }
+.play-btn { background: linear-gradient(135deg, #7CFF6B, #2bd44f); color: #06220f; box-shadow: 0 6px 18px rgba(43, 212, 79, .4); }
+.fold-btn { background: linear-gradient(135deg, #ff7a85, #e0394a); color: #2a0006; box-shadow: 0 6px 18px rgba(224, 57, 74, .4); }
+.pp-toggle { cursor: pointer; }
+
+@media (max-width: 560px) {
+    .roul-board { gap: 2px; }
+    .rb-cell { min-height: 26px; font-size: 10px; }
+    .chip { width: 44px; height: 44px; }
+    .pcard { width: 50px; height: 72px; }
+    .pc-v { font-size: 19px; } .pc-s { font-size: 17px; }
+    .speech { max-width: 220px; font-size: 12px; }
+    .drop-btn, .cast-btn, .spin-roul, .deal-btn, .crash-btn, .play-btn, .fold-btn { font-size: 14px; padding: 0 16px; }
+}
+
 </style>
 </head>
 <body>
@@ -440,6 +561,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
 (function (root) {
     'use strict';
     var Casino = root.Casino = root.Casino || {};
+    Casino.registry = Casino.registry || [];   // katalog všech her (sloty + arkády + stolní)
 
     /* ---------- Utility ---------- */
     var nf = (typeof Intl !== 'undefined')
@@ -667,7 +789,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             freeSpins: { trigger: 4, count: 15 },
             // hodnoty násobících koulí (vážené – malé hodnoty výrazně častěji)
-            orbValues: [[2, 44], [3, 26], [4, 12], [5, 7], [6, 4], [8, 2.2], [10, 1.4], [15, 0.7], [20, 0.4], [25, 0.2], [50, 0.06], [100, 0.02], [250, 0.005]],
+            orbValues: [[2, 42], [3, 25], [4, 12], [5, 7], [6, 4], [8, 2.2], [10, 1.4], [15, 0.7], [20, 0.4], [25, 0.2], [50, 0.07], [100, 0.025], [250, 0.006], [500, 0.0015]],
             symbols: [
                 { id: 'g1', icon: '🟦', name: 'Modrý', weight: 24, pays: { 9: 0.25, 11: 0.5, 13: 1.2 } },
                 { id: 'g2', icon: '🟩', name: 'Zelený', weight: 22, pays: { 9: 0.3, 11: 0.6, 13: 1.5 } },
@@ -679,12 +801,48 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
                 { id: 'orb', icon: '⚡', name: 'Násobící koule', weight: 2.2, orb: true },
                 { id: 'scatter', icon: '🔮', name: 'Koule Dia (Scatter)', weight: 4, scatter: true, pays: { 4: 2, 5: 5, 6: 50 } }
             ]
+        },
+
+        /* ---- 7) Candy Bonanza (6x5 tumble, cukrové bomby s velkými násobiči) ---- */
+        {
+            id: 'candy',
+            type: 'tumble',
+            name: 'Candy Bonanza',
+            tagline: 'Sladké kaskády a cukrové bomby až x100',
+            emoji: '🍭',
+            volatility: 'Velmi vysoká',
+            rtp: 96,
+            reels: 6, rows: 5,
+            cluster: 9,
+            buckets: [9, 11, 13],
+            theme: { a: '#ff6fd5', b: '#7ad7ff', bg: 'radial-gradient(circle at 50% 0%, #3a1140, #140319)' },
+            bets: [20, 40, 100, 200, 400, 1000, 2000],
+            freeSpins: { trigger: 4, count: 12 },
+            orbValues: [[2, 40], [3, 24], [4, 13], [5, 8], [6, 4.5], [8, 2.6], [10, 1.7], [15, 0.9], [20, 0.5], [25, 0.3], [50, 0.1], [100, 0.04]],
+            symbols: [
+                { id: 's1', icon: '💜', name: 'Fialový bonbón', weight: 24, pays: { 9: 0.25, 11: 0.5, 13: 1.2 } },
+                { id: 's2', icon: '💙', name: 'Modrý bonbón', weight: 22, pays: { 9: 0.3, 11: 0.6, 13: 1.5 } },
+                { id: 's3', icon: '💚', name: 'Zelený bonbón', weight: 20, pays: { 9: 0.4, 11: 0.8, 13: 2 } },
+                { id: 's4', icon: '❤️', name: 'Červené srdce', weight: 18, pays: { 9: 0.5, 11: 1, 13: 2.5 } },
+                { id: 'plum', icon: '🍇', name: 'Hrozny', weight: 12, pays: { 9: 0.8, 11: 1.5, 13: 4 } },
+                { id: 'apple', icon: '🍎', name: 'Jablko', weight: 9, pays: { 9: 1.2, 11: 2.5, 13: 6 } },
+                { id: 'melon', icon: '🍉', name: 'Meloun', weight: 6, pays: { 9: 2, 11: 4, 13: 10 } },
+                { id: 'bomb', icon: '💣', name: 'Cukrová bomba (násobič)', weight: 2.2, orb: true },
+                { id: 'scatter', icon: '🍬', name: 'Bonbón (Scatter)', weight: 4, scatter: true, pays: { 4: 3, 5: 5, 6: 50 } }
+            ]
         }
     ];
 
     Casino.getGame = function (id) {
         for (var i = 0; i < Casino.GAMES.length; i++) if (Casino.GAMES[i].id === id) return Casino.GAMES[i];
         return null;
+    };
+
+    // metadata libovolné hry (i ne-slotové) z katalogu, fallback na slot
+    Casino.metaById = function (id) {
+        for (var i = 0; i < Casino.registry.length; i++) if (Casino.registry[i].id === id) return Casino.registry[i];
+        var g = Casino.getGame(id);
+        return g ? { id: g.id, name: g.name, emoji: g.emoji } : null;
     };
 
 })(typeof window !== 'undefined' ? window : global);
@@ -1228,6 +1386,68 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
             save();
         }
     };
+
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
+/* ===== dealer.js ===== */
+/* ==========================================================================
+   MARES CASINO – Dealer (mluví: text v bublině + hlas přes Web Speech API)
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+
+    var hasSpeech = (typeof window !== 'undefined') && ('speechSynthesis' in window);
+
+    var Dealer = Casino.Dealer = {
+        voice: null,
+        ready: false,
+
+        pickVoice: function () {
+            if (!hasSpeech) return;
+            try {
+                var vs = window.speechSynthesis.getVoices() || [];
+                this.voice = vs.filter(function (v) { return /cs|cz/i.test(v.lang); })[0]
+                    || vs.filter(function (v) { return /sk/i.test(v.lang); })[0]
+                    || vs.filter(function (v) { return /^en/i.test(v.lang); })[0]
+                    || vs[0] || null;
+                this.ready = true;
+            } catch (e) { }
+        },
+
+        // řekni text: ukaž v bublině a (pokud lze) přehraj hlasem
+        say: function (bubbleEl, text) {
+            if (bubbleEl) {
+                bubbleEl.textContent = text;
+                bubbleEl.classList.remove('hidden', 'pop');
+                void bubbleEl.offsetWidth;
+                bubbleEl.classList.add('pop');
+            }
+            this.speak(text);
+        },
+
+        speak: function (text) {
+            if (!hasSpeech) return;
+            if (Casino.Account && !Casino.Account.isSoundOn()) return;
+            try {
+                if (!this.ready) this.pickVoice();
+                var u = new SpeechSynthesisUtterance(text);
+                if (this.voice) u.voice = this.voice;
+                u.lang = (this.voice && this.voice.lang) || 'cs-CZ';
+                u.rate = 1.02; u.pitch = 1.0; u.volume = 0.95;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(u);
+            } catch (e) { }
+        },
+
+        stop: function () { if (hasSpeech) { try { window.speechSynthesis.cancel(); } catch (e) { } } }
+    };
+
+    if (hasSpeech) {
+        try { window.speechSynthesis.onvoiceschanged = function () { Dealer.pickVoice(); }; } catch (e) { }
+    }
 
 })(typeof window !== 'undefined' ? window : global);
 
@@ -1990,6 +2210,1238 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
 
 </script>
 <script>
+/* ===== games/plinko.js ===== */
+/* ==========================================================================
+   MARES CASINO – Plinko (padající kulička, canvas animace)
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var fmt = Casino.util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+
+    var ROWS = 16, BUCKETS = 17;
+    var PROFILES = {
+        low: { label: 'Nízké', m: [9, 3.4, 1.7, 1.4, 1.2, 1.1, 1, 0.9, 0.79, 0.9, 1, 1.1, 1.2, 1.4, 1.7, 3.4, 9] },
+        med: { label: 'Střední', m: [106, 24, 7.9, 4, 1.9, 1.5, 0.93, 0.66, 0.53, 0.66, 0.93, 1.5, 1.9, 4, 7.9, 24, 106] },
+        high: { label: 'Vysoké', m: [557, 111, 37, 11, 3.7, 1.3, 0.37, 0.19, 0.19, 0.19, 0.37, 1.3, 3.7, 11, 37, 111, 557] }
+    };
+    var BETS = [10, 20, 50, 100, 250, 500, 1000];
+
+    function bucketColor(mult) {
+        if (mult >= 50) return '#ff3b3b';
+        if (mult >= 10) return '#ff7a1a';
+        if (mult >= 3) return '#ffb01a';
+        if (mult >= 1.2) return '#ffe14a';
+        if (mult >= 1) return '#7CFF6B';
+        return '#3aa0ff';
+    }
+
+    Casino.Plinko = {
+        open: function (mount, opts) { return new Plinko(mount, opts); }
+    };
+
+    function Plinko(mount, opts) {
+        this.opts = opts || {};
+        this.risk = 'med';
+        this.betIndex = 3;
+        this.balls = [];
+        this.history = [];
+        this.raf = null;
+        this.last = 0;
+        this.destroyed = false;
+        this.auto = 0;
+        this.build(mount);
+    }
+
+    Plinko.prototype.bet = function () { return BETS[this.betIndex]; };
+
+    Plinko.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#34e3ff', b: '#7b61ff', bg: 'radial-gradient(circle at 50% 0%, #10183a, #05030f)' };
+        var f = Casino.UI.gameFrame(mount, {
+            emoji: '🎯', name: 'Plinko', subtitle: 'Pusť kuličku — krajní jamky platí nejvíc',
+            theme: theme, bg: theme.bg, onExit: this.opts.onExit,
+            onInfo: function () { self.info(); }
+        });
+        this.frame = f;
+
+        // recent výsledky
+        this.histEl = el('div', 'plinko-hist');
+        f.stage.appendChild(this.histEl);
+
+        // canvas
+        var holder = el('div', 'plinko-canvas-holder');
+        this.canvas = el('canvas');
+        this.W = 520; this.H = 560;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.canvas.width = this.W * dpr; this.canvas.height = this.H * dpr;
+        this.canvas.style.width = '100%'; this.canvas.style.maxWidth = this.W + 'px';
+        this.ctx = this.canvas.getContext('2d');
+        this.ctx.scale(dpr, dpr);
+        holder.appendChild(this.canvas);
+        f.stage.appendChild(holder);
+
+        this.winLabel = el('div', 'plinko-win', '');
+        f.stage.appendChild(this.winLabel);
+
+        // ovládání
+        var c = f.controls;
+        c.innerHTML =
+            '<div class="ctrl-cell ctrl-bet"><button class="bet-dn">−</button>' +
+            '<div class="bet-val"><label>Sázka</label><b class="c-bet">' + fmt(this.bet()) + '</b></div>' +
+            '<button class="bet-up">+</button></div>' +
+            '<div class="risk-seg" role="group">' +
+            ['low', 'med', 'high'].map(function (r) { return '<button data-r="' + r + '"' + (r === 'med' ? ' class="on"' : '') + '>' + PROFILES[r].label + '</button>'; }).join('') +
+            '</div>' +
+            '<button class="drop-btn">PUSŤ 🎯</button>' +
+            '<button class="auto-btn ctrl-mini">AUTO</button>';
+        this.betEl = c.querySelector('.c-bet');
+        c.querySelector('.bet-dn').onclick = function () { self.changeBet(-1); };
+        c.querySelector('.bet-up').onclick = function () { self.changeBet(1); };
+        c.querySelectorAll('.risk-seg button').forEach(function (b) {
+            b.onclick = function () { Casino.Sound.click(); self.risk = b.dataset.r; c.querySelectorAll('.risk-seg button').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on'); self.draw(); };
+        });
+        c.querySelector('.drop-btn').onclick = function () { Casino.Sound.unlock(); self.drop(); };
+        this.autoBtn = c.querySelector('.auto-btn');
+        this.autoBtn.onclick = function () { self.toggleAuto(); };
+
+        this.geom();
+        this.draw();
+        this.loop = function (ts) { self.tick(ts); };
+        this.raf = requestAnimationFrame(this.loop);
+    };
+
+    Plinko.prototype.geom = function () {
+        this.top = 42; this.bucketH = 60;
+        this.sx = 28; this.center = this.W / 2;
+        this.rowH = (this.H - this.top - this.bucketH) / ROWS;
+    };
+    Plinko.prototype.node = function (row, k) {
+        return { x: this.center + (k - row / 2) * this.sx, y: this.top + row * this.rowH };
+    };
+
+    Plinko.prototype.changeBet = function (d) {
+        var n = this.betIndex + d; if (n < 0 || n >= BETS.length) return;
+        this.betIndex = n; Casino.Sound.click(); this.betEl.textContent = fmt(this.bet());
+    };
+
+    Plinko.prototype.drop = function () {
+        var bet = this.bet();
+        if (!Casino.Account.debit(bet)) { Casino.UI.toast('Nedostatek kreditu!', ''); this.stopAuto(); if (this.opts.onBroke) this.opts.onBroke(); return; }
+        var dirs = [], k = 0;
+        for (var i = 0; i < ROWS; i++) { var d = Math.random() < 0.5 ? 0 : 1; dirs.push(d); k += d; }
+        var nodeK = [0]; for (i = 0; i < ROWS; i++) nodeK.push(nodeK[i] + dirs[i]);
+        var mult = PROFILES[this.risk].m[k];
+        this.balls.push({ nodeK: nodeK, seg: 0, t: 0, bet: bet, mult: mult, bucket: k, landed: false, lastSeg: -1 });
+        Casino.Sound.click();
+    };
+
+    Plinko.prototype.toggleAuto = function () {
+        if (this.auto) { this.stopAuto(); return; }
+        this.auto = 1; this.autoBtn.classList.add('on'); this.autoBtn.textContent = 'STOP';
+        this.autoAcc = 0;
+    };
+    Plinko.prototype.stopAuto = function () { this.auto = 0; if (this.autoBtn) { this.autoBtn.classList.remove('on'); this.autoBtn.textContent = 'AUTO'; } };
+
+    Plinko.prototype.tick = function (ts) {
+        if (this.destroyed) return;
+        var dt = this.last ? Math.min(50, ts - this.last) : 16; this.last = ts;
+        var segDur = 88;
+
+        if (this.auto) {
+            this.autoAcc += dt;
+            if (this.autoAcc >= 360) { this.autoAcc = 0; if (Casino.Account.getBalance() >= this.bet()) this.drop(); else this.stopAuto(); }
+        }
+
+        for (var bi = this.balls.length - 1; bi >= 0; bi--) {
+            var b = this.balls[bi];
+            if (b.landed) { b.flash -= dt; if (b.flash <= 0) this.balls.splice(bi, 1); continue; }
+            b.t += dt / segDur;
+            if (Math.floor(b.seg) !== b.lastSeg) { b.lastSeg = Math.floor(b.seg); Casino.Sound.tick(); }
+            while (b.t >= 1 && b.seg < ROWS) { b.t -= 1; b.seg++; if (b.seg < ROWS) Casino.Sound.tick(); }
+            if (b.seg >= ROWS) this.land(b);
+        }
+        this.draw();
+        this.raf = requestAnimationFrame(this.loop);
+    };
+
+    Plinko.prototype.land = function (b) {
+        b.landed = true; b.flash = 600;
+        var win = Math.round(b.bet * b.mult);
+        if (win > 0) Casino.Account.credit(win);
+        Casino.Account.recordSpin('plinko', b.bet, win);
+        this.history.unshift({ mult: b.mult }); this.history = this.history.slice(0, 14);
+        this.renderHist();
+        var net = win - b.bet;
+        this.winLabel.textContent = (net >= 0 ? '+' : '') + fmt(net) + ' (×' + b.mult + ')';
+        this.winLabel.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+        if (b.mult >= 10) { Casino.Sound.win(b.mult >= 50 ? 3 : 2); }
+        else if (b.mult >= 1) Casino.Sound.win(0);
+        else Casino.Sound.lose();
+        this.flashBucket = { i: b.bucket, t: 600 };
+    };
+
+    Plinko.prototype.draw = function () {
+        var ctx = this.ctx, W = this.W, H = this.H;
+        ctx.clearRect(0, 0, W, H);
+        // pegy
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        for (var r = 1; r < ROWS; r++) for (var k = 0; k <= r; k++) {
+            var p = this.node(r, k);
+            ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, 7); ctx.fill();
+        }
+        // buckety
+        var m = PROFILES[this.risk].m;
+        for (var i = 0; i < BUCKETS; i++) {
+            var bc = this.node(ROWS, i);
+            var x = bc.x - this.sx / 2 + 1, y = this.top + ROWS * this.rowH + 4, w = this.sx - 2, h = this.bucketH - 8;
+            var flashing = this.flashBucket && this.flashBucket.i === i && this.flashBucket.t > 0;
+            ctx.fillStyle = bucketColor(m[i]);
+            ctx.globalAlpha = flashing ? 1 : 0.85;
+            roundRect(ctx, x, y, w, h, 5); ctx.fill();
+            if (flashing) { ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = m[i] >= 1.2 ? '#2a1700' : '#06223a';
+            ctx.font = '700 ' + (m[i] >= 100 ? 8 : 9) + 'px Segoe UI, sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText((m[i] >= 10 ? Math.round(m[i]) : m[i]) + '×', bc.x, y + h / 2);
+        }
+        if (this.flashBucket) { this.flashBucket.t -= 16; if (this.flashBucket.t <= 0) this.flashBucket = null; }
+        // kuličky
+        for (var bi = 0; bi < this.balls.length; bi++) {
+            var b = this.balls[bi];
+            var seg = Math.min(b.seg, ROWS - 1);
+            var n0 = this.node(seg, b.nodeK[seg]);
+            var n1 = this.node(seg + 1, b.nodeK[seg + 1]);
+            var t = b.landed ? 1 : b.t;
+            var bx = n0.x + (n1.x - n0.x) * t;
+            var by = n0.y + (n1.y - n0.y) * t - Math.sin(t * Math.PI) * 6;
+            if (b.landed) { var lp = this.node(ROWS, b.bucket); bx = lp.x; by = this.top + ROWS * this.rowH + 14; }
+            var g = ctx.createRadialGradient(bx - 2, by - 2, 1, bx, by, 8);
+            g.addColorStop(0, '#fff7d6'); g.addColorStop(1, '#ffb01a');
+            ctx.fillStyle = g; ctx.shadowColor = '#ffd24a'; ctx.shadowBlur = 10;
+            ctx.beginPath(); ctx.arc(bx, by, 7, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+        }
+    };
+
+    Plinko.prototype.renderHist = function () {
+        this.histEl.innerHTML = this.history.map(function (h) {
+            return '<span class="ph" style="background:' + bucketColor(h.mult) + ';color:' + (h.mult >= 1.2 ? '#2a1700' : '#06223a') + '">' + (h.mult >= 10 ? Math.round(h.mult) : h.mult) + '×</span>';
+        }).join('');
+    };
+
+    Plinko.prototype.info = function () {
+        var m = PROFILES[this.risk].m;
+        Casino.UI.modal({
+            title: '🎯 Plinko — jak hrát',
+            body: '<p style="color:var(--muted);line-height:1.6">Pusť kuličku z vrcholu. Odráží se mezi kolíky a spadne do jedné z ' + BUCKETS + ' jamek. ' +
+                'Výhra = sázka × násobič jamky. <b>Krajní jamky platí nejvíc</b> (až 557× na vysoké riziko), ale jsou nejméně pravděpodobné.</p>' +
+                '<p style="color:var(--muted);margin-top:10px">Riziko mění rozložení násobičů. RTP ≈ 96–98 %. Tlačítko AUTO pouští kuličky automaticky.</p>'
+        });
+    };
+
+    Plinko.prototype.destroy = function () {
+        this.destroyed = true; this.auto = 0;
+        if (this.raf) cancelAnimationFrame(this.raf);
+    };
+
+    function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    }
+
+    Casino.registry.push({
+        id: 'plinko', name: 'Plinko', emoji: '🎯', category: 'arcade',
+        tagline: 'Pusť kuličku a sleduj, kam spadne',
+        theme: { a: '#34e3ff', b: '#7b61ff', bg: 'radial-gradient(circle at 50% 0%, #10183a, #05030f)' },
+        badges: ['RTP ~97%', 'Arkáda'], meta: '16 řad · jamky až 557×',
+        open: function (mount, opts) { return Casino.Plinko.open(mount, opts); }
+    });
+
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
+/* ===== games/crash.js ===== */
+/* ==========================================================================
+   MARES CASINO – To the Moon (crash / raketa). Vyber cash-out než spadne.
+   Crash bod: m = 0.99/(1-r) => ~1% house edge (RTP ~99% při výběru).
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var fmt = Casino.util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+
+    var BETS = [10, 20, 50, 100, 250, 500, 1000];
+    var K = 0.32; // růst násobiče (e^(K*t))
+
+    function crashPoint() {
+        var r = Math.random();
+        var m = 0.99 / (1 - r);
+        if (m < 1) m = 1.0;
+        m = Math.min(m, 100000);
+        return Math.floor(m * 100) / 100;
+    }
+
+    Casino.Crash = { open: function (mount, opts) { return new Crash(mount, opts); } };
+
+    function Crash(mount, opts) {
+        this.opts = opts || {};
+        this.betIndex = 3;
+        this.state = 'idle';
+        this.history = [];
+        this.autoOn = false; this.autoTarget = 2.0;
+        this.pts = [];
+        this.destroyed = false;
+        this.build(mount);
+    }
+    Crash.prototype.bet = function () { return BETS[this.betIndex]; };
+
+    Crash.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#ff5d6c', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 10%, #0b1233, #05030f)' };
+        var f = Casino.UI.gameFrame(mount, {
+            emoji: '🚀', name: 'To the Moon', subtitle: 'Vyber výhru než raketa vybuchne',
+            theme: theme, bg: theme.bg, onExit: this.opts.onExit, onInfo: function () { self.info(); }
+        });
+        this.frame = f;
+
+        this.histEl = el('div', 'crash-hist'); f.stage.appendChild(this.histEl);
+        var holder = el('div', 'crash-canvas-holder');
+        this.canvas = el('canvas'); this.W = 540; this.H = 360;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.canvas.width = this.W * dpr; this.canvas.height = this.H * dpr;
+        this.canvas.style.width = '100%'; this.canvas.style.maxWidth = this.W + 'px';
+        this.ctx = this.canvas.getContext('2d'); this.ctx.scale(dpr, dpr);
+        holder.appendChild(this.canvas);
+        this.multEl = el('div', 'crash-mult', '1.00×');
+        holder.appendChild(this.multEl);
+        f.stage.appendChild(holder);
+
+        var c = f.controls;
+        c.innerHTML =
+            '<div class="ctrl-cell ctrl-bet"><button class="bet-dn">−</button>' +
+            '<div class="bet-val"><label>Sázka</label><b class="c-bet">' + fmt(this.bet()) + '</b></div>' +
+            '<button class="bet-up">+</button></div>' +
+            '<label class="auto-cash"><input type="checkbox" class="ac-on"> Auto výběr ×<input type="number" class="ac-val" value="2.00" step="0.1" min="1.01"></label>' +
+            '<button class="crash-btn idle">VSADIT</button>';
+        this.betEl = c.querySelector('.c-bet');
+        c.querySelector('.bet-dn').onclick = function () { self.changeBet(-1); };
+        c.querySelector('.bet-up').onclick = function () { self.changeBet(1); };
+        this.acOn = c.querySelector('.ac-on'); this.acVal = c.querySelector('.ac-val');
+        this.acOn.onchange = function () { self.autoOn = self.acOn.checked; };
+        this.acVal.onchange = function () { self.autoTarget = Math.max(1.01, parseFloat(self.acVal.value) || 2); self.acVal.value = self.autoTarget.toFixed(2); };
+        this.btn = c.querySelector('.crash-btn');
+        this.btn.onclick = function () { Casino.Sound.unlock(); self.onButton(); };
+
+        this.draw();
+        this.loop = function (ts) { self.tick(ts); };
+        this.raf = requestAnimationFrame(this.loop);
+    };
+
+    Crash.prototype.changeBet = function (d) {
+        if (this.state !== 'idle') return;
+        var n = this.betIndex + d; if (n < 0 || n >= BETS.length) return;
+        this.betIndex = n; Casino.Sound.click(); this.betEl.textContent = fmt(this.bet());
+    };
+
+    Crash.prototype.onButton = function () {
+        if (this.state === 'idle') this.startRound();
+        else if (this.state === 'running' && !this.cashed) this.cashOut(this.mult);
+    };
+
+    Crash.prototype.startRound = function () {
+        var bet = this.bet();
+        if (!Casino.Account.debit(bet)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+        this.roundBet = bet;
+        this.crash = crashPoint();
+        this.startT = performance.now();
+        this.mult = 1.0; this.cashed = false; this.cashedAt = 0; this.pts = [];
+        this.state = 'running';
+        this.btn.className = 'crash-btn cash';
+        Casino.Sound.spin();
+    };
+
+    Crash.prototype.cashOut = function (atMult) {
+        if (this.cashed) return;
+        this.cashed = true; this.cashedAt = atMult;
+        var win = Math.round(this.roundBet * atMult);
+        this.winAmount = win;
+        Casino.Account.credit(win);
+        Casino.Sound.win(atMult >= 10 ? 3 : atMult >= 3 ? 2 : 1);
+        this.btn.className = 'crash-btn done';
+        this.btn.textContent = 'VYBRÁNO ×' + atMult.toFixed(2);
+        Casino.UI.toast('Výběr ×' + atMult.toFixed(2) + ' → +' + fmt(win), 'good');
+    };
+
+    Crash.prototype.endRound = function () {
+        this.state = 'crashed';
+        var win = this.cashed ? this.winAmount : 0;
+        Casino.Account.recordSpin('crash', this.roundBet, win);
+        this.history.unshift(this.crash); this.history = this.history.slice(0, 16);
+        this.renderHist();
+        if (!this.cashed) { Casino.Sound.lose(); }
+        this.crashT = performance.now();
+    };
+
+    Crash.prototype.tick = function (ts) {
+        if (this.destroyed) return;
+        if (this.state === 'running') {
+            var tSec = (ts - this.startT) / 1000;
+            this.mult = Math.exp(K * tSec);
+            if (!this.cashed && this.autoOn && this.mult >= this.autoTarget && this.autoTarget <= this.crash) {
+                this.cashOut(this.autoTarget);
+            }
+            if (this.mult >= this.crash) { this.mult = this.crash; this.endRound(); }
+            else { this.pts.push({ t: tSec, m: this.mult }); if (this.pts.length > 1200) this.pts.shift(); }
+        } else if (this.state === 'crashed') {
+            if (ts - this.crashT > 1500) this.reset();
+        }
+        this.draw();
+        this.raf = requestAnimationFrame(this.loop);
+    };
+
+    Crash.prototype.reset = function () {
+        this.state = 'idle';
+        this.btn.className = 'crash-btn idle'; this.btn.textContent = 'VSADIT';
+        this.multEl.textContent = '1.00×'; this.multEl.style.color = '';
+    };
+
+    Crash.prototype.draw = function () {
+        var ctx = this.ctx, W = this.W, H = this.H, pad = 30;
+        ctx.clearRect(0, 0, W, H);
+        // mřížka
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+        for (var gx = 0; gx <= 5; gx++) { var x = pad + (W - 2 * pad) * gx / 5; ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, H - pad); ctx.stroke(); }
+        for (var gy = 0; gy <= 4; gy++) { var y = pad + (H - 2 * pad) * gy / 4; ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke(); }
+
+        var running = this.state === 'running', crashed = this.state === 'crashed';
+        var curMult = this.mult || 1;
+        var tmax = Math.max(this.pts.length ? this.pts[this.pts.length - 1].t : 1, 3);
+        var mmax = Math.max(curMult, 2);
+        var self = this;
+        function px(t) { return pad + (W - 2 * pad) * (t / tmax); }
+        function py(m) { return (H - pad) - (H - 2 * pad) * ((m - 1) / (mmax - 1)); }
+
+        if (this.pts.length > 1) {
+            ctx.beginPath(); ctx.moveTo(px(0), py(1));
+            for (var i = 0; i < this.pts.length; i++) ctx.lineTo(px(this.pts[i].t), py(this.pts[i].m));
+            var grad = ctx.createLinearGradient(0, 0, W, 0);
+            grad.addColorStop(0, '#ffd24a'); grad.addColorStop(1, crashed ? '#ff3b3b' : (this.cashed ? '#7CFF6B' : '#ff7a1a'));
+            ctx.strokeStyle = grad; ctx.lineWidth = 4; ctx.lineJoin = 'round';
+            ctx.shadowColor = crashed ? '#ff3b3b' : '#ffd24a'; ctx.shadowBlur = 12; ctx.stroke(); ctx.shadowBlur = 0;
+            // plocha pod křivkou
+            ctx.lineTo(px(this.pts[this.pts.length - 1].t), H - pad); ctx.lineTo(px(0), H - pad); ctx.closePath();
+            ctx.fillStyle = 'rgba(255,210,74,0.08)'; ctx.fill();
+            // raketa / exploze na hlavě
+            var hx = px(this.pts[this.pts.length - 1].t), hy = py(this.pts[this.pts.length - 1].m);
+            ctx.font = '26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(crashed ? '💥' : '🚀', hx, hy - 4);
+        }
+        // text násobiče
+        this.multEl.textContent = curMult.toFixed(2) + '×';
+        this.multEl.style.color = crashed && !this.cashed ? 'var(--red)' : (this.cashed ? 'var(--green)' : '#fff');
+        if (crashed) this.multEl.textContent = '💥 ' + this.crash.toFixed(2) + '×';
+        if (running && !this.cashed) this.btn.textContent = 'VYBER ×' + curMult.toFixed(2);
+    };
+
+    Crash.prototype.renderHist = function () {
+        this.histEl.innerHTML = this.history.map(function (m) {
+            var col = m >= 10 ? '#ff3b3b' : m >= 2 ? '#7CFF6B' : '#ff7a1a';
+            return '<span class="ch" style="color:' + col + ';border-color:' + col + '">' + m.toFixed(2) + '×</span>';
+        }).join('');
+    };
+
+    Crash.prototype.info = function () {
+        Casino.UI.modal({
+            title: '🚀 To the Moon — jak hrát',
+            body: '<p style="color:var(--muted);line-height:1.6">Vsaď a raketa odstartuje. Násobič roste — klikni <b>VYBER</b>, než raketa vybuchne, a získáš sázku × aktuální násobič. ' +
+                'Když vybuchne dřív, sázka propadá.</p>' +
+                '<p style="color:var(--muted);margin-top:10px">Můžeš zapnout <b>Auto výběr</b> na zvolený násobič. Crash může přijít kdykoliv (i hned na 1.00×). RTP ≈ 99 %.</p>'
+        });
+    };
+
+    Crash.prototype.destroy = function () { this.destroyed = true; if (this.raf) cancelAnimationFrame(this.raf); };
+
+    Casino.registry.push({
+        id: 'crash', name: 'To the Moon', emoji: '🚀', category: 'arcade',
+        tagline: 'Raketa stoupá — vyber než vybuchne',
+        theme: { a: '#ff5d6c', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 10%, #0b1233, #05030f)' },
+        badges: ['RTP ~99%', 'Crash'], meta: 'Násobič bez stropu · auto výběr',
+        open: function (mount, opts) { return Casino.Crash.open(mount, opts); }
+    });
+
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
+/* ===== games/fishing.js ===== */
+/* ==========================================================================
+   MARES CASINO – Velký úlovek (rybaření). Nahoď, navíjej, chyť rybu.
+   RTP ~96 % (váhy výsledků odladěny).
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var util = Casino.util, fmt = util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+
+    var BETS = [10, 20, 50, 100, 250, 500, 1000];
+    var OUTCOMES = [
+        { icon: '🥾', name: 'Stará bota', mult: 0, weight: 26 },
+        { icon: '🌿', name: 'Mořská řasa', mult: 0, weight: 24 },
+        { icon: '🥫', name: 'Plechovka', mult: 0, weight: 20 },
+        { icon: '🦐', name: 'Kreveta', mult: 1.2, weight: 26 },
+        { icon: '🐟', name: 'Rybka', mult: 1.5, weight: 18 },
+        { icon: '🐠', name: 'Tropická ryba', mult: 2, weight: 11 },
+        { icon: '🐡', name: 'Čtverzubec', mult: 3, weight: 6 },
+        { icon: '🦀', name: 'Krab', mult: 5, weight: 2.6 },
+        { icon: '🐙', name: 'Chobotnice', mult: 10, weight: 0.8 },
+        { icon: '🦈', name: 'Žralok', mult: 25, weight: 0.22 },
+        { icon: '🐋', name: 'Velryba', mult: 50, weight: 0.06 },
+        { icon: '💎', name: 'Truhla pokladů', mult: 100, weight: 0.015 }
+    ];
+
+    Casino.Fishing = { open: function (mount, opts) { return new Fishing(mount, opts); } };
+
+    function Fishing(mount, opts) {
+        this.opts = opts || {};
+        this.betIndex = 3;
+        this.busy = false;
+        this.destroyed = false;
+        this.timers = [];
+        this.build(mount);
+    }
+    Fishing.prototype.bet = function () { return BETS[this.betIndex]; };
+    Fishing.prototype.after = function (ms, fn) { var id = setTimeout(fn, ms); this.timers.push(id); return id; };
+
+    Fishing.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#27d3c4', b: '#1a73ff', bg: 'linear-gradient(180deg, #0a2a45 0%, #062033 100%)' };
+        var f = Casino.UI.gameFrame(mount, {
+            emoji: '🎣', name: 'Velký úlovek', subtitle: 'Nahoď a chyť, co se dá — velryba i poklad čekají',
+            theme: theme, bg: theme.bg, onExit: this.opts.onExit, onInfo: function () { self.info(); }
+        });
+        this.frame = f;
+
+        var scene = el('div', 'fishing-scene');
+        scene.innerHTML =
+            '<div class="boat">🚤</div>' +
+            '<div class="fish-line"><div class="hook"><span class="hook-ico">🪝</span><span class="hook-fish"></span></div></div>' +
+            '<div class="water-deco"></div>';
+        // dekorativní ryby
+        var deco = scene.querySelector('.water-deco');
+        ['🐟', '🐠', '🐡', '🦐', '🐙'].forEach(function (fi, i) {
+            var d = el('span', 'deco-fish', fi);
+            d.style.top = (40 + i * 13) + '%';
+            d.style.animationDuration = (8 + i * 2.5) + 's';
+            d.style.animationDelay = (-i * 2) + 's';
+            if (i % 2) d.classList.add('rev');
+            deco.appendChild(d);
+        });
+        f.stage.appendChild(scene);
+        this.scene = scene;
+        this.line = scene.querySelector('.fish-line');
+        this.hookFish = scene.querySelector('.hook-fish');
+
+        this.reveal = el('div', 'catch-reveal hidden');
+        f.stage.appendChild(this.reveal);
+
+        var c = f.controls;
+        c.innerHTML =
+            '<div class="ctrl-cell ctrl-bet"><button class="bet-dn">−</button>' +
+            '<div class="bet-val"><label>Sázka</label><b class="c-bet">' + fmt(this.bet()) + '</b></div>' +
+            '<button class="bet-up">+</button></div>' +
+            '<div class="ctrl-cell ctrl-win"><label>Úlovek</label><b class="c-win">—</b></div>' +
+            '<button class="cast-btn">NAHODIT 🎣</button>';
+        this.betEl = c.querySelector('.c-bet'); this.winEl = c.querySelector('.c-win');
+        c.querySelector('.bet-dn').onclick = function () { self.changeBet(-1); };
+        c.querySelector('.bet-up').onclick = function () { self.changeBet(1); };
+        this.castBtn = c.querySelector('.cast-btn');
+        this.castBtn.onclick = function () { Casino.Sound.unlock(); self.cast(); };
+    };
+
+    Fishing.prototype.changeBet = function (d) {
+        if (this.busy) return;
+        var n = this.betIndex + d; if (n < 0 || n >= BETS.length) return;
+        this.betIndex = n; Casino.Sound.click(); this.betEl.textContent = fmt(this.bet());
+    };
+
+    Fishing.prototype.cast = function () {
+        if (this.busy) return;
+        var bet = this.bet();
+        if (!Casino.Account.debit(bet)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+        this.busy = true; this.castBtn.disabled = true; this.castBtn.classList.add('busy');
+        this.reveal.classList.add('hidden');
+        this.winEl.textContent = '…';
+        var outcome = util.weightedPick(OUTCOMES);
+        var self = this;
+        Casino.Sound.spin();
+
+        // hák dolů
+        this.line.classList.add('cast-down');
+        this.after(750, function () {
+            // zachyť
+            self.hookFish.textContent = outcome.icon;
+            self.line.classList.add('tug'); Casino.Sound.reelStop(2);
+            self.after(350, function () {
+                self.line.classList.remove('tug');
+                // navíjení nahoru
+                self.line.classList.remove('cast-down');
+                self.after(700, function () {
+                    self.hookFish.textContent = '';
+                    self.finish(outcome, bet);
+                });
+            });
+        });
+    };
+
+    Fishing.prototype.finish = function (outcome, bet) {
+        var win = Math.round(bet * outcome.mult);
+        if (win > 0) Casino.Account.credit(win);
+        Casino.Account.recordSpin('fishing', bet, win);
+        var net = win - bet;
+        this.winEl.textContent = win > 0 ? '+' + fmt(win) : '0';
+        this.winEl.style.color = win > 0 ? 'var(--green)' : 'var(--red)';
+
+        var big = outcome.mult >= 10;
+        this.reveal.className = 'catch-reveal' + (big ? ' big' : '') + (outcome.mult === 0 ? ' junk' : '');
+        this.reveal.innerHTML =
+            '<div class="cr-ico">' + outcome.icon + '</div>' +
+            '<div class="cr-name">' + outcome.name + '</div>' +
+            (outcome.mult > 0
+                ? '<div class="cr-mult">×' + outcome.mult + '</div><div class="cr-win">+' + fmt(win) + '</div>'
+                : '<div class="cr-mult">Smůla! Jen smetí.</div>');
+        if (outcome.mult >= 25) { Casino.Sound.bigWinFanfare(); }
+        else if (outcome.mult >= 3) Casino.Sound.win(2);
+        else if (outcome.mult > 0) Casino.Sound.win(0);
+        else Casino.Sound.lose();
+
+        var self = this;
+        this.after(150, function () { self.busy = false; self.castBtn.disabled = false; self.castBtn.classList.remove('busy'); });
+    };
+
+    Fishing.prototype.info = function () {
+        var rows = OUTCOMES.filter(function (o) { return o.mult > 0; }).sort(function (a, b) { return b.mult - a.mult; })
+            .map(function (o) { return '<div class="pt-card"><div class="pt-ico">' + o.icon + '</div><div class="pt-info"><b>' + o.name + '</b><div class="pt-pays">×' + o.mult + '</div></div></div>'; }).join('');
+        Casino.UI.modal({
+            title: '🎣 Velký úlovek — výplaty',
+            body: '<p style="color:var(--muted);line-height:1.6">Nahoď udici a navíjej. Co chytíš, to máš: výhra = sázka × násobič ryby. ' +
+                'Občas se chytí jen stará bota nebo řasa (prohra). Pozor na žraloka, velrybu a truhlu pokladů (×100)! RTP ≈ 96 %.</p>' +
+                '<div class="pt-grid" style="margin-top:12px">' + rows + '</div>'
+        });
+    };
+
+    Fishing.prototype.destroy = function () { this.destroyed = true; this.timers.forEach(clearTimeout); };
+
+    Casino.registry.push({
+        id: 'fishing', name: 'Velký úlovek', emoji: '🎣', category: 'arcade',
+        tagline: 'Nahoď udici a chyť velký úlovek',
+        theme: { a: '#27d3c4', b: '#1a73ff', bg: 'linear-gradient(180deg, #0a2a45, #062033)' },
+        badges: ['RTP ~96%', 'Arkáda'], meta: 'Chytni rybu · poklad až 100×',
+        open: function (mount, opts) { return Casino.Fishing.open(mount, opts); }
+    });
+
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
+/* ===== games/roulette.js ===== */
+/* ==========================================================================
+   MARES CASINO – Evropská ruleta (jedno zero). Sázecí stůl + kolo + dealer.
+   Výplaty: plné číslo 35:1, tucty/sloupce 2:1, jednoduché šance 1:1.
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var fmt = Casino.util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+
+    var WHEEL = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+    var RED = { 1: 1, 3: 1, 5: 1, 7: 1, 9: 1, 12: 1, 14: 1, 16: 1, 18: 1, 19: 1, 21: 1, 23: 1, 25: 1, 27: 1, 30: 1, 32: 1, 34: 1, 36: 1 };
+    var CHIPS = [10, 50, 100, 500];
+    function isRed(n) { return !!RED[n]; }
+    function colorOf(n) { return n === 0 ? 'green' : (isRed(n) ? 'red' : 'black'); }
+
+    var TALK = {
+        place: ['Sázky, prosím!', 'Vsaďte si, dámy a pánové.', 'Kam dnes vsadíte?'],
+        spin: ['Roztáčím kolečko… nic už nepřijímám!', 'Kulička letí!', 'A je to v pohybu!'],
+        winBig: ['Gratuluji, pěkná výhra!', 'To je terno!', 'Dnes vám to sype!'],
+        winSmall: ['Výhra! Dobrá volba.', 'Trefa!', 'Sedlo to.'],
+        lose: ['Smůla, příště to vyjde.', 'Tentokrát nic, zkuste to znovu.', 'Dům bere. Hlavu vzhůru!']
+    };
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+    Casino.Roulette = { open: function (mount, opts) { return new Roulette(mount, opts); } };
+
+    function Roulette(mount, opts) {
+        this.opts = opts || {};
+        this.chip = 50;
+        this.bets = {}; this.total = 0; this.lastBets = null;
+        this.rot = 0; this.spinning = false; this.destroyed = false;
+        this.history = [];
+        this.build(mount);
+    }
+
+    Roulette.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#27c46b', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #0c3a23, #04140c)' };
+        var f = Casino.UI.gameFrame(mount, {
+            emoji: '🎡', name: 'Ruleta', subtitle: 'Evropská ruleta s živým dealerem',
+            theme: theme, bg: theme.bg, onExit: function () { Casino.Dealer.stop(); self.opts.onExit && self.opts.onExit(); },
+            onInfo: function () { self.info(); }
+        });
+        this.frame = f;
+
+        // dealer + výsledky
+        var topRow = el('div', 'roul-top');
+        topRow.innerHTML = '<div class="dealer"><div class="dealer-av">🤵</div><div class="speech hidden"></div></div><div class="roul-hist"></div>';
+        f.stage.appendChild(topRow);
+        this.speech = topRow.querySelector('.speech');
+        this.histEl = topRow.querySelector('.roul-hist');
+
+        // kolo
+        var wheelWrap = el('div', 'wheel-wrap');
+        this.canvas = el('canvas'); this.WS = 260;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.canvas.width = this.WS * dpr; this.canvas.height = this.WS * dpr;
+        this.canvas.style.width = this.WS + 'px'; this.canvas.style.height = this.WS + 'px';
+        this.ctx = this.canvas.getContext('2d'); this.ctx.scale(dpr, dpr);
+        wheelWrap.appendChild(this.canvas);
+        wheelWrap.innerHTML += '<div class="wheel-pointer">▼</div>';
+        wheelWrap.insertBefore(this.canvas, wheelWrap.firstChild);
+        f.stage.appendChild(wheelWrap);
+        this.drawWheel(0);
+
+        // sázecí stůl
+        this.board = el('div', 'roul-board');
+        this.buildBoard();
+        f.stage.appendChild(this.board);
+
+        // výběr žetonu
+        var chips = el('div', 'chip-row');
+        CHIPS.forEach(function (v) {
+            var b = el('button', 'chip chip-' + v + (v === self.chip ? ' on' : ''), fmt(v));
+            b.onclick = function () { Casino.Sound.click(); self.chip = v; chips.querySelectorAll('.chip').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on'); };
+            chips.appendChild(b);
+        });
+        f.stage.appendChild(chips);
+
+        // ovládání
+        var c = f.controls;
+        c.innerHTML =
+            '<div class="ctrl-cell"><label>Vsazeno</label><b class="c-total">0</b></div>' +
+            '<button class="btn-secondary clear-btn">🗑 Smazat</button>' +
+            '<button class="btn-secondary rebet-btn">↺ Opakovat</button>' +
+            '<button class="spin-roul">ROZTOČIT 🎡</button>';
+        this.totalEl = c.querySelector('.c-total');
+        c.querySelector('.clear-btn').onclick = function () { self.clearBets(); };
+        c.querySelector('.rebet-btn').onclick = function () { self.rebet(); };
+        c.querySelector('.spin-roul').onclick = function () { Casino.Sound.unlock(); self.spin(); };
+        this.spinBtn = c.querySelector('.spin-roul');
+
+        Casino.Dealer.say(this.speech, pick(TALK.place));
+    };
+
+    Roulette.prototype.cell = function (key, label, cls, gc, gr) {
+        var self = this;
+        var d = el('div', 'rb-cell ' + (cls || ''), '<span class="rb-label">' + label + '</span><span class="rb-chip"></span>');
+        d.style.gridColumn = gc; d.style.gridRow = gr;
+        d.dataset.key = key;
+        d.onclick = function () { self.placeBet(key, d); };
+        this.board.appendChild(d);
+        return d;
+    };
+
+    Roulette.prototype.buildBoard = function () {
+        this.board.innerHTML = '';
+        this.cell('straight:0', '0', 'num green', '1', '1 / span 3');
+        for (var j = 0; j < 12; j++) {
+            for (var r = 0; r < 3; r++) {
+                var n = 3 * (j + 1) - r; // r0=top(3..36), r1(2..35), r2(1..34)
+                this.cell('straight:' + n, '' + n, 'num ' + colorOf(n), (j + 2) + '', (r + 1) + '');
+            }
+        }
+        // sloupce 2:1 (vpravo)
+        this.cell('col:3', '2:1', 'side', '14', '1');
+        this.cell('col:2', '2:1', 'side', '14', '2');
+        this.cell('col:1', '2:1', 'side', '14', '3');
+        // tucty
+        this.cell('dozen:1', '1. tucet', 'side', '2 / span 4', '4');
+        this.cell('dozen:2', '2. tucet', 'side', '6 / span 4', '4');
+        this.cell('dozen:3', '3. tucet', 'side', '10 / span 4', '4');
+        // jednoduché šance
+        this.cell('low', '1–18', 'side', '2 / span 2', '5');
+        this.cell('even', 'Sudá', 'side', '4 / span 2', '5');
+        this.cell('red', '◆', 'side red', '6 / span 2', '5');
+        this.cell('black', '◆', 'side black', '8 / span 2', '5');
+        this.cell('odd', 'Lichá', 'side', '10 / span 2', '5');
+        this.cell('high', '19–36', 'side', '12 / span 2', '5');
+    };
+
+    Roulette.prototype.placeBet = function (key, cellEl) {
+        if (this.spinning) return;
+        if (!Casino.Account.debit(this.chip)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+        this.bets[key] = (this.bets[key] || 0) + this.chip;
+        this.total += this.chip;
+        Casino.Sound.click();
+        this.refreshChips(); this.totalEl.textContent = fmt(this.total);
+    };
+
+    Roulette.prototype.refreshChips = function () {
+        var bets = this.bets;
+        this.board.querySelectorAll('.rb-cell').forEach(function (d) {
+            var v = bets[d.dataset.key] || 0;
+            var chip = d.querySelector('.rb-chip');
+            if (v) { chip.textContent = fmt(v); chip.classList.add('on'); }
+            else { chip.textContent = ''; chip.classList.remove('on'); }
+        });
+    };
+
+    Roulette.prototype.clearBets = function () {
+        if (this.spinning || !this.total) return;
+        Casino.Account.credit(this.total);
+        this.bets = {}; this.total = 0;
+        Casino.Sound.click(); this.refreshChips(); this.totalEl.textContent = '0';
+    };
+
+    Roulette.prototype.rebet = function () {
+        if (this.spinning || !this.lastBets) return;
+        var sum = 0; for (var k in this.lastBets) sum += this.lastBets[k];
+        if (Casino.Account.getBalance() < sum) { Casino.UI.toast('Nedostatek kreditu na opakování.', ''); return; }
+        Casino.Account.debit(sum);
+        for (var k2 in this.lastBets) this.bets[k2] = (this.bets[k2] || 0) + this.lastBets[k2];
+        this.total += sum; Casino.Sound.click();
+        this.refreshChips(); this.totalEl.textContent = fmt(this.total);
+    };
+
+    Roulette.prototype.wins = function (key, n) {
+        var t = key.split(':'); var kind = t[0];
+        switch (kind) {
+            case 'straight': return +t[1] === n;
+            case 'red': return isRed(n); case 'black': return n !== 0 && !isRed(n);
+            case 'even': return n !== 0 && n % 2 === 0; case 'odd': return n % 2 === 1;
+            case 'low': return n >= 1 && n <= 18; case 'high': return n >= 19 && n <= 36;
+            case 'dozen': { var d = +t[1]; return n >= (d - 1) * 12 + 1 && n <= d * 12; }
+            case 'col': { var c = +t[1]; return n !== 0 && ((n - 1) % 3) === (c - 1); }
+        }
+        return false;
+    };
+    function odds(key) {
+        var kind = key.split(':')[0];
+        if (kind === 'straight') return 35;
+        if (kind === 'dozen' || kind === 'col') return 2;
+        return 1;
+    }
+
+    Roulette.prototype.spin = function () {
+        var self = this;
+        if (this.spinning) return;
+        if (!this.total) { Casino.UI.toast('Nejdřív vsaď žetony na stůl.', ''); return; }
+        this.spinning = true; this.spinBtn.disabled = true;
+        this.lastBets = JSON.parse(JSON.stringify(this.bets));
+        Casino.Dealer.say(this.speech, pick(TALK.spin));
+        Casino.Sound.spin();
+
+        var result = Math.floor(Math.random() * 37);
+        var idx = WHEEL.indexOf(result);
+        var seg = (Math.PI * 2) / 37;
+        // cílová rotace: střed segmentu idx nahoru (-PI/2), + několik otáček
+        var target = (-Math.PI / 2) - idx * seg;
+        var turns = 5 + Math.floor(Math.random() * 2);
+        var start = this.rot;
+        // normalizuj tak, aby šel vždy dopředu
+        var end = target - turns * Math.PI * 2;
+        while (end > start) end -= Math.PI * 2;
+        var dur = 4200, t0 = performance.now(), last = 0;
+        function frame(now) {
+            if (self.destroyed) return;
+            var p = Math.min(1, (now - t0) / dur);
+            var e = 1 - Math.pow(1 - p, 3);
+            self.rot = start + (end - start) * e;
+            self.drawWheel(self.rot);
+            if (now - last > 90 && p < 0.92) { Casino.Sound.tick(); last = now; }
+            if (p < 1) requestAnimationFrame(frame);
+            else self.resolve(result);
+        }
+        requestAnimationFrame(frame);
+    };
+
+    Roulette.prototype.resolve = function (n) {
+        var self = this;
+        var totalReturn = 0, anyWin = false;
+        for (var key in this.bets) {
+            var stake = this.bets[key];
+            if (this.wins(key, n)) { totalReturn += stake * (odds(key) + 1); anyWin = true; }
+        }
+        if (totalReturn > 0) Casino.Account.credit(totalReturn);
+        Casino.Account.recordSpin('roulette', this.total, totalReturn);
+
+        this.history.unshift(n); this.history = this.history.slice(0, 14); this.renderHist();
+        var net = totalReturn - this.total;
+        var col = colorOf(n);
+        var colCs = col === 'red' ? 'červená' : col === 'black' ? 'černá' : 'zelená';
+        var phrase = n + ', ' + colCs + '. ';
+        if (anyWin && net > 0) { phrase += pick(net >= this.total * 3 ? TALK.winBig : TALK.winSmall); Casino.Sound.win(net >= this.total * 3 ? 3 : 2); }
+        else { phrase += pick(TALK.lose); Casino.Sound.lose(); }
+        Casino.Dealer.say(this.speech, phrase);
+        Casino.UI.toast('Padlo ' + n + ' (' + colCs + ') · ' + (net >= 0 ? '+' : '') + fmt(net), net >= 0 ? 'good' : '');
+
+        // vyřeš žetony
+        this.bets = {}; this.total = 0; this.refreshChips(); this.totalEl.textContent = '0';
+        this.spinning = false; this.spinBtn.disabled = false;
+    };
+
+    Roulette.prototype.renderHist = function () {
+        this.histEl.innerHTML = this.history.map(function (n) {
+            return '<span class="rh ' + colorOf(n) + '">' + n + '</span>';
+        }).join('');
+    };
+
+    Roulette.prototype.drawWheel = function (rot) {
+        var ctx = this.ctx, S = this.WS, cx = S / 2, cy = S / 2, R = S / 2 - 4;
+        var seg = (Math.PI * 2) / 37;
+        ctx.clearRect(0, 0, S, S);
+        for (var i = 0; i < 37; i++) {
+            var n = WHEEL[i];
+            var a0 = rot + i * seg - seg / 2, a1 = a0 + seg;
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, a0, a1); ctx.closePath();
+            ctx.fillStyle = n === 0 ? '#1ea65a' : (isRed(n) ? '#d4213d' : '#1c1c24');
+            ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke();
+            // číslo
+            var am = a0 + seg / 2;
+            ctx.save(); ctx.translate(cx + Math.cos(am) * (R - 13), cy + Math.sin(am) * (R - 13));
+            ctx.rotate(am + Math.PI / 2);
+            ctx.fillStyle = '#fff'; ctx.font = '700 9px Segoe UI, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('' + n, 0, 0); ctx.restore();
+        }
+        // střed
+        ctx.beginPath(); ctx.arc(cx, cy, R * 0.45, 0, 7); ctx.fillStyle = '#2a1a08'; ctx.fill();
+        ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#ffd24a'; ctx.font = '700 14px Segoe UI'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('🎡', cx, cy);
+    };
+
+    Roulette.prototype.info = function () {
+        Casino.UI.modal({
+            title: '🎡 Ruleta — výplaty',
+            body: '<p style="color:var(--muted);line-height:1.7">Evropská ruleta (čísla 0–36, jedno zelené zero).</p>' +
+                '<ul style="color:var(--muted);line-height:1.8;margin-left:18px">' +
+                '<li><b>Plné číslo</b> (klik na číslo): 35:1</li>' +
+                '<li><b>Tucet / Sloupec</b> (2:1)</li>' +
+                '<li><b>Červená/Černá, Sudá/Lichá, 1–18/19–36</b>: 1:1</li></ul>' +
+                '<p style="color:var(--muted);margin-top:10px">Vyber hodnotu žetonu, klikáním přidávej sázky na stůl, pak roztoč. RTP ≈ 97,3 %.</p>'
+        });
+    };
+
+    Roulette.prototype.destroy = function () { this.destroyed = true; Casino.Dealer.stop(); };
+
+    Casino.registry.push({
+        id: 'roulette', name: 'Ruleta', emoji: '🎡', category: 'table',
+        tagline: 'Vsaď na číslo nebo barvu a roztoč kolo',
+        theme: { a: '#27c46b', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #0c3a23, #04140c)' },
+        badges: ['RTP 97.3%', 'Stolní'], meta: 'Evropská · živý dealer',
+        open: function (mount, opts) { return Casino.Roulette.open(mount, opts); }
+    });
+
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
+/* ===== games/poker.js ===== */
+/* ==========================================================================
+   MARES CASINO – Three Card Poker (proti dealerovi, který mluví)
+   Ante + Play, volitelný Pair Plus. Dealer kvalifikuje od dámy výš.
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var fmt = Casino.util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+
+    var BETS = [10, 20, 50, 100, 250, 500];
+    var SUITS = ['♠', '♥', '♦', '♣'];
+    var RANK_NAME = { 0: 'Vysoká karta', 1: 'Pár', 2: 'Barva', 3: 'Postupka', 4: 'Trojice', 5: 'Postupka v barvě' };
+    var ANTE_BONUS = { 3: 1, 4: 4, 5: 5 };          // postupka/trojice/postupka v barvě
+    var PLUS_PAY = { 1: 1, 2: 3, 3: 6, 4: 30, 5: 40 }; // Pair Plus
+
+    function valStr(v) { return v <= 10 ? '' + v : { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' }[v]; }
+
+    function deck() {
+        var d = [];
+        for (var s = 0; s < 4; s++) for (var v = 2; v <= 14; v++) d.push({ v: v, s: s });
+        for (var i = d.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = d[i]; d[i] = d[j]; d[j] = t; }
+        return d;
+    }
+
+    function evaluate(cards) {
+        var vs = cards.map(function (c) { return c.v; }).sort(function (a, b) { return b - a; });
+        var flush = cards[0].s === cards[1].s && cards[1].s === cards[2].s;
+        var a23 = vs[0] === 14 && vs[1] === 3 && vs[2] === 2;
+        var straight = (vs[0] - 1 === vs[1] && vs[1] - 1 === vs[2]) || a23;
+        var sHigh = a23 ? 3 : vs[0];
+        var trips = vs[0] === vs[1] && vs[1] === vs[2];
+        var pairVal = 0, kicker = 0;
+        if (!trips) {
+            if (vs[0] === vs[1]) { pairVal = vs[0]; kicker = vs[2]; }
+            else if (vs[1] === vs[2]) { pairVal = vs[1]; kicker = vs[0]; }
+        }
+        if (straight && flush) return { rank: 5, tb: [sHigh] };
+        if (trips) return { rank: 4, tb: [vs[0]] };
+        if (straight) return { rank: 3, tb: [sHigh] };
+        if (flush) return { rank: 2, tb: vs };
+        if (pairVal) return { rank: 1, tb: [pairVal, kicker] };
+        return { rank: 0, tb: vs };
+    }
+    function cmp(a, b) {
+        if (a.rank !== b.rank) return a.rank - b.rank;
+        for (var i = 0; i < Math.max(a.tb.length, b.tb.length); i++) {
+            var d = (a.tb[i] || 0) - (b.tb[i] || 0); if (d) return d;
+        }
+        return 0;
+    }
+    function qualifies(h) { return h.rank >= 1 || (h.rank === 0 && h.tb[0] >= 12); }
+
+    var TALK = {
+        deal: ['Rozdávám karty. Hodně štěstí!', 'Tři karty pro vás, tři pro mě.', 'Ať vám karta přeje!'],
+        decide: ['Hrajete, nebo balíte?', 'Co na to říkáte — play, nebo fold?', 'Rozmyslete si to dobře.'],
+        fold: ['Balíte. Někdy je to moudré.', 'Skládáte. Beru ante.', 'Fold. Příště to vyjde.'],
+        noQual: ['Nekvalifikoval jsem se — ante vám platí.', 'Mám míň než dámu, ante hraje ve váš prospěch.'],
+        win: ['Vyhráváte! Gratuluji.', 'Pěkná ruka, berete to!', 'To je výhra, klobouk dolů!'],
+        lose: ['Dům bere. Příště!', 'Tentokrát mám lepší ruku.', 'Beru to já, smůla.'],
+        push: ['Shoda — nikdo nebere.', 'Remíza, sázky se vrací.'],
+        plus: ['A Pair Plus vám taky platí!', 'Bonus Pair Plus letí k vám!']
+    };
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+    Casino.Poker = { open: function (mount, opts) { return new Poker(mount, opts); } };
+
+    function Poker(mount, opts) {
+        this.opts = opts || {};
+        this.betIndex = 2;
+        this.pairPlus = false;
+        this.state = 'idle';
+        this.destroyed = false;
+        this.build(mount);
+    }
+    Poker.prototype.ante = function () { return BETS[this.betIndex]; };
+
+    Poker.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#19a86b', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #0a3b2a, #04130d)' };
+        var f = Casino.UI.gameFrame(mount, {
+            emoji: '🃏', name: 'Three Card Poker', subtitle: 'Tři karty proti živému dealerovi',
+            theme: theme, bg: theme.bg, onExit: function () { Casino.Dealer.stop(); self.opts.onExit && self.opts.onExit(); },
+            onInfo: function () { self.info(); }
+        });
+        this.frame = f;
+
+        var stage = f.stage;
+        var dealerRow = el('div', 'poker-dealer');
+        dealerRow.innerHTML = '<div class="dealer-av">🤵</div><div class="speech hidden"></div>';
+        stage.appendChild(dealerRow);
+        this.speech = dealerRow.querySelector('.speech');
+
+        this.dealerCards = el('div', 'card-row dealer-cards'); stage.appendChild(this.labelRow('Dealer', this.dealerCards));
+        this.result = el('div', 'poker-result'); stage.appendChild(this.result);
+        this.playerCards = el('div', 'card-row player-cards'); stage.appendChild(this.labelRow('Ty', this.playerCards));
+
+        var c = f.controls;
+        c.innerHTML =
+            '<div class="ctrl-cell ctrl-bet"><button class="bet-dn">−</button>' +
+            '<div class="bet-val"><label>Ante</label><b class="c-bet">' + fmt(this.ante()) + '</b></div>' +
+            '<button class="bet-up">+</button></div>' +
+            '<label class="auto-cash pp-toggle"><input type="checkbox" class="pp"> Pair Plus</label>' +
+            '<div class="poker-actions">' +
+            '<button class="deal-btn">ROZDAT 🃏</button>' +
+            '<button class="fold-btn hidden">SLOŽIT</button>' +
+            '<button class="play-btn hidden">HRÁT</button>' +
+            '</div>';
+        this.betEl = c.querySelector('.c-bet');
+        c.querySelector('.bet-dn').onclick = function () { self.changeBet(-1); };
+        c.querySelector('.bet-up').onclick = function () { self.changeBet(1); };
+        c.querySelector('.pp').onchange = function (e) { self.pairPlus = e.target.checked; };
+        this.dealBtn = c.querySelector('.deal-btn');
+        this.foldBtn = c.querySelector('.fold-btn');
+        this.playBtn = c.querySelector('.play-btn');
+        this.dealBtn.onclick = function () { Casino.Sound.unlock(); self.deal(); };
+        this.foldBtn.onclick = function () { self.fold(); };
+        this.playBtn.onclick = function () { self.play(); };
+
+        this.renderCards(this.dealerCards, null, 3);
+        this.renderCards(this.playerCards, null, 3);
+        Casino.Dealer.say(this.speech, 'Vítejte u stolu! Vsaďte ante a rozdáme.');
+    };
+
+    Poker.prototype.labelRow = function (label, cardsEl) {
+        var w = el('div', 'card-area'); w.appendChild(el('div', 'card-area-label', label)); w.appendChild(cardsEl); return w;
+    };
+
+    Poker.prototype.changeBet = function (d) {
+        if (this.state !== 'idle') return;
+        var n = this.betIndex + d; if (n < 0 || n >= BETS.length) return;
+        this.betIndex = n; Casino.Sound.click(); this.betEl.textContent = fmt(this.ante());
+    };
+
+    Poker.prototype.renderCards = function (container, cards, count) {
+        container.innerHTML = '';
+        for (var i = 0; i < count; i++) {
+            var c = el('div', 'pcard down');
+            if (cards && cards[i]) { c = this.faceCard(cards[i]); }
+            container.appendChild(c);
+        }
+    };
+    Poker.prototype.faceCard = function (card) {
+        var red = card.s === 1 || card.s === 2;
+        var c = el('div', 'pcard' + (red ? ' red' : ''));
+        c.innerHTML = '<span class="pc-v">' + valStr(card.v) + '</span><span class="pc-s">' + SUITS[card.s] + '</span>';
+        return c;
+    };
+
+    Poker.prototype.deal = function () {
+        var ante = this.ante();
+        var cost = ante + (this.pairPlus ? ante : 0);
+        if (!Casino.Account.debit(cost)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+        this.anteAmt = ante; this.ppAmt = this.pairPlus ? ante : 0;
+        var d = deck();
+        this.player = [d.pop(), d.pop(), d.pop()];
+        this.dealer = [d.pop(), d.pop(), d.pop()];
+        this.state = 'decide';
+        this.result.textContent = '';
+        Casino.Sound.click();
+
+        this.renderCards(this.dealerCards, null, 3);
+        // postupně otoč hráčské karty
+        var self = this;
+        this.renderCards(this.playerCards, null, 3);
+        this.player.forEach(function (card, i) {
+            setTimeout(function () {
+                if (self.destroyed) return;
+                self.playerCards.children[i].replaceWith(self.faceCard(card));
+                Casino.Sound.reelStop(i);
+            }, 180 * (i + 1));
+        });
+        this.dealBtn.classList.add('hidden');
+        this.foldBtn.classList.remove('hidden');
+        this.playBtn.classList.remove('hidden');
+        setTimeout(function () { if (!self.destroyed) Casino.Dealer.say(self.speech, pick(TALK.decide)); }, 800);
+    };
+
+    Poker.prototype.revealDealer = function () {
+        var self = this;
+        this.dealer.forEach(function (card, i) {
+            setTimeout(function () {
+                if (self.destroyed) return;
+                self.dealerCards.children[i].replaceWith(self.faceCard(card));
+                Casino.Sound.reelStop(i + 1);
+            }, 160 * i);
+        });
+    };
+
+    Poker.prototype.resolvePairPlus = function (ph) {
+        if (!this.ppAmt) return 0;
+        var mult = PLUS_PAY[ph.rank];
+        return mult ? this.ppAmt * (mult + 1) : 0;
+    };
+
+    Poker.prototype.fold = function () {
+        if (this.state !== 'decide') return;
+        this.state = 'idle';
+        Casino.Sound.lose();
+        var ph = evaluate(this.player);
+        var ppReturn = this.resolvePairPlus(ph);   // Pair Plus se řeší dle tvých karet
+        if (ppReturn > 0) Casino.Account.credit(ppReturn);
+        Casino.Account.recordSpin('poker', this.anteAmt + this.ppAmt, ppReturn);
+        this.revealDealer();
+        Casino.Dealer.say(this.speech, pick(TALK.fold) + (ppReturn > 0 ? ' Ale Pair Plus platí!' : ''));
+        this.showResult('Složil jsi. ' + (ppReturn > 0 ? 'Pair Plus +' + fmt(ppReturn) : 'Ante propadá.'), ppReturn > 0);
+        this.endHand();
+    };
+
+    Poker.prototype.play = function () {
+        if (this.state !== 'decide') return;
+        var play = this.anteAmt;
+        if (!Casino.Account.debit(play)) { Casino.UI.toast('Nedostatek kreditu na Play sázku!', ''); return; }
+        this.state = 'reveal';
+        this.revealDealer();
+        var self = this;
+        setTimeout(function () { if (!self.destroyed) self.showdown(play); }, 700);
+    };
+
+    Poker.prototype.showdown = function (play) {
+        var ph = evaluate(this.player), dh = evaluate(this.dealer);
+        var dq = qualifies(dh);
+        var mainReturn = 0, outcome = '', win = false;
+
+        if (!dq) {
+            mainReturn = this.anteAmt * 2 + play; // ante 1:1, play push
+            outcome = 'Dealer nekvalifikoval (' + RANK_NAME[dh.rank] + '). Ante platí 1:1, Play se vrací.';
+            win = true;
+            Casino.Dealer.say(this.speech, pick(TALK.noQual));
+        } else {
+            var r = cmp(ph, dh);
+            if (r > 0) { mainReturn = this.anteAmt * 2 + play * 2; outcome = 'Tvá ' + RANK_NAME[ph.rank] + ' poráží dealerovu ' + RANK_NAME[dh.rank] + '!'; win = true; Casino.Dealer.say(this.speech, pick(TALK.win)); }
+            else if (r === 0) { mainReturn = this.anteAmt + play; outcome = 'Shoda — sázky se vrací.'; Casino.Dealer.say(this.speech, pick(TALK.push)); }
+            else { mainReturn = 0; outcome = 'Dealerova ' + RANK_NAME[dh.rank] + ' bere nad tvou ' + RANK_NAME[ph.rank] + '.'; Casino.Dealer.say(this.speech, pick(TALK.lose)); }
+        }
+        var bonusMult = ANTE_BONUS[ph.rank] || 0;
+        var bonus = bonusMult ? this.anteAmt * bonusMult : 0;
+        var ppReturn = this.resolvePairPlus(ph);
+        var totalReturn = mainReturn + bonus + ppReturn;
+        if (totalReturn > 0) Casino.Account.credit(totalReturn);
+        Casino.Account.recordSpin('poker', this.anteAmt + play + this.ppAmt, totalReturn);
+
+        var extra = [];
+        if (bonus) extra.push('Ante bonus +' + fmt(bonus) + ' (' + RANK_NAME[ph.rank] + ')');
+        if (ppReturn) extra.push('Pair Plus +' + fmt(ppReturn));
+        var net = totalReturn - (this.anteAmt + play + this.ppAmt);
+        this.showResult(outcome + (extra.length ? ' · ' + extra.join(' · ') : '') + '  →  ' + (net >= 0 ? '+' : '') + fmt(net), net >= 0);
+        if (net > 0) Casino.Sound.win(net >= this.anteAmt * 4 ? 3 : 2); else if (net === 0) Casino.Sound.win(0); else Casino.Sound.lose();
+        this.state = 'idle';
+        this.endHand();
+    };
+
+    Poker.prototype.showResult = function (txt, good) {
+        this.result.textContent = txt;
+        this.result.className = 'poker-result show ' + (good ? 'good' : 'bad');
+    };
+    Poker.prototype.endHand = function () {
+        this.foldBtn.classList.add('hidden');
+        this.playBtn.classList.add('hidden');
+        this.dealBtn.classList.remove('hidden');
+    };
+
+    Poker.prototype.info = function () {
+        Casino.UI.modal({
+            title: '🃏 Three Card Poker — pravidla',
+            body: '<p style="color:var(--muted);line-height:1.7">Vsadíš <b>Ante</b> a dostaneš 3 karty (dealer taky). Pak se rozhodneš <b>HRÁT</b> (přidáš stejnou Play sázku) nebo <b>SLOŽIT</b>.</p>' +
+                '<ul style="color:var(--muted);line-height:1.8;margin-left:18px">' +
+                '<li>Dealer kvalifikuje od <b>dámy</b> výš.</li>' +
+                '<li>Nekvalifikuje → Ante platí 1:1, Play se vrací.</li>' +
+                '<li>Kvalifikuje → porovnání rukou (výhra 1:1 na obě sázky).</li>' +
+                '<li><b>Ante bonus:</b> postupka 1:1, trojice 4:1, postupka v barvě 5:1.</li>' +
+                '<li><b>Pair Plus</b> (volitelně): pár 1:1, barva 3:1, postupka 6:1, trojice 30:1, postupka v barvě 40:1.</li></ul>' +
+                '<p style="color:var(--muted);margin-top:8px">Pořadí rukou: postupka v barvě > trojice > postupka > barva > pár > vysoká karta.</p>'
+        });
+    };
+
+    Poker.prototype.destroy = function () { this.destroyed = true; Casino.Dealer.stop(); };
+
+    Casino.registry.push({
+        id: 'poker', name: 'Three Card Poker', emoji: '🃏', category: 'table',
+        tagline: 'Tři karty proti dealerovi, který mluví',
+        theme: { a: '#19a86b', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #0a3b2a, #04130d)' },
+        badges: ['RTP ~96.6%', 'Stolní'], meta: 'Živý dealer · Pair Plus 40:1',
+        open: function (mount, opts) { return Casino.Poker.open(mount, opts); }
+    });
+
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
 /* ===== app.js ===== */
 /* ==========================================================================
    MARES CASINO – aplikace: přihlášení, lobby, navigace, hlavička, bonusy
@@ -2038,6 +3490,22 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
             r.appendChild(t);
             requestAnimationFrame(function () { t.classList.add('show'); });
             setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 2600);
+        },
+        // společný rámec pro ne-slotové hry (horní lišta + stage + ovládání)
+        gameFrame: function (mount, opts) {
+            var root = el('div', 'table-game');
+            if (opts.theme) { root.style.setProperty('--accent', opts.theme.a); root.style.setProperty('--accent2', opts.theme.b); }
+            var top = el('div', 'machine-top');
+            var back = el('button', 'btn-ghost', '← Lobby');
+            back.onclick = function () { Casino.Sound.click(); if (opts.onExit) opts.onExit(); };
+            var title = el('div', 'machine-title', '<span class="m-emoji">' + opts.emoji + '</span><span><b>' + opts.name + '</b><small>' + (opts.subtitle || '') + '</small></span>');
+            top.appendChild(back); top.appendChild(title);
+            if (opts.onInfo) { var ib = el('button', 'btn-ghost', 'ℹ️ Info'); ib.onclick = function () { Casino.Sound.click(); opts.onInfo(); }; top.appendChild(ib); }
+            var stage = el('div', 'tg-stage'); if (opts.bg) stage.style.background = opts.bg;
+            var controls = el('div', 'tg-controls');
+            root.appendChild(top); root.appendChild(stage); root.appendChild(controls);
+            mount.innerHTML = ''; mount.appendChild(root);
+            return { root: root, top: top, stage: stage, controls: controls };
         }
     };
 
@@ -2156,9 +3624,48 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         return g.reels + '×' + g.rows + ' · ' + g.paylines.length + ' linií';
     }
 
-    function goLobby() {
-        renderLobby();
-        show('lobby');
+    var CATS = [
+        { id: 'slots', label: '🎰 Automaty' },
+        { id: 'arcade', label: '🕹️ Arkády & rychlovky' },
+        { id: 'table', label: '🃏 Stolní hry' }
+    ];
+
+    // jednou zaregistruj sloty do katalogu (ostatní hry se registrují samy při načtení)
+    function registerSlots() {
+        if (Casino._slotsReg) return; Casino._slotsReg = true;
+        GAMES.forEach(function (g) {
+            Casino.registry.unshift({
+                id: g.id, name: g.name, emoji: g.emoji, tagline: g.tagline, category: 'slots', theme: g.theme,
+                badges: ['RTP ' + g.rtp + '%', g.volatility],
+                meta: gameTypeLabel(g) + (g.freeSpins ? ' · 🎁 free spins' : ''),
+                open: (function (game) { return function (mount, opts) { return Casino.Slot.open(game, mount, opts); }; })(g)
+            });
+        });
+        // zachovej pořadí slotů dle GAMES (unshift je obrátil)
+        Casino.registry.sort(function (a, b) {
+            var ai = a.category === 'slots' ? GAMES.findIndex(function (g) { return g.id === a.id; }) : 999;
+            var bi = b.category === 'slots' ? GAMES.findIndex(function (g) { return g.id === b.id; }) : 999;
+            return ai - bi;
+        });
+    }
+
+    function goLobby() { renderLobby(); show('lobby'); }
+
+    function makeCard(entry) {
+        var card = el('button', 'game-card');
+        card.style.setProperty('--a', entry.theme.a);
+        card.style.setProperty('--b', entry.theme.b);
+        card.style.background = entry.theme.bg;
+        var badges = (entry.badges || []).map(function (b, i) { return '<span class="' + (i === 0 ? 'gc-rtp' : 'gc-vol') + '">' + b + '</span>'; }).join('');
+        card.innerHTML =
+            '<div class="gc-badges">' + badges + '</div>' +
+            '<div class="gc-emoji">' + entry.emoji + '</div>' +
+            '<div class="gc-name">' + entry.name + '</div>' +
+            '<div class="gc-tag">' + entry.tagline + '</div>' +
+            '<div class="gc-meta">' + (entry.meta || '') + '</div>' +
+            '<div class="gc-play">HRÁT ▶</div>';
+        card.onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openGame(entry); };
+        return card;
     }
 
     function renderLobby() {
@@ -2169,7 +3676,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         var hero = el('div', 'lobby-hero');
         hero.innerHTML =
             '<div class="hero-text"><h1>Ahoj, ' + a.name + '! 🎰</h1>' +
-            '<p>Vyber si jeden z ' + GAMES.length + ' automatů a roztoč štěstí. Hodně zdaru!</p></div>' +
+            '<p>Vyber si z ' + Casino.registry.length + ' her — automaty, arkády i stolní hry. Hodně zdaru!</p></div>' +
             '<div class="hero-stats">' +
             '<div class="hs"><label>Kredit</label><b>🪙 ' + fmt(a.balance) + '</b></div>' +
             '<div class="hs"><label>Zatočení</label><b>' + fmt(a.stats.spins) + '</b></div>' +
@@ -2177,32 +3684,22 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
             '</div>';
         scr.appendChild(hero);
 
-        scr.appendChild(el('h2', 'section-title', '🎰 Herna — automaty'));
-        var grid = el('div', 'game-grid');
-        GAMES.forEach(function (g) {
-            var card = el('button', 'game-card');
-            card.style.setProperty('--a', g.theme.a);
-            card.style.setProperty('--b', g.theme.b);
-            card.style.background = g.theme.bg;
-            card.innerHTML =
-                '<div class="gc-badges"><span class="gc-rtp">RTP ' + g.rtp + '%</span><span class="gc-vol">' + g.volatility + '</span></div>' +
-                '<div class="gc-emoji">' + g.emoji + '</div>' +
-                '<div class="gc-name">' + g.name + '</div>' +
-                '<div class="gc-tag">' + g.tagline + '</div>' +
-                '<div class="gc-meta">' + gameTypeLabel(g) + (g.freeSpins ? ' · 🎁 free spins' : '') + '</div>' +
-                '<div class="gc-play">HRÁT ▶</div>';
-            card.onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openGame(g); };
-            grid.appendChild(card);
+        CATS.forEach(function (cat) {
+            var entries = Casino.registry.filter(function (e) { return e.category === cat.id; });
+            if (!entries.length) return;
+            scr.appendChild(el('h2', 'section-title', cat.label));
+            var grid = el('div', 'game-grid');
+            entries.forEach(function (e) { grid.appendChild(makeCard(e)); });
+            scr.appendChild(grid);
         });
-        scr.appendChild(grid);
 
         // poslední výhry
         if (a.history && a.history.length) {
             scr.appendChild(el('h2', 'section-title', '🏆 Tvé poslední výhry'));
             var ticker = el('div', 'win-ticker');
             a.history.slice(0, 12).forEach(function (h) {
-                var g = Casino.getGame(h.g);
-                ticker.appendChild(el('div', 'wt-item', (g ? g.emoji : '🎰') + ' <b>+' + fmt(h.win) + '</b> <small>' + (g ? g.name : '') + '</small>'));
+                var m = Casino.metaById(h.g);
+                ticker.appendChild(el('div', 'wt-item', (m ? m.emoji : '🎰') + ' <b>+' + fmt(h.win) + '</b> <small>' + (m ? m.name : '') + '</small>'));
             });
             scr.appendChild(ticker);
         }
@@ -2213,12 +3710,13 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
 
     /* ---------- Hra ---------- */
     var currentMachine = null;
-    function openGame(g) {
+    function closeGame() { if (currentMachine && currentMachine.destroy) currentMachine.destroy(); currentMachine = null; }
+    function openGame(entry) {
         show('game');
         var mount = $('#machine-mount');
-        if (currentMachine) currentMachine.destroy();
-        currentMachine = Casino.Slot.open(g, mount, {
-            onExit: function () { currentMachine = null; goLobby(); },
+        closeGame();
+        currentMachine = entry.open(mount, {
+            onExit: function () { closeGame(); goLobby(); },
             onBroke: function () { openBonus(); }
         });
     }
@@ -2283,16 +3781,16 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         var byGame = Object.keys(s.byGame);
         if (byGame.length) {
             var tbl = el('table', 'stats-table');
-            tbl.innerHTML = '<thead><tr><th>Automat</th><th>Zatočení</th><th>Bilance</th></tr></thead>';
+            tbl.innerHTML = '<thead><tr><th>Hra</th><th>Kol</th><th>Bilance</th></tr></thead>';
             var tb = el('tbody');
             byGame.forEach(function (id) {
-                var g = Casino.getGame(id), gg = s.byGame[id], n = gg.won - gg.wagered;
-                var tr = el('tr', null, '<td>' + (g ? g.emoji + ' ' + g.name : id) + '</td><td>' + fmt(gg.spins) +
+                var m = Casino.metaById(id), gg = s.byGame[id], n = gg.won - gg.wagered;
+                var tr = el('tr', null, '<td>' + (m ? m.emoji + ' ' + m.name : id) + '</td><td>' + fmt(gg.spins) +
                     '</td><td class="' + (n >= 0 ? 'pos' : 'neg') + '">' + (n >= 0 ? '+' : '') + fmt(n) + '</td>');
                 tb.appendChild(tr);
             });
             tbl.appendChild(tb);
-            body.appendChild(el('h4', null, 'Podle automatu'));
+            body.appendChild(el('h4', null, 'Podle hry'));
             body.appendChild(tbl);
         }
         Casino.UI.modal({ title: '📊 Statistiky — ' + a.name, body: body });
@@ -2318,10 +3816,11 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
        ===================================================================== */
     function init() {
         Account.init();
+        registerSlots();
 
         // hlavička – tlačítka
-        $('#brand').onclick = function () { if (Account.isLoggedIn()) { if (currentMachine) { currentMachine.destroy(); currentMachine = null; } goLobby(); } };
-        $('#btn-lobby').onclick = function () { Casino.Sound.click(); if (currentMachine) { currentMachine.destroy(); currentMachine = null; } goLobby(); };
+        $('#brand').onclick = function () { if (Account.isLoggedIn()) { closeGame(); goLobby(); } };
+        $('#btn-lobby').onclick = function () { Casino.Sound.click(); closeGame(); goLobby(); };
         $('#btn-bonus').onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openBonus(); };
         $('#btn-stats').onclick = function () { Casino.Sound.click(); openStats(); };
         $('#btn-user').onclick = function () { Casino.Sound.click(); openUserMenu(); };

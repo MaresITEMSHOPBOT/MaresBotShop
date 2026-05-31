@@ -6,6 +6,7 @@
 (function (root) {
     'use strict';
     var Casino = root.Casino = root.Casino || {};
+    Casino.registry = Casino.registry || [];   // katalog všech her (sloty + arkády + stolní)
 
     /* ---------- Utility ---------- */
     var nf = (typeof Intl !== 'undefined')
@@ -233,7 +234,7 @@
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             freeSpins: { trigger: 4, count: 15 },
             // hodnoty násobících koulí (vážené – malé hodnoty výrazně častěji)
-            orbValues: [[2, 44], [3, 26], [4, 12], [5, 7], [6, 4], [8, 2.2], [10, 1.4], [15, 0.7], [20, 0.4], [25, 0.2], [50, 0.06], [100, 0.02], [250, 0.005]],
+            orbValues: [[2, 42], [3, 25], [4, 12], [5, 7], [6, 4], [8, 2.2], [10, 1.4], [15, 0.7], [20, 0.4], [25, 0.2], [50, 0.07], [100, 0.025], [250, 0.006], [500, 0.0015]],
             symbols: [
                 { id: 'g1', icon: '🟦', name: 'Modrý', weight: 24, pays: { 9: 0.25, 11: 0.5, 13: 1.2 } },
                 { id: 'g2', icon: '🟩', name: 'Zelený', weight: 22, pays: { 9: 0.3, 11: 0.6, 13: 1.5 } },
@@ -245,12 +246,48 @@
                 { id: 'orb', icon: '⚡', name: 'Násobící koule', weight: 2.2, orb: true },
                 { id: 'scatter', icon: '🔮', name: 'Koule Dia (Scatter)', weight: 4, scatter: true, pays: { 4: 2, 5: 5, 6: 50 } }
             ]
+        },
+
+        /* ---- 7) Candy Bonanza (6x5 tumble, cukrové bomby s velkými násobiči) ---- */
+        {
+            id: 'candy',
+            type: 'tumble',
+            name: 'Candy Bonanza',
+            tagline: 'Sladké kaskády a cukrové bomby až x100',
+            emoji: '🍭',
+            volatility: 'Velmi vysoká',
+            rtp: 96,
+            reels: 6, rows: 5,
+            cluster: 9,
+            buckets: [9, 11, 13],
+            theme: { a: '#ff6fd5', b: '#7ad7ff', bg: 'radial-gradient(circle at 50% 0%, #3a1140, #140319)' },
+            bets: [20, 40, 100, 200, 400, 1000, 2000],
+            freeSpins: { trigger: 4, count: 12 },
+            orbValues: [[2, 40], [3, 24], [4, 13], [5, 8], [6, 4.5], [8, 2.6], [10, 1.7], [15, 0.9], [20, 0.5], [25, 0.3], [50, 0.1], [100, 0.04]],
+            symbols: [
+                { id: 's1', icon: '💜', name: 'Fialový bonbón', weight: 24, pays: { 9: 0.25, 11: 0.5, 13: 1.2 } },
+                { id: 's2', icon: '💙', name: 'Modrý bonbón', weight: 22, pays: { 9: 0.3, 11: 0.6, 13: 1.5 } },
+                { id: 's3', icon: '💚', name: 'Zelený bonbón', weight: 20, pays: { 9: 0.4, 11: 0.8, 13: 2 } },
+                { id: 's4', icon: '❤️', name: 'Červené srdce', weight: 18, pays: { 9: 0.5, 11: 1, 13: 2.5 } },
+                { id: 'plum', icon: '🍇', name: 'Hrozny', weight: 12, pays: { 9: 0.8, 11: 1.5, 13: 4 } },
+                { id: 'apple', icon: '🍎', name: 'Jablko', weight: 9, pays: { 9: 1.2, 11: 2.5, 13: 6 } },
+                { id: 'melon', icon: '🍉', name: 'Meloun', weight: 6, pays: { 9: 2, 11: 4, 13: 10 } },
+                { id: 'bomb', icon: '💣', name: 'Cukrová bomba (násobič)', weight: 2.2, orb: true },
+                { id: 'scatter', icon: '🍬', name: 'Bonbón (Scatter)', weight: 4, scatter: true, pays: { 4: 3, 5: 5, 6: 50 } }
+            ]
         }
     ];
 
     Casino.getGame = function (id) {
         for (var i = 0; i < Casino.GAMES.length; i++) if (Casino.GAMES[i].id === id) return Casino.GAMES[i];
         return null;
+    };
+
+    // metadata libovolné hry (i ne-slotové) z katalogu, fallback na slot
+    Casino.metaById = function (id) {
+        for (var i = 0; i < Casino.registry.length; i++) if (Casino.registry[i].id === id) return Casino.registry[i];
+        var g = Casino.getGame(id);
+        return g ? { id: g.id, name: g.name, emoji: g.emoji } : null;
     };
 
 })(typeof window !== 'undefined' ? window : global);

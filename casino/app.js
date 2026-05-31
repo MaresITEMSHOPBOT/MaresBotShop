@@ -45,6 +45,22 @@
             r.appendChild(t);
             requestAnimationFrame(function () { t.classList.add('show'); });
             setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 2600);
+        },
+        // společný rámec pro ne-slotové hry (horní lišta + stage + ovládání)
+        gameFrame: function (mount, opts) {
+            var root = el('div', 'table-game');
+            if (opts.theme) { root.style.setProperty('--accent', opts.theme.a); root.style.setProperty('--accent2', opts.theme.b); }
+            var top = el('div', 'machine-top');
+            var back = el('button', 'btn-ghost', '← Lobby');
+            back.onclick = function () { Casino.Sound.click(); if (opts.onExit) opts.onExit(); };
+            var title = el('div', 'machine-title', '<span class="m-emoji">' + opts.emoji + '</span><span><b>' + opts.name + '</b><small>' + (opts.subtitle || '') + '</small></span>');
+            top.appendChild(back); top.appendChild(title);
+            if (opts.onInfo) { var ib = el('button', 'btn-ghost', 'ℹ️ Info'); ib.onclick = function () { Casino.Sound.click(); opts.onInfo(); }; top.appendChild(ib); }
+            var stage = el('div', 'tg-stage'); if (opts.bg) stage.style.background = opts.bg;
+            var controls = el('div', 'tg-controls');
+            root.appendChild(top); root.appendChild(stage); root.appendChild(controls);
+            mount.innerHTML = ''; mount.appendChild(root);
+            return { root: root, top: top, stage: stage, controls: controls };
         }
     };
 
@@ -163,9 +179,48 @@
         return g.reels + '×' + g.rows + ' · ' + g.paylines.length + ' linií';
     }
 
-    function goLobby() {
-        renderLobby();
-        show('lobby');
+    var CATS = [
+        { id: 'slots', label: '🎰 Automaty' },
+        { id: 'arcade', label: '🕹️ Arkády & rychlovky' },
+        { id: 'table', label: '🃏 Stolní hry' }
+    ];
+
+    // jednou zaregistruj sloty do katalogu (ostatní hry se registrují samy při načtení)
+    function registerSlots() {
+        if (Casino._slotsReg) return; Casino._slotsReg = true;
+        GAMES.forEach(function (g) {
+            Casino.registry.unshift({
+                id: g.id, name: g.name, emoji: g.emoji, tagline: g.tagline, category: 'slots', theme: g.theme,
+                badges: ['RTP ' + g.rtp + '%', g.volatility],
+                meta: gameTypeLabel(g) + (g.freeSpins ? ' · 🎁 free spins' : ''),
+                open: (function (game) { return function (mount, opts) { return Casino.Slot.open(game, mount, opts); }; })(g)
+            });
+        });
+        // zachovej pořadí slotů dle GAMES (unshift je obrátil)
+        Casino.registry.sort(function (a, b) {
+            var ai = a.category === 'slots' ? GAMES.findIndex(function (g) { return g.id === a.id; }) : 999;
+            var bi = b.category === 'slots' ? GAMES.findIndex(function (g) { return g.id === b.id; }) : 999;
+            return ai - bi;
+        });
+    }
+
+    function goLobby() { renderLobby(); show('lobby'); }
+
+    function makeCard(entry) {
+        var card = el('button', 'game-card');
+        card.style.setProperty('--a', entry.theme.a);
+        card.style.setProperty('--b', entry.theme.b);
+        card.style.background = entry.theme.bg;
+        var badges = (entry.badges || []).map(function (b, i) { return '<span class="' + (i === 0 ? 'gc-rtp' : 'gc-vol') + '">' + b + '</span>'; }).join('');
+        card.innerHTML =
+            '<div class="gc-badges">' + badges + '</div>' +
+            '<div class="gc-emoji">' + entry.emoji + '</div>' +
+            '<div class="gc-name">' + entry.name + '</div>' +
+            '<div class="gc-tag">' + entry.tagline + '</div>' +
+            '<div class="gc-meta">' + (entry.meta || '') + '</div>' +
+            '<div class="gc-play">HRÁT ▶</div>';
+        card.onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openGame(entry); };
+        return card;
     }
 
     function renderLobby() {
@@ -176,7 +231,7 @@
         var hero = el('div', 'lobby-hero');
         hero.innerHTML =
             '<div class="hero-text"><h1>Ahoj, ' + a.name + '! 🎰</h1>' +
-            '<p>Vyber si jeden z ' + GAMES.length + ' automatů a roztoč štěstí. Hodně zdaru!</p></div>' +
+            '<p>Vyber si z ' + Casino.registry.length + ' her — automaty, arkády i stolní hry. Hodně zdaru!</p></div>' +
             '<div class="hero-stats">' +
             '<div class="hs"><label>Kredit</label><b>🪙 ' + fmt(a.balance) + '</b></div>' +
             '<div class="hs"><label>Zatočení</label><b>' + fmt(a.stats.spins) + '</b></div>' +
@@ -184,32 +239,22 @@
             '</div>';
         scr.appendChild(hero);
 
-        scr.appendChild(el('h2', 'section-title', '🎰 Herna — automaty'));
-        var grid = el('div', 'game-grid');
-        GAMES.forEach(function (g) {
-            var card = el('button', 'game-card');
-            card.style.setProperty('--a', g.theme.a);
-            card.style.setProperty('--b', g.theme.b);
-            card.style.background = g.theme.bg;
-            card.innerHTML =
-                '<div class="gc-badges"><span class="gc-rtp">RTP ' + g.rtp + '%</span><span class="gc-vol">' + g.volatility + '</span></div>' +
-                '<div class="gc-emoji">' + g.emoji + '</div>' +
-                '<div class="gc-name">' + g.name + '</div>' +
-                '<div class="gc-tag">' + g.tagline + '</div>' +
-                '<div class="gc-meta">' + gameTypeLabel(g) + (g.freeSpins ? ' · 🎁 free spins' : '') + '</div>' +
-                '<div class="gc-play">HRÁT ▶</div>';
-            card.onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openGame(g); };
-            grid.appendChild(card);
+        CATS.forEach(function (cat) {
+            var entries = Casino.registry.filter(function (e) { return e.category === cat.id; });
+            if (!entries.length) return;
+            scr.appendChild(el('h2', 'section-title', cat.label));
+            var grid = el('div', 'game-grid');
+            entries.forEach(function (e) { grid.appendChild(makeCard(e)); });
+            scr.appendChild(grid);
         });
-        scr.appendChild(grid);
 
         // poslední výhry
         if (a.history && a.history.length) {
             scr.appendChild(el('h2', 'section-title', '🏆 Tvé poslední výhry'));
             var ticker = el('div', 'win-ticker');
             a.history.slice(0, 12).forEach(function (h) {
-                var g = Casino.getGame(h.g);
-                ticker.appendChild(el('div', 'wt-item', (g ? g.emoji : '🎰') + ' <b>+' + fmt(h.win) + '</b> <small>' + (g ? g.name : '') + '</small>'));
+                var m = Casino.metaById(h.g);
+                ticker.appendChild(el('div', 'wt-item', (m ? m.emoji : '🎰') + ' <b>+' + fmt(h.win) + '</b> <small>' + (m ? m.name : '') + '</small>'));
             });
             scr.appendChild(ticker);
         }
@@ -220,12 +265,13 @@
 
     /* ---------- Hra ---------- */
     var currentMachine = null;
-    function openGame(g) {
+    function closeGame() { if (currentMachine && currentMachine.destroy) currentMachine.destroy(); currentMachine = null; }
+    function openGame(entry) {
         show('game');
         var mount = $('#machine-mount');
-        if (currentMachine) currentMachine.destroy();
-        currentMachine = Casino.Slot.open(g, mount, {
-            onExit: function () { currentMachine = null; goLobby(); },
+        closeGame();
+        currentMachine = entry.open(mount, {
+            onExit: function () { closeGame(); goLobby(); },
             onBroke: function () { openBonus(); }
         });
     }
@@ -290,16 +336,16 @@
         var byGame = Object.keys(s.byGame);
         if (byGame.length) {
             var tbl = el('table', 'stats-table');
-            tbl.innerHTML = '<thead><tr><th>Automat</th><th>Zatočení</th><th>Bilance</th></tr></thead>';
+            tbl.innerHTML = '<thead><tr><th>Hra</th><th>Kol</th><th>Bilance</th></tr></thead>';
             var tb = el('tbody');
             byGame.forEach(function (id) {
-                var g = Casino.getGame(id), gg = s.byGame[id], n = gg.won - gg.wagered;
-                var tr = el('tr', null, '<td>' + (g ? g.emoji + ' ' + g.name : id) + '</td><td>' + fmt(gg.spins) +
+                var m = Casino.metaById(id), gg = s.byGame[id], n = gg.won - gg.wagered;
+                var tr = el('tr', null, '<td>' + (m ? m.emoji + ' ' + m.name : id) + '</td><td>' + fmt(gg.spins) +
                     '</td><td class="' + (n >= 0 ? 'pos' : 'neg') + '">' + (n >= 0 ? '+' : '') + fmt(n) + '</td>');
                 tb.appendChild(tr);
             });
             tbl.appendChild(tb);
-            body.appendChild(el('h4', null, 'Podle automatu'));
+            body.appendChild(el('h4', null, 'Podle hry'));
             body.appendChild(tbl);
         }
         Casino.UI.modal({ title: '📊 Statistiky — ' + a.name, body: body });
@@ -325,10 +371,11 @@
        ===================================================================== */
     function init() {
         Account.init();
+        registerSlots();
 
         // hlavička – tlačítka
-        $('#brand').onclick = function () { if (Account.isLoggedIn()) { if (currentMachine) { currentMachine.destroy(); currentMachine = null; } goLobby(); } };
-        $('#btn-lobby').onclick = function () { Casino.Sound.click(); if (currentMachine) { currentMachine.destroy(); currentMachine = null; } goLobby(); };
+        $('#brand').onclick = function () { if (Account.isLoggedIn()) { closeGame(); goLobby(); } };
+        $('#btn-lobby').onclick = function () { Casino.Sound.click(); closeGame(); goLobby(); };
         $('#btn-bonus').onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openBonus(); };
         $('#btn-stats').onclick = function () { Casino.Sound.click(); openStats(); };
         $('#btn-user').onclick = function () { Casino.Sound.click(); openUserMenu(); };
