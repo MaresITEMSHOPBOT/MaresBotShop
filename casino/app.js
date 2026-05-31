@@ -352,6 +352,31 @@
     }
 
     /* ======================================================================
+       Vklad kreditů (virtuální)
+       ===================================================================== */
+    function openDeposit() {
+        var body = el('div', 'deposit-box');
+        body.innerHTML = '<div class="bank-card"><span class="bank-chip">💳</span><div class="bank-no">•••• •••• •••• 1234</div><div class="bank-name">MARES CASINO · virtuální peněženka</div></div>' +
+            '<p style="color:var(--muted);margin-bottom:10px">Napiš částku, kterou chceš nahrát na účet:</p>';
+        var presets = el('div', 'deposit-presets');
+        [1000, 5000, 25000, 100000].forEach(function (v) { var b = el('button', 'feat-btn'); b.type = 'button'; b.textContent = '+' + fmt(v); b.onclick = function () { input.value = v; input.focus(); }; presets.appendChild(b); });
+        var form = el('form', 'promo-form deposit-form');
+        var input = el('input', 'promo-input'); input.type = 'number'; input.min = '1'; input.placeholder = 'Částka v kreditech…';
+        var btn = el('button', 'btn-primary', '💳 Nahrát');
+        form.appendChild(input); form.appendChild(btn);
+        var msg = el('div', 'promo-msg');
+        form.onsubmit = function (e) {
+            e.preventDefault();
+            var got = Account.deposit(parseInt(input.value, 10) || 0);
+            if (got) { refreshHeader(); Casino.Sound.win(2); Casino.UI.toast('💳 Vklad +' + fmt(got) + ' kreditů', 'good'); msg.className = 'promo-msg good'; msg.textContent = '✓ Nahráno +' + fmt(got) + ' kreditů na účet.'; input.value = ''; }
+            else { msg.className = 'promo-msg bad'; msg.textContent = 'Zadej částku větší než 0.'; }
+        };
+        body.appendChild(presets); body.appendChild(form); body.appendChild(msg);
+        body.appendChild(el('p', 'bonus-note', '⚠️ Pouze virtuální kredity pro zábavu — žádné reálné peníze ani skutečný bankovní účet.'));
+        Casino.UI.modal({ title: '💳 Vklad kreditů', body: body });
+    }
+
+    /* ======================================================================
        Statistiky
        ===================================================================== */
     function openStats() {
@@ -412,6 +437,7 @@
         $('#brand').onclick = function () { if (Account.isLoggedIn()) { closeGame(); goLobby(); } };
         $('#btn-lobby').onclick = function () { Casino.Sound.click(); closeGame(); goLobby(); };
         $('#btn-bonus').onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openBonus(); };
+        $('#btn-deposit').onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openDeposit(); };
         $('#btn-stats').onclick = function () { Casino.Sound.click(); openStats(); };
         $('#btn-user').onclick = function () { Casino.Sound.click(); openUserMenu(); };
 

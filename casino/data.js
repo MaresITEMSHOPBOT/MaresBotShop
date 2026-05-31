@@ -149,7 +149,7 @@
             paylines: takeLines(LINES_5x3, 10),
             theme: { a: '#e6b800', b: '#c97f1a', bg: 'radial-gradient(circle at 50% 0%, #2b1d05, #0c0700)' },
             bets: [10, 20, 50, 100, 250, 500, 1000],
-            freeSpins: { trigger: 3, count: 10, scatterIsWild: true, expanding: true, buyCost: 13 }, ante: { mult: 1.25, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 12, scatterIsWild: true, expanding: true, buyCost: 13 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'c1', icon: '🔶', name: 'A', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
                 { id: 'c2', icon: '🔷', name: 'K', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
@@ -177,7 +177,7 @@
             theme: { a: '#7b61ff', b: '#00e5ff', bg: 'radial-gradient(circle at 50% 0%, #0b0a2e, #03040f)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 12, globalMultiplier: 2, buyCost: 16 }, ante: { mult: 1.25, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 12, globalMultiplier: 3, buyCost: 16 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'p1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 1, 4: 4, 5: 12 } },
                 { id: 'p2', icon: '🟣', name: 'Fialová', weight: 22, pays: { 3: 1, 4: 4, 5: 12 } },
@@ -205,7 +205,7 @@
             theme: { a: '#d98a2b', b: '#ffcf5c', bg: 'radial-gradient(circle at 50% 0%, #2a1a08, #0d0600)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 8, globalMultiplier: 2, buyCost: 11 }, ante: { mult: 1.25, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 10, globalMultiplier: 2, buyCost: 11 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'beer', icon: '🍺', name: 'Pivo', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
                 { id: 'cactus', icon: '🌵', name: 'Kaktus', weight: 22, pays: { 3: 1, 4: 4, 5: 10 } },
@@ -391,6 +391,62 @@
                 { id: 'wolf', icon: '🐺', name: 'Vlk', weight: 8, pays: { 3: 55, 4: 185, 5: 680 } },
                 { id: 'wild', icon: '🌟', name: 'Wild', weight: 6, wild: true, pays: { 3: 80, 4: 300, 5: 1100 } },
                 { id: 'moon', icon: '🌕', name: 'Měsíc (Hold & Win)', weight: 12 }
+            ]
+        },
+
+        /* ---- 12) Kouzelný Kotel (tumble, kotel sbírá násobiče – čím víc, tím víc ×) ---- */
+        {
+            id: 'cauldron',
+            type: 'tumble',
+            name: 'Kouzelný Kotel',
+            tagline: 'Kotel sbírá násobiče — každé spojení přidá víc ×',
+            emoji: '🔮',
+            volatility: 'Velmi vysoká',
+            rtp: 96,
+            reels: 6, rows: 5,
+            cluster: 9,
+            buckets: [9, 11, 13],
+            theme: { a: '#9b5cff', b: '#34e3ff', bg: 'radial-gradient(circle at 50% 0%, #1a0b33, #06030f)' },
+            bets: [20, 40, 100, 200, 400, 1000, 2000],
+            freeSpins: { trigger: 4, count: 15, persistentMult: true, buyCost: 100, potLabel: '🔮 KOTEL' },
+            orbValues: [[2, 38], [3, 24], [4, 13], [5, 8], [6, 4.5], [8, 2.6], [10, 1.8], [15, 1], [20, 0.6], [25, 0.4], [50, 0.16], [100, 0.06], [250, 0.01], [500, 0.004]],
+            symbols: [
+                { id: 'p1', icon: '🟣', name: 'Fialový lektvar', weight: 24, pays: { 9: 0.25, 11: 0.5, 13: 1.2 } },
+                { id: 'p2', icon: '🟢', name: 'Zelený lektvar', weight: 22, pays: { 9: 0.3, 11: 0.6, 13: 1.5 } },
+                { id: 'p3', icon: '🔵', name: 'Modrý lektvar', weight: 20, pays: { 9: 0.4, 11: 0.8, 13: 2 } },
+                { id: 'p4', icon: '🔴', name: 'Červený lektvar', weight: 18, pays: { 9: 0.5, 11: 1, 13: 2.5 } },
+                { id: 'mush', icon: '🍄', name: 'Houba', weight: 12, pays: { 9: 0.8, 11: 1.5, 13: 4 } },
+                { id: 'owl', icon: '🦉', name: 'Sova', weight: 9, pays: { 9: 1.2, 11: 2.5, 13: 6 } },
+                { id: 'gem', icon: '💎', name: 'Krystal', weight: 6, pays: { 9: 2, 11: 4, 13: 10 } },
+                { id: 'orb', icon: '🧪', name: 'Lektvar (násobič)', weight: 2.4, orb: true },
+                { id: 'scatter', icon: '🌙', name: 'Měsíc (Scatter)', weight: 2.2, scatter: true, pays: { 4: 3, 5: 5, 6: 50 } }
+            ]
+        },
+
+        /* ---- 13) Divoká Šelma (5x3, šelma se ČASTÝM a výdělečným bonusem) ---- */
+        {
+            id: 'beast',
+            type: 'lines',
+            name: 'Divoká Šelma',
+            tagline: 'Šelma s velmi častým a štědrým bonusem',
+            emoji: '🐆',
+            volatility: 'Střední',
+            rtp: 96,
+            reels: 5, rows: 3,
+            paylines: takeLines(LINES_5x3, 20),
+            theme: { a: '#ffa733', b: '#1f9d55', bg: 'radial-gradient(circle at 50% 0%, #2a1c08, #0c0a04)' },
+            bets: [20, 40, 100, 200, 400, 1000, 2000],
+            freeSpins: { trigger: 3, count: 12, globalMultiplier: 3, buyCost: 75, noRetrigger: true },
+            ante: { mult: 1.25, scatterMult: 1.3 },
+            symbols: [
+                { id: 'a1', icon: '🔵', name: 'Modrá', weight: 22, pays: { 3: 1, 4: 3, 5: 8 } },
+                { id: 'a2', icon: '🟢', name: 'Zelená', weight: 20, pays: { 3: 1, 4: 3, 5: 8 } },
+                { id: 'a3', icon: '🟡', name: 'Žlutá', weight: 18, pays: { 3: 2, 4: 5, 5: 12 } },
+                { id: 'zebra', icon: '🦓', name: 'Zebra', weight: 14, pays: { 3: 4, 4: 12, 5: 35 } },
+                { id: 'buffalo', icon: '🦬', name: 'Buvol', weight: 11, pays: { 3: 7, 4: 18, 5: 55 } },
+                { id: 'panther', icon: '🐆', name: 'Panter', weight: 8, pays: { 3: 16, 4: 60, 5: 220 } },
+                { id: 'wild', icon: '🐾', name: 'Tlapa (Wild)', weight: 6, wild: true, pays: { 3: 25, 4: 100, 5: 400 } },
+                { id: 'scatter', icon: '🌅', name: 'Savana (Scatter)', weight: 6, scatter: true, pays: { 3: 2, 4: 8, 5: 40 } }
             ]
         }
     ];

@@ -182,7 +182,7 @@
         if ((game.freeSpins && game.freeSpins.buyCost) || (game.holdwin && game.holdwin.buyCost) || game.ante) {
             var fb = el('div', 'feature-bar');
             if (game.ante) {
-                var anteBtn = el('button', 'feat-btn ante-btn', '⚡ Vyšší šance +' + Math.round((game.ante.mult - 1) * 100) + '%');
+                var anteBtn = el('button', 'feat-btn ante-btn', '🌶️ Vyšší šance na bonus +' + Math.round((game.ante.mult - 1) * 100) + '%');
                 anteBtn.onclick = function () {
                     if (self.spinning || self.fsMode) return;
                     self.ante = !self.ante; anteBtn.classList.toggle('on', self.ante); Casino.Sound.click(); self.updateBet();
@@ -625,12 +625,13 @@
         var pre = Promise.resolve();
         if (fsCfg.expanding) pre = this.chooseExpanding().then(function (id) { expanding = id; });
 
+        var played = 0;   // pojistka proti nekonečným retriggerům
         return pre.then(function () {
             return self.bigWin('FREE SPINS!', -1, fsCfg.count + ' zatočení zdarma');
         }).then(function () {
             function step() {
-                if (self._destroyed || remaining <= 0) return Promise.resolve();
-                remaining--;
+                if (self._destroyed || remaining <= 0 || played >= 250) return Promise.resolve();
+                remaining--; played++;
                 self.clearWins(); self.winEl.textContent = fmt(total); Casino.Sound.spin();
 
                 /* --- Big Bass: sběr peněžních ryb rybářem --- */
@@ -676,7 +677,7 @@
                         if (win > 0) { Casino.Account.credit(win); Casino.Account.recordSpin(game.id, 0, win); total += win; Casino.Sound.win(winLevel(win, bet)); }
                         if (tr.freeSpinsAwarded) { remaining += 5; self.flashFsRetrigger(); }
                         self.winEl.textContent = fmt(total);
-                        banner(fsCfg.persistentMult ? ' · Násobič x' + Math.max(persistent, 1) : '');
+                        banner(fsCfg.persistentMult ? ' · ' + (fsCfg.potLabel || 'Násobič') + ' ×' + Math.max(persistent, 1) : '');
                         return delay(self.turbo ? T.fsTurbo : T.fsDelay);
                     }).then(step);
                 }
@@ -690,7 +691,7 @@
                         Casino.Account.credit(lres.totalWin); Casino.Account.recordSpin(game.id, 0, lres.totalWin);
                         total += lres.totalWin; Casino.Sound.win(winLevel(lres.totalWin, bet));
                     }
-                    if (lres.freeSpinsAwarded) { remaining += fsCfg.count; self.flashFsRetrigger(); }
+                    if (lres.freeSpinsAwarded && !fsCfg.noRetrigger) { remaining += fsCfg.count; self.flashFsRetrigger(); }
                     self.winEl.textContent = fmt(total);
                     banner(expanding ? (' · Symbol ' + Engine.symById(game, expanding).icon) : (fsCfg.globalMultiplier ? ' · Násobič x' + fsCfg.globalMultiplier : ''));
                     return delay(self.turbo ? T.fsTurbo : T.fsDelay);
@@ -774,14 +775,17 @@
         gridEl.style.setProperty('--reels', game.reels);
 
         function valOf(c) { return c ? (c.value ? c.value * bet : 0) : 0; }
-        function render(flashSet) {
+        var coinIcon = game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon;
+        function render(flashSet, spinning) {
             gridEl.innerHTML = '';
             for (var yy = 0; yy < game.rows; yy++) for (var rr = 0; rr < game.reels; rr++) {
                 var c = cells[idx(rr, yy)];
                 var d = document.createElement('div');
-                d.className = 'hw-cell' + (c ? ' coin' : ' empty') + (c && c.jackpot ? ' jp jp-' + c.jackpot : '') + (flashSet && flashSet[idx(rr, yy)] ? ' new' : '');
-                if (c && c.jackpot) d.innerHTML = '<span class="hw-coin">' + game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon + '</span><span class="hw-lab">' + Casino.Jackpots.LABEL[c.jackpot] + '</span>';
-                else if (c) d.innerHTML = '<span class="hw-coin">' + game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon + '</span><span class="hw-val">' + fmt(c.value * bet) + '</span>';
+                var spin = spinning && !c;
+                d.className = 'hw-cell' + (c ? ' coin' : ' empty') + (spin ? ' spinning' : '') + (c && c.jackpot ? ' jp jp-' + c.jackpot : '') + (flashSet && flashSet[idx(rr, yy)] ? ' new' : '');
+                if (c && c.jackpot) d.innerHTML = '<span class="hw-coin">' + coinIcon + '</span><span class="hw-lab">' + Casino.Jackpots.LABEL[c.jackpot] + '</span>';
+                else if (c) d.innerHTML = '<span class="hw-coin">' + coinIcon + '</span><span class="hw-val">' + fmt(c.value * bet) + '</span>';
+                else if (spin) d.innerHTML = '<span class="hw-coin spin-ico">' + coinIcon + '</span>';
                 gridEl.appendChild(d);
             }
         }
@@ -794,19 +798,20 @@
             if (self._destroyed) return Promise.resolve();
             if (respins <= 0 || locked >= total) return Promise.resolve();
             respins--;
-            Casino.Sound.spin();
-            // dober prázdné pozice
-            var flash = {}, gotNew = false;
-            for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) {
-                var i = idx(r, y);
-                if (cells[i]) continue;
-                // šance na novou minci v respinu
-                if (Math.random() < 0.2) { cells[i] = assignCoin(game, bet); locked++; flash[i] = true; gotNew = true; }
-            }
-            if (gotNew) { respins = hw.respins; Casino.Sound.reelStop(2); }
             reEl.textContent = respins;
-            render(flash); sumEl.textContent = fmt(curSum());
-            return delay(self.turbo ? 320 : 620).then(step);
+            Casino.Sound.spin();
+            render(null, true);                       // viditelné roztočení prázdných polí
+            return delay(self.turbo ? 200 : 420).then(function () {
+                var flash = {}, gotNew = false;
+                for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) {
+                    var i = idx(r, y);
+                    if (cells[i]) continue;
+                    if (Math.random() < 0.2) { cells[i] = assignCoin(game, bet); locked++; flash[i] = true; gotNew = true; }
+                }
+                if (gotNew) { respins = hw.respins; reEl.textContent = respins; Casino.Sound.reelStop(2); }
+                render(flash); sumEl.textContent = fmt(curSum());
+                return delay(self.turbo ? 260 : 460);
+            }).then(step);
         }
 
         return delay(700).then(step).then(function () {

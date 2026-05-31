@@ -632,3 +632,34 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
 .hw-lab { font-weight: 900; font-size: clamp(8px, 2.2vw, 11px); letter-spacing: .5px; }
 .hw-total { font-size: clamp(15px, 4vw, 22px); font-weight: 900; }
 .hw-total b { color: var(--green); }
+
+/* ==========================================================================
+   CHICKEN ROAD + VKLAD
+   ========================================================================== */
+.chick-msg { text-align: center; font-weight: 700; margin-bottom: 12px; min-height: 22px; }
+.chick-road { display: flex; gap: 6px; overflow-x: auto; padding: 10px 4px 14px; scroll-behavior: smooth; }
+.chick-road::-webkit-scrollbar { height: 6px; } .chick-road::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 3px; }
+.lane { flex: 0 0 64px; border-radius: 12px; background: linear-gradient(180deg, #2a2030, #1a1226); border: 1px solid var(--border); overflow: hidden; transition: transform .15s, box-shadow .15s; }
+.lane.start { background: linear-gradient(180deg, #14351f, #0c2415); }
+.lane.cur { transform: translateY(-6px); box-shadow: 0 0 18px var(--gold); border-color: var(--gold); }
+.lane.done { opacity: .7; }
+.lane.crash { border-color: var(--red); box-shadow: 0 0 16px rgba(255,59,59,.5); }
+.lane-mult { text-align: center; font-size: 12px; font-weight: 900; color: var(--gold); padding: 5px 2px; background: rgba(0,0,0,.35); }
+.lane.start .lane-mult { color: var(--green); }
+.lane-body { height: 70px; display: grid; place-items: center; font-size: 30px; }
+.chick { font-size: 34px; animation: chickHop .5s ease; }
+@keyframes chickHop { 0% { transform: translateX(-30px) translateY(-12px); } 100% { transform: translateX(0) translateY(0); } }
+.chick-diff button { padding: 12px 12px; }
+
+.deposit-box .bank-card { background: linear-gradient(135deg, #3a2d68, #1a73ff); border-radius: 16px; padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.bank-card .bank-chip { font-size: 26px; }
+.bank-card .bank-no { font-size: 20px; font-weight: 900; letter-spacing: 2px; margin-top: 14px; color: #fff; }
+.bank-card .bank-name { font-size: 11px; color: rgba(255,255,255,.8); margin-top: 6px; letter-spacing: 1px; }
+.deposit-presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.deposit-presets .feat-btn { flex: 1; min-width: 70px; }
+.deposit-form { display: flex; gap: 8px; }
+
+/* Hold & Win – viditelné roztočení prázdných polí */
+.hw-cell.spinning { background: rgba(255,210,74,.1); border: 1px solid rgba(255,210,74,.3); }
+.hw-cell .spin-ico { opacity: .5; animation: spinFlick .18s linear infinite; }
+@keyframes spinFlick { 0% { transform: translateY(-6px); opacity: .25; } 50% { transform: translateY(6px); opacity: .55; } 100% { transform: translateY(-6px); opacity: .25; } }

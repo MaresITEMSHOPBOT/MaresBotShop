@@ -91,6 +91,17 @@
             Casino.bus.emit('balance', a.balance);
         },
         credit: function (n) { Account.setBalance(Account.getBalance() + n); },
+
+        // vklad (virtuální kredity – žádné reálné peníze)
+        deposit: function (amount) {
+            var a = Account.current(); if (!a) return 0;
+            amount = Math.round(amount);
+            if (!(amount > 0)) return 0;
+            amount = Math.min(amount, 1000000);
+            a.totalDeposited = (a.totalDeposited || 0) + amount;
+            Account.credit(amount);
+            return amount;
+        },
         debit: function (n) {
             var a = Account.current(); if (!a) return false;
             if (a.balance < n) return false;

@@ -641,6 +641,37 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
 .hw-total { font-size: clamp(15px, 4vw, 22px); font-weight: 900; }
 .hw-total b { color: var(--green); }
 
+/* ==========================================================================
+   CHICKEN ROAD + VKLAD
+   ========================================================================== */
+.chick-msg { text-align: center; font-weight: 700; margin-bottom: 12px; min-height: 22px; }
+.chick-road { display: flex; gap: 6px; overflow-x: auto; padding: 10px 4px 14px; scroll-behavior: smooth; }
+.chick-road::-webkit-scrollbar { height: 6px; } .chick-road::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 3px; }
+.lane { flex: 0 0 64px; border-radius: 12px; background: linear-gradient(180deg, #2a2030, #1a1226); border: 1px solid var(--border); overflow: hidden; transition: transform .15s, box-shadow .15s; }
+.lane.start { background: linear-gradient(180deg, #14351f, #0c2415); }
+.lane.cur { transform: translateY(-6px); box-shadow: 0 0 18px var(--gold); border-color: var(--gold); }
+.lane.done { opacity: .7; }
+.lane.crash { border-color: var(--red); box-shadow: 0 0 16px rgba(255,59,59,.5); }
+.lane-mult { text-align: center; font-size: 12px; font-weight: 900; color: var(--gold); padding: 5px 2px; background: rgba(0,0,0,.35); }
+.lane.start .lane-mult { color: var(--green); }
+.lane-body { height: 70px; display: grid; place-items: center; font-size: 30px; }
+.chick { font-size: 34px; animation: chickHop .5s ease; }
+@keyframes chickHop { 0% { transform: translateX(-30px) translateY(-12px); } 100% { transform: translateX(0) translateY(0); } }
+.chick-diff button { padding: 12px 12px; }
+
+.deposit-box .bank-card { background: linear-gradient(135deg, #3a2d68, #1a73ff); border-radius: 16px; padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.bank-card .bank-chip { font-size: 26px; }
+.bank-card .bank-no { font-size: 20px; font-weight: 900; letter-spacing: 2px; margin-top: 14px; color: #fff; }
+.bank-card .bank-name { font-size: 11px; color: rgba(255,255,255,.8); margin-top: 6px; letter-spacing: 1px; }
+.deposit-presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.deposit-presets .feat-btn { flex: 1; min-width: 70px; }
+.deposit-form { display: flex; gap: 8px; }
+
+/* Hold & Win – viditelné roztočení prázdných polí */
+.hw-cell.spinning { background: rgba(255,210,74,.1); border: 1px solid rgba(255,210,74,.3); }
+.hw-cell .spin-ico { opacity: .5; animation: spinFlick .18s linear infinite; }
+@keyframes spinFlick { 0% { transform: translateY(-6px); opacity: .25; } 50% { transform: translateY(6px); opacity: .55; } 100% { transform: translateY(-6px); opacity: .25; } }
+
 </style>
 </head>
 <body>
@@ -659,6 +690,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
             <button id="btn-lobby" class="btn-ghost hidden">← Lobby</button>
         </div>
         <div class="topbar-right">
+            <button id="btn-deposit" class="icon-btn" title="Vklad kreditů">💳</button>
             <button id="btn-bonus" class="bonus-btn">🎁 Bonus</button>
             <div class="balance-chip" id="balance-chip">🪙 <b id="hdr-balance">0</b></div>
             <button id="btn-stats" class="icon-btn" title="Statistiky">📊</button>
@@ -830,7 +862,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
             paylines: takeLines(LINES_5x3, 10),
             theme: { a: '#e6b800', b: '#c97f1a', bg: 'radial-gradient(circle at 50% 0%, #2b1d05, #0c0700)' },
             bets: [10, 20, 50, 100, 250, 500, 1000],
-            freeSpins: { trigger: 3, count: 10, scatterIsWild: true, expanding: true, buyCost: 13 }, ante: { mult: 1.25, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 12, scatterIsWild: true, expanding: true, buyCost: 13 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'c1', icon: '🔶', name: 'A', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
                 { id: 'c2', icon: '🔷', name: 'K', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
@@ -858,7 +890,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
             theme: { a: '#7b61ff', b: '#00e5ff', bg: 'radial-gradient(circle at 50% 0%, #0b0a2e, #03040f)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 12, globalMultiplier: 2, buyCost: 16 }, ante: { mult: 1.25, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 12, globalMultiplier: 3, buyCost: 16 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'p1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 1, 4: 4, 5: 12 } },
                 { id: 'p2', icon: '🟣', name: 'Fialová', weight: 22, pays: { 3: 1, 4: 4, 5: 12 } },
@@ -886,7 +918,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
             theme: { a: '#d98a2b', b: '#ffcf5c', bg: 'radial-gradient(circle at 50% 0%, #2a1a08, #0d0600)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 8, globalMultiplier: 2, buyCost: 11 }, ante: { mult: 1.25, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 10, globalMultiplier: 2, buyCost: 11 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'beer', icon: '🍺', name: 'Pivo', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
                 { id: 'cactus', icon: '🌵', name: 'Kaktus', weight: 22, pays: { 3: 1, 4: 4, 5: 10 } },
@@ -1072,6 +1104,62 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
                 { id: 'wolf', icon: '🐺', name: 'Vlk', weight: 8, pays: { 3: 55, 4: 185, 5: 680 } },
                 { id: 'wild', icon: '🌟', name: 'Wild', weight: 6, wild: true, pays: { 3: 80, 4: 300, 5: 1100 } },
                 { id: 'moon', icon: '🌕', name: 'Měsíc (Hold & Win)', weight: 12 }
+            ]
+        },
+
+        /* ---- 12) Kouzelný Kotel (tumble, kotel sbírá násobiče – čím víc, tím víc ×) ---- */
+        {
+            id: 'cauldron',
+            type: 'tumble',
+            name: 'Kouzelný Kotel',
+            tagline: 'Kotel sbírá násobiče — každé spojení přidá víc ×',
+            emoji: '🔮',
+            volatility: 'Velmi vysoká',
+            rtp: 96,
+            reels: 6, rows: 5,
+            cluster: 9,
+            buckets: [9, 11, 13],
+            theme: { a: '#9b5cff', b: '#34e3ff', bg: 'radial-gradient(circle at 50% 0%, #1a0b33, #06030f)' },
+            bets: [20, 40, 100, 200, 400, 1000, 2000],
+            freeSpins: { trigger: 4, count: 15, persistentMult: true, buyCost: 100, potLabel: '🔮 KOTEL' },
+            orbValues: [[2, 38], [3, 24], [4, 13], [5, 8], [6, 4.5], [8, 2.6], [10, 1.8], [15, 1], [20, 0.6], [25, 0.4], [50, 0.16], [100, 0.06], [250, 0.01], [500, 0.004]],
+            symbols: [
+                { id: 'p1', icon: '🟣', name: 'Fialový lektvar', weight: 24, pays: { 9: 0.25, 11: 0.5, 13: 1.2 } },
+                { id: 'p2', icon: '🟢', name: 'Zelený lektvar', weight: 22, pays: { 9: 0.3, 11: 0.6, 13: 1.5 } },
+                { id: 'p3', icon: '🔵', name: 'Modrý lektvar', weight: 20, pays: { 9: 0.4, 11: 0.8, 13: 2 } },
+                { id: 'p4', icon: '🔴', name: 'Červený lektvar', weight: 18, pays: { 9: 0.5, 11: 1, 13: 2.5 } },
+                { id: 'mush', icon: '🍄', name: 'Houba', weight: 12, pays: { 9: 0.8, 11: 1.5, 13: 4 } },
+                { id: 'owl', icon: '🦉', name: 'Sova', weight: 9, pays: { 9: 1.2, 11: 2.5, 13: 6 } },
+                { id: 'gem', icon: '💎', name: 'Krystal', weight: 6, pays: { 9: 2, 11: 4, 13: 10 } },
+                { id: 'orb', icon: '🧪', name: 'Lektvar (násobič)', weight: 2.4, orb: true },
+                { id: 'scatter', icon: '🌙', name: 'Měsíc (Scatter)', weight: 2.2, scatter: true, pays: { 4: 3, 5: 5, 6: 50 } }
+            ]
+        },
+
+        /* ---- 13) Divoká Šelma (5x3, šelma se ČASTÝM a výdělečným bonusem) ---- */
+        {
+            id: 'beast',
+            type: 'lines',
+            name: 'Divoká Šelma',
+            tagline: 'Šelma s velmi častým a štědrým bonusem',
+            emoji: '🐆',
+            volatility: 'Střední',
+            rtp: 96,
+            reels: 5, rows: 3,
+            paylines: takeLines(LINES_5x3, 20),
+            theme: { a: '#ffa733', b: '#1f9d55', bg: 'radial-gradient(circle at 50% 0%, #2a1c08, #0c0a04)' },
+            bets: [20, 40, 100, 200, 400, 1000, 2000],
+            freeSpins: { trigger: 3, count: 12, globalMultiplier: 3, buyCost: 75, noRetrigger: true },
+            ante: { mult: 1.25, scatterMult: 1.3 },
+            symbols: [
+                { id: 'a1', icon: '🔵', name: 'Modrá', weight: 22, pays: { 3: 1, 4: 3, 5: 8 } },
+                { id: 'a2', icon: '🟢', name: 'Zelená', weight: 20, pays: { 3: 1, 4: 3, 5: 8 } },
+                { id: 'a3', icon: '🟡', name: 'Žlutá', weight: 18, pays: { 3: 2, 4: 5, 5: 12 } },
+                { id: 'zebra', icon: '🦓', name: 'Zebra', weight: 14, pays: { 3: 4, 4: 12, 5: 35 } },
+                { id: 'buffalo', icon: '🦬', name: 'Buvol', weight: 11, pays: { 3: 7, 4: 18, 5: 55 } },
+                { id: 'panther', icon: '🐆', name: 'Panter', weight: 8, pays: { 3: 16, 4: 60, 5: 220 } },
+                { id: 'wild', icon: '🐾', name: 'Tlapa (Wild)', weight: 6, wild: true, pays: { 3: 25, 4: 100, 5: 400 } },
+                { id: 'scatter', icon: '🌅', name: 'Savana (Scatter)', weight: 6, scatter: true, pays: { 3: 2, 4: 8, 5: 40 } }
             ]
         }
     ];
@@ -1591,6 +1679,17 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
             Casino.bus.emit('balance', a.balance);
         },
         credit: function (n) { Account.setBalance(Account.getBalance() + n); },
+
+        // vklad (virtuální kredity – žádné reálné peníze)
+        deposit: function (amount) {
+            var a = Account.current(); if (!a) return 0;
+            amount = Math.round(amount);
+            if (!(amount > 0)) return 0;
+            amount = Math.min(amount, 1000000);
+            a.totalDeposited = (a.totalDeposited || 0) + amount;
+            Account.credit(amount);
+            return amount;
+        },
         debit: function (n) {
             var a = Account.current(); if (!a) return false;
             if (a.balance < n) return false;
@@ -1946,7 +2045,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         if ((game.freeSpins && game.freeSpins.buyCost) || (game.holdwin && game.holdwin.buyCost) || game.ante) {
             var fb = el('div', 'feature-bar');
             if (game.ante) {
-                var anteBtn = el('button', 'feat-btn ante-btn', '⚡ Vyšší šance +' + Math.round((game.ante.mult - 1) * 100) + '%');
+                var anteBtn = el('button', 'feat-btn ante-btn', '🌶️ Vyšší šance na bonus +' + Math.round((game.ante.mult - 1) * 100) + '%');
                 anteBtn.onclick = function () {
                     if (self.spinning || self.fsMode) return;
                     self.ante = !self.ante; anteBtn.classList.toggle('on', self.ante); Casino.Sound.click(); self.updateBet();
@@ -2389,12 +2488,13 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         var pre = Promise.resolve();
         if (fsCfg.expanding) pre = this.chooseExpanding().then(function (id) { expanding = id; });
 
+        var played = 0;   // pojistka proti nekonečným retriggerům
         return pre.then(function () {
             return self.bigWin('FREE SPINS!', -1, fsCfg.count + ' zatočení zdarma');
         }).then(function () {
             function step() {
-                if (self._destroyed || remaining <= 0) return Promise.resolve();
-                remaining--;
+                if (self._destroyed || remaining <= 0 || played >= 250) return Promise.resolve();
+                remaining--; played++;
                 self.clearWins(); self.winEl.textContent = fmt(total); Casino.Sound.spin();
 
                 /* --- Big Bass: sběr peněžních ryb rybářem --- */
@@ -2440,7 +2540,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
                         if (win > 0) { Casino.Account.credit(win); Casino.Account.recordSpin(game.id, 0, win); total += win; Casino.Sound.win(winLevel(win, bet)); }
                         if (tr.freeSpinsAwarded) { remaining += 5; self.flashFsRetrigger(); }
                         self.winEl.textContent = fmt(total);
-                        banner(fsCfg.persistentMult ? ' · Násobič x' + Math.max(persistent, 1) : '');
+                        banner(fsCfg.persistentMult ? ' · ' + (fsCfg.potLabel || 'Násobič') + ' ×' + Math.max(persistent, 1) : '');
                         return delay(self.turbo ? T.fsTurbo : T.fsDelay);
                     }).then(step);
                 }
@@ -2454,7 +2554,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
                         Casino.Account.credit(lres.totalWin); Casino.Account.recordSpin(game.id, 0, lres.totalWin);
                         total += lres.totalWin; Casino.Sound.win(winLevel(lres.totalWin, bet));
                     }
-                    if (lres.freeSpinsAwarded) { remaining += fsCfg.count; self.flashFsRetrigger(); }
+                    if (lres.freeSpinsAwarded && !fsCfg.noRetrigger) { remaining += fsCfg.count; self.flashFsRetrigger(); }
                     self.winEl.textContent = fmt(total);
                     banner(expanding ? (' · Symbol ' + Engine.symById(game, expanding).icon) : (fsCfg.globalMultiplier ? ' · Násobič x' + fsCfg.globalMultiplier : ''));
                     return delay(self.turbo ? T.fsTurbo : T.fsDelay);
@@ -2538,14 +2638,17 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         gridEl.style.setProperty('--reels', game.reels);
 
         function valOf(c) { return c ? (c.value ? c.value * bet : 0) : 0; }
-        function render(flashSet) {
+        var coinIcon = game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon;
+        function render(flashSet, spinning) {
             gridEl.innerHTML = '';
             for (var yy = 0; yy < game.rows; yy++) for (var rr = 0; rr < game.reels; rr++) {
                 var c = cells[idx(rr, yy)];
                 var d = document.createElement('div');
-                d.className = 'hw-cell' + (c ? ' coin' : ' empty') + (c && c.jackpot ? ' jp jp-' + c.jackpot : '') + (flashSet && flashSet[idx(rr, yy)] ? ' new' : '');
-                if (c && c.jackpot) d.innerHTML = '<span class="hw-coin">' + game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon + '</span><span class="hw-lab">' + Casino.Jackpots.LABEL[c.jackpot] + '</span>';
-                else if (c) d.innerHTML = '<span class="hw-coin">' + game.symbols.filter(function (s) { return s.id === hw.coinId; })[0].icon + '</span><span class="hw-val">' + fmt(c.value * bet) + '</span>';
+                var spin = spinning && !c;
+                d.className = 'hw-cell' + (c ? ' coin' : ' empty') + (spin ? ' spinning' : '') + (c && c.jackpot ? ' jp jp-' + c.jackpot : '') + (flashSet && flashSet[idx(rr, yy)] ? ' new' : '');
+                if (c && c.jackpot) d.innerHTML = '<span class="hw-coin">' + coinIcon + '</span><span class="hw-lab">' + Casino.Jackpots.LABEL[c.jackpot] + '</span>';
+                else if (c) d.innerHTML = '<span class="hw-coin">' + coinIcon + '</span><span class="hw-val">' + fmt(c.value * bet) + '</span>';
+                else if (spin) d.innerHTML = '<span class="hw-coin spin-ico">' + coinIcon + '</span>';
                 gridEl.appendChild(d);
             }
         }
@@ -2558,19 +2661,20 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
             if (self._destroyed) return Promise.resolve();
             if (respins <= 0 || locked >= total) return Promise.resolve();
             respins--;
-            Casino.Sound.spin();
-            // dober prázdné pozice
-            var flash = {}, gotNew = false;
-            for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) {
-                var i = idx(r, y);
-                if (cells[i]) continue;
-                // šance na novou minci v respinu
-                if (Math.random() < 0.2) { cells[i] = assignCoin(game, bet); locked++; flash[i] = true; gotNew = true; }
-            }
-            if (gotNew) { respins = hw.respins; Casino.Sound.reelStop(2); }
             reEl.textContent = respins;
-            render(flash); sumEl.textContent = fmt(curSum());
-            return delay(self.turbo ? 320 : 620).then(step);
+            Casino.Sound.spin();
+            render(null, true);                       // viditelné roztočení prázdných polí
+            return delay(self.turbo ? 200 : 420).then(function () {
+                var flash = {}, gotNew = false;
+                for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) {
+                    var i = idx(r, y);
+                    if (cells[i]) continue;
+                    if (Math.random() < 0.2) { cells[i] = assignCoin(game, bet); locked++; flash[i] = true; gotNew = true; }
+                }
+                if (gotNew) { respins = hw.respins; reEl.textContent = respins; Casino.Sound.reelStop(2); }
+                render(flash); sumEl.textContent = fmt(curSum());
+                return delay(self.turbo ? 260 : 460);
+            }).then(step);
         }
 
         return delay(700).then(step).then(function () {
@@ -4901,6 +5005,123 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
 
 </script>
 <script>
+/* ===== games/chicken.js ===== */
+/* ==========================================================================
+   MARES CASINO – Chicken Road. Slepice skáče přes pruhy s auty.
+   Každý pruh zvedne násobič, ale hrozí sražení. Vyber výhru včas.
+   Násobič_k = 0.97 / s^k  → RTP ~97 % (s = šance přežití na pruh).
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var fmt = Casino.util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+    var BETS = [10, 20, 50, 100, 250, 500];
+    var LANES = 16, EDGE = 0.97;
+    var DIFF = {
+        easy: { label: 'Lehká', s: 0.95 },
+        medium: { label: 'Střední', s: 0.86 },
+        hard: { label: 'Těžká', s: 0.75 }
+    };
+    function mults(s) { var a = []; for (var k = 1; k <= LANES; k++) { var m = EDGE / Math.pow(s, k); a.push(m >= 10 ? Math.round(m) : Math.round(m * 100) / 100); } return a; }
+
+    Casino.Chicken = { open: function (m, o) { return new Chicken(m, o); } };
+    function Chicken(mount, opts) { this.opts = opts || {}; this.betIndex = 3; this.diff = 'medium'; this.state = 'bet'; this.pos = 0; this.build(mount); }
+    Chicken.prototype.bet = function () { return BETS[this.betIndex]; };
+    Chicken.prototype.M = function () { return mults(DIFF[this.diff].s); };
+
+    Chicken.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#ffd24a', b: '#ff7a1a', bg: 'linear-gradient(180deg, #1a1f3a, #07030f)' };
+        var f = Casino.UI.gameFrame(mount, { emoji: '🐔', name: 'Chicken Road', subtitle: 'Přeskákej pruhy a vyber výhru než tě srazí auto', theme: theme, bg: theme.bg, onExit: this.opts.onExit, onInfo: function () { self.info(); } });
+        this.frame = f;
+        this.msgEl = el('div', 'chick-msg', 'Vyber obtížnost, vsaď a klikni SKOČ.'); f.stage.appendChild(this.msgEl);
+        this.road = el('div', 'chick-road'); f.stage.appendChild(this.road);
+        this.renderRoad();
+        var c = f.controls;
+        c.innerHTML =
+            '<div class="ctrl-cell ctrl-bet"><button class="bet-dn">−</button><div class="bet-val"><label>Sázka</label><b class="c-bet">' + fmt(this.bet()) + '</b></div><button class="bet-up">+</button></div>' +
+            '<div class="risk-seg chick-diff">' + Object.keys(DIFF).map(function (d) { return '<button data-d="' + d + '"' + (d === 'medium' ? ' class="on"' : '') + '>' + DIFF[d].label + '</button>'; }).join('') + '</div>' +
+            '<button class="deal-btn chick-jump">SKOČ 🐔</button>' +
+            '<button class="play-btn chick-cash hidden">VYBRAT</button>';
+        this.betEl = c.querySelector('.c-bet'); this.jumpBtn = c.querySelector('.chick-jump'); this.cashBtn = c.querySelector('.chick-cash');
+        c.querySelector('.bet-dn').onclick = function () { self.changeBet(-1); };
+        c.querySelector('.bet-up').onclick = function () { self.changeBet(1); };
+        c.querySelectorAll('.chick-diff button').forEach(function (b) { b.onclick = function () { if (self.state !== 'bet') return; self.diff = b.dataset.d; c.querySelectorAll('.chick-diff button').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on'); Casino.Sound.click(); self.renderRoad(); }; });
+        this.jumpBtn.onclick = function () { Casino.Sound.unlock(); self.jump(); };
+        this.cashBtn.onclick = function () { self.cashout(); };
+    };
+    Chicken.prototype.changeBet = function (d) { if (this.state !== 'bet') return; var n = this.betIndex + d; if (n < 0 || n >= BETS.length) return; this.betIndex = n; Casino.Sound.click(); this.betEl.textContent = fmt(this.bet()); };
+
+    Chicken.prototype.renderRoad = function () {
+        var self = this, M = this.M();
+        this.road.innerHTML = '';
+        var start = el('div', 'lane start' + (this.pos === 0 ? ' cur' : ''));
+        start.innerHTML = '<div class="lane-mult">START</div><div class="lane-body">' + (this.pos === 0 ? '<span class="chick">🐔</span>' : '🟩') + '</div>';
+        this.road.appendChild(start);
+        for (var k = 1; k <= LANES; k++) {
+            var lane = el('div', 'lane' + (k === this.pos ? ' cur' : '') + (k < this.pos ? ' done' : '') + (k === this.crashLane ? ' crash' : ''));
+            var body = k === this.pos ? '<span class="chick">🐔</span>' : (k === this.crashLane ? '🚗💥' : (k < this.pos ? '✅' : '🚗'));
+            lane.innerHTML = '<div class="lane-mult">' + M[k - 1] + '×</div><div class="lane-body">' + body + '</div>';
+            this.road.appendChild(lane);
+        }
+        // posuň pohled na aktuální pruh
+        var cur = this.road.querySelector('.cur');
+        if (cur) cur.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    };
+
+    Chicken.prototype.setMode = function (m) {
+        this.jumpBtn.classList.toggle('hidden', m !== 'play' && m !== 'bet');
+        this.jumpBtn.textContent = m === 'bet' ? 'SKOČ 🐔' : 'SKOČ 🐔';
+        this.cashBtn.classList.toggle('hidden', m !== 'play' || this.pos < 1);
+    };
+
+    Chicken.prototype.jump = function () {
+        var self = this;
+        if (this.state === 'bet') {
+            var bet = this.bet();
+            if (!Casino.Account.debit(bet)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+            this.stake = bet; this.pos = 0; this.crashLane = -1; this.state = 'play';
+            this.renderRoad(); Casino.Sound.click();
+        }
+        if (this.state !== 'play') return;
+        // pokus o přeskok na další pruh
+        var s = DIFF[this.diff].s;
+        if (Math.random() < s) {
+            this.pos++; Casino.Sound.reelStop(2);
+            this.renderRoad();
+            var m = this.M()[this.pos - 1];
+            this.cashBtn.textContent = 'VYBRAT ' + fmt(Math.round(this.stake * m));
+            this.msgEl.textContent = 'Pruh ' + this.pos + ' · ×' + m + ' — skoč dál, nebo vyber!';
+            this.setMode('play');
+            if (this.pos >= LANES) this.cashout(); // dosažen konec → auto výběr
+        } else {
+            this.crashLane = this.pos + 1; this.state = 'bet';
+            this.renderRoad(); Casino.Sound.lose();
+            Casino.Account.recordSpin('chicken', this.stake, 0);
+            this.msgEl.textContent = '💥 Auto! Slepice to nedala. Prohra ' + fmt(this.stake) + '.';
+            this.jumpBtn.textContent = 'SKOČ 🐔'; this.setMode('bet'); this.cashBtn.classList.add('hidden');
+        }
+    };
+
+    Chicken.prototype.cashout = function () {
+        if (this.state !== 'play' || this.pos < 1) return;
+        var m = this.M()[this.pos - 1], win = Math.round(this.stake * m);
+        Casino.Account.credit(win); Casino.Account.recordSpin('chicken', this.stake, win);
+        Casino.Sound.win(m >= 10 ? 3 : 2);
+        this.state = 'bet';
+        this.msgEl.textContent = '🐔 Bezpečně! ×' + m + ' → +' + fmt(win);
+        this.setMode('bet'); this.cashBtn.classList.add('hidden');
+    };
+
+    Chicken.prototype.info = function () { Casino.UI.modal({ title: '🐔 Chicken Road', body: '<p style="color:var(--muted);line-height:1.7">Vsaď a klikni <b>SKOČ</b>. Slepice přeskakuje pruhy s auty — každý zdolaný pruh zvedne násobič. Kdykoliv můžeš <b>VYBRAT</b> (sázka × aktuální násobič). Když tě srazí auto, sázka propadá.</p><p style="color:var(--muted);margin-top:8px">Obtížnost mění riziko i násobiče: Lehká (bezpečná, malé ×), Těžká (riskantní, až ' + Math.round(EDGE / Math.pow(DIFF.hard.s, LANES)) + '×). RTP ≈ 97 %.</p>' }); };
+    Chicken.prototype.destroy = function () { };
+
+    Casino.registry.push({ id: 'chicken', name: 'Chicken Road', emoji: '🐔', category: 'arcade', tagline: 'Přeskákej auta a vyber výhru včas', theme: { a: '#ffd24a', b: '#ff7a1a', bg: 'linear-gradient(180deg, #1a1f3a, #07030f)' }, badges: ['RTP ~97%', 'Arkáda'], meta: '3 obtížnosti · cash-out kdykoliv', open: function (m, o) { return Casino.Chicken.open(m, o); } });
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
 /* ===== app.js ===== */
 /* ==========================================================================
    MARES CASINO – aplikace: přihlášení, lobby, navigace, hlavička, bonusy
@@ -5256,6 +5477,31 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
     }
 
     /* ======================================================================
+       Vklad kreditů (virtuální)
+       ===================================================================== */
+    function openDeposit() {
+        var body = el('div', 'deposit-box');
+        body.innerHTML = '<div class="bank-card"><span class="bank-chip">💳</span><div class="bank-no">•••• •••• •••• 1234</div><div class="bank-name">MARES CASINO · virtuální peněženka</div></div>' +
+            '<p style="color:var(--muted);margin-bottom:10px">Napiš částku, kterou chceš nahrát na účet:</p>';
+        var presets = el('div', 'deposit-presets');
+        [1000, 5000, 25000, 100000].forEach(function (v) { var b = el('button', 'feat-btn'); b.type = 'button'; b.textContent = '+' + fmt(v); b.onclick = function () { input.value = v; input.focus(); }; presets.appendChild(b); });
+        var form = el('form', 'promo-form deposit-form');
+        var input = el('input', 'promo-input'); input.type = 'number'; input.min = '1'; input.placeholder = 'Částka v kreditech…';
+        var btn = el('button', 'btn-primary', '💳 Nahrát');
+        form.appendChild(input); form.appendChild(btn);
+        var msg = el('div', 'promo-msg');
+        form.onsubmit = function (e) {
+            e.preventDefault();
+            var got = Account.deposit(parseInt(input.value, 10) || 0);
+            if (got) { refreshHeader(); Casino.Sound.win(2); Casino.UI.toast('💳 Vklad +' + fmt(got) + ' kreditů', 'good'); msg.className = 'promo-msg good'; msg.textContent = '✓ Nahráno +' + fmt(got) + ' kreditů na účet.'; input.value = ''; }
+            else { msg.className = 'promo-msg bad'; msg.textContent = 'Zadej částku větší než 0.'; }
+        };
+        body.appendChild(presets); body.appendChild(form); body.appendChild(msg);
+        body.appendChild(el('p', 'bonus-note', '⚠️ Pouze virtuální kredity pro zábavu — žádné reálné peníze ani skutečný bankovní účet.'));
+        Casino.UI.modal({ title: '💳 Vklad kreditů', body: body });
+    }
+
+    /* ======================================================================
        Statistiky
        ===================================================================== */
     function openStats() {
@@ -5316,6 +5562,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
         $('#brand').onclick = function () { if (Account.isLoggedIn()) { closeGame(); goLobby(); } };
         $('#btn-lobby').onclick = function () { Casino.Sound.click(); closeGame(); goLobby(); };
         $('#btn-bonus').onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openBonus(); };
+        $('#btn-deposit').onclick = function () { Casino.Sound.unlock(); Casino.Sound.click(); openDeposit(); };
         $('#btn-stats').onclick = function () { Casino.Sound.click(); openStats(); };
         $('#btn-user').onclick = function () { Casino.Sound.click(); openUserMenu(); };
 
