@@ -66,6 +66,7 @@
         c.appendChild(icon);
         if (data.wm) { var b = el('span', 'wm-badge', 'x' + data.wm); c.appendChild(b); }
         if (data.m) { var o = el('span', 'orb-badge', 'x' + data.m); c.appendChild(o); }
+        if (data.mv) { c.classList.add('is-money'); var mvb = el('span', 'money-badge', data.mv + '×'); c.appendChild(mvb); }
         return c;
     }
 
@@ -177,6 +178,26 @@
             e.currentTarget.textContent = on ? '🔊' : '🔇'; if (on) Casino.Sound.toggle();
         };
 
+        // lišta funkcí: Ante Bet (vyšší šance) + Koupit bonus
+        if ((game.freeSpins && game.freeSpins.buyCost) || game.ante) {
+            var fb = el('div', 'feature-bar');
+            if (game.ante) {
+                var anteBtn = el('button', 'feat-btn ante-btn', '⚡ Vyšší šance +' + Math.round((game.ante.mult - 1) * 100) + '%');
+                anteBtn.onclick = function () {
+                    if (self.spinning || self.fsMode) return;
+                    self.ante = !self.ante; anteBtn.classList.toggle('on', self.ante); Casino.Sound.click(); self.updateBet();
+                };
+                fb.appendChild(anteBtn); this.anteBtn = anteBtn;
+            }
+            if (game.freeSpins && game.freeSpins.buyCost) {
+                var buyBtn = el('button', 'feat-btn buy-btn', '');
+                buyBtn.onclick = function () { Casino.Sound.unlock(); self.buyBonus(); };
+                fb.appendChild(buyBtn); this.buyBtn = buyBtn;
+            }
+            root.insertBefore(fb, controls);
+            this.updateFeatureBar();
+        }
+
         // klávesa mezerník = spin
         this._key = function (e) {
             if (e.code === 'Space' && !self.spinning && !self.fsMode) { e.preventDefault(); self.onSpinClick(); }
@@ -223,7 +244,16 @@
         if (n < 0 || n >= this.game.bets.length) return;
         this.betIndex = n; Casino.Sound.click(); this.updateBet();
     };
-    Machine.prototype.updateBet = function () { this.betEl.textContent = fmt(this.bet()); };
+    Machine.prototype.updateBet = function () {
+        this.betEl.textContent = fmt(this.bet());
+        this.updateFeatureBar();
+    };
+    Machine.prototype.updateFeatureBar = function () {
+        if (this.buyBtn) this.buyBtn.textContent = '🛒 Koupit bonus (' + fmt(this.bet() * this.game.freeSpins.buyCost) + ')';
+        if (this.anteBtn) this.anteBtn.classList.toggle('on', !!this.ante);
+        // ukaž efektivní sázku při Ante
+        if (this.betEl) this.betEl.textContent = this.ante && this.game.ante ? fmt(this.effectiveBet()) : fmt(this.bet());
+    };
 
     /* ---------------- LINIOVÉ HRY ---------------- */
     Machine.prototype.buildStrip = function (reelObj, targetCol, fillers) {
@@ -423,10 +453,14 @@
         this.spinBtn.classList.toggle('spinning', b);
     };
 
+    Machine.prototype.effectiveBet = function () {
+        var g = this.game; return (this.ante && g.ante) ? Math.round(this.bet() * g.ante.mult) : this.bet();
+    };
+
     Machine.prototype.doSpin = function () {
         var self = this, game = this.game, bet = this.bet();
         Casino.Sound.unlock();
-        if (!Casino.Account.debit(bet)) {
+        if (!Casino.Account.debit(this.effectiveBet())) {
             this.message('Nedostatek kreditu! Vyber si bonus.');
             this.stopAuto();
             if (this.opts.onBroke) this.opts.onBroke();
@@ -445,13 +479,47 @@
     Machine.prototype.spinLinesFlow = function (bet) {
         var self = this, game = this.game;
         var betPerLine = bet / game.paylines.length;
-        var grid = Engine.generateLineGrid(game);
+        var sm = (this.ante && game.ante) ? game.ante.scatterMult : 1;
+        var grid = Engine.generateLineGrid(game, { scatterMult: sm });
         var result = Engine.evaluateLines(game, grid, { betPerLine: betPerLine, totalBet: bet, freeSpin: false });
         return this.spinLines(grid).then(function () {
             return self.presentLines(result, bet, betPerLine, false);
         }).then(function () {
+            if (game.respin && !result.freeSpinsAwarded) return self.runRespins(grid, bet, betPerLine);
+        }).then(function () {
             return self.afterBaseSpin(result, bet);
         });
+    };
+
+    /* ---------------- RESPIN (lepící se žolíci) ---------------- */
+    Machine.prototype.runRespins = function (grid, bet, betPerLine) {
+        var self = this, game = this.game, holdId = game.respin.holdId, max = game.respin.max || 5;
+        function held(g) { var c = []; for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) if (g[r][y].id === holdId) c.push([r, y]); return c; }
+        var first = held(grid);
+        if (!first.length) return Promise.resolve();
+        var count = 0;
+        function step(prevHeld) {
+            if (self._destroyed || count >= max) return Promise.resolve();
+            count++;
+            self.clearWins();
+            self.message('🃏 Respin! Žolíci drží…');
+            var ng = Engine.generateLineGrid(game);
+            prevHeld.forEach(function (rc) { ng[rc[0]][rc[1]] = { id: holdId }; });
+            var res = Engine.evaluateLines(game, ng, { betPerLine: betPerLine, totalBet: bet, freeSpin: false });
+            return self.spinLines(ng).then(function () {
+                prevHeld.forEach(function (rc) { var te = self.reels[rc[0]].targetEls[rc[1]]; if (te) te.classList.add('held'); });
+                if (res.totalWin > 0) {
+                    self.highlightLines(game, res, betPerLine);
+                    Casino.Account.credit(res.totalWin); Casino.Account.recordSpin(game.id, 0, res.totalWin);
+                    Casino.Sound.win(winLevel(res.totalWin, bet)); self.winEl.textContent = fmt(res.totalWin);
+                }
+                var now = held(ng);
+                return delay(self.turbo ? 300 : 600).then(function () {
+                    if (now.length > prevHeld.length) return step(now);
+                });
+            });
+        }
+        return step(first);
     };
 
     Machine.prototype.presentLines = function (result, bet, betPerLine, isFs) {
@@ -532,21 +600,21 @@
     };
 
     /* ---------------- FREE SPINS ---------------- */
-    Machine.prototype.runFreeSpins = function (bet) {
+    Machine.prototype.runFreeSpins = function (bet, bought) {
         var self = this, game = this.game, fsCfg = game.freeSpins;
         this.fsMode = true;
         Casino.Sound.freeSpins();
         var total = 0, remaining = fsCfg.count;
         var betPerLine = bet / (game.paylines ? game.paylines.length : 1);
         var expanding = null;
+        var persistent = 0;                              // tumble persistentMult
+        var fishermenTotal = 0, tierMult = 1, tiersHit = 0; // Big Bass
 
-        // banner
         this.fsBanner.classList.remove('hidden');
+        function banner(extra) { self.updateFsBanner(remaining, total, extra || ''); }
 
         var pre = Promise.resolve();
-        if (fsCfg.expanding) {
-            pre = this.chooseExpanding().then(function (id) { expanding = id; });
-        }
+        if (fsCfg.expanding) pre = this.chooseExpanding().then(function (id) { expanding = id; });
 
         return pre.then(function () {
             return self.bigWin('FREE SPINS!', -1, fsCfg.count + ' zatočení zdarma');
@@ -554,40 +622,70 @@
             function step() {
                 if (self._destroyed || remaining <= 0) return Promise.resolve();
                 remaining--;
-                self.updateFsBanner(remaining, total, fsCfg, expanding);
-                self.clearWins();
-                self.winEl.textContent = fmt(total);
-                Casino.Sound.spin();
+                self.clearWins(); self.winEl.textContent = fmt(total); Casino.Sound.spin();
 
-                if (game.type === 'tumble') {
-                    var tr = Engine.spinTumble(game, { totalBet: bet });
-                    return self.runTumble(tr).then(function () {
-                        var last = tr.steps[tr.steps.length - 1];
-                        self.renderTumble(last.grid, null, false);
-                        var win = tr.totalWin;
+                /* --- Big Bass: sběr peněžních ryb rybářem --- */
+                if (fsCfg.collect) {
+                    var bg = Engine.generateLineGrid(game, { moneyId: fsCfg.moneyId, moneyValues: fsCfg.moneyValues });
+                    return self.spinLines(bg).then(function () {
+                        var fishermen = 0, sum = 0;
+                        for (var r = 0; r < game.reels; r++) for (var y = 0; y < game.rows; y++) {
+                            var cell = bg[r][y];
+                            if (cell.id === fsCfg.collectorId) fishermen++;
+                            if (cell.id === fsCfg.moneyId && cell.mv) sum += cell.mv;
+                        }
+                        var res = Engine.evaluateLines(game, bg, { betPerLine: betPerLine, totalBet: bet, freeSpin: true, excludeId: fsCfg.moneyId });
+                        if (res.totalWin > 0) self.highlightLines(game, res, betPerLine);
+                        var collectWin = (fishermen > 0 && sum > 0) ? Math.round(sum * bet * tierMult) : 0;
+                        if (collectWin > 0) self.flashCollect();
+                        var win = res.totalWin + collectWin;
                         if (win > 0) { Casino.Account.credit(win); Casino.Account.recordSpin(game.id, 0, win); total += win; Casino.Sound.win(winLevel(win, bet)); }
-                        if (tr.freeSpinsAwarded) { remaining += 5; self.flashFsRetrigger(); }
-                        self.winEl.textContent = fmt(total);
-                        self.updateFsBanner(remaining, total, fsCfg, expanding);
-                        return delay(self.turbo ? T.fsTurbo : T.fsDelay);
-                    }).then(step);
-                } else {
-                    var grid = Engine.generateLineGrid(game);
-                    var res = Engine.evaluateLines(game, grid, { betPerLine: betPerLine, totalBet: bet, freeSpin: true, expandingSymbol: expanding });
-                    return self.spinLines(grid).then(function () {
-                        if (res.totalWin > 0) {
-                            self.highlightLines(game, res, betPerLine);
-                            Casino.Account.credit(res.totalWin);
-                            Casino.Account.recordSpin(game.id, 0, res.totalWin);
-                            total += res.totalWin;
-                            Casino.Sound.win(winLevel(res.totalWin, bet));
+                        if (fishermen > 0) {
+                            fishermenTotal += fishermen;
+                            while (tiersHit < fsCfg.tiers.length && fishermenTotal >= fsCfg.tiers[tiersHit][0]) {
+                                tierMult = fsCfg.tiers[tiersHit][1]; remaining += 10; tiersHit++; self.flashFsRetrigger();
+                            }
                         }
                         if (res.freeSpinsAwarded) { remaining += fsCfg.count; self.flashFsRetrigger(); }
                         self.winEl.textContent = fmt(total);
-                        self.updateFsBanner(remaining, total, fsCfg, expanding);
+                        banner('🎣 Rybáři: ' + fishermenTotal + ' · Násobič x' + tierMult);
                         return delay(self.turbo ? T.fsTurbo : T.fsDelay);
                     }).then(step);
                 }
+
+                /* --- Tumble (Olympus/Candy) – persistentní násobič --- */
+                if (game.type === 'tumble') {
+                    var tr = Engine.spinTumble(game, { totalBet: bet });
+                    return self.runTumble(tr).then(function () {
+                        var last = tr.steps[tr.steps.length - 1]; self.renderTumble(last.grid, null, false);
+                        var win;
+                        if (fsCfg.persistentMult) {
+                            persistent += tr.orbSum;
+                            win = tr.baseWin > 0 ? Math.round(tr.baseWin * Math.max(persistent, 1)) + tr.scatterWin : tr.scatterWin;
+                            if (tr.orbSum > 0) self.flashOrbs();
+                        } else win = tr.totalWin;
+                        if (win > 0) { Casino.Account.credit(win); Casino.Account.recordSpin(game.id, 0, win); total += win; Casino.Sound.win(winLevel(win, bet)); }
+                        if (tr.freeSpinsAwarded) { remaining += 5; self.flashFsRetrigger(); }
+                        self.winEl.textContent = fmt(total);
+                        banner(fsCfg.persistentMult ? ' · Násobič x' + Math.max(persistent, 1) : '');
+                        return delay(self.turbo ? T.fsTurbo : T.fsDelay);
+                    }).then(step);
+                }
+
+                /* --- Liniové: Book expanding / globální násobič --- */
+                var lgrid = Engine.generateLineGrid(game);
+                var lres = Engine.evaluateLines(game, lgrid, { betPerLine: betPerLine, totalBet: bet, freeSpin: true, expandingSymbol: expanding });
+                return self.spinLines(lgrid).then(function () {
+                    if (lres.totalWin > 0) {
+                        self.highlightLines(game, lres, betPerLine);
+                        Casino.Account.credit(lres.totalWin); Casino.Account.recordSpin(game.id, 0, lres.totalWin);
+                        total += lres.totalWin; Casino.Sound.win(winLevel(lres.totalWin, bet));
+                    }
+                    if (lres.freeSpinsAwarded) { remaining += fsCfg.count; self.flashFsRetrigger(); }
+                    self.winEl.textContent = fmt(total);
+                    banner(expanding ? (' · Symbol ' + Engine.symById(game, expanding).icon) : (fsCfg.globalMultiplier ? ' · Násobič x' + fsCfg.globalMultiplier : ''));
+                    return delay(self.turbo ? T.fsTurbo : T.fsDelay);
+                }).then(step);
             }
             return step();
         }).then(function () {
@@ -598,12 +696,32 @@
         });
     };
 
-    Machine.prototype.updateFsBanner = function (remaining, total, fsCfg, expanding) {
-        var extra = '';
-        if (fsCfg.globalMultiplier) extra = ' · Násobič x' + fsCfg.globalMultiplier;
-        if (expanding) { var s = Engine.symById(this.game, expanding); extra = ' · Symbol: ' + s.icon; }
-        this.fsBanner.innerHTML = '🎁 FREE SPINS — zbývá <b>' + remaining + '</b>' + extra +
+    Machine.prototype.updateFsBanner = function (remaining, total, extra) {
+        this.fsBanner.innerHTML = '🎁 FREE SPINS — zbývá <b>' + remaining + '</b>' + (extra || '') +
             ' · Výhra: <b>' + fmt(total) + '</b>';
+    };
+
+    Machine.prototype.flashCollect = function () {
+        Array.prototype.forEach.call(this.reelsEl.querySelectorAll('.sym-fish, .sym-fisher'), function (o) { o.classList.add('orb-flash'); });
+    };
+
+    /* ---------------- nákup bonusu ---------------- */
+    Machine.prototype.buyBonus = function () {
+        if (this.spinning || this.fsMode) return;
+        var self = this, bet = this.bet(), cost = Math.round(bet * this.game.freeSpins.buyCost);
+        Casino.UI.modal({
+            title: '🛒 Koupit bonus',
+            body: 'Spustit free spiny okamžitě za <b>🪙 ' + fmt(cost) + '</b> kreditů? (' + this.game.freeSpins.buyCost +'× sázka)',
+            actions: [{ label: 'Zrušit' }, { label: 'Koupit za ' + fmt(cost), primary: true, onClick: function () { self.doBuyBonus(bet, cost); } }]
+        });
+    };
+    Machine.prototype.doBuyBonus = function (bet, cost) {
+        var self = this;
+        if (!Casino.Account.debit(cost)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+        Casino.Account.recordSpin(this.game.id, cost, 0);
+        Casino.Sound.unlock();
+        this.setBusy(true); this.clearWins(); this.winEl.textContent = '0';
+        this.runFreeSpins(bet, true).then(function () { self.endSpin(); });
     };
 
     Machine.prototype.flashFsRetrigger = function () {

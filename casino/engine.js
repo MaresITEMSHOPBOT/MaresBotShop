@@ -46,16 +46,29 @@
        LINIOVÉ HRY (klasik / video sloty)
        grid[reel][row] = {id, wm?}
        ===================================================================== */
-    Engine.generateLineGrid = function (game) {
+    Engine.generateLineGrid = function (game, opts) {
+        opts = opts || {};
+        // ante bet (vyšší šance) zvyšuje váhu scatteru
+        var pool = game.symbols;
+        if (opts.scatterMult && opts.scatterMult !== 1) {
+            pool = game.symbols.map(function (s) {
+                if (!s.scatter) return s;
+                var c = {}; for (var k in s) c[k] = s[k]; c.weight = s.weight * opts.scatterMult; return c;
+            });
+        }
         var grid = [];
         for (var r = 0; r < game.reels; r++) {
             var col = [];
             for (var y = 0; y < game.rows; y++) {
-                var sym = pickSymbol(game);
+                var sym = util.weightedPick(pool, Engine.rng);
                 var cell = { id: sym.id };
                 // násobící wild – přiřadíme náhodný násobič
                 if (sym.wild && game.multiplierWild) {
                     cell.wm = game.multiplierWild[util.randInt(0, game.multiplierWild.length - 1)];
+                }
+                // peněžní symbol (Big Bass) – hodnota jen ve free spinech
+                if (opts.moneyId && sym.id === opts.moneyId && opts.moneyValues) {
+                    cell.mv = util.weightedValue(opts.moneyValues, Engine.rng);
                 }
                 col.push(cell);
             }
@@ -73,74 +86,64 @@
 
         var result = { wins: [], lineWin: 0, scatterWin: 0, totalWin: 0, scatterCount: 0, freeSpinsAwarded: 0, scatterCells: [] };
 
-        /* --- Book: expandující symbol ve free spinech --- */
+        /* --- Book: expandující symbol ve free spinech (jako Book of Ra) ---
+           Symbol expanduje a platí na všech liniích podle počtu PO SOBĚ JDOUCÍCH
+           válců zleva, na kterých leží. Normální linie se přitom počítají dál. */
+        var excludeId = null;
         if (opts.freeSpin && game.freeSpins && game.freeSpins.expanding && opts.expandingSymbol) {
-            var exId = opts.expandingSymbol;
-            var reelsWith = [];
+            excludeId = opts.expandingSymbol;
+            var ec = 0;
             for (var er = 0; er < game.reels; er++) {
                 var has = false;
-                for (var ey = 0; ey < game.rows; ey++) {
-                    if (grid[er][ey].id === exId || (scatterId && game.freeSpins.scatterIsWild && grid[er][ey].id === scatterId && exId === scatterId)) has = true;
-                }
-                if (has) reelsWith.push(er);
+                for (var ey = 0; ey < game.rows; ey++) if (grid[er][ey].id === excludeId) has = true;
+                if (has) ec++; else break;
             }
-            if (reelsWith.length >= 2) {
-                var exSym = symById(game, exId);
-                var exPay = payFor(exSym, reelsWith.length);
+            if (ec >= 2) {
+                var exSym = symById(game, excludeId);
+                var exPay = payFor(exSym, ec);
                 if (exPay > 0) {
                     var amount = exPay * betPerLine * game.paylines.length;
                     var cells = [];
-                    reelsWith.forEach(function (rr) { for (var yy = 0; yy < game.rows; yy++) cells.push([rr, yy]); });
-                    result.wins.push({ type: 'expand', symbol: exId, count: reelsWith.length, cells: cells, amount: amount });
+                    for (var rr = 0; rr < ec; rr++) for (var yy = 0; yy < game.rows; yy++) cells.push([rr, yy]);
+                    result.wins.push({ type: 'expand', symbol: excludeId, count: ec, cells: cells, amount: amount });
                     result.lineWin += amount;
                 }
             }
         }
 
-        /* --- klasické výherní linie --- */
-        if (!(opts.freeSpin && game.freeSpins && game.freeSpins.expanding)) {
-            for (var li = 0; li < game.paylines.length; li++) {
-                var line = game.paylines[li];
-                // symboly na lince
-                var lineCells = [];
-                for (var c = 0; c < line.length; c++) lineCells.push(grid[c][line[c]]);
+        // obecné vyloučení symbolu z linií (Big Bass: peněžní ryba platí jen sběrem)
+        if (!excludeId && opts.excludeId) excludeId = opts.excludeId;
 
-                // urči "platící" symbol = první ne-wild
-                var baseId = null;
-                for (var i = 0; i < lineCells.length; i++) {
-                    if (lineCells[i].id !== wildId) { baseId = lineCells[i].id; break; }
-                }
-                if (baseId === null) baseId = wildId; // samé wildy
+        /* --- klasické výherní linie (počítají se vždy) --- */
+        for (var li = 0; li < game.paylines.length; li++) {
+            var line = game.paylines[li];
+            var lineCells = [];
+            for (var c = 0; c < line.length; c++) lineCells.push(grid[c][line[c]]);
 
-                // scatter neplatí po linii
-                if (baseId === scatterId) continue;
+            // platící symbol = první ne-wild
+            var baseId = null;
+            for (var i = 0; i < lineCells.length; i++) {
+                if (lineCells[i].id !== wildId) { baseId = lineCells[i].id; break; }
+            }
+            if (baseId === null) baseId = wildId; // samé wildy
+            if (baseId === scatterId) continue;            // scatter neplatí po linii
+            if (excludeId && baseId === excludeId) continue; // platí přes expanzi
 
-                // spočítej souvislou řadu od válce 0
-                var count = 0, wildMult = 1, runCells = [];
-                for (var j = 0; j < lineCells.length; j++) {
-                    var cid = lineCells[j].id;
-                    if (cid === baseId || cid === wildId) {
-                        count++;
-                        runCells.push([j, line[j]]);
-                        // násobící wild – bereme nejvyšší (ne součin, ten exploduje)
-                        if (cid === wildId && lineCells[j].wm) wildMult = Math.max(wildMult, lineCells[j].wm);
-                    } else break;
-                }
-
-                var sym = symById(game, baseId);
-                var pay = payFor(sym, count);
-                // varianta: linie samých wildů platí dle wildu
-                if (wildId) {
-                    var wcount = 0;
-                    for (var w = 0; w < lineCells.length; w++) { if (lineCells[w].id === wildId) wcount++; else break; }
-                    var wpay = payFor(symById(game, wildId), wcount);
-                    if (wpay * 1 > pay * 1 && wcount > 0) { /* wild linie lepší – necháme základ, wild se stejně počítá */ }
-                }
-                if (pay > 0) {
-                    var amt = pay * betPerLine * wildMult;
-                    result.wins.push({ type: 'line', line: li, symbol: baseId, count: count, cells: runCells, amount: amt, mult: wildMult });
-                    result.lineWin += amt;
-                }
+            var count = 0, wildMult = 1, runCells = [];
+            for (var j = 0; j < lineCells.length; j++) {
+                var cid = lineCells[j].id;
+                if (cid === baseId || cid === wildId) {
+                    count++;
+                    runCells.push([j, line[j]]);
+                    if (cid === wildId && lineCells[j].wm) wildMult = Math.max(wildMult, lineCells[j].wm);
+                } else break;
+            }
+            var sym = symById(game, baseId);
+            var pay = payFor(sym, count);
+            if (pay > 0) {
+                var amt = pay * betPerLine * wildMult;
+                result.wins.push({ type: 'line', line: li, symbol: baseId, count: count, cells: runCells, amount: amt, mult: wildMult });
+                result.lineWin += amt;
             }
         }
 

@@ -149,17 +149,17 @@
             paylines: takeLines(LINES_5x3, 10),
             theme: { a: '#e6b800', b: '#c97f1a', bg: 'radial-gradient(circle at 50% 0%, #2b1d05, #0c0700)' },
             bets: [10, 20, 50, 100, 250, 500, 1000],
-            freeSpins: { trigger: 3, count: 10, scatterIsWild: true, expanding: true },
+            freeSpins: { trigger: 3, count: 10, scatterIsWild: true, expanding: true, buyCost: 13 }, ante: { mult: 1.4, scatterMult: 1.2 },
             symbols: [
-                { id: 'c1', icon: '🔶', name: 'A', weight: 24, pays: { 3: 1, 4: 3, 5: 8 } },
-                { id: 'c2', icon: '🔷', name: 'K', weight: 24, pays: { 3: 1, 4: 3, 5: 8 } },
-                { id: 'c3', icon: '🟢', name: 'Q', weight: 22, pays: { 3: 1, 4: 3, 5: 10 } },
-                { id: 'c4', icon: '🔴', name: 'J', weight: 22, pays: { 3: 1, 4: 3, 5: 10 } },
-                { id: 'cat', icon: '🐈', name: 'Kočka', weight: 14, pays: { 2: 1, 3: 5, 4: 15, 5: 60 } },
-                { id: 'falcon', icon: '🦅', name: 'Sokol', weight: 12, pays: { 2: 1, 3: 6, 4: 16, 5: 80 } },
-                { id: 'scarab', icon: '🪲', name: 'Skarab', weight: 10, pays: { 3: 9, 4: 30, 5: 150 } },
-                { id: 'pharaoh', icon: '🤴', name: 'Faraon', weight: 8, pays: { 3: 18, 4: 75, 5: 420 } },
-                { id: 'book', icon: '📖', name: 'Kniha (Wild+Scatter)', weight: 7, wild: true, scatter: true, pays: { 3: 2, 4: 18, 5: 150 } }
+                { id: 'c1', icon: '🔶', name: 'A', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
+                { id: 'c2', icon: '🔷', name: 'K', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
+                { id: 'c3', icon: '🟢', name: 'Q', weight: 22, pays: { 3: 1, 4: 4, 5: 13 } },
+                { id: 'c4', icon: '🔴', name: 'J', weight: 22, pays: { 3: 1, 4: 4, 5: 13 } },
+                { id: 'cat', icon: '🐈', name: 'Kočka', weight: 14, pays: { 2: 1, 3: 8, 4: 25, 5: 100 } },
+                { id: 'falcon', icon: '🦅', name: 'Sokol', weight: 12, pays: { 2: 1, 3: 10, 4: 30, 5: 140 } },
+                { id: 'scarab', icon: '🪲', name: 'Skarab', weight: 10, pays: { 2: 1, 3: 15, 4: 50, 5: 220 } },
+                { id: 'pharaoh', icon: '🤴', name: 'Faraon', weight: 8, pays: { 3: 30, 4: 120, 5: 600 } },
+                { id: 'book', icon: '📖', name: 'Kniha (Wild+Scatter)', weight: 7, wild: true, scatter: true, pays: { 3: 2, 4: 20, 5: 200 } }
             ]
         },
 
@@ -177,7 +177,7 @@
             theme: { a: '#7b61ff', b: '#00e5ff', bg: 'radial-gradient(circle at 50% 0%, #0b0a2e, #03040f)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 12, globalMultiplier: 2 },
+            freeSpins: { trigger: 3, count: 12, globalMultiplier: 2, buyCost: 16 }, ante: { mult: 1.4, scatterMult: 1.2 },
             symbols: [
                 { id: 'p1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 1, 4: 4, 5: 12 } },
                 { id: 'p2', icon: '🟣', name: 'Fialová', weight: 22, pays: { 3: 1, 4: 4, 5: 12 } },
@@ -205,7 +205,7 @@
             theme: { a: '#d98a2b', b: '#ffcf5c', bg: 'radial-gradient(circle at 50% 0%, #2a1a08, #0d0600)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 8, globalMultiplier: 2 },
+            freeSpins: { trigger: 3, count: 8, globalMultiplier: 2, buyCost: 11 }, ante: { mult: 1.4, scatterMult: 1.2 },
             symbols: [
                 { id: 'beer', icon: '🍺', name: 'Pivo', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
                 { id: 'cactus', icon: '🌵', name: 'Kaktus', weight: 22, pays: { 3: 1, 4: 4, 5: 10 } },
@@ -232,7 +232,7 @@
             buckets: [9, 11, 13],      // hranice výplatních pásem
             theme: { a: '#ffd24a', b: '#9b5cff', bg: 'radial-gradient(circle at 50% 0%, #1a0b33, #05030f)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
-            freeSpins: { trigger: 4, count: 15 },
+            freeSpins: { trigger: 4, count: 15, persistentMult: true, buyCost: 78 },
             // hodnoty násobících koulí (vážené – malé hodnoty výrazně častěji)
             orbValues: [[2, 42], [3, 25], [4, 12], [5, 7], [6, 4], [8, 2.2], [10, 1.4], [15, 0.7], [20, 0.4], [25, 0.2], [50, 0.07], [100, 0.025], [250, 0.006], [500, 0.0015]],
             symbols: [
@@ -244,7 +244,7 @@
                 { id: 'goblet', icon: '🏆', name: 'Pohár', weight: 9, pays: { 9: 1.2, 11: 2.5, 13: 6 } },
                 { id: 'crown', icon: '👑', name: 'Koruna', weight: 6, pays: { 9: 2, 11: 4, 13: 10 } },
                 { id: 'orb', icon: '⚡', name: 'Násobící koule', weight: 2.2, orb: true },
-                { id: 'scatter', icon: '🔮', name: 'Koule Dia (Scatter)', weight: 4, scatter: true, pays: { 4: 2, 5: 5, 6: 50 } }
+                { id: 'scatter', icon: '🔮', name: 'Koule Dia (Scatter)', weight: 2.0, scatter: true, pays: { 4: 2, 5: 5, 6: 50 } }
             ]
         },
 
@@ -262,7 +262,7 @@
             buckets: [9, 11, 13],
             theme: { a: '#ff6fd5', b: '#7ad7ff', bg: 'radial-gradient(circle at 50% 0%, #3a1140, #140319)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
-            freeSpins: { trigger: 4, count: 12 },
+            freeSpins: { trigger: 4, count: 12, persistentMult: true, buyCost: 55 },
             orbValues: [[2, 40], [3, 24], [4, 13], [5, 8], [6, 4.5], [8, 2.6], [10, 1.7], [15, 0.9], [20, 0.5], [25, 0.3], [50, 0.1], [100, 0.04]],
             symbols: [
                 { id: 's1', icon: '💜', name: 'Fialový bonbón', weight: 24, pays: { 9: 0.25, 11: 0.5, 13: 1.2 } },
@@ -273,7 +273,63 @@
                 { id: 'apple', icon: '🍎', name: 'Jablko', weight: 9, pays: { 9: 1.2, 11: 2.5, 13: 6 } },
                 { id: 'melon', icon: '🍉', name: 'Meloun', weight: 6, pays: { 9: 2, 11: 4, 13: 10 } },
                 { id: 'bomb', icon: '💣', name: 'Cukrová bomba (násobič)', weight: 2.2, orb: true },
-                { id: 'scatter', icon: '🍬', name: 'Bonbón (Scatter)', weight: 4, scatter: true, pays: { 4: 3, 5: 5, 6: 50 } }
+                { id: 'scatter', icon: '🍬', name: 'Bonbón (Scatter)', weight: 2.2, scatter: true, pays: { 4: 3, 5: 5, 6: 50 } }
+            ]
+        },
+
+        /* ---- 8) Respin Joker (5x3, lepící se žolíci + respiny) ---- */
+        {
+            id: 'joker',
+            type: 'lines',
+            name: 'Respin Joker',
+            tagline: 'Žolíci se lepí a spouští respiny',
+            emoji: '🃏',
+            volatility: 'Střední',
+            rtp: 96,
+            reels: 5, rows: 3,
+            paylines: takeLines(LINES_5x3, 20),
+            theme: { a: '#ff3b6b', b: '#9b5cff', bg: 'radial-gradient(circle at 50% 0%, #2a0a2e, #0b0312)' },
+            bets: [20, 40, 100, 200, 400, 1000, 2000],
+            respin: { holdId: 'joker', max: 3 },
+            symbols: [
+                { id: 'cherry', icon: '🍒', name: 'Třešně', weight: 26, pays: { 3: 1, 4: 3, 5: 9 } },
+                { id: 'lemon', icon: '🍋', name: 'Citron', weight: 24, pays: { 3: 1, 4: 3, 5: 9 } },
+                { id: 'melon', icon: '🍉', name: 'Meloun', weight: 22, pays: { 3: 2, 4: 6, 5: 16 } },
+                { id: 'bell', icon: '🔔', name: 'Zvonek', weight: 16, pays: { 3: 4, 4: 10, 5: 28 } },
+                { id: 'star', icon: '⭐', name: 'Hvězda', weight: 12, pays: { 3: 6, 4: 18, 5: 60 } },
+                { id: 'seven', icon: '7️⃣', name: 'Sedmička', weight: 9, pays: { 3: 12, 4: 36, 5: 140 } },
+                { id: 'joker', icon: '🃏', name: 'Žolík (Wild)', weight: 5, wild: true, pays: { 3: 18, 4: 70, 5: 280 } }
+            ]
+        },
+
+        /* ---- 9) Big Bass Splash (5x3, 10 linií, sběr peněžních ryb ve free spins) ---- */
+        {
+            id: 'bigbass',
+            type: 'lines',
+            name: 'Big Bass Splash',
+            tagline: 'Rybář sbírá peněžní ryby ve free spinech',
+            emoji: '🎣',
+            volatility: 'Vysoká',
+            rtp: 96,
+            reels: 5, rows: 3,
+            paylines: takeLines(LINES_5x3, 10),
+            theme: { a: '#1fb6ff', b: '#2bd44f', bg: 'radial-gradient(circle at 50% 0%, #06324d, #03141f)' },
+            bets: [10, 20, 50, 100, 250, 500, 1000],
+            freeSpins: {
+                trigger: 3, count: 10, collect: true, moneyId: 'fish', collectorId: 'fisher', buyCost: 180,
+                moneyValues: [[0.6, 40], [1.2, 26], [2, 16], [4, 9], [6, 4], [12, 1.5], [20, 0.5], [40, 0.12]],
+                tiers: [[4, 2], [6, 3], [9, 5]]
+            },
+            symbols: [
+                { id: 'b1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 1, 4: 2, 5: 5 } },
+                { id: 'b2', icon: '🟢', name: 'Zelená', weight: 22, pays: { 3: 1, 4: 2, 5: 5 } },
+                { id: 'b3', icon: '🟡', name: 'Žlutá', weight: 20, pays: { 3: 1, 4: 3, 5: 8 } },
+                { id: 'b4', icon: '🔴', name: 'Červená', weight: 18, pays: { 3: 1, 4: 3, 5: 8 } },
+                { id: 'worm', icon: '🪱', name: 'Žížala', weight: 14, pays: { 3: 3, 4: 8, 5: 25 } },
+                { id: 'box', icon: '🧰', name: 'Bedna', weight: 11, pays: { 3: 5, 4: 12, 5: 40 } },
+                { id: 'fish', icon: '🐟', name: 'Ryba (peněžní)', weight: 10, pays: { 3: 4, 4: 10, 5: 30 } },
+                { id: 'fisher', icon: '🎣', name: 'Rybář (Wild + sběrač)', weight: 6, wild: true, pays: { 3: 10, 4: 50, 5: 200 } },
+                { id: 'scatter', icon: '🎏', name: 'Návnada (Scatter)', weight: 3, scatter: true, pays: { 3: 2, 4: 5, 5: 25 } }
             ]
         }
     ];

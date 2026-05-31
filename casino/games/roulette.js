@@ -210,6 +210,9 @@
             var p = Math.min(1, (now - t0) / dur);
             var e = 1 - Math.pow(1 - p, 3);
             self.rot = start + (end - start) * e;
+            var Rb = self.WS / 2 - 4;
+            // kulička obíhá opačně a spirálovitě zapadá ke kapse nahoře (kde končí výsledek)
+            self._ball = { a: -Math.PI / 2 - (1 - e) * (7 * Math.PI), r: (self.WS / 2 - 8) - ((self.WS / 2 - 8) - Rb * 0.74) * e };
             self.drawWheel(self.rot);
             if (now - last > 90 && p < 0.92) { Casino.Sound.tick(); last = now; }
             if (p < 1) requestAnimationFrame(frame);
@@ -271,6 +274,12 @@
         ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 2; ctx.stroke();
         ctx.fillStyle = '#ffd24a'; ctx.font = '700 14px Segoe UI'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('🎡', cx, cy);
+        // kulička
+        if (this._ball) {
+            var bx = cx + Math.cos(this._ball.a) * this._ball.r, by = cy + Math.sin(this._ball.a) * this._ball.r;
+            ctx.beginPath(); ctx.arc(bx, by, 5, 0, 7); ctx.fillStyle = '#fff';
+            ctx.shadowColor = '#fff'; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
+        }
     };
 
     Roulette.prototype.info = function () {
