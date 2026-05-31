@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --host",
-    "build:shopify": "vite build --config vite.shopify.config.js"
+    "build:shopify": "vite build --config vite.shopify.config.js",
+    "build:singlefile": "vite build --config vite.shopify.config.js && node build-singlefile.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.105.6",
