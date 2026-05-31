@@ -1,20 +1,38 @@
 import { Environment, Lightformer } from '@react-three/drei';
 
-// Sdílené studiové osvětlení + HDRI z „lightformerů“ (generuje se procedurálně,
-// bez stahování souborů) — dává kovu realistické odrazy.
+// Studiové osvětlení pro realistický kov. HDRI se skládá procedurálně
+// z „lightformerů" (žádné stahování souboru → funguje i offline / z file://).
+// Cíl: světlý gradient shora + svislé highlight pruhy = produktový „studio" odraz.
 export function Studio() {
   return (
     <>
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[5, 8, 5]} intensity={1.4} />
-      <directionalLight position={[-6, 2, -4]} intensity={0.8} color="#79e3ff" />
+      <ambientLight intensity={0.18} />
 
-      <Environment resolution={256}>
-        <Lightformer form="rect" intensity={3} position={[0, 3, 5]} scale={[8, 6, 1]} />
-        <Lightformer form="rect" intensity={1.6} position={[-5, 1, 2]} scale={[4, 8, 1]} color="#9fdcff" />
-        <Lightformer form="ring" intensity={2.2} position={[5, 2, -3]} scale={3} color="#e6a16a" />
-        <Lightformer form="rect" intensity={1} position={[0, -3, 2]} scale={[6, 3, 1]} />
+      <Environment resolution={512} frames={1}>
+        {/* tmavé pozadí scény → kov má kontrast (tmavé dno odrazu) */}
+        <Lightformer form="rect" intensity={0.35} position={[0, 0, -7]} scale={[24, 24, 1]} color="#1b1c22" />
+
+        {/* velký horní softbox (hlavní světlo) */}
+        <Lightformer
+          form="rect"
+          intensity={3.4}
+          position={[0, 6, 2]}
+          rotation={[Math.PI / 2, 0, 0]}
+          scale={[12, 12, 1]}
+          color="#ffffff"
+        />
+
+        {/* svislé highlight pruhy – kresba na boku láhve */}
+        <Lightformer form="rect" intensity={5.5} position={[-2.6, 1.2, 3.2]} scale={[0.55, 6.5, 1]} color="#e2f4ff" />
+        <Lightformer form="rect" intensity={2.6} position={[2.8, 0.6, 2.6]} scale={[0.4, 5.5, 1]} color="#ffffff" />
+
+        {/* studený fill zleva + teplý rim zezadu vpravo */}
+        <Lightformer form="rect" intensity={1.4} position={[-4.2, 0.4, 1]} scale={[3.5, 7, 1]} color="#a6dcff" />
+        <Lightformer form="ring" intensity={2.6} position={[4.2, 2.2, -3]} scale={2.4} color="#e6a16a" />
       </Environment>
+
+      {/* directional pro vržený kontaktní stín */}
+      <directionalLight position={[4, 7, 4]} intensity={1.0} castShadow shadow-mapSize={[1024, 1024]} />
     </>
   );
 }

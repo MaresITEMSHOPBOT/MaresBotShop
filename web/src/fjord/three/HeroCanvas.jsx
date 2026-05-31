@@ -1,5 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber';
+import { ContactShadows } from '@react-three/drei';
 import { useRef } from 'react';
+import * as THREE from 'three';
 import { Bottle } from './Bottle.jsx';
 import { Studio } from './Studio.jsx';
 import { scrollState, pointerState } from '../lib/runtime.js';
@@ -11,21 +13,43 @@ function HeroBottle() {
   useFrame((state, delta) => {
     const g = ref.current;
     if (!g) return;
-    spin.current += delta * 0.25;
-    g.rotation.y = spin.current + pointerState.x * 0.3;
-    const targetX = pointerState.y * 0.16 + scrollState.progress * 0.25;
+    spin.current += delta * 0.3;
+    g.rotation.y = spin.current + pointerState.x * 0.35;
+    const targetX = pointerState.y * 0.14 + scrollState.progress * 0.2;
     g.rotation.x += (targetX - g.rotation.x) * 0.06;
-    g.position.y = Math.sin(state.clock.elapsedTime * 0.8) * 0.07 - scrollState.progress * 0.5;
+    g.position.y = Math.sin(state.clock.elapsedTime * 0.9) * 0.06 - scrollState.progress * 0.4;
   });
 
   return (
-    <Bottle ref={ref} colorHex="#2b3a55" metalness={0.95} roughness={0.3} scale={1.18} position={[1.25, 0, 0]} />
+    <group position={[1.2, 0, 0]}>
+      <group ref={ref}>
+        <Bottle colorHex="#2b3a55" metalness={0.9} roughness={0.24} scale={1.16} />
+      </group>
+      <ContactShadows
+        position={[0, -1.72, 0]}
+        opacity={0.5}
+        scale={9}
+        blur={2.6}
+        far={4}
+        resolution={512}
+        color="#000000"
+      />
+    </group>
   );
 }
 
 export default function HeroCanvas() {
   return (
-    <Canvas camera={{ position: [0, 0, 6], fov: 34 }} dpr={[1, 2]} gl={{ antialias: true, alpha: true }}>
+    <Canvas
+      shadows
+      dpr={[1, 2]}
+      gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
+      camera={{ position: [0, 0.15, 6.2], fov: 30 }}
+      onCreated={({ gl }) => {
+        gl.toneMapping = THREE.ACESFilmicToneMapping;
+        gl.toneMappingExposure = 1.12;
+      }}
+    >
       <Studio />
       <HeroBottle />
     </Canvas>

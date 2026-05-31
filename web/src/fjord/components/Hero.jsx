@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { useIsClient } from '../hooks/useIsClient.js';
 import { MagneticButton } from './MagneticButton.jsx';
+import { CanvasErrorBoundary } from './CanvasErrorBoundary.jsx';
 
 // 3D plátno se načítá jen na klientovi (dynamický import) — žádné Three.js na serveru.
 const HeroCanvas = lazy(() => import('../three/HeroCanvas.jsx'));
@@ -13,9 +14,11 @@ export function Hero() {
       <div className="hero__glow" />
       <div className="hero__canvas" aria-hidden="true">
         {isClient && (
-          <Suspense fallback={null}>
-            <HeroCanvas />
-          </Suspense>
+          <CanvasErrorBoundary fallback={<div className="hero__fallback" />}>
+            <Suspense fallback={<div className="hero__fallback" />}>
+              <HeroCanvas />
+            </Suspense>
+          </CanvasErrorBoundary>
         )}
       </div>
 
