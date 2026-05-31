@@ -311,9 +311,31 @@
             refreshBonusBtn();
         };
         body.appendChild(rescueBtn);
-        body.appendChild(el('p', 'bonus-note', 'Bonusy zajišťují, že si vždycky můžeš zahrát dál. 😉'));
 
-        Casino.UI.modal({ title: '🎁 Bonusy', body: body });
+        // promo / creator kódy
+        body.appendChild(el('div', 'promo-title', '🎟️ Promo / creator kód'));
+        var promo = el('form', 'promo-form');
+        var pin = el('input', 'promo-input'); pin.placeholder = 'Zadej kód…'; pin.maxLength = 20;
+        var pbtn = el('button', 'btn-primary', 'Uplatnit');
+        promo.appendChild(pin); promo.appendChild(pbtn);
+        var pmsg = el('div', 'promo-msg');
+        promo.onsubmit = function (e) {
+            e.preventDefault();
+            var res = Account.redeemCode(pin.value);
+            if (res.ok) {
+                refreshHeader(); Casino.Sound.win(2);
+                pmsg.className = 'promo-msg good'; pmsg.textContent = '✓ Kód ' + res.code + ' uplatněn: +' + fmt(res.amount) + ' kreditů!';
+                Casino.UI.toast('🎟️ +' + fmt(res.amount) + ' z kódu ' + res.code, 'good'); pin.value = '';
+            } else {
+                pmsg.className = 'promo-msg bad';
+                pmsg.textContent = res.reason === 'used' ? 'Tento kód jsi už použil.' : res.reason === 'invalid' ? 'Neplatný kód.' : 'Zadej kód.';
+                Casino.Sound.lose();
+            }
+        };
+        body.appendChild(promo); body.appendChild(pmsg);
+        body.appendChild(el('p', 'bonus-note', 'Tip: zkus <b>WELCOME</b>, <b>LUCKY777</b> nebo <b>CREATOR</b>. Bonusy zajišťují, že si vždy můžeš zahrát dál. 😉'));
+
+        Casino.UI.modal({ title: '🎁 Bonusy & kódy', body: body });
     }
 
     /* ======================================================================

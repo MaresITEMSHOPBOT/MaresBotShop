@@ -149,7 +149,7 @@
             paylines: takeLines(LINES_5x3, 10),
             theme: { a: '#e6b800', b: '#c97f1a', bg: 'radial-gradient(circle at 50% 0%, #2b1d05, #0c0700)' },
             bets: [10, 20, 50, 100, 250, 500, 1000],
-            freeSpins: { trigger: 3, count: 10, scatterIsWild: true, expanding: true, buyCost: 13 }, ante: { mult: 1.4, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 10, scatterIsWild: true, expanding: true, buyCost: 13 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'c1', icon: '🔶', name: 'A', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
                 { id: 'c2', icon: '🔷', name: 'K', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
@@ -177,7 +177,7 @@
             theme: { a: '#7b61ff', b: '#00e5ff', bg: 'radial-gradient(circle at 50% 0%, #0b0a2e, #03040f)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 12, globalMultiplier: 2, buyCost: 16 }, ante: { mult: 1.4, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 12, globalMultiplier: 2, buyCost: 16 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'p1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 1, 4: 4, 5: 12 } },
                 { id: 'p2', icon: '🟣', name: 'Fialová', weight: 22, pays: { 3: 1, 4: 4, 5: 12 } },
@@ -205,7 +205,7 @@
             theme: { a: '#d98a2b', b: '#ffcf5c', bg: 'radial-gradient(circle at 50% 0%, #2a1a08, #0d0600)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 8, globalMultiplier: 2, buyCost: 11 }, ante: { mult: 1.4, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 8, globalMultiplier: 2, buyCost: 11 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'beer', icon: '🍺', name: 'Pivo', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
                 { id: 'cactus', icon: '🌵', name: 'Kaktus', weight: 22, pays: { 3: 1, 4: 4, 5: 10 } },
@@ -320,6 +320,7 @@
                 moneyValues: [[0.6, 40], [1.2, 26], [2, 16], [4, 9], [6, 4], [12, 1.5], [20, 0.5], [40, 0.12]],
                 tiers: [[4, 2], [6, 3], [9, 5]]
             },
+            ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'b1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 1, 4: 2, 5: 5 } },
                 { id: 'b2', icon: '🟢', name: 'Zelená', weight: 22, pays: { 3: 1, 4: 2, 5: 5 } },

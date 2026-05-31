@@ -40,10 +40,19 @@
             balance: START_BALANCE,
             created: Date.now(),
             lastDaily: 0,
+            redeemed: {},
             stats: { spins: 0, wagered: 0, won: 0, biggest: 0, byGame: {} },
             history: []
         };
     }
+
+    // promo / creator kódy (jednorázově na účet)
+    var CODES = {
+        'WELCOME': 1000, 'MARES5000': 5000, 'LUCKY777': 777, 'FREESPINS': 2500, 'JACKPOT': 7500,
+        'CREATOR': 10000, 'STREAMER': 10000, 'YOUTUBE': 5000, 'TWITCH': 5000, 'TIKTOK': 5000,
+        'VIP': 15000, 'ADAMEK': 25000, 'MEGAWIN': 50000
+    };
+    Casino.PROMO_CODES = CODES;
 
     var Account = Casino.Account = {
         init: function () { load(); },
@@ -114,6 +123,19 @@
             if (a.balance >= RESCUE_BELOW) return 0;
             Account.credit(RESCUE_AMOUNT);
             return RESCUE_AMOUNT;
+        },
+
+        // promo / creator kód
+        redeemCode: function (code) {
+            var a = Account.current(); if (!a) return { ok: false, reason: 'login' };
+            code = (code || '').trim().toUpperCase();
+            if (!code) return { ok: false, reason: 'empty' };
+            if (!(code in CODES)) return { ok: false, reason: 'invalid' };
+            a.redeemed = a.redeemed || {};
+            if (a.redeemed[code]) return { ok: false, reason: 'used' };
+            a.redeemed[code] = Date.now();
+            Account.credit(CODES[code]);
+            return { ok: true, amount: CODES[code], code: code };
         },
 
         /* ---- statistiky ---- */

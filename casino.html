@@ -561,6 +561,51 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
     .holdem-table { min-height: 360px; }
 }
 
+/* ==========================================================================
+   VIDEO POKER / BLACKJACK / MINES / PROMO KÓDY
+   ========================================================================== */
+/* Video Poker */
+.vp-paytable { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 14px; max-width: 560px; margin: 0 auto 14px; padding: 10px 14px; background: rgba(0, 0, 0, .35); border: 1px solid var(--border); border-radius: 12px; }
+.vp-pt-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); padding: 2px 0; }
+.vp-pt-row b { color: var(--gold); }
+.vp-pt-row.on { color: #fff; background: rgba(255, 210, 74, .18); border-radius: 6px; padding: 2px 6px; margin: 0 -6px; }
+.vp-cards { display: flex; gap: 10px; justify-content: center; margin: 6px 0; }
+.vp-card-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.vp-card-wrap.clickable .pcard { cursor: pointer; transition: transform .12s; }
+.vp-card-wrap.clickable:hover .pcard { transform: translateY(-4px); }
+.vp-card-wrap .pcard { width: 64px; height: 90px; }
+.vp-hold { font-size: 11px; font-weight: 800; letter-spacing: .5px; color: var(--muted); padding: 3px 10px; border-radius: 8px; border: 1px solid var(--border); }
+.vp-card-wrap.held .vp-hold { background: var(--gold); color: #2a1700; border-color: var(--gold); }
+.vp-card-wrap.held .pcard { box-shadow: 0 0 16px var(--gold); border: 2px solid var(--gold); }
+.vp-msg { text-align: center; margin-top: 12px; font-weight: 700; min-height: 22px; }
+.vp-pt-modal { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; margin-top: 10px; }
+.vp-pt-modal .vp-pt-row { font-size: 13px; }
+
+/* Blackjack */
+.bj-dealer { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 6px; }
+.card-area-label span { color: var(--gold); font-weight: 900; }
+
+/* Mines */
+.mines-top { display: flex; gap: 16px; justify-content: center; margin-bottom: 10px; font-size: 14px; color: var(--muted); }
+.mines-top b { color: var(--gold); font-size: 17px; }
+.mines-next b { color: var(--cyan); }
+.mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; max-width: 360px; margin: 0 auto; }
+.mine-tile { aspect-ratio: 1; border-radius: 12px; font-size: 26px; display: grid; place-items: center; background: linear-gradient(160deg, #2c2350, #1a1233); border: 1px solid rgba(255, 255, 255, .1); transition: transform .1s, background .2s; }
+.mine-tile:not(.open):hover { transform: translateY(-3px); background: linear-gradient(160deg, #3a2d68, #241944); box-shadow: 0 6px 16px rgba(0, 0, 0, .4); }
+.mine-tile.open { cursor: default; }
+.mine-tile.gem { background: radial-gradient(circle at 50% 40%, rgba(124, 255, 107, .35), rgba(0, 0, 0, .3)); border-color: var(--green); animation: bwPop .3s; }
+.mine-tile.mine { background: radial-gradient(circle at 50% 40%, rgba(255, 59, 59, .5), rgba(0, 0, 0, .3)); border-color: var(--red); animation: bwPop .3s; }
+.mine-tile.mine-shown { opacity: .6; }
+.mines-seg button { padding: 12px 12px; }
+
+/* Promo / creator kódy */
+.promo-title { margin: 18px 0 8px; font-weight: 800; }
+.promo-form { display: flex; gap: 8px; }
+.promo-input { flex: 1; padding: 12px 14px; border-radius: 11px; background: rgba(0, 0, 0, .3); border: 1px solid var(--border); color: var(--text); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+.promo-input:focus { outline: none; border-color: var(--gold); }
+.promo-msg { font-size: 13px; font-weight: 700; min-height: 18px; margin-top: 8px; }
+.promo-msg.good { color: var(--green); } .promo-msg.bad { color: var(--red); }
+
 </style>
 </head>
 <body>
@@ -750,7 +795,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
             paylines: takeLines(LINES_5x3, 10),
             theme: { a: '#e6b800', b: '#c97f1a', bg: 'radial-gradient(circle at 50% 0%, #2b1d05, #0c0700)' },
             bets: [10, 20, 50, 100, 250, 500, 1000],
-            freeSpins: { trigger: 3, count: 10, scatterIsWild: true, expanding: true, buyCost: 13 }, ante: { mult: 1.4, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 10, scatterIsWild: true, expanding: true, buyCost: 13 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'c1', icon: '🔶', name: 'A', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
                 { id: 'c2', icon: '🔷', name: 'K', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
@@ -778,7 +823,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
             theme: { a: '#7b61ff', b: '#00e5ff', bg: 'radial-gradient(circle at 50% 0%, #0b0a2e, #03040f)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 12, globalMultiplier: 2, buyCost: 16 }, ante: { mult: 1.4, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 12, globalMultiplier: 2, buyCost: 16 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'p1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 1, 4: 4, 5: 12 } },
                 { id: 'p2', icon: '🟣', name: 'Fialová', weight: 22, pays: { 3: 1, 4: 4, 5: 12 } },
@@ -806,7 +851,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
             theme: { a: '#d98a2b', b: '#ffcf5c', bg: 'radial-gradient(circle at 50% 0%, #2a1a08, #0d0600)' },
             bets: [20, 40, 100, 200, 400, 1000, 2000],
             multiplierWild: [2, 3],
-            freeSpins: { trigger: 3, count: 8, globalMultiplier: 2, buyCost: 11 }, ante: { mult: 1.4, scatterMult: 1.2 },
+            freeSpins: { trigger: 3, count: 8, globalMultiplier: 2, buyCost: 11 }, ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'beer', icon: '🍺', name: 'Pivo', weight: 24, pays: { 3: 1, 4: 4, 5: 10 } },
                 { id: 'cactus', icon: '🌵', name: 'Kaktus', weight: 22, pays: { 3: 1, 4: 4, 5: 10 } },
@@ -921,6 +966,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: var(--text)
                 moneyValues: [[0.6, 40], [1.2, 26], [2, 16], [4, 9], [6, 4], [12, 1.5], [20, 0.5], [40, 0.12]],
                 tiers: [[4, 2], [6, 3], [9, 5]]
             },
+            ante: { mult: 1.25, scatterMult: 1.2 },
             symbols: [
                 { id: 'b1', icon: '🔵', name: 'Modrá', weight: 24, pays: { 3: 1, 4: 2, 5: 5 } },
                 { id: 'b2', icon: '🟢', name: 'Zelená', weight: 22, pays: { 3: 1, 4: 2, 5: 5 } },
@@ -1399,10 +1445,19 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
             balance: START_BALANCE,
             created: Date.now(),
             lastDaily: 0,
+            redeemed: {},
             stats: { spins: 0, wagered: 0, won: 0, biggest: 0, byGame: {} },
             history: []
         };
     }
+
+    // promo / creator kódy (jednorázově na účet)
+    var CODES = {
+        'WELCOME': 1000, 'MARES5000': 5000, 'LUCKY777': 777, 'FREESPINS': 2500, 'JACKPOT': 7500,
+        'CREATOR': 10000, 'STREAMER': 10000, 'YOUTUBE': 5000, 'TWITCH': 5000, 'TIKTOK': 5000,
+        'VIP': 15000, 'ADAMEK': 25000, 'MEGAWIN': 50000
+    };
+    Casino.PROMO_CODES = CODES;
 
     var Account = Casino.Account = {
         init: function () { load(); },
@@ -1473,6 +1528,19 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
             if (a.balance >= RESCUE_BELOW) return 0;
             Account.credit(RESCUE_AMOUNT);
             return RESCUE_AMOUNT;
+        },
+
+        // promo / creator kód
+        redeemCode: function (code) {
+            var a = Account.current(); if (!a) return { ok: false, reason: 'login' };
+            code = (code || '').trim().toUpperCase();
+            if (!code) return { ok: false, reason: 'empty' };
+            if (!(code in CODES)) return { ok: false, reason: 'invalid' };
+            a.redeemed = a.redeemed || {};
+            if (a.redeemed[code]) return { ok: false, reason: 'used' };
+            a.redeemed[code] = Date.now();
+            Account.credit(CODES[code]);
+            return { ok: true, amount: CODES[code], code: code };
         },
 
         /* ---- statistiky ---- */
@@ -4117,6 +4185,476 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
 
 </script>
 <script>
+/* ===== games/videopoker.js ===== */
+/* ==========================================================================
+   MARES CASINO – Video Poker (Jacks or Better). Klasický pokerový automat.
+   Rozdá 5 karet, podržíš co chceš, dobereš, platí podle kombinace.
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var fmt = Casino.util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+    var SUITS = ['♠', '♥', '♦', '♣'];
+    var BETS = [10, 20, 50, 100, 250, 500];
+    function valStr(v) { return v <= 10 ? '' + v : { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' }[v]; }
+    function deck() { var d = []; for (var s = 0; s < 4; s++) for (var v = 2; v <= 14; v++) d.push({ v: v, s: s }); for (var i = d.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = d[i]; d[i] = d[j]; d[j] = t; } return d; }
+
+    // výplatní tabulka (násobek sázky, včetně vrácení)
+    var PAYTABLE = [
+        ['Royal Flush', 250], ['Postupka v barvě', 50], ['Kareta', 25], ['Full House', 9],
+        ['Barva', 6], ['Postupka', 4], ['Trojice', 3], ['Dva páry', 2], ['Páry J+', 1]
+    ];
+    function evalHand(cards) {
+        var vs = cards.map(function (c) { return c.v; }).sort(function (a, b) { return a - b; });
+        var flush = cards.every(function (c) { return c.s === cards[0].s; });
+        var uniq = vs.filter(function (v, i) { return vs.indexOf(v) === i; });
+        var straight = uniq.length === 5 && (vs[4] - vs[0] === 4 || (vs[0] === 2 && vs[1] === 3 && vs[2] === 4 && vs[3] === 5 && vs[4] === 14));
+        var counts = {}; vs.forEach(function (v) { counts[v] = (counts[v] || 0) + 1; });
+        var cv = Object.keys(counts).map(function (k) { return counts[k]; }).sort(function (a, b) { return b - a; });
+        var royal = straight && flush && vs[0] === 10;
+        if (royal) return 0;
+        if (straight && flush) return 1;
+        if (cv[0] === 4) return 2;
+        if (cv[0] === 3 && cv[1] === 2) return 3;
+        if (flush) return 4;
+        if (straight) return 5;
+        if (cv[0] === 3) return 6;
+        if (cv[0] === 2 && cv[1] === 2) return 7;
+        if (cv[0] === 2) {
+            var pv = +Object.keys(counts).filter(function (k) { return counts[k] === 2; })[0];
+            if (pv >= 11 || pv === 14) return 8;
+        }
+        return -1;
+    }
+
+    Casino.VideoPoker = { open: function (m, o) { return new VP(m, o); } };
+    function VP(mount, opts) { this.opts = opts || {}; this.betIndex = 3; this.state = 'deal'; this.hold = [false, false, false, false, false]; this.build(mount); }
+    VP.prototype.bet = function () { return BETS[this.betIndex]; };
+
+    VP.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#6c5cff', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #161038, #07030f)' };
+        var f = Casino.UI.gameFrame(mount, { emoji: '🂡', name: 'Video Poker', subtitle: 'Jacks or Better — podrž a dober', theme: theme, bg: theme.bg, onExit: this.opts.onExit, onInfo: function () { self.info(); } });
+        this.frame = f;
+        var pt = el('div', 'vp-paytable');
+        pt.innerHTML = PAYTABLE.map(function (r, i) { return '<div class="vp-pt-row" data-i="' + i + '"><span>' + r[0] + '</span><b>' + r[1] + '×</b></div>'; }).join('');
+        f.stage.appendChild(pt); this.ptEl = pt;
+        var row = el('div', 'vp-cards card-row'); f.stage.appendChild(row); this.row = row;
+        this.msgEl = el('div', 'vp-msg', 'Stiskni ROZDAT.'); f.stage.appendChild(this.msgEl);
+        this.renderCards([null, null, null, null, null]);
+        var c = f.controls;
+        c.innerHTML =
+            '<div class="ctrl-cell ctrl-bet"><button class="bet-dn">−</button><div class="bet-val"><label>Sázka</label><b class="c-bet">' + fmt(this.bet()) + '</b></div><button class="bet-up">+</button></div>' +
+            '<div class="ctrl-cell ctrl-win"><label>Výhra</label><b class="c-win">0</b></div>' +
+            '<button class="deal-btn vp-deal">ROZDAT</button>';
+        this.betEl = c.querySelector('.c-bet'); this.winEl = c.querySelector('.c-win'); this.dealBtn = c.querySelector('.vp-deal');
+        c.querySelector('.bet-dn').onclick = function () { self.changeBet(-1); };
+        c.querySelector('.bet-up').onclick = function () { self.changeBet(1); };
+        this.dealBtn.onclick = function () { Casino.Sound.unlock(); self.action(); };
+    };
+    VP.prototype.changeBet = function (d) { if (this.state !== 'deal') return; var n = this.betIndex + d; if (n < 0 || n >= BETS.length) return; this.betIndex = n; Casino.Sound.click(); this.betEl.textContent = fmt(this.bet()); };
+
+    VP.prototype.renderCards = function (cards) {
+        var self = this; this.row.innerHTML = '';
+        cards.forEach(function (cd, i) {
+            var wrap = el('div', 'vp-card-wrap');
+            var card;
+            if (!cd) card = el('div', 'pcard down');
+            else { var red = cd.s === 1 || cd.s === 2; card = el('div', 'pcard' + (red ? ' red' : ''), '<span class="pc-v">' + valStr(cd.v) + '</span><span class="pc-s">' + SUITS[cd.s] + '</span>'); }
+            if (self.hold[i]) wrap.classList.add('held');
+            var hold = el('div', 'vp-hold', self.hold[i] ? 'DRŽÍM' : 'DRŽET');
+            wrap.appendChild(card); wrap.appendChild(hold);
+            if (self.state === 'draw') { wrap.onclick = function () { self.hold[i] = !self.hold[i]; self.renderCards(self.cards); Casino.Sound.click(); }; wrap.classList.add('clickable'); }
+            self.row.appendChild(wrap);
+        });
+    };
+
+    VP.prototype.action = function () {
+        if (this.state === 'deal') {
+            var bet = this.bet();
+            if (!Casino.Account.debit(bet)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+            this.deck = deck(); this.cards = [this.deck.pop(), this.deck.pop(), this.deck.pop(), this.deck.pop(), this.deck.pop()];
+            this.hold = [false, false, false, false, false];
+            this.state = 'draw'; this.winEl.textContent = '0'; this.ptEl.querySelectorAll('.vp-pt-row').forEach(function (r) { r.classList.remove('on'); });
+            this.renderCards(this.cards); this.dealBtn.textContent = 'DOBRAT'; this.msgEl.textContent = 'Vyber karty k držení a stiskni DOBRAT.';
+            Casino.Sound.reelStop(1);
+        } else {
+            for (var i = 0; i < 5; i++) if (!this.hold[i]) this.cards[i] = this.deck.pop();
+            this.state = 'deal';
+            this.renderCards(this.cards);
+            var rank = evalHand(this.cards);
+            var bet = this.bet(), win = 0;
+            if (rank >= 0) { win = bet * PAYTABLE[rank][1]; Casino.Account.credit(win); var rowEl = this.ptEl.querySelector('.vp-pt-row[data-i="' + rank + '"]'); if (rowEl) rowEl.classList.add('on'); }
+            Casino.Account.recordSpin('videopoker', bet, win);
+            this.winEl.textContent = win > 0 ? '+' + fmt(win) : '0';
+            this.winEl.style.color = win > 0 ? 'var(--green)' : 'var(--muted)';
+            if (rank === 0) { Casino.Sound.bigWinFanfare(); this.msgEl.textContent = '👑 ROYAL FLUSH! +' + fmt(win); }
+            else if (rank >= 0) { Casino.Sound.win(win >= bet * 9 ? 3 : 2); this.msgEl.textContent = PAYTABLE[rank][0] + '! +' + fmt(win); }
+            else { Casino.Sound.lose(); this.msgEl.textContent = 'Bez výhry. Zkus to znovu!'; }
+            this.dealBtn.textContent = 'ROZDAT';
+        }
+    };
+
+    VP.prototype.info = function () {
+        Casino.UI.modal({ title: '🂡 Video Poker — Jacks or Better', body: '<p style="color:var(--muted);line-height:1.6">Dostaneš 5 karet. Klikni na karty, které chceš <b>DRŽET</b>, zbytek se dobere. Platí pokerová kombinace (páry až od kluků J výš).</p><div class="vp-pt-modal">' + PAYTABLE.map(function (r) { return '<div class="vp-pt-row"><span>' + r[0] + '</span><b>' + r[1] + '×</b></div>'; }).join('') + '</div><p style="color:var(--muted);margin-top:8px">Při dobré strategii RTP ~99 %.</p>' });
+    };
+    VP.prototype.destroy = function () { };
+
+    Casino.registry.push({ id: 'videopoker', name: 'Video Poker', emoji: '🂡', category: 'table', tagline: 'Klasický pokerový automat (Jacks or Better)', theme: { a: '#6c5cff', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #161038, #07030f)' }, badges: ['RTP ~99%', 'Poker'], meta: 'Drž & dober · Royal 250×', open: function (m, o) { return Casino.VideoPoker.open(m, o); } });
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
+/* ===== games/blackjack.js ===== */
+/* ==========================================================================
+   MARES CASINO – Blackjack (21) proti dealerovi, který mluví.
+   Blackjack platí 3:2, dealer dobírá do 17. Hit / Stand / Double.
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var fmt = Casino.util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+    var SUITS = ['♠', '♥', '♦', '♣'];
+    var BETS = [10, 20, 50, 100, 250, 500];
+    function valStr(v) { return v <= 10 ? '' + v : { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' }[v]; }
+    function deck() { var d = []; for (var n = 0; n < 4; n++) for (var s = 0; s < 4; s++) for (var v = 2; v <= 14; v++) d.push({ v: v, s: s }); for (var i = d.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = d[i]; d[i] = d[j]; d[j] = t; } return d; }
+    function cardVal(c) { if (c.v >= 14) return 11; if (c.v >= 11) return 10; return c.v; }
+    function handVal(cards) { var sum = 0, aces = 0; cards.forEach(function (c) { sum += cardVal(c); if (c.v === 14) aces++; }); while (sum > 21 && aces > 0) { sum -= 10; aces--; } return sum; }
+    function isBJ(cards) { return cards.length === 2 && handVal(cards) === 21; }
+
+    var TALK = {
+        deal: ['Karty na stole. Hodně štěstí!', 'Rozdávám.', 'Vsadíme si?'],
+        bust: ['Přetáhl jsi, mrzí mě to.', 'Bum, přes 21.'],
+        dealerBust: ['Přetáhl jsem! Bereš to.', 'Já jdu přes — výhra je tvá.'],
+        win: ['Vyhráváš, gratuluji!', 'Lepší ruka bere, pěkně.'],
+        lose: ['Beru to já.', 'Dnes má navrch dům.'],
+        push: ['Shoda — sázka se vrací.', 'Remíza.'],
+        bj: ['Blackjack! Platím jedna a půl!', 'Černý jack! Pěkné.']
+    };
+    function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+    Casino.Blackjack = { open: function (m, o) { return new BJ(m, o); } };
+    function BJ(mount, opts) { this.opts = opts || {}; this.betIndex = 3; this.state = 'bet'; this.build(mount); }
+    BJ.prototype.bet = function () { return BETS[this.betIndex]; };
+
+    BJ.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#d4213d', b: '#ffd24a', bg: 'radial-gradient(ellipse at 50% 40%, #0c5236, #062017)' };
+        var f = Casino.UI.gameFrame(mount, { emoji: '🂡', name: 'Blackjack', subtitle: '21 proti dealerovi · BJ platí 3:2', theme: theme, bg: theme.bg, onExit: function () { Casino.Dealer.stop(); self.opts.onExit && self.opts.onExit(); }, onInfo: function () { self.info(); } });
+        this.frame = f;
+        var stage = f.stage;
+        var drow = el('div', 'bj-dealer'); drow.innerHTML = '<div class="dealer-av">🤵</div><div class="speech hidden"></div>'; stage.appendChild(drow); this.speech = drow.querySelector('.speech');
+        this.dealerCards = el('div', 'card-row'); stage.appendChild(this.labelRow('Dealer', this.dealerCards, 'dval'));
+        this.result = el('div', 'poker-result'); stage.appendChild(this.result);
+        this.playerCards = el('div', 'card-row'); stage.appendChild(this.labelRow('Ty', this.playerCards, 'pval'));
+        var c = f.controls;
+        c.innerHTML =
+            '<div class="ctrl-cell ctrl-bet"><button class="bet-dn">−</button><div class="bet-val"><label>Sázka</label><b class="c-bet">' + fmt(this.bet()) + '</b></div><button class="bet-up">+</button></div>' +
+            '<div class="poker-actions">' +
+            '<button class="deal-btn bj-deal">ROZDAT</button>' +
+            '<button class="call-btn bj-hit hidden">HIT</button>' +
+            '<button class="play-btn bj-stand hidden">STÁT</button>' +
+            '<button class="feat-btn bj-double hidden">ZDVOJIT</button>' +
+            '</div>';
+        this.betEl = c.querySelector('.c-bet');
+        c.querySelector('.bet-dn').onclick = function () { self.changeBet(-1); };
+        c.querySelector('.bet-up').onclick = function () { self.changeBet(1); };
+        this.dealBtn = c.querySelector('.bj-deal'); this.hitBtn = c.querySelector('.bj-hit'); this.standBtn = c.querySelector('.bj-stand'); this.dblBtn = c.querySelector('.bj-double');
+        this.dealBtn.onclick = function () { Casino.Sound.unlock(); self.deal(); };
+        this.hitBtn.onclick = function () { self.hit(); };
+        this.standBtn.onclick = function () { self.stand(); };
+        this.dblBtn.onclick = function () { self.double(); };
+        this.renderCards(this.dealerCards, [], true, 'dval'); this.renderCards(this.playerCards, [], false, 'pval');
+        Casino.Dealer.say(this.speech, 'Vítej u Blackjacku! Vsaď a rozdáme.');
+    };
+    BJ.prototype.labelRow = function (label, cardsEl, valCls) { var w = el('div', 'card-area'); w.appendChild(el('div', 'card-area-label', label + ' <span class="' + valCls + '"></span>')); w.appendChild(cardsEl); return w; };
+    BJ.prototype.changeBet = function (d) { if (this.state !== 'bet') return; var n = this.betIndex + d; if (n < 0 || n >= BETS.length) return; this.betIndex = n; Casino.Sound.click(); this.betEl.textContent = fmt(this.bet()); };
+
+    BJ.prototype.cardHtml = function (cd) { var red = cd.s === 1 || cd.s === 2; return '<div class="pcard' + (red ? ' red' : '') + '"><span class="pc-v">' + valStr(cd.v) + '</span><span class="pc-s">' + SUITS[cd.s] + '</span></div>'; };
+    BJ.prototype.renderCards = function (container, cards, hideHole, valCls) {
+        container.innerHTML = cards.map(function (cd, i) { return (hideHole && i === 1 && !this.revealed) ? '<div class="pcard down"></div>' : this.cardHtml(cd); }, this).join('') || '<div class="pcard down"></div><div class="pcard down"></div>';
+        var vEl = this.frame.stage.querySelector('.' + valCls);
+        if (vEl) { if (!cards.length) vEl.textContent = ''; else if (hideHole && !this.revealed) vEl.textContent = '(' + (cardVal(cards[0]) === 11 ? 'A' : handVal([cards[0]])) + ')'; else vEl.textContent = handVal(cards); }
+    };
+
+    BJ.prototype.setButtons = function (mode) {
+        this.dealBtn.classList.toggle('hidden', mode !== 'bet');
+        this.hitBtn.classList.toggle('hidden', mode !== 'play');
+        this.standBtn.classList.toggle('hidden', mode !== 'play');
+        this.dblBtn.classList.toggle('hidden', mode !== 'play' || this.player.length !== 2 || !this.canDouble);
+    };
+
+    BJ.prototype.deal = function () {
+        var bet = this.bet();
+        if (!Casino.Account.debit(bet)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+        this.stake = bet; this.canDouble = Casino.Account.getBalance() >= bet;
+        this.deck = deck(); this.revealed = false;
+        this.player = [this.deck.pop(), this.deck.pop()];
+        this.dealer = [this.deck.pop(), this.deck.pop()];
+        this.state = 'play'; this.result.className = 'poker-result';
+        Casino.Dealer.say(this.speech, pick(TALK.deal)); Casino.Sound.reelStop(1);
+        this.renderCards(this.dealerCards, this.dealer, true, 'dval'); this.renderCards(this.playerCards, this.player, false, 'pval');
+        if (isBJ(this.player) || isBJ(this.dealer)) return this.finish();
+        this.setButtons('play');
+    };
+    BJ.prototype.hit = function () {
+        this.player.push(this.deck.pop()); this.canDouble = false; Casino.Sound.reelStop(2);
+        this.renderCards(this.playerCards, this.player, false, 'pval');
+        if (handVal(this.player) > 21) { this.setButtons('none'); this.finish(); } else this.setButtons('play');
+    };
+    BJ.prototype.double = function () {
+        if (!Casino.Account.debit(this.stake)) { Casino.UI.toast('Málo kreditu na zdvojení.', ''); return; }
+        this.stake *= 2; this.player.push(this.deck.pop()); Casino.Sound.reelStop(2);
+        this.renderCards(this.playerCards, this.player, false, 'pval'); this.setButtons('none');
+        this.stand();
+    };
+    BJ.prototype.stand = function () { this.setButtons('none'); this.dealerPlay(); };
+
+    BJ.prototype.dealerPlay = function () {
+        var self = this; this.revealed = true; this.renderCards(this.dealerCards, this.dealer, true, 'dval');
+        function step() {
+            if (self.destroyed) return;
+            if (handVal(self.dealer) < 17 && handVal(self.player) <= 21) {
+                self.dealer.push(self.deck.pop()); self.renderCards(self.dealerCards, self.dealer, true, 'dval'); Casino.Sound.reelStop(2);
+                setTimeout(step, 600);
+            } else self.finish();
+        }
+        if (handVal(this.player) > 21) this.finish(); else setTimeout(step, 600);
+    };
+
+    BJ.prototype.finish = function () {
+        this.revealed = true; this.renderCards(this.dealerCards, this.dealer, true, 'dval');
+        var pv = handVal(this.player), dv = handVal(this.dealer);
+        var pBJ = isBJ(this.player), dBJ = isBJ(this.dealer);
+        var ret = 0, msg, good = false;
+        if (pBJ && !dBJ) { ret = this.stake * 2.5; msg = 'Blackjack! +' + fmt(ret - this.stake); good = true; Casino.Dealer.say(this.speech, pick(TALK.bj)); }
+        else if (pBJ && dBJ) { ret = this.stake; msg = 'Oba Blackjack — push.'; Casino.Dealer.say(this.speech, pick(TALK.push)); }
+        else if (pv > 21) { ret = 0; msg = 'Přetažení (' + pv + '). Prohra.'; Casino.Dealer.say(this.speech, pick(TALK.bust)); }
+        else if (dv > 21) { ret = this.stake * 2; msg = 'Dealer přetáhl (' + dv + ')! +' + fmt(this.stake); good = true; Casino.Dealer.say(this.speech, pick(TALK.dealerBust)); }
+        else if (pv > dv) { ret = this.stake * 2; msg = 'Tvých ' + pv + ' poráží ' + dv + '! +' + fmt(this.stake); good = true; Casino.Dealer.say(this.speech, pick(TALK.win)); }
+        else if (pv < dv) { ret = 0; msg = 'Dealer má ' + dv + ' proti ' + pv + '. Prohra.'; Casino.Dealer.say(this.speech, pick(TALK.lose)); }
+        else { ret = this.stake; msg = 'Shoda na ' + pv + ' — push.'; Casino.Dealer.say(this.speech, pick(TALK.push)); }
+        if (ret > 0) Casino.Account.credit(ret);
+        Casino.Account.recordSpin('blackjack', this.stake, ret);
+        var net = ret - this.stake;
+        this.result.className = 'poker-result show ' + (net > 0 ? 'good' : net < 0 ? 'bad' : '');
+        this.result.textContent = msg;
+        if (net > 0) Casino.Sound.win(pBJ ? 3 : 2); else if (net < 0) Casino.Sound.lose(); else Casino.Sound.click();
+        this.state = 'bet'; this.setButtons('bet');
+    };
+
+    BJ.prototype.info = function () { Casino.UI.modal({ title: '🂡 Blackjack — pravidla', body: '<p style="color:var(--muted);line-height:1.7">Cílem je být blíž k 21 než dealer, ale nepřetáhnout. Obrázky = 10, eso = 1 nebo 11.</p><ul style="color:var(--muted);line-height:1.8;margin-left:18px"><li><b>HIT</b> = další karta, <b>STÁT</b> = končíš, <b>ZDVOJIT</b> = dvojnásobná sázka + 1 karta.</li><li>Dealer dobírá do 17.</li><li>Blackjack (eso + desítka) platí <b>3:2</b>, běžná výhra 1:1.</li></ul><p style="color:var(--muted);margin-top:6px">RTP ~99,5 % při základní strategii.</p>' }); };
+    BJ.prototype.destroy = function () { this.destroyed = true; Casino.Dealer.stop(); };
+
+    Casino.registry.push({ id: 'blackjack', name: 'Blackjack', emoji: '🂡', category: 'table', tagline: '21 proti dealerovi, který mluví', theme: { a: '#d4213d', b: '#ffd24a', bg: 'radial-gradient(ellipse at 50% 40%, #0c5236, #062017)' }, badges: ['RTP ~99.5%', 'Stolní'], meta: 'Hit/Stand/Double · BJ 3:2', open: function (m, o) { return Casino.Blackjack.open(m, o); } });
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
+/* ===== games/mines.js ===== */
+/* ==========================================================================
+   MARES CASINO – Mines. Odkrývej políčka, vyhýbej se minám, vyber výhru včas.
+   Násobič = férový (0.99) součin (N-i)/(N-M-i) za každé bezpečné políčko.
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var fmt = Casino.util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+    var N = 25, BETS = [10, 20, 50, 100, 250, 500], MINES = [1, 3, 5, 10];
+    var EDGE = 0.99;
+
+    function multiplier(M, k) { var m = EDGE; for (var i = 0; i < k; i++) m *= (N - i) / (N - M - i); return Math.round(m * 100) / 100; }
+
+    Casino.Mines = { open: function (m, o) { return new Mines(m, o); } };
+    function Mines(mount, opts) { this.opts = opts || {}; this.betIndex = 3; this.mines = 3; this.state = 'bet'; this.build(mount); }
+    Mines.prototype.bet = function () { return BETS[this.betIndex]; };
+
+    Mines.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#ff9b21', b: '#34e3ff', bg: 'radial-gradient(circle at 50% 0%, #161a2e, #06070f)' };
+        var f = Casino.UI.gameFrame(mount, { emoji: '💣', name: 'Mines', subtitle: 'Odkrývej drahokamy, vyhni se minám', theme: theme, bg: theme.bg, onExit: this.opts.onExit, onInfo: function () { self.info(); } });
+        this.frame = f;
+        var info = el('div', 'mines-top'); info.innerHTML = '<div class="mines-mult">Násobič: <b class="cur">1.00×</b></div><div class="mines-next">Další: <b class="nxt">—</b></div>'; f.stage.appendChild(info);
+        this.curEl = info.querySelector('.cur'); this.nxtEl = info.querySelector('.nxt');
+        this.grid = el('div', 'mines-grid'); f.stage.appendChild(this.grid);
+        this.tiles = [];
+        for (var i = 0; i < N; i++) { var tile = el('button', 'mine-tile'); tile.dataset.i = i; (function (idx, tl) { tl.onclick = function () { self.reveal(idx); }; })(i, tile); this.grid.appendChild(tile); this.tiles.push(tile); }
+        this.msgEl = el('div', 'vp-msg', 'Vyber počet min a stiskni HRÁT.'); f.stage.appendChild(this.msgEl);
+        var c = f.controls;
+        c.innerHTML =
+            '<div class="ctrl-cell ctrl-bet"><button class="bet-dn">−</button><div class="bet-val"><label>Sázka</label><b class="c-bet">' + fmt(this.bet()) + '</b></div><button class="bet-up">+</button></div>' +
+            '<div class="risk-seg mines-seg">' + MINES.map(function (m) { return '<button data-m="' + m + '"' + (m === 3 ? ' class="on"' : '') + '>' + m + ' 💣</button>'; }).join('') + '</div>' +
+            '<button class="deal-btn mines-start">HRÁT</button>' +
+            '<button class="play-btn mines-cash hidden">VYBRAT</button>';
+        this.betEl = c.querySelector('.c-bet'); this.startBtn = c.querySelector('.mines-start'); this.cashBtn = c.querySelector('.mines-cash');
+        c.querySelector('.bet-dn').onclick = function () { self.changeBet(-1); };
+        c.querySelector('.bet-up').onclick = function () { self.changeBet(1); };
+        c.querySelectorAll('.mines-seg button').forEach(function (b) { b.onclick = function () { if (self.state !== 'bet') return; self.mines = +b.dataset.m; c.querySelectorAll('.mines-seg button').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on'); Casino.Sound.click(); }; });
+        this.startBtn.onclick = function () { Casino.Sound.unlock(); self.start(); };
+        this.cashBtn.onclick = function () { self.cashout(); };
+    };
+    Mines.prototype.changeBet = function (d) { if (this.state !== 'bet') return; var n = this.betIndex + d; if (n < 0 || n >= BETS.length) return; this.betIndex = n; Casino.Sound.click(); this.betEl.textContent = fmt(this.bet()); };
+
+    Mines.prototype.start = function () {
+        var bet = this.bet();
+        if (!Casino.Account.debit(bet)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+        this.stake = bet; this.picked = 0; this.state = 'play';
+        // rozmísti miny
+        this.mineSet = {}; var placed = 0;
+        while (placed < this.mines) { var r = Math.floor(Math.random() * N); if (!this.mineSet[r]) { this.mineSet[r] = true; placed++; } }
+        this.tiles.forEach(function (t) { t.className = 'mine-tile'; t.textContent = ''; t.disabled = false; });
+        this.curEl.textContent = '1.00×'; this.nxtEl.textContent = multiplier(this.mines, 1).toFixed(2) + '×';
+        this.startBtn.classList.add('hidden'); this.cashBtn.classList.remove('hidden'); this.cashBtn.textContent = 'VYBRAT';
+        this.msgEl.textContent = 'Odkrývej políčka. Vyber výhru, než šlápneš na minu!';
+    };
+
+    Mines.prototype.reveal = function (i) {
+        if (this.state !== 'play' || this.tiles[i].classList.contains('open')) return;
+        var t = this.tiles[i]; t.classList.add('open'); t.disabled = true;
+        if (this.mineSet[i]) {
+            t.classList.add('mine'); t.textContent = '💣'; Casino.Sound.lose();
+            this.bust();
+        } else {
+            this.picked++; t.classList.add('gem'); t.textContent = '💎'; Casino.Sound.tick();
+            var mult = multiplier(this.mines, this.picked);
+            this.curEl.textContent = mult.toFixed(2) + '×';
+            this.cashBtn.textContent = 'VYBRAT ' + fmt(Math.round(this.stake * mult));
+            var safeLeft = (N - this.mines) - this.picked;
+            if (safeLeft <= 0) { this.cashout(); return; }
+            this.nxtEl.textContent = multiplier(this.mines, this.picked + 1).toFixed(2) + '×';
+            Casino.Sound.win(0);
+        }
+    };
+
+    Mines.prototype.bust = function () {
+        var self = this; this.state = 'bet';
+        this.tiles.forEach(function (t, i) { if (self.mineSet[i] && !t.classList.contains('mine')) { t.classList.add('open', 'mine-shown'); t.textContent = '💣'; } t.disabled = true; });
+        Casino.Account.recordSpin('mines', this.stake, 0);
+        this.msgEl.textContent = '💥 Bum! Šlápl jsi na minu. Prohra ' + fmt(this.stake) + '.';
+        this.cashBtn.classList.add('hidden'); this.startBtn.classList.remove('hidden');
+    };
+
+    Mines.prototype.cashout = function () {
+        if (this.state !== 'play' || this.picked === 0) { if (this.picked === 0) Casino.UI.toast('Odkryj aspoň jedno políčko.', ''); return; }
+        var mult = multiplier(this.mines, this.picked), win = Math.round(this.stake * mult);
+        Casino.Account.credit(win); Casino.Account.recordSpin('mines', this.stake, win);
+        Casino.Sound.win(mult >= 5 ? 3 : 2);
+        var self = this; this.state = 'bet';
+        this.tiles.forEach(function (t, i) { if (self.mineSet[i]) { t.classList.add('open', 'mine-shown'); t.textContent = '💣'; } t.disabled = true; });
+        this.msgEl.textContent = '💰 Vybráno ' + mult.toFixed(2) + '× → +' + fmt(win) + '!';
+        this.cashBtn.classList.add('hidden'); this.startBtn.classList.remove('hidden');
+    };
+
+    Mines.prototype.info = function () { Casino.UI.modal({ title: '💣 Mines — jak hrát', body: '<p style="color:var(--muted);line-height:1.7">Na mřížce 5×5 je schováno ' + 'několik min. Odkrývej políčka — každý nalezený drahokam 💎 zvedne násobič. Kdykoliv můžeš <b>VYBRAT</b> výhru (sázka × násobič). Když odkryješ minu 💣, prohráváš sázku.</p><p style="color:var(--muted);margin-top:8px">Víc min = vyšší násobiče, ale větší riziko. RTP ≈ 99 %.</p>' }); };
+    Mines.prototype.destroy = function () { this.state = 'done'; };
+
+    Casino.registry.push({ id: 'mines', name: 'Mines', emoji: '💣', category: 'arcade', tagline: 'Odkrývej drahokamy, vyhni se minám', theme: { a: '#ff9b21', b: '#34e3ff', bg: 'radial-gradient(circle at 50% 0%, #161a2e, #06070f)' }, badges: ['RTP ~99%', 'Arkáda'], meta: '5×5 · vyber výhru včas', open: function (m, o) { return Casino.Mines.open(m, o); } });
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
+/* ===== games/wheel.js ===== */
+/* ==========================================================================
+   MARES CASINO – Kolo štěstí. Roztoč kolo a vyhraj násobič pod ukazatelem.
+   ========================================================================== */
+(function (root) {
+    'use strict';
+    var Casino = root.Casino = root.Casino || {};
+    var fmt = Casino.util.fmt;
+    function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+    var BETS = [10, 20, 50, 100, 250, 500, 1000];
+    // 16 segmentů, RTP ~95 %
+    var SEG = [0, 1.2, 0, 1.5, 0, 1.6, 0, 1.4, 0, 2.4, 0, 1.5, 0, 1.6, 0, 4];
+    function segColor(m) { return m === 0 ? '#3a2150' : m >= 4 ? '#ff3b3b' : m >= 2 ? '#ff7a1a' : m >= 1.5 ? '#ffd24a' : '#7CFF6B'; }
+
+    Casino.Wheel = { open: function (m, o) { return new Wheel(m, o); } };
+    function Wheel(mount, opts) { this.opts = opts || {}; this.betIndex = 3; this.rot = 0; this.spinning = false; this.history = []; this.build(mount); }
+    Wheel.prototype.bet = function () { return BETS[this.betIndex]; };
+
+    Wheel.prototype.build = function (mount) {
+        var self = this;
+        var theme = { a: '#ff5db1', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #2a0e3a, #0a0414)' };
+        var f = Casino.UI.gameFrame(mount, { emoji: '🎡', name: 'Kolo štěstí', subtitle: 'Roztoč a vyhraj násobič', theme: theme, bg: theme.bg, onExit: this.opts.onExit, onInfo: function () { self.info(); } });
+        this.frame = f;
+        this.histEl = el('div', 'crash-hist'); f.stage.appendChild(this.histEl);
+        var wrap = el('div', 'wheel-wrap');
+        this.canvas = el('canvas'); this.WS = 300;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.canvas.width = this.WS * dpr; this.canvas.height = this.WS * dpr; this.canvas.style.width = this.WS + 'px'; this.canvas.style.height = this.WS + 'px';
+        this.ctx = this.canvas.getContext('2d'); this.ctx.scale(dpr, dpr);
+        wrap.appendChild(this.canvas); wrap.appendChild(el('div', 'wheel-pointer', '▼'));
+        f.stage.appendChild(wrap);
+        this.winLabel = el('div', 'plinko-win', ''); f.stage.appendChild(this.winLabel);
+        this.draw(0);
+        var c = f.controls;
+        c.innerHTML = '<div class="ctrl-cell ctrl-bet"><button class="bet-dn">−</button><div class="bet-val"><label>Sázka</label><b class="c-bet">' + fmt(this.bet()) + '</b></div><button class="bet-up">+</button></div><button class="spin-roul wheel-spin">ROZTOČIT 🎡</button>';
+        this.betEl = c.querySelector('.c-bet'); this.spinBtn = c.querySelector('.wheel-spin');
+        c.querySelector('.bet-dn').onclick = function () { self.changeBet(-1); };
+        c.querySelector('.bet-up').onclick = function () { self.changeBet(1); };
+        this.spinBtn.onclick = function () { Casino.Sound.unlock(); self.spin(); };
+    };
+    Wheel.prototype.changeBet = function (d) { if (this.spinning) return; var n = this.betIndex + d; if (n < 0 || n >= BETS.length) return; this.betIndex = n; Casino.Sound.click(); this.betEl.textContent = fmt(this.bet()); };
+
+    Wheel.prototype.spin = function () {
+        if (this.spinning) return;
+        var bet = this.bet();
+        if (!Casino.Account.debit(bet)) { Casino.UI.toast('Nedostatek kreditu!', ''); if (this.opts.onBroke) this.opts.onBroke(); return; }
+        this.spinning = true; this.spinBtn.disabled = true; Casino.Sound.spin();
+        var idx = Math.floor(Math.random() * SEG.length);
+        var seg = (Math.PI * 2) / SEG.length;
+        var target = (-Math.PI / 2) - idx * seg;
+        var turns = 5 + Math.floor(Math.random() * 2);
+        var start = this.rot, end = target - turns * Math.PI * 2; while (end > start) end -= Math.PI * 2;
+        var self = this, t0 = performance.now(), dur = 4000, last = 0;
+        function frame(now) {
+            if (self.destroyed) return;
+            var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+            self.rot = start + (end - start) * e; self.draw(self.rot);
+            if (now - last > 90 && p < 0.92) { Casino.Sound.tick(); last = now; }
+            if (p < 1) requestAnimationFrame(frame); else self.resolve(idx, bet);
+        }
+        requestAnimationFrame(frame);
+    };
+
+    Wheel.prototype.resolve = function (idx, bet) {
+        var mult = SEG[idx], win = Math.round(bet * mult);
+        if (win > 0) Casino.Account.credit(win);
+        Casino.Account.recordSpin('wheel', bet, win);
+        this.history.unshift(mult); this.history = this.history.slice(0, 14); this.renderHist();
+        var net = win - bet;
+        this.winLabel.textContent = (net >= 0 ? '+' : '') + fmt(net) + ' (' + mult + '×)';
+        this.winLabel.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+        if (mult >= 4) Casino.Sound.win(3); else if (mult >= 1.5) Casino.Sound.win(2); else if (mult > 0) Casino.Sound.win(0); else Casino.Sound.lose();
+        this.spinning = false; this.spinBtn.disabled = false;
+    };
+    Wheel.prototype.renderHist = function () { this.histEl.innerHTML = this.history.map(function (m) { var c = segColor(m); return '<span class="ch" style="color:' + c + ';border-color:' + c + '">' + m + '×</span>'; }).join(''); };
+
+    Wheel.prototype.draw = function (rot) {
+        var ctx = this.ctx, S = this.WS, cx = S / 2, cy = S / 2, R = S / 2 - 4, seg = (Math.PI * 2) / SEG.length;
+        ctx.clearRect(0, 0, S, S);
+        for (var i = 0; i < SEG.length; i++) {
+            var a0 = rot + i * seg - seg / 2, a1 = a0 + seg;
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, a0, a1); ctx.closePath();
+            ctx.fillStyle = segColor(SEG[i]); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
+            var am = a0 + seg / 2;
+            ctx.save(); ctx.translate(cx + Math.cos(am) * (R - 18), cy + Math.sin(am) * (R - 18)); ctx.rotate(am + Math.PI / 2);
+            ctx.fillStyle = SEG[i] === 0 ? '#9a8' : '#1a1030'; ctx.font = '700 12px Segoe UI'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(SEG[i] === 0 ? '✕' : SEG[i] + '×', 0, 0); ctx.restore();
+        }
+        ctx.beginPath(); ctx.arc(cx, cy, R * 0.16, 0, 7); ctx.fillStyle = '#2a1a08'; ctx.fill(); ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 3; ctx.stroke();
+    };
+
+    Wheel.prototype.info = function () { Casino.UI.modal({ title: '🎡 Kolo štěstí', body: '<p style="color:var(--muted);line-height:1.7">Vsaď a roztoč kolo. Kde se zastaví ukazatel, takový násobič dostaneš (výhra = sázka × násobič). Pole ✕ znamená prohru. Top výhra 4×, RTP ≈ 95 %.</p>' }); };
+    Wheel.prototype.destroy = function () { this.destroyed = true; };
+
+    Casino.registry.push({ id: 'wheel', name: 'Kolo štěstí', emoji: '🎡', category: 'arcade', tagline: 'Roztoč kolo a chytni násobič', theme: { a: '#ff5db1', b: '#ffd24a', bg: 'radial-gradient(circle at 50% 0%, #2a0e3a, #0a0414)' }, badges: ['RTP ~95%', 'Arkáda'], meta: '16 polí · až 4×', open: function (m, o) { return Casino.Wheel.open(m, o); } });
+})(typeof window !== 'undefined' ? window : global);
+
+</script>
+<script>
 /* ===== app.js ===== */
 /* ==========================================================================
    MARES CASINO – aplikace: přihlášení, lobby, navigace, hlavička, bonusy
@@ -4431,9 +4969,31 @@ if (typeof module !== 'undefined' && module.exports) module.exports = (typeof wi
             refreshBonusBtn();
         };
         body.appendChild(rescueBtn);
-        body.appendChild(el('p', 'bonus-note', 'Bonusy zajišťují, že si vždycky můžeš zahrát dál. 😉'));
 
-        Casino.UI.modal({ title: '🎁 Bonusy', body: body });
+        // promo / creator kódy
+        body.appendChild(el('div', 'promo-title', '🎟️ Promo / creator kód'));
+        var promo = el('form', 'promo-form');
+        var pin = el('input', 'promo-input'); pin.placeholder = 'Zadej kód…'; pin.maxLength = 20;
+        var pbtn = el('button', 'btn-primary', 'Uplatnit');
+        promo.appendChild(pin); promo.appendChild(pbtn);
+        var pmsg = el('div', 'promo-msg');
+        promo.onsubmit = function (e) {
+            e.preventDefault();
+            var res = Account.redeemCode(pin.value);
+            if (res.ok) {
+                refreshHeader(); Casino.Sound.win(2);
+                pmsg.className = 'promo-msg good'; pmsg.textContent = '✓ Kód ' + res.code + ' uplatněn: +' + fmt(res.amount) + ' kreditů!';
+                Casino.UI.toast('🎟️ +' + fmt(res.amount) + ' z kódu ' + res.code, 'good'); pin.value = '';
+            } else {
+                pmsg.className = 'promo-msg bad';
+                pmsg.textContent = res.reason === 'used' ? 'Tento kód jsi už použil.' : res.reason === 'invalid' ? 'Neplatný kód.' : 'Zadej kód.';
+                Casino.Sound.lose();
+            }
+        };
+        body.appendChild(promo); body.appendChild(pmsg);
+        body.appendChild(el('p', 'bonus-note', 'Tip: zkus <b>WELCOME</b>, <b>LUCKY777</b> nebo <b>CREATOR</b>. Bonusy zajišťují, že si vždy můžeš zahrát dál. 😉'));
+
+        Casino.UI.modal({ title: '🎁 Bonusy & kódy', body: body });
     }
 
     /* ======================================================================
