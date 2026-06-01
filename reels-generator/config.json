@@ -9,6 +9,8 @@
     "width": 1080,
     "height": 1920,
     "fps": 30,
+    "animate": true,
+    "reveal_ratio": 0.7,
     "font_path": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "font_path_regular": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     "max_title_size": 96,

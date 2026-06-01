@@ -1,38 +1,162 @@
 {
   "palettes": {
-    "tmava": ["#0f2027", "#203a43", "#2c5364"],
+    "penize": ["#0b3d2e", "#11694e", "#1faa78"],
+    "zlato": ["#1a1a1a", "#3d3416", "#caa24a"],
+    "korporat": ["#001233", "#023e7d", "#0466c8"],
     "ohen": ["#420516", "#94202d", "#e23744"],
     "fialova": ["#1a1035", "#3a1c71", "#7b2ff7"],
-    "zelena": ["#0b3d2e", "#11694e", "#1faa78"],
-    "noc": ["#000428", "#003566", "#0466c8"]
+    "noc": ["#000428", "#003566", "#0466c8"],
+    "uhel": ["#0d0d0d", "#1a1a1a", "#333333"]
+  },
+  "accents": {
+    "penize": "#5ef0b0",
+    "zlato": "#ffd166",
+    "korporat": "#4cc9f0",
+    "ohen": "#ff7b54",
+    "fialova": "#c77dff",
+    "noc": "#48cae4",
+    "uhel": "#ffd60a",
+    "_default": "#ffd166"
   },
   "videos": [
     {
-      "id": "fakta-mozek",
-      "palette": "fialova",
-      "tags": ["fakta", "zajimavosti", "mozek", "veda"],
-      "hook": "3 fakta o mozku, kterým neuvěříš",
+      "id": "5-navyku-bohatych",
+      "palette": "zlato",
+      "tags": ["byznys", "penize", "rozvoj"],
+      "hook": "5 návyků, které mají všichni bohatí lidé",
       "scenes": [
-        "Tvůj mozek spotřebuje 20 % veškeré energie těla.",
-        "Za jeden den ti hlavou proběhne přes 6000 myšlenek.",
-        "Mozek nikdy nespí. Pracuje i ve spánku víc než přes den.",
-        "Ulož si to, ať na to nezapomeneš. A sleduj pro víc faktů!"
+        "Platí nejdřív sami sobě. Odloží peníze hned po výplatě.",
+        "Investují do sebe víc než do věcí.",
+        "Mají víc zdrojů příjmu, ne jen jednu výplatu.",
+        "Obklopují se lidmi chytřejšími než oni sami.",
+        "Ulož si to a začni hned u prvního bodu. Sleduj pro víc 💰"
       ],
-      "caption": "Které tě překvapilo nejvíc? Napiš do komentářů 👇🧠"
+      "caption": "Který návyk si osvojíš jako první? Napiš do komentářů 👇💰"
     },
     {
-      "id": "motivace-rano",
-      "palette": "ohen",
-      "tags": ["motivace", "produktivita", "rozvoj", "disciplina"],
-      "hook": "Udělej tohle hned po probuzení",
+      "id": "spor-50-30-20",
+      "palette": "penize",
+      "tags": ["penize", "produktivita"],
+      "hook": "Pravidlo 50/30/20, které ti změní finance",
       "scenes": [
-        "Nesahej na telefon prvních 30 minut.",
-        "Vypij sklenici vody. Tělo bylo 8 hodin bez tekutin.",
-        "Napiš si 3 věci, které dnes MUSÍŠ udělat.",
-        "Udělej tu nejtěžší jako první. Zbytek dne pak jede sám.",
-        "Sleduj pro denní dávku disciplíny 🔥"
+        "50 % příjmu na nutné výdaje: nájem, jídlo, účty.",
+        "30 % na to, co tě baví. Žít se musí.",
+        "20 % vždy odlož a investuj. Bez výjimky.",
+        "Nastav si to jako trvalý příkaz a zapomeň na to.",
+        "Sleduj pro víc finančních tipů 📈"
       ],
-      "caption": "Která rada ti dává smysl? 🔥 Ulož si to na zítra ráno."
+      "caption": "Kolik procent teď reálně odkládáš? Buď upřímný 👇"
+    },
+    {
+      "id": "chyby-zacinajicich",
+      "palette": "ohen",
+      "tags": ["byznys", "penize"],
+      "hook": "3 chyby, kvůli kterým nemáš peníze",
+      "scenes": [
+        "Čekáš na 'ten správný moment'. Nikdy nepřijde.",
+        "Utrácíš za to, co ostatní vidí, místo za to, co tě posune.",
+        "Nemáš rezervu, tak při první krizi prodáš všechno se ztrátou.",
+        "Začni dnes, i kdyby jen malým krokem. Sleduj pro víc 🔥"
+      ],
+      "caption": "Kterou chybu jsi dělal i ty? Přiznej se v komentářích 🔥"
+    },
+    {
+      "id": "slozene-uroceni",
+      "palette": "korporat",
+      "tags": ["penize", "fakta"],
+      "hook": "Proč Einstein nazval tohle osmým divem světa",
+      "scenes": [
+        "Složené úročení: úroky ti vydělávají další úroky.",
+        "1000 Kč měsíčně při 8 % je za 30 let přes 1,4 milionu.",
+        "A vložil jsi jen 360 tisíc. Zbytek udělal čas.",
+        "Klíč není kolik, ale jak dlouho. Začni co nejdřív.",
+        "Sleduj pro víc o investování 📊"
+      ],
+      "caption": "Začal bys investovat, kdybys to věděl dřív? 👇📊"
+    },
+    {
+      "id": "pasivni-prijem-myty",
+      "palette": "fialova",
+      "tags": ["byznys", "penize", "rozvoj"],
+      "hook": "Pravda o pasivním příjmu, kterou ti nikdo neřekne",
+      "scenes": [
+        "Žádný pasivní příjem není pasivní na začátku.",
+        "Nejdřív vložíš čas nebo peníze. Hodně.",
+        "Teprve potom systém běží skoro sám.",
+        "Kdo slibuje peníze bez práce, prodává ti sen.",
+        "Sleduj pro realistické finanční rady 💡"
+      ],
+      "caption": "Věřil jsi někdy na rychlé zbohatnutí? 👇"
+    },
+    {
+      "id": "rozpocet-za-5-minut",
+      "palette": "penize",
+      "tags": ["penize", "produktivita"],
+      "hook": "Sestav si rozpočet za 5 minut",
+      "scenes": [
+        "Sečti všechny příjmy za měsíc.",
+        "Vypiš fixní výdaje: nájem, splátky, předplatné.",
+        "Co zbyde, rozděl na útratu a úspory.",
+        "Sleduj výdaje týden a uvidíš, kam peníze mizí.",
+        "Ulož si to a začni dnes 📒"
+      ],
+      "caption": "Vedeš si rozpočet, nebo to máš v hlavě? 👇"
+    },
+    {
+      "id": "kup-aktivum-ne-pasivum",
+      "palette": "zlato",
+      "tags": ["byznys", "penize"],
+      "hook": "Aktivum vs. pasivum: rozdíl mezi bohatým a chudým",
+      "scenes": [
+        "Aktivum ti peníze přináší. Pasivum ti je bere.",
+        "Auto na úvěr není aktivum. Je to díra v rozpočtu.",
+        "Bohatí kupují aktiva, pak si z výnosů koupí hračky.",
+        "Chudí kupují hračky a myslí, že zbohatli.",
+        "Sleduj pro víc finanční gramotnosti 💰"
+      ],
+      "caption": "Co bylo tvoje poslední 'pasivum'? Buď upřímný 👇"
+    },
+    {
+      "id": "side-hustle-nizky-kapital",
+      "palette": "korporat",
+      "tags": ["byznys", "rozvoj"],
+      "hook": "3 byznysy, které rozjedeš skoro bez peněz",
+      "scenes": [
+        "Služby: doučování, copywriting, správa sítí.",
+        "Prodávej dovednost, kterou už máš.",
+        "Online produkt: e-book nebo šablona. Vyrobíš jednou, prodáváš stokrát.",
+        "Nepotřebuješ kapitál. Potřebuješ začít.",
+        "Sleduj pro víc nápadů na podnikání 🚀"
+      ],
+      "caption": "Jakou dovednost bys mohl prodávat ty? 👇🚀"
+    },
+    {
+      "id": "mentalita-penez",
+      "palette": "noc",
+      "tags": ["rozvoj", "penize"],
+      "hook": "Změň tuhle větu a změníš svoje finance",
+      "scenes": [
+        "Přestaň říkat 'na to nemám peníze'.",
+        "Ptej se: 'Jak si na to můžu vydělat?'",
+        "První věta zavře mozek. Druhá ho rozjede.",
+        "Bohatství začíná v hlavě, ne na účtu.",
+        "Sleduj pro víc o mindsetu 🧠"
+      ],
+      "caption": "Kterou větu používáš častěji ty? 👇🧠"
+    },
+    {
+      "id": "tri-fondy-zaklad",
+      "palette": "penize",
+      "tags": ["penize", "fakta"],
+      "hook": "3 účty, které by měl mít každý",
+      "scenes": [
+        "Provozní účet: na běžné výdaje a útratu.",
+        "Rezerva: 3 až 6 měsíčních výdajů stranou pro jistotu.",
+        "Investiční účet: tady peníze pracují a rostou.",
+        "Odděl je a přestaneš utrácet rezervu omylem.",
+        "Sleduj pro víc finančních základů 💵"
+      ],
+      "caption": "Který účet ti zatím chybí? 👇💵"
     }
   ]
 }

@@ -1,8 +1,9 @@
 # 🎬 Reels Generator – videa s textem, zvukem a hashtagy
 
 Nástroj, který z textu vyrobí hotové vertikální video (1080×1920) pro
-Instagram Reels / TikTok / YouTube Shorts: **gradientové pozadí, velký
-čitelný titulek, namluvený hlas (TTS)** a připravený **popisek s hashtagy**.
+Instagram Reels / TikTok / YouTube Shorts: **gradientové pozadí, animovaný
+text odhalovaný slovo po slově (karaoke efekt), namluvený hlas (TTS)** a
+připravený **popisek s hashtagy**. Součástí je i **auto‑generátor témat**.
 
 > ⚠️ **Důležité – co tenhle nástroj NEDĚLÁ:** nezakládá Instagram účet a sám
 > nic nepostuje. Automatické zakládání účtů a postování porušuje pravidla
@@ -60,9 +61,40 @@ Vlož vlastní témata – jsou tam dvě ukázky.
 ## 4. Generování
 
 ```bash
-python3 generate.py --all              # vyrobí všechna videa z content.json
-python3 generate.py --id fakta-mozek   # jen jedno konkrétní
-python3 generate.py --id X --no-audio  # bez hlasu (jen text + ticho)
+python3 generate.py --all                # vyrobí všechna videa z content.json
+python3 generate.py --id 5-navyku-bohatych  # jen jedno konkrétní
+python3 generate.py --id X --no-audio    # bez hlasu (jen text + ticho)
+python3 generate.py --id X --no-animate  # statický text místo animace
+```
+
+### ✨ Animovaný text
+
+Text se odhaluje **slovo po slově** synchronně s mluvením a poslední odhalené
+slovo je zvýrazněné akcentní barvou (karaoke efekt) – to drží pozornost a
+zvyšuje *watch‑time*. Vypnout lze v `config.json` (`"animate": false`) nebo
+přepínačem `--no-animate`. Rozvržení se počítá z celého textu, takže slova
+při objevování neposkakují.
+
+Barevné palety a akcenty jsou definované v `content.json` (`palettes`,
+`accents`) – přibalených je 7 stylů (penize, zlato, korporat, ohen, fialova,
+noc, uhel). Paletu vybíráš u každého videa polem `"palette"`.
+
+## 🤖 Auto‑generátor témat
+
+Nechceš vymýšlet obsah ručně? Vygeneruj témata z banky:
+
+```bash
+python3 generate_topics.py --niche byznys --count 5            # → content.generated.json
+python3 generate_topics.py --niche byznys --count 5 --append   # přidá rovnou do content.json
+python3 generate_topics.py --niche penize --count 3 --seed 1   # reprodukovatelně
+```
+
+Dostupné niky: `byznys`, `penize`, `fakta`, `motivace`. Banku témat snadno
+rozšíříš v `generate_topics.py` (slovník `BANK`). Vygenerovaný samostatný
+soubor pak vyrobíš třeba takhle:
+
+```bash
+python3 generate.py --all --content content.generated.json
 ```
 
 Výstup ve složce `output/`:
