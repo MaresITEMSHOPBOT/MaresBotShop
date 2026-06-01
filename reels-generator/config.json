@@ -1,0 +1,28 @@
+{
+  "brand": {
+    "handle": "@tvuj_ucet",
+    "name": "Tvoje značka",
+    "niche": "fakta",
+    "lang": "cs"
+  },
+  "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "font_path": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "font_path_regular": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "max_title_size": 96,
+    "body_size": 72,
+    "handle_size": 44,
+    "margin": 110
+  },
+  "audio": {
+    "tts": true,
+    "tts_slow": false,
+    "music_path": "",
+    "music_volume": 0.12
+  },
+  "hashtags": {
+    "count": 22
+  }
+}

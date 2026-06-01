@@ -1,0 +1,38 @@
+{
+  "palettes": {
+    "tmava": ["#0f2027", "#203a43", "#2c5364"],
+    "ohen": ["#420516", "#94202d", "#e23744"],
+    "fialova": ["#1a1035", "#3a1c71", "#7b2ff7"],
+    "zelena": ["#0b3d2e", "#11694e", "#1faa78"],
+    "noc": ["#000428", "#003566", "#0466c8"]
+  },
+  "videos": [
+    {
+      "id": "fakta-mozek",
+      "palette": "fialova",
+      "tags": ["fakta", "zajimavosti", "mozek", "veda"],
+      "hook": "3 fakta o mozku, kterým neuvěříš",
+      "scenes": [
+        "Tvůj mozek spotřebuje 20 % veškeré energie těla.",
+        "Za jeden den ti hlavou proběhne přes 6000 myšlenek.",
+        "Mozek nikdy nespí. Pracuje i ve spánku víc než přes den.",
+        "Ulož si to, ať na to nezapomeneš. A sleduj pro víc faktů!"
+      ],
+      "caption": "Které tě překvapilo nejvíc? Napiš do komentářů 👇🧠"
+    },
+    {
+      "id": "motivace-rano",
+      "palette": "ohen",
+      "tags": ["motivace", "produktivita", "rozvoj", "disciplina"],
+      "hook": "Udělej tohle hned po probuzení",
+      "scenes": [
+        "Nesahej na telefon prvních 30 minut.",
+        "Vypij sklenici vody. Tělo bylo 8 hodin bez tekutin.",
+        "Napiš si 3 věci, které dnes MUSÍŠ udělat.",
+        "Udělej tu nejtěžší jako první. Zbytek dne pak jede sám.",
+        "Sleduj pro denní dávku disciplíny 🔥"
+      ],
+      "caption": "Která rada ti dává smysl? 🔥 Ulož si to na zítra ráno."
+    }
+  ]
+}
