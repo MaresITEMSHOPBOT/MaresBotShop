@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS:GO Case Opening – Otvírání beden</title>
+<style>
+:root{
+  --bg:#0e1116; --bg2:#151a22; --panel:#1b212b; --panel2:#222a36;
+  --border:#2b3340; --text:#e8edf3; --muted:#8b97a8;
+  --accent:#f0a020; --accent2:#de9b35; --green:#16a34a; --red:#dc2626;
+  /* CS:GO rarity colors */
+  --r-milspec:#4b69ff; --r-restricted:#8847ff; --r-classified:#d32ee6;
+  --r-covert:#eb4b4b; --r-knife:#e4ae39; --r-consumer:#b0c3d9;
+  --shadow:0 8px 30px rgba(0,0,0,.45);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  background:radial-gradient(1200px 600px at 50% -10%,#1a2330 0%,var(--bg) 60%) fixed;
+  color:var(--text); line-height:1.5; min-height:100vh;
+}
+.wrap{max-width:1200px;margin:0 auto;padding:1rem 1.2rem 4rem}
+
+/* Header */
+header{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1rem 0 1.2rem; flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:.7rem}
+.brand .logo{
+  font-weight:800;font-size:1.5rem;letter-spacing:.5px;
+  background:linear-gradient(180deg,#fff,#a9b6c7);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.brand .tag{
+  font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  color:#0e1116;background:var(--accent);padding:.18rem .5rem;border-radius:5px;
+}
+.hud{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.balance{
+  display:flex;align-items:center;gap:.5rem;background:var(--panel);
+  border:1px solid var(--border);border-radius:10px;padding:.5rem .9rem;font-weight:700;
+  box-shadow:var(--shadow);
+}
+.balance .coin{color:var(--accent);font-size:1.1rem}
+.balance #balance{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.icon-btn{
+  background:var(--panel);border:1px solid var(--border);color:var(--text);
+  border-radius:10px;padding:.5rem .7rem;cursor:pointer;font-size:1.05rem;transition:.15s;
+}
+.icon-btn:hover{background:var(--panel2);border-color:#3a4555}
+.icon-btn:disabled{opacity:.4;cursor:not-allowed}
+.icon-btn:disabled:hover{background:var(--panel);border-color:var(--border)}
+
+/* Tabs */
+.tabs{display:flex;gap:.4rem;border-bottom:1px solid var(--border);margin-bottom:1.3rem;flex-wrap:wrap}
+.tab{
+  background:none;border:none;color:var(--muted);font-size:1rem;font-weight:600;
+  padding:.7rem 1.1rem;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;transition:.15s;
+}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.view{display:none;animation:fade .25s}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Case grid */
+.section-title{font-size:1.05rem;font-weight:700;margin:.2rem 0 1rem;color:var(--text)}
+.section-title small{color:var(--muted);font-weight:500;font-size:.82rem;margin-left:.5rem}
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
+.case{
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--border);border-radius:14px;padding:1.1rem;cursor:pointer;
+  transition:.18s;position:relative;overflow:hidden;box-shadow:var(--shadow);
+}
+.case::before{
+  content:"";position:absolute;inset:0;background:radial-gradient(120px 90px at 50% 30%,color-mix(in srgb,var(--glow,#4b69ff) 20%,transparent),transparent 70%);opacity:.55;
+}
+.case:hover{transform:translateY(-4px);border-color:var(--accent)}
+.case-art{position:relative;display:flex;align-items:center;justify-content:center;height:110px;margin-bottom:.7rem}
+.case-art .box{font-size:3.4rem;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+.case h3{position:relative;font-size:1rem;margin-bottom:.15rem}
+.case .desc{position:relative;color:var(--muted);font-size:.8rem;min-height:2.4em}
+.case .price{
+  position:relative;margin-top:.7rem;display:flex;align-items:center;justify-content:space-between;
+}
+.case .price .open-btn{
+  background:var(--accent);color:#0e1116;border:none;font-weight:800;border-radius:8px;
+  padding:.45rem .9rem;cursor:pointer;transition:.15s;font-size:.9rem;
+}
+.case .price .open-btn:hover{background:#ffb733}
+.case .key{color:var(--accent);font-weight:800}
+
+/* Opening / reel */
+.opener{
+  background:linear-gradient(180deg,var(--panel),var(--bg2));
+  border:1px solid var(--border);border-radius:16px;padding:1.4rem;box-shadow:var(--shadow);
+  margin-bottom:1.4rem;
+}
+.opener-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+.opener-head h2{font-size:1.15rem}
+.opener-head .meta{color:var(--muted);font-size:.85rem}
+.reel-frame{
+  position:relative;overflow:hidden;border-radius:12px;background:
+   repeating-linear-gradient(90deg,#0c1015,#0c1015 2px,#10151c 2px,#10151c 4px);
+  border:1px solid var(--border);padding:14px 0;
+}
+.reel-frame::before,.reel-frame::after{
+  content:"";position:absolute;top:0;bottom:0;width:80px;z-index:3;pointer-events:none;
+}
+.reel-frame::before{left:0;background:linear-gradient(90deg,var(--bg2),transparent)}
+.reel-frame::after{right:0;background:linear-gradient(270deg,var(--bg2),transparent)}
+.marker{
+  position:absolute;top:0;bottom:0;left:50%;width:3px;transform:translateX(-50%);
+  background:var(--accent);z-index:4;box-shadow:0 0 12px 2px rgba(240,160,32,.7);
+}
+.marker::before,.marker::after{
+  content:"";position:absolute;left:50%;transform:translateX(-50%);
+  border-left:7px solid transparent;border-right:7px solid transparent;
+}
+.marker::before{top:-1px;border-top:9px solid var(--accent)}
+.marker::after{bottom:-1px;border-bottom:9px solid var(--accent)}
+.reel{display:flex;gap:8px;will-change:transform;padding:0 8px}
+
+/* item card (reel + inventory + modal share base) */
+.item{
+  position:relative;flex:0 0 150px;width:150px;height:118px;border-radius:10px;
+  background:linear-gradient(180deg,#20262f,#161b22);
+  border:1px solid #2a323d;overflow:hidden;display:flex;flex-direction:column;
+}
+.item .glow{position:absolute;inset:0;background:radial-gradient(80px 60px at 50% 42%,color-mix(in srgb,var(--rc) 27%,transparent),transparent 72%)}
+.item .ico{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.item .ico svg{width:78px;height:auto;color:var(--rc);filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+.item .names{position:relative;z-index:1;padding:.25rem .45rem;text-align:center;font-size:.7rem;line-height:1.15}
+.item .names .w{color:#cfd8e3;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .names .s{color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .bar{height:5px;background:var(--rc)}
+.item .st{position:absolute;top:3px;left:4px;z-index:2;font-size:.55rem;font-weight:800;color:#cf6a32;letter-spacing:.3px}
+.item .wear-tag{position:absolute;top:3px;right:5px;z-index:2;font-size:.58rem;color:var(--muted);font-weight:700}
+
+/* Modal */
+.overlay{
+  position:fixed;inset:0;background:rgba(5,8,12,.78);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;z-index:50;padding:1rem;
+}
+.overlay.show{display:flex;animation:fade .2s}
+.reveal-card{
+  background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--border);
+  border-radius:18px;padding:1.6rem;max-width:440px;width:100%;text-align:center;box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
+}
+.reveal-card .rarity-name{font-size:.8rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--rc)}
+.reveal-big{
+  margin:1rem auto;width:230px;height:170px;border-radius:14px;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#20262f,#12161c);border:1px solid #2a323d;
+  display:flex;flex-direction:column;
+}
+.reveal-big .glow{position:absolute;inset:0;background:radial-gradient(130px 100px at 50% 42%,color-mix(in srgb,var(--rc) 33%,transparent),transparent 72%)}
+.reveal-big .ico{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.reveal-big .ico svg{width:130px;color:var(--rc);filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
+.reveal-big .bar{height:7px;background:var(--rc)}
+.reveal-card .wname{font-size:1.05rem;font-weight:700;margin-top:.2rem}
+.reveal-card .sname{font-size:1.35rem;font-weight:800;color:#fff}
+.reveal-card .sub{color:var(--muted);font-size:.9rem;margin:.3rem 0 .1rem}
+.reveal-card .value{font-size:1.6rem;font-weight:800;color:var(--accent);margin:.5rem 0 1rem}
+.reveal-actions{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+.btn{
+  background:var(--accent);color:#0e1116;border:none;font-weight:800;border-radius:9px;
+  padding:.6rem 1.1rem;cursor:pointer;transition:.15s;font-size:.92rem;
+}
+.btn:hover{background:#ffb733}
+.btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+.btn.sec:hover{background:#2c3543}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.confetti{position:absolute;width:9px;height:9px;top:-12px;border-radius:2px;z-index:5;pointer-events:none}
+
+/* Inventory */
+.inv-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.8rem}
+.inv-item{
+  background:linear-gradient(180deg,#20262f,#161b22);border:1px solid #2a323d;border-radius:12px;
+  overflow:hidden;display:flex;flex-direction:column;position:relative;
+}
+.inv-item .top{position:relative;height:96px;display:flex;align-items:center;justify-content:center}
+.inv-item .top .glow{position:absolute;inset:0;background:radial-gradient(80px 60px at 50% 45%,color-mix(in srgb,var(--rc) 25%,transparent),transparent 72%)}
+.inv-item .top svg{width:84px;color:var(--rc);position:relative;z-index:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+.inv-item .bar{height:5px;background:var(--rc)}
+.inv-item .info{padding:.5rem .6rem .6rem}
+.inv-item .info .w{font-size:.72rem;color:#cfd8e3;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inv-item .info .s{font-size:.85rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inv-item .info .meta{font-size:.68rem;color:var(--muted);margin:.15rem 0 .4rem}
+.inv-item .info .st{color:#cf6a32;font-weight:800}
+.inv-item .sell{
+  width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+  border-radius:7px;padding:.35rem;cursor:pointer;font-weight:700;font-size:.8rem;transition:.15s;
+}
+.inv-item .sell:hover{background:var(--green);border-color:var(--green);color:#fff}
+.empty{
+  text-align:center;color:var(--muted);padding:3rem 1rem;border:1px dashed var(--border);border-radius:14px;
+}
+
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem;margin-bottom:1.4rem}
+.stat{
+  background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--border);
+  border-radius:12px;padding:1rem 1.1rem;box-shadow:var(--shadow);
+}
+.stat .label{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.5px}
+.stat .val{font-size:1.5rem;font-weight:800;margin-top:.2rem}
+.odds{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.2rem}
+.odds h3{font-size:.95rem;margin-bottom:.7rem}
+.odds-row{display:flex;align-items:center;gap:.7rem;margin:.4rem 0;font-size:.9rem}
+.odds-row .dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.odds-row .nm{flex:1}
+.odds-row .pct{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(40px);
+  background:var(--panel2);border:1px solid var(--border);color:var(--text);
+  padding:.7rem 1.1rem;border-radius:10px;box-shadow:var(--shadow);z-index:60;opacity:0;
+  transition:.3s;font-weight:600;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:2.5rem;line-height:1.7}
+footer a{color:var(--accent2);text-decoration:none}
+@media (max-width:600px){
+  .item{flex:0 0 120px;width:120px;height:100px}
+  .brand .logo{font-size:1.2rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="logo">CS:GO</span>
+      <span class="tag">Case Opening</span>
+    </div>
+    <div class="hud">
+      <div class="balance" title="Tvůj zůstatek">
+        <span class="coin">●</span><span id="balance">0</span>
+      </div>
+      <button class="icon-btn" id="sound-btn" title="Zvuk zap/vyp">🔊</button>
+      <button class="icon-btn" id="bonus-btn" title="Vyžádat bonus">🎁 +500</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-view="store">📦 Bedny</button>
+    <button class="tab" data-view="inventory">🎒 Inventář <span id="inv-count"></span></button>
+    <button class="tab" data-view="stats">📊 Statistiky</button>
+  </div>
+
+  <!-- STORE -->
+  <section class="view active" id="view-store">
+    <div id="opener-mount"></div>
+    <h2 class="section-title">Vyber si bednu <small>Šance na drop jsou stejné pro všechny bedny – dražší bedny ukrývají cennější skiny.</small></h2>
+    <div class="cases" id="cases"></div>
+  </section>
+
+  <!-- INVENTORY -->
+  <section class="view" id="view-inventory">
+    <div class="inv-bar">
+      <h2 class="section-title">Tvůj inventář <small id="inv-value"></small></h2>
+      <button class="btn sec" id="sell-all">💰 Prodat vše</button>
+    </div>
+    <div id="inv-grid" class="inv-grid"></div>
+  </section>
+
+  <!-- STATS -->
+  <section class="view" id="view-stats">
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="odds">
+      <h3>🎲 Šance na drop (rarita)</h3>
+      <div id="odds-list"></div>
+    </div>
+  </section>
+
+  <footer>
+    Fanouškovský simulátor otevírání beden inspirovaný Counter-Strike. Žádné skutečné peníze, žádné skutečné předměty – jen zábava. 🎮<br>
+    Postup se ukládá lokálně ve tvém prohlížeči. Mezerník / Enter otevře vybranou bednu, Esc zavře okno.
+  </footer>
+</div>
+
+<!-- Reveal modal -->
+<div class="overlay" id="overlay">
+  <div class="reveal-card" id="reveal-card"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Rarity config (authentic CS:GO colors + odds) ---------- */
+const RARITIES = {
+  milspec:    {name:"Mil-Spec",     color:"#4b69ff", weight:7992},
+  restricted: {name:"Restricted",   color:"#8847ff", weight:1598},
+  classified: {name:"Classified",   color:"#d32ee6", weight:320},
+  covert:     {name:"Covert",       color:"#eb4b4b", weight:64},
+  knife:      {name:"★ Rare Special",color:"#e4ae39", weight:26},
+};
+const RARITY_ORDER = ["milspec","restricted","classified","covert","knife"];
+
+/* wear levels (float) + value multiplier + spawn weight */
+const WEARS = [
+  {name:"Factory New",    short:"FN", mult:1.00, weight:10},
+  {name:"Minimal Wear",   short:"MW", mult:0.82, weight:20},
+  {name:"Field-Tested",   short:"FT", mult:0.62, weight:40},
+  {name:"Well-Worn",      short:"WW", mult:0.48, weight:18},
+  {name:"Battle-Scarred", short:"BS", mult:0.38, weight:12},
+];
+
+/* ---------- Weapon category -> SVG icon ---------- */
+function catOf(weapon){
+  if(/Knife|Karambit|Bayonet|Daggers|Talon/i.test(weapon)) return "knife";
+  if(/Gloves|Wraps/i.test(weapon)) return "gloves";
+  if(/AWP|SSG|SCAR|G3SG/i.test(weapon)) return "sniper";
+  if(/MP9|MAC-10|MP7|UMP|P90|PP-Bizon|MP5/i.test(weapon)) return "smg";
+  if(/Nova|XM1014|MAG-7|Sawed/i.test(weapon)) return "shotgun";
+  if(/Glock|USP|P250|Deagle|Desert Eagle|Five-SeveN|Tec-9|P2000|CZ75|Dual/i.test(weapon)) return "pistol";
+  return "rifle";
+}
+const ICONS = {
+  rifle:'<svg viewBox="0 0 100 60" fill="currentColor"><rect x="6" y="25" width="74" height="9" rx="2"/><rect x="1" y="23" width="11" height="14" rx="2"/><rect x="40" y="34" width="12" height="17" rx="2"/><rect x="78" y="27" width="20" height="5" rx="2"/><rect x="60" y="34" width="9" height="10" rx="2"/></svg>',
+  smg:'<svg viewBox="0 0 100 60" fill="currentColor"><rect x="14" y="26" width="54" height="8" rx="2"/><rect x="9" y="24" width="9" height="12" rx="2"/><rect x="36" y="34" width="10" height="15" rx="2"/><rect x="66" y="28" width="22" height="4" rx="2"/><rect x="52" y="34" width="8" height="9" rx="2"/></svg>',
+  sniper:'<svg viewBox="0 0 100 60" fill="currentColor"><rect x="4" y="28" width="64" height="7" rx="2"/><rect x="0" y="26" width="8" height="12" rx="2"/><rect x="66" y="29" width="32" height="4" rx="2"/><circle cx="40" cy="21" r="7"/><rect x="40" y="20" width="20" height="3" rx="1.5"/><rect x="50" y="34" width="9" height="11" rx="2"/></svg>',
+  shotgun:'<svg viewBox="0 0 100 60" fill="currentColor"><rect x="6" y="24" width="72" height="11" rx="3"/><rect x="1" y="23" width="11" height="15" rx="2"/><rect x="76" y="26" width="22" height="7" rx="3"/><rect x="58" y="34" width="9" height="11" rx="2"/></svg>',
+  pistol:'<svg viewBox="0 0 100 60" fill="currentColor"><rect x="24" y="22" width="44" height="10" rx="2"/><rect x="64" y="24" width="12" height="5" rx="1"/><path d="M30 32 h16 l-4 20 h-13 z"/></svg>',
+  knife:'<svg viewBox="0 0 100 60" fill="currentColor"><path d="M12 42 C 36 14, 64 10, 90 16 C 70 26, 46 34, 26 43 Z"/><rect x="8" y="39" width="26" height="8" rx="4"/><circle cx="14" cy="43" r="2.4" fill="#0e1116"/></svg>',
+  gloves:'<svg viewBox="0 0 100 60" fill="currentColor"><path d="M30 12 h28 a7 7 0 0 1 7 7 v22 a10 10 0 0 1 -10 10 h-24 a9 9 0 0 1 -9 -9 v-7 l-9 -3 v-9 l9 -3 z"/></svg>',
+};
+function iconFor(weapon){ return ICONS[catOf(weapon)] || ICONS.rifle; }
+
+/* ---------- Skin pools ---------- */
+// rarity-tagged skins live inside each case; knives/gloves are a shared "rare special" pool
+const KNIVES = [
+  {weapon:"★ Karambit",        skin:"Doppler",        base:18000},
+  {weapon:"★ Butterfly Knife", skin:"Fade",           base:16000},
+  {weapon:"★ M9 Bayonet",      skin:"Marble Fade",    base:9500},
+  {weapon:"★ Talon Knife",     skin:"Crimson Web",    base:11000},
+  {weapon:"★ Bayonet",         skin:"Tiger Tooth",    base:6500},
+  {weapon:"★ Flip Knife",      skin:"Slaughter",      base:4200},
+  {weapon:"★ Gut Knife",       skin:"Doppler",        base:2600},
+  {weapon:"★ Sport Gloves",    skin:"Pandora's Box",  base:14000},
+  {weapon:"★ Specialist Gloves",skin:"Crimson Kimono",base:8000},
+  {weapon:"★ Driver Gloves",   skin:"King Snake",     base:5200},
+];
+
+const CASES = [
+  {
+    id:"prime", name:"Prime bedna", price:50, glow:"#4b69ff", emoji:"🟦",
+    desc:"Klasická startovní bedna. Ideální pro první roztočení.",
+    skins:[
+      {weapon:"P250",      skin:"Sand Dune",   rarity:"milspec",   base:30},
+      {weapon:"MP9",       skin:"Storm",       rarity:"milspec",   base:36},
+      {weapon:"Nova",      skin:"Predator",    rarity:"milspec",   base:42},
+      {weapon:"Glock-18",  skin:"Candy Apple", rarity:"milspec",   base:55},
+      {weapon:"USP-S",     skin:"Stainless",   rarity:"restricted",base:140},
+      {weapon:"Desert Eagle",skin:"Conspiracy",rarity:"restricted",base:220},
+      {weapon:"AK-47",     skin:"Blue Laminate",rarity:"restricted",base:260},
+      {weapon:"M4A1-S",    skin:"Guardian",    rarity:"classified",base:520},
+      {weapon:"AWP",       skin:"Hyper Beast", rarity:"classified",base:780},
+      {weapon:"AK-47",     skin:"Redline",     rarity:"covert",    base:1900},
+    ],
+  },
+  {
+    id:"spectrum", name:"Spektrum bedna", price:120, glow:"#d32ee6", emoji:"🟪",
+    desc:"Pestrá kolekce s ostřejšími skiny a vyšší hodnotou dropu.",
+    skins:[
+      {weapon:"Five-SeveN",skin:"Capillary",   rarity:"milspec",   base:48},
+      {weapon:"MAC-10",    skin:"Tatter",       rarity:"milspec",   base:52},
+      {weapon:"P90",       skin:"Cocoa Rampage",rarity:"milspec",   base:60},
+      {weapon:"USP-S",     skin:"Cyrex",        rarity:"restricted",base:300},
+      {weapon:"M4A4",      skin:"Evil Daimyo",  rarity:"restricted",base:340},
+      {weapon:"Tec-9",     skin:"Fuel Injector",rarity:"restricted",base:280},
+      {weapon:"AK-47",     skin:"Vulcan",       rarity:"classified",base:1100},
+      {weapon:"M4A4",      skin:"Asiimov",      rarity:"classified",base:1350},
+      {weapon:"AWP",       skin:"Asiimov",      rarity:"covert",    base:3200},
+      {weapon:"M4A4",      skin:"Howl",         rarity:"covert",    base:6800},
+    ],
+  },
+  {
+    id:"dragon", name:"Dračí bedna", price:300, glow:"#eb4b4b", emoji:"🟥",
+    desc:"Prémiová bedna. Domov legendárních coverty a vzácných nožů.",
+    skins:[
+      {weapon:"CZ75-Auto", skin:"Victoria",     rarity:"milspec",   base:70},
+      {weapon:"Galil AR",  skin:"Cerberus",     rarity:"milspec",   base:90},
+      {weapon:"UMP-45",    skin:"Primal Saber", rarity:"milspec",   base:110},
+      {weapon:"Desert Eagle",skin:"Kumicho Dragon",rarity:"restricted",base:520},
+      {weapon:"AWP",       skin:"Redline",      rarity:"restricted",base:600},
+      {weapon:"M4A1-S",    skin:"Hyper Beast",  rarity:"restricted",base:560},
+      {weapon:"AK-47",     skin:"Fire Serpent", rarity:"classified",base:2400},
+      {weapon:"USP-S",     skin:"Kill Confirmed",rarity:"classified",base:2100},
+      {weapon:"AWP",       skin:"Dragon Lore",  rarity:"covert",    base:12000},
+      {weapon:"M4A4",      skin:"Poseidon",     rarity:"covert",    base:7500},
+    ],
+  },
+];
+
+/* ---------- State / persistence ---------- */
+const STORAGE_KEY = "csgo-case-opening-v1";
+const DEFAULT_STATE = {
+  balance:1000, inventory:[], soundOn:true,
+  stats:{opened:0, spent:0, earned:0, bestValue:0, bestItem:null, counts:{milspec:0,restricted:0,classified:0,covert:0,knife:0}},
+};
+const clone = o => JSON.parse(JSON.stringify(o));
+let state = loadState();
+let nextId = Math.max(0, ...state.inventory.map(i=>i.id||0)) + 1;
+let opening = false;
+let currentCaseId = null;
+
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(!s) return clone(DEFAULT_STATE);
+    // merge to be safe against older versions
+    return Object.assign(clone(DEFAULT_STATE), s, {
+      stats:Object.assign(clone(DEFAULT_STATE.stats), s.stats||{},
+        {counts:Object.assign(clone(DEFAULT_STATE.stats.counts), (s.stats&&s.stats.counts)||{})}),
+    });
+  }catch(e){ return clone(DEFAULT_STATE); }
+}
+function save(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+/* ---------- Helpers ---------- */
+const $ = sel => document.querySelector(sel);
+function money(n){ return "$" + Math.round(n).toLocaleString("cs-CZ"); }
+function weightedPick(items, wKey){
+  const total = items.reduce((s,it)=>s+(typeof wKey==="function"?wKey(it):it[wKey]),0);
+  let r = Math.random()*total;
+  for(const it of items){ r -= (typeof wKey==="function"?wKey(it):it[wKey]); if(r<=0) return it; }
+  return items[items.length-1];
+}
+function pickRarity(){
+  const keys = RARITY_ORDER.map(k=>({k, weight:RARITIES[k].weight}));
+  return weightedPick(keys,"weight").k;
+}
+function pickWear(){ return weightedPick(WEARS,"weight"); }
+
+/* build a concrete dropped item instance */
+function rollItem(caseObj){
+  const rarity = pickRarity();
+  let basePool;
+  if(rarity==="knife") basePool = KNIVES;
+  else basePool = caseObj.skins.filter(s=>s.rarity===rarity);
+  if(!basePool.length) basePool = caseObj.skins.filter(s=>s.rarity==="milspec");
+  const baseSkin = basePool[Math.floor(Math.random()*basePool.length)];
+  const wear = pickWear();
+  const statTrak = (rarity!=="knife"||Math.random()<0.5) ? Math.random()<0.10 : false;
+  const value = Math.round(baseSkin.base * wear.mult * (statTrak?1.5:1));
+  return {
+    id: nextId++,
+    weapon: baseSkin.weapon, skin: baseSkin.skin, rarity,
+    wear: wear.short, wearName: wear.name, statTrak, value,
+  };
+}
+
+/* ---------- Card rendering ---------- */
+function reelCard(it){
+  const rc = RARITIES[it.rarity].color;
+  const d = document.createElement("div");
+  d.className = "item"; d.style.setProperty("--rc", rc);
+  d.innerHTML = `
+    <div class="glow"></div>
+    ${it.statTrak?`<span class="st">ST™</span>`:``}
+    <span class="wear-tag">${it.wear}</span>
+    <div class="ico">${iconFor(it.weapon)}</div>
+    <div class="names"><div class="w">${it.weapon}</div><div class="s">${it.skin}</div></div>
+    <div class="bar"></div>`;
+  return d;
+}
+
+/* ---------- HUD ---------- */
+const MIN_CASE = Math.min(...CASES.map(c=>c.price));
+function renderHUD(){
+  $("#balance").textContent = money(state.balance).slice(1); // without $ since coin shown
+  const c = state.inventory.length;
+  $("#inv-count").textContent = c?`(${c})`:"";
+  $("#sound-btn").textContent = state.soundOn?"🔊":"🔇";
+  // bonus is a safety net: only when you can't afford the cheapest case
+  const broke = state.balance < MIN_CASE;
+  const bonus = $("#bonus-btn");
+  bonus.disabled = !broke;
+  bonus.title = broke ? "Vyžádat záchranný bonus" : "Bonus je dostupný, až ti dojdou peníze (prodej skiny v inventáři)";
+}
+
+/* ---------- Store / cases ---------- */
+function renderCases(){
+  const wrap = $("#cases"); wrap.innerHTML = "";
+  CASES.forEach(c=>{
+    const el = document.createElement("div");
+    el.className = "case"; el.style.setProperty("--glow", c.glow);
+    el.innerHTML = `
+      <div class="case-art"><span class="box">${c.emoji}📦</span></div>
+      <h3>${c.name}</h3>
+      <div class="desc">${c.desc}</div>
+      <div class="price">
+        <span>Cena klíče: <span class="key">${money(c.price)}</span></span>
+        <button class="open-btn">Otevřít</button>
+      </div>`;
+    el.querySelector(".open-btn").addEventListener("click",(e)=>{e.stopPropagation();startOpen(c);});
+    el.addEventListener("click",()=>startOpen(c));
+    wrap.appendChild(el);
+  });
+}
+
+/* ---------- Sound (Web Audio) ---------- */
+let actx = null;
+function audio(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return actx; }
+function tick(){
+  if(!state.soundOn) return; const a=audio(); if(!a) return;
+  const o=a.createOscillator(), g=a.createGain();
+  o.type="square"; o.frequency.value=1500+Math.random()*200;
+  g.gain.setValueAtTime(0.06,a.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.05);
+  o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime+0.05);
+}
+function fanfare(rarity){
+  if(!state.soundOn) return; const a=audio(); if(!a) return;
+  const notes = rarity==="knife"?[523,659,784,1047]:
+                rarity==="covert"?[523,659,784]:
+                rarity==="classified"?[523,659]:[440,554];
+  notes.forEach((f,i)=>{
+    const o=a.createOscillator(), g=a.createGain(), t=a.currentTime+i*0.09;
+    o.type="triangle"; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.12,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t+0.24);
+  });
+}
+
+/* ---------- Opening flow ---------- */
+function startOpen(caseObj){
+  if(opening) return;
+  if(state.balance < caseObj.price){
+    toast("Nedostatečný zůstatek! Vyžádej si bonus 🎁");
+    return;
+  }
+  audio(); // unlock audio on user gesture
+  opening = true; currentCaseId = caseObj.id;
+
+  state.balance -= caseObj.price;
+  state.stats.spent += caseObj.price;
+  renderHUD();
+
+  const winner = rollItem(caseObj);
+
+  // build opener UI
+  const mount = $("#opener-mount");
+  mount.innerHTML = `
+    <div class="opener">
+      <div class="opener-head">
+        <h2>${caseObj.emoji} ${caseObj.name}</h2>
+        <span class="meta">Roztáčím…</span>
+      </div>
+      <div class="reel-frame">
+        <div class="marker"></div>
+        <div class="reel" id="reel"></div>
+      </div>
+    </div>`;
+  mount.scrollIntoView({behavior:"smooth", block:"start"});
+
+  const reel = $("#reel");
+  const TOTAL = 70, WIN_INDEX = 62;
+  const items = [];
+  for(let i=0;i<TOTAL;i++){
+    items[i] = (i===WIN_INDEX) ? winner : rollItem(caseObj);
+  }
+  items.forEach(it=> reel.appendChild(reelCard(it)));
+
+  // wait a frame for layout, then animate
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const frame = reel.parentElement;
+    const cards = reel.children;
+    const winEl = cards[WIN_INDEX];
+    const frameW = frame.clientWidth;
+    // center of winner inside reel, minus small random jitter so it doesn't always center
+    const jitter = (Math.random()*0.6-0.3) * winEl.offsetWidth;
+    const targetX = -(winEl.offsetLeft + winEl.offsetWidth/2 - frameW/2 + jitter);
+    // precompute card centers for tick detection
+    const centers = Array.from(cards).map(c=>c.offsetLeft + c.offsetWidth/2);
+    animateReel(reel, targetX, frameW, centers, ()=> finishOpen(winner, caseObj));
+  }));
+}
+
+function animateReel(reel, targetX, frameW, centers, done){
+  const DURATION = 5200 + Math.random()*600;
+  const start = performance.now();
+  let lastIdx = -1;
+  function ease(t){ return 1 - Math.pow(1-t, 3); } // easeOutCubic
+  function frame(now){
+    let p = (now-start)/DURATION; if(p>1) p=1;
+    const x = targetX * ease(p);
+    reel.style.transform = `translateX(${x}px)`;
+    // which card under marker?
+    const markerPos = frameW/2 - x; // in reel coords
+    let idx = 0, best = Infinity;
+    for(let i=0;i<centers.length;i++){ const d=Math.abs(centers[i]-markerPos); if(d<best){best=d;idx=i;} }
+    if(idx!==lastIdx){ lastIdx=idx; tick(); }
+    if(p<1) requestAnimationFrame(frame);
+    else done();
+  }
+  requestAnimationFrame(frame);
+}
+
+function finishOpen(winner, caseObj){
+  // record
+  state.inventory.unshift(winner);
+  state.stats.opened += 1;
+  state.stats.counts[winner.rarity] = (state.stats.counts[winner.rarity]||0)+1;
+  if(winner.value > state.stats.bestValue){
+    state.stats.bestValue = winner.value;
+    state.stats.bestItem = `${winner.statTrak?"StatTrak™ ":""}${winner.weapon} | ${winner.skin}`;
+  }
+  save(); renderHUD(); renderInventory(); renderStats();
+  fanfare(winner.rarity);
+  showReveal(winner, caseObj);
+  opening = false;
+  $(".opener .meta") && ($(".opener .meta").textContent = "Hotovo!");
+}
+
+/* ---------- Reveal modal ---------- */
+function showReveal(it, caseObj){
+  const rc = RARITIES[it.rarity].color;
+  const card = $("#reveal-card");
+  card.style.setProperty("--rc", rc);
+  card.innerHTML = `
+    <div class="rarity-name">${RARITIES[it.rarity].name}</div>
+    <div class="reveal-big">
+      <div class="glow"></div>
+      <div class="ico">${iconFor(it.weapon)}</div>
+      <div class="bar"></div>
+    </div>
+    <div class="wname">${it.statTrak?`<span style="color:#cf6a32">StatTrak™</span> `:""}${it.weapon}</div>
+    <div class="sname">${it.skin}</div>
+    <div class="sub">${it.wearName} (${it.wear})</div>
+    <div class="value">${money(it.value)}</div>
+    <div class="reveal-actions">
+      <button class="btn" id="sell-now">💰 Prodat za ${money(it.value)}</button>
+      <button class="btn sec" id="keep-now">🎒 Ponechat</button>
+      <button class="btn sec" id="again-now">🔄 Znovu (${money(caseObj.price)})</button>
+    </div>`;
+  $("#overlay").classList.add("show");
+  if(["covert","knife","classified"].includes(it.rarity)) confetti(rc);
+
+  $("#sell-now").addEventListener("click",()=>{ sellItem(it.id); closeOverlay(); });
+  $("#keep-now").addEventListener("click", closeOverlay);
+  $("#again-now").addEventListener("click",()=>{ closeOverlay(); startOpen(caseObj); });
+}
+function closeOverlay(){ $("#overlay").classList.remove("show"); }
+
+function confetti(color){
+  const card = $("#reveal-card");
+  const colors = [color,"#ffffff","#f0a020"];
+  for(let i=0;i<28;i++){
+    const c = document.createElement("div");
+    c.className="confetti";
+    c.style.background = colors[i%colors.length];
+    c.style.left = Math.random()*100+"%";
+    const dx = (Math.random()*2-1)*120, dy = 220+Math.random()*160, rot=Math.random()*720;
+    c.animate([
+      {transform:"translate(0,0) rotate(0)",opacity:1},
+      {transform:`translate(${dx}px,${dy}px) rotate(${rot}deg)`,opacity:0}
+    ],{duration:1100+Math.random()*500,easing:"cubic-bezier(.2,.6,.3,1)"});
+    card.appendChild(c);
+    setTimeout(()=>c.remove(),1700);
+  }
+}
+
+/* ---------- Inventory ---------- */
+function renderInventory(){
+  const grid = $("#inv-grid");
+  const total = state.inventory.reduce((s,i)=>s+i.value,0);
+  $("#inv-value").textContent = state.inventory.length ? `${state.inventory.length} předmětů • hodnota ${money(total)}` : "";
+  $("#sell-all").disabled = state.inventory.length===0;
+  if(!state.inventory.length){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">Inventář je prázdný. Otevři nějakou bednu! 📦</div>`;
+    renderHUD(); return;
+  }
+  grid.innerHTML = "";
+  // newest first already (unshift); show as stored
+  state.inventory.forEach(it=>{
+    const rc = RARITIES[it.rarity].color;
+    const el = document.createElement("div");
+    el.className = "inv-item"; el.style.setProperty("--rc", rc);
+    el.innerHTML = `
+      <div class="top"><div class="glow"></div>${iconFor(it.weapon)}</div>
+      <div class="bar"></div>
+      <div class="info">
+        <div class="w">${it.statTrak?`<span class="st">ST™</span> `:""}${it.weapon}</div>
+        <div class="s">${it.skin}</div>
+        <div class="meta">${it.wear} • <span style="color:${rc}">${RARITIES[it.rarity].name}</span></div>
+        <button class="sell">Prodat ${money(it.value)}</button>
+      </div>`;
+    el.querySelector(".sell").addEventListener("click",()=>sellItem(it.id));
+    grid.appendChild(el);
+  });
+  renderHUD();
+}
+function sellItem(id){
+  const idx = state.inventory.findIndex(i=>i.id===id);
+  if(idx<0) return;
+  const it = state.inventory[idx];
+  state.balance += it.value;
+  state.stats.earned += it.value;
+  state.inventory.splice(idx,1);
+  save(); renderHUD(); renderInventory(); renderStats();
+  toast(`Prodáno: ${it.weapon} | ${it.skin} za ${money(it.value)}`);
+}
+$("#sell-all").addEventListener("click",()=>{
+  if(!state.inventory.length) return;
+  const total = state.inventory.reduce((s,i)=>s+i.value,0);
+  if(!confirm(`Prodat všech ${state.inventory.length} předmětů za ${money(total)}?`)) return;
+  state.balance += total; state.stats.earned += total; state.inventory = [];
+  save(); renderHUD(); renderInventory(); renderStats();
+  toast(`Prodáno vše za ${money(total)}`);
+});
+
+/* ---------- Stats ---------- */
+function renderStats(){
+  const s = state.stats;
+  const invValue = state.inventory.reduce((a,i)=>a+i.value,0);
+  const net = s.earned + invValue - s.spent;
+  const grid = $("#stat-grid");
+  const cells = [
+    ["Otevřeno beden", s.opened],
+    ["Utraceno", money(s.spent)],
+    ["Vyděláno prodejem", money(s.earned)],
+    ["Hodnota inventáře", money(invValue)],
+    ["Čistý zisk/ztráta", (net>=0?"+":"−")+money(Math.abs(net)).slice(1)],
+    ["Nejlepší drop", s.bestItem?money(s.bestValue):"—"],
+  ];
+  grid.innerHTML = cells.map(([l,v],i)=>`
+    <div class="stat"><div class="label">${l}</div>
+    <div class="val" ${i===4?`style="color:${net>=0?'var(--green)':'var(--red)'}"`:""}>${v}</div></div>`).join("");
+  if(s.bestItem){
+    grid.innerHTML += `<div class="stat" style="grid-column:span 2"><div class="label">Nejcennější skin</div><div class="val" style="font-size:1.05rem">${s.bestItem}</div></div>`;
+  }
+
+  const odds = $("#odds-list");
+  const totalW = RARITY_ORDER.reduce((a,k)=>a+RARITIES[k].weight,0);
+  odds.innerHTML = RARITY_ORDER.slice().reverse().map(k=>{
+    const r = RARITIES[k]; const pct = (r.weight/totalW*100);
+    const got = s.counts[k]||0;
+    return `<div class="odds-row">
+      <span class="dot" style="background:${r.color}"></span>
+      <span class="nm" style="color:${r.color};font-weight:600">${r.name}</span>
+      <span style="color:var(--muted);font-size:.8rem">vytaženo: ${got}×</span>
+      <span class="pct">${pct<1?pct.toFixed(2):pct.toFixed(1)} %</span>
+    </div>`;
+  }).join("");
+}
+
+/* ---------- Toast ---------- */
+let toastTimer=null;
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2400);
+}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    tab.classList.add("active");
+    $("#view-"+tab.dataset.view).classList.add("active");
+  });
+});
+
+/* ---------- Buttons ---------- */
+$("#sound-btn").addEventListener("click",()=>{
+  state.soundOn = !state.soundOn; save(); renderHUD();
+  if(state.soundOn){ audio(); tick(); }
+});
+$("#bonus-btn").addEventListener("click",()=>{
+  if(state.balance >= MIN_CASE) return;
+  state.balance += 500; save(); renderHUD();
+  toast("Připsáno +"+money(500)+" 🎁");
+});
+
+/* keyboard */
+document.addEventListener("keydown",(e)=>{
+  if(e.key==="Escape") closeOverlay();
+  if((e.key===" "||e.key==="Enter") && !opening && !$("#overlay").classList.contains("show")
+     && $("#view-store").classList.contains("active")){
+    const c = CASES.find(c=>c.id===currentCaseId) || CASES[0];
+    if(state.balance>=c.price){ e.preventDefault(); startOpen(c); }
+  }
+});
+
+/* ---------- Init ---------- */
+renderHUD();
+renderCases();
+renderInventory();
+renderStats();
+})();
+</script>
+</body>
+</html>
