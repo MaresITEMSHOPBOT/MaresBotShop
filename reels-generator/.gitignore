@@ -1,0 +1,6 @@
+# Výstupní videa a popisky (negenerovat do gitu)
+output/*
+!output/.gitkeep
+__pycache__/
+*.pyc
+content.generated.json
