@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Français 3D — Nauč se francouzsky z 0 na B2</title>
+<style>
+:root{
+  --bg:#0e1726; --panel:#16213a; --panel2:#1f2c49; --text:#eef2ff; --muted:#9fb0d0;
+  --m:#3b82f6; --f:#ec4899; --pl:#10b981; --accent:#f59e0b; --ok:#22c55e; --err:#ef4444;
+  --border:#2a3a5e; --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:#000;color:var(--text);}
+#app{position:fixed;inset:0;}
+canvas{display:block}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed;z-index:10;pointer-events:none;}
+.hud .clickable{pointer-events:auto}
+
+#topbar{top:0;left:0;right:0;display:flex;align-items:center;gap:.6rem;padding:.55rem .8rem;
+  background:linear-gradient(180deg,rgba(8,12,22,.85),rgba(8,12,22,0));}
+#topbar .brand{font-weight:800;letter-spacing:.3px;font-size:1.05rem;white-space:nowrap}
+#topbar .brand .fr{color:var(--accent)}
+.spacer{flex:1}
+.pill{background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:.32rem .7rem;font-size:.82rem;color:var(--muted)}
+.pill b{color:var(--text)}
+.btn{pointer-events:auto;cursor:pointer;border:1px solid var(--border);background:var(--panel);color:var(--text);
+  padding:.45rem .8rem;border-radius:10px;font-size:.86rem;font-weight:600;transition:.15s;white-space:nowrap}
+.btn:hover{background:var(--panel2);border-color:#3a4f7e}
+.btn.primary{background:var(--accent);color:#1a1304;border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+
+#hint{left:50%;transform:translateX(-50%);bottom:14px;background:rgba(8,12,22,.7);border:1px solid var(--border);
+  border-radius:12px;padding:.5rem .9rem;font-size:.8rem;color:var(--muted);text-align:center;max-width:92vw}
+#hint kbd{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:.05rem .4rem;color:var(--text);font-size:.78rem}
+
+#crosshair{left:50%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border:2px solid rgba(255,255,255,.5);
+  border-radius:50%;mix-blend-mode:difference}
+#crosshair.active{border-color:var(--accent);box-shadow:0 0 12px var(--accent)}
+
+/* ---------- 3D labels ---------- */
+.lbl{pointer-events:auto;cursor:pointer;user-select:none;
+  font-weight:700;font-size:13px;line-height:1;white-space:nowrap;
+  padding:4px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
+  background:rgba(10,16,30,.82);box-shadow:0 4px 12px rgba(0,0,0,.4);transition:transform .1s, box-shadow .1s}
+.lbl:hover{transform:scale(1.08)}
+.lbl .art{opacity:.95}
+.lbl.m{color:#bcd4ff}.lbl.m .art{color:var(--m)}
+.lbl.f{color:#ffc7e6}.lbl.f .art{color:var(--f)}
+.lbl.pl{color:#bff0d8}.lbl.pl .art{color:var(--pl)}
+.lbl.npc{background:rgba(245,158,11,.16);border-color:var(--accent);color:#ffe6b0}
+.lbl.near{outline:2px solid var(--accent);outline-offset:2px}
+.lbl.done{opacity:.55}
+.lbl.done::after{content:" ✓";color:var(--ok)}
+
+/* ---------- panels / overlays ---------- */
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(5,8,16,.72);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;padding:18px}
+.overlay.show{display:flex}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);
+  width:min(820px,96vw);max-height:90vh;overflow:auto;padding:0}
+.card .head{display:flex;align-items:center;gap:.6rem;padding:1rem 1.2rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);z-index:2}
+.card .head h2{font-size:1.15rem}
+.card .body{padding:1.2rem}
+.x{margin-left:auto;cursor:pointer;border:none;background:var(--panel2);color:var(--text);width:34px;height:34px;border-radius:10px;font-size:1.1rem}
+.x:hover{background:#34456f}
+
+/* word panel (side) */
+#wordPanel{position:fixed;z-index:25;right:14px;top:64px;width:min(340px,92vw);background:var(--panel);
+  border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);display:none;overflow:hidden}
+#wordPanel.show{display:block}
+#wordPanel .wp-top{padding:1rem 1.1rem;border-bottom:1px solid var(--border)}
+#wordPanel .wbig{font-size:1.7rem;font-weight:800}
+#wordPanel .wbig .art{font-weight:800}
+#wordPanel .gender{display:inline-block;margin-top:.35rem;font-size:.74rem;font-weight:700;padding:.15rem .55rem;border-radius:999px}
+#wordPanel .gender.m{background:rgba(59,130,246,.18);color:#9dc1ff}
+#wordPanel .gender.f{background:rgba(236,72,153,.18);color:#ffb0db}
+#wordPanel .gender.pl{background:rgba(16,185,129,.18);color:#8ff0c6}
+#wordPanel .cz{color:var(--muted);font-size:.9rem;margin-top:.5rem}
+#wordPanel .cs{font-size:1.05rem;margin-top:.15rem}
+#wordPanel .ex{padding:.9rem 1.1rem;border-bottom:1px solid var(--border)}
+#wordPanel .ex .fr{font-weight:600}
+#wordPanel .ex .tr{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+#wordPanel .wp-actions{display:flex;gap:.5rem;padding:.85rem 1.1rem;flex-wrap:wrap}
+.spk{cursor:pointer;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:10px;
+  padding:.4rem .7rem;font-size:.85rem;font-weight:600;display:inline-flex;align-items:center;gap:.35rem}
+.spk:hover{background:#34456f}
+
+/* dialogue */
+#dlg{position:fixed;z-index:28;left:50%;transform:translateX(-50%);bottom:0;width:min(760px,100vw);
+  background:var(--panel);border:1px solid var(--border);border-bottom:none;border-radius:18px 18px 0 0;
+  box-shadow:var(--shadow);display:none;padding:1rem 1.1rem 1.2rem}
+#dlg.show{display:block}
+#dlg .who{display:flex;align-items:center;gap:.55rem;margin-bottom:.5rem}
+#dlg .avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:1.2rem;background:var(--panel2)}
+#dlg .who .name{font-weight:700}
+#dlg .who .role{color:var(--muted);font-size:.8rem}
+#dlg .line .fr{font-size:1.25rem;font-weight:600;line-height:1.35}
+#dlg .line .tr{color:var(--muted);margin-top:.3rem}
+#dlg .choices{display:flex;flex-direction:column;gap:.5rem;margin-top:.9rem}
+#dlg .choice{cursor:pointer;text-align:left;border:1px solid var(--border);background:var(--panel2);color:var(--text);
+  padding:.6rem .8rem;border-radius:12px;font-size:.95rem;transition:.12s}
+#dlg .choice:hover{background:#34456f;border-color:#3a4f7e}
+#dlg .choice .ctr{display:block;color:var(--muted);font-size:.8rem;margin-top:.15rem}
+#dlg .bar{display:flex;align-items:center;gap:.5rem;margin-top:.9rem}
+#dlg .progress{flex:1;color:var(--muted);font-size:.8rem}
+
+/* lessons */
+.levelTabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.levelTab{cursor:pointer;border:1px solid var(--border);background:var(--panel2);color:var(--text);
+  padding:.4rem .8rem;border-radius:999px;font-weight:700;font-size:.85rem}
+.levelTab.active{background:var(--accent);color:#1a1304;border-color:transparent}
+.lessonItem{display:flex;align-items:center;gap:.7rem;padding:.75rem .85rem;border:1px solid var(--border);
+  border-radius:12px;margin-bottom:.55rem;cursor:pointer;background:var(--panel2);transition:.12s}
+.lessonItem:hover{border-color:#3a4f7e;background:#26365c}
+.lessonItem .num{width:30px;height:30px;border-radius:8px;background:var(--panel);display:grid;place-items:center;font-weight:800;color:var(--accent);flex:none}
+.lessonItem .t{font-weight:700}
+.lessonItem .s{color:var(--muted);font-size:.8rem}
+.lessonItem .chk{margin-left:auto;color:var(--ok);font-weight:800}
+.lesson h3{margin:1rem 0 .5rem}
+.lesson h4{margin:.9rem 0 .35rem;color:var(--accent)}
+.lesson p{margin:.45rem 0;line-height:1.6;color:#dde6fb}
+.lesson ul,.lesson ol{margin:.4rem 0 .4rem 1.3rem;line-height:1.6}
+.lesson li{margin:.2rem 0}
+.lesson code{background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:.05rem .4rem;font-size:.95em}
+.lesson table{border-collapse:collapse;width:100%;margin:.6rem 0;font-size:.92rem}
+.lesson th,.lesson td{border:1px solid var(--border);padding:.4rem .55rem;text-align:left}
+.lesson th{background:var(--panel2)}
+.exline{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border:1px solid var(--border);border-radius:10px;margin:.35rem 0;background:var(--panel2)}
+.exline .fr{font-weight:600}
+.exline .tr{color:var(--muted);font-size:.86rem}
+.exline .spk{flex:none}
+.callout{border-left:4px solid var(--accent);background:rgba(245,158,11,.08);padding:.6rem .8rem;border-radius:0 10px 10px 0;margin:.7rem 0}
+
+/* quiz */
+.quiz .q{font-weight:700;margin:.9rem 0 .5rem}
+.quiz .opt{display:block;width:100%;text-align:left;cursor:pointer;border:1px solid var(--border);background:var(--panel2);
+  color:var(--text);padding:.55rem .8rem;border-radius:10px;margin:.35rem 0;transition:.12s}
+.quiz .opt:hover{background:#34456f}
+.quiz .opt.correct{background:rgba(34,197,94,.18);border-color:var(--ok)}
+.quiz .opt.wrong{background:rgba(239,68,68,.18);border-color:var(--err)}
+.quiz .explain{font-size:.86rem;color:var(--muted);margin:.3rem 0 .5rem;display:none}
+.quiz .explain.show{display:block}
+
+/* flashcards */
+.fc{perspective:1200px;margin:1rem 0}
+.fcInner{position:relative;height:230px;border-radius:16px;transition:transform .5s;transform-style:preserve-3d;cursor:pointer}
+.fcInner.flip{transform:rotateY(180deg)}
+.fcFace{position:absolute;inset:0;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid var(--border);border-radius:16px;background:var(--panel2);padding:1rem;text-align:center}
+.fcBack{transform:rotateY(180deg)}
+.fcFace .big{font-size:2rem;font-weight:800}
+.fcFace .sub{color:var(--muted);margin-top:.4rem}
+.fcGrade{display:flex;gap:.5rem;justify-content:center;margin-top:.9rem;flex-wrap:wrap}
+
+/* start screen */
+#start .card{width:min(680px,96vw);text-align:center}
+#start .hero{font-size:2.1rem;font-weight:800;margin:.3rem 0}
+#start .hero .fr{color:var(--accent)}
+#start .lead{color:var(--muted);max-width:46ch;margin:.4rem auto 1rem}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin:1rem 0;text-align:left}
+.feat .f{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:.8rem}
+.feat .f .ic{font-size:1.4rem}
+.feat .f .t{font-weight:700;margin:.3rem 0 .15rem}
+.feat .f .d{color:var(--muted);font-size:.84rem}
+.startBtns{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.6rem}
+
+.toast{position:fixed;z-index:40;left:50%;bottom:70px;transform:translateX(-50%);background:var(--panel);
+  border:1px solid var(--border);border-radius:12px;padding:.6rem 1rem;box-shadow:var(--shadow);font-weight:600;
+  opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+.mobileMove{position:fixed;z-index:15;left:16px;bottom:16px;display:none;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px);gap:6px}
+.mobileMove .mb{pointer-events:auto;background:rgba(20,30,52,.85);border:1px solid var(--border);border-radius:10px;display:grid;place-items:center;font-size:1.1rem;color:var(--text);user-select:none}
+.mobileMove .up{grid-column:2;grid-row:1}.mobileMove .left{grid-column:1;grid-row:2}.mobileMove .down{grid-column:2;grid-row:3}.mobileMove .right{grid-column:3;grid-row:2}
+@media (max-width:760px){ #hint{display:none} }
+.small{font-size:.8rem;color:var(--muted)}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.badge{font-size:.7rem;font-weight:800;padding:.1rem .45rem;border-radius:6px;background:var(--panel2);border:1px solid var(--border)}
+.badge.A1{color:#86efac}.badge.A2{color:#7dd3fc}.badge.B1{color:#fde68a}.badge.B2{color:#fca5a5}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- HUD -->
+<div id="topbar" class="hud">
+  <div class="brand">🇫🇷 <span class="fr">Français</span> 3D</div>
+  <span class="pill clickable" id="lvlPill">Úroveň: <b id="lvlVal">A1</b></span>
+  <span class="pill clickable" id="xpPill">⭐ <b id="xpVal">0</b> XP</span>
+  <span class="pill clickable" id="wordsPill">📚 <b id="wordsVal">0</b> slov</span>
+  <span class="spacer"></span>
+  <button class="btn ghost clickable" id="btnLessons">📖 Lekce</button>
+  <button class="btn ghost clickable" id="btnReview">🃏 Opakování</button>
+  <button class="btn ghost clickable" id="btnHelp">❔</button>
+</div>
+
+<div id="crosshair" class="hud"></div>
+<div id="hint" class="hud"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> pohyb · myš = rozhlížení · klikni na popisek = slovíčko · <kbd>E</kbd> = interakce · <kbd>F</kbd> = vyslovit</div>
+
+<div class="mobileMove" id="mobileMove">
+  <div class="mb up" data-dir="f">▲</div><div class="mb left" data-dir="l">◀</div>
+  <div class="mb down" data-dir="b">▼</div><div class="mb right" data-dir="r">▶</div>
+</div>
+
+<!-- word panel -->
+<div id="wordPanel"></div>
+
+<!-- dialogue -->
+<div id="dlg"></div>
+
+<!-- start screen -->
+<div class="overlay show" id="start">
+  <div class="card"><div class="body">
+    <div style="font-size:2.6rem">🇫🇷🗼🥐</div>
+    <div class="hero">Nauč se <span class="fr">francouzsky</span><br>z nuly na B2 — hraním</div>
+    <p class="lead">Procházej 3D svět, klikej na věci (každá má svůj <b>člen</b> a rod), povídej si s postavami a postupuj přes strukturované lekce A1 → B2.</p>
+    <div class="feat">
+      <div class="f"><div class="ic">🏠</div><div class="t">3D svět</div><div class="d">Dům, zahrada i náves plné popsaných věcí</div></div>
+      <div class="f"><div class="ic">🔵🔴</div><div class="t">Členy podle rodu</div><div class="d">Modrá = le · růžová = la · zelená = les</div></div>
+      <div class="f"><div class="ic">🗣️</div><div class="t">Mluvené situace</div><div class="d">Kavárna, pekařství, trh — vše se čte nahlas</div></div>
+      <div class="f"><div class="ic">📖</div><div class="t">Lekce A1→B2</div><div class="d">Gramatika česky + kvízy a kartičky</div></div>
+    </div>
+    <div class="startBtns">
+      <button class="btn primary" id="btnPlay">▶ Začít hrát</button>
+      <button class="btn" id="btnStartLessons">📖 Rovnou na lekce</button>
+    </div>
+    <p class="small" style="margin-top:.8rem">Tip: nejlepší se zvukem zapnutým. Pro výslovnost appka používá hlas prohlížeče (Web Speech).</p>
+  </div></div>
+</div>
+
+<!-- generic overlay (lessons / review / help) -->
+<div class="overlay" id="overlay">
+  <div class="card">
+    <div class="head"><h2 id="ovTitle">Lekce</h2><button class="x" id="ovClose">✕</button></div>
+    <div class="body" id="ovBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+/* =========================================================================
+   DATA — slovíčka ve světě (rod přesně!). g: m=mužský, f=ženský, pl=množné.
+   art = člen pro popisek (l' pro samohlásky). pos = [x,y,z]. type = stavebnice.
+   cz = pomocná česká výslovnost. ex/exCs = příkladová věta + překlad.
+   ========================================================================= */
+const VOCAB = [
+  // --- DŮM (interiér, zóna kolem x:-16..-4) ---
+  {fr:"porte",art:"la",g:"f",cs:"dveře",cz:"port",type:"door",pos:[-10,0,-7.6],level:"A1",ex:"J'ouvre la porte.",exCs:"Otevírám dveře."},
+  {fr:"fenêtre",art:"la",g:"f",cs:"okno",cz:"fnetr",type:"window",pos:[-15.6,1.6,-3],level:"A1",ex:"La fenêtre est ouverte.",exCs:"Okno je otevřené."},
+  {fr:"table",art:"la",g:"f",cs:"stůl",cz:"tabl",type:"table",pos:[-12,0,-2],level:"A1",ex:"Le livre est sur la table.",exCs:"Kniha je na stole."},
+  {fr:"chaise",art:"la",g:"f",cs:"židle",cz:"šez",type:"chair",pos:[-13.4,0,-2],level:"A1",ex:"Je m'assois sur la chaise.",exCs:"Sednu si na židli."},
+  {fr:"canapé",art:"le",g:"m",cs:"pohovka",cz:"kanapé",type:"sofa",pos:[-14.5,0,1.5],level:"A1",ex:"Le chat dort sur le canapé.",exCs:"Kočka spí na pohovce."},
+  {fr:"lit",art:"le",g:"m",cs:"postel",cz:"li",type:"bed",pos:[-9,0,3.5],level:"A1",ex:"Je dors dans mon lit.",exCs:"Spím ve své posteli."},
+  {fr:"lampe",art:"la",g:"f",cs:"lampa",cz:"lamp",type:"lamp",pos:[-11.6,0,-3.2],level:"A1",ex:"Allume la lampe, s'il te plaît.",exCs:"Rozsviť lampu, prosím."},
+  {fr:"livre",art:"le",g:"m",cs:"kniha",cz:"livr",type:"book",pos:[-12,0.78,-2],level:"A1",ex:"Je lis un livre intéressant.",exCs:"Čtu zajímavou knihu."},
+  {fr:"horloge",art:"l'",g:"f",cs:"hodiny (nástěnné)",cz:"orlož",type:"clock",pos:[-15.6,2.2,1],level:"A1",ex:"L'horloge indique midi.",exCs:"Hodiny ukazují poledne."},
+  {fr:"télévision",art:"la",g:"f",cs:"televize",cz:"televizjon",type:"tv",pos:[-15.6,0,1.5],level:"A1",ex:"Je regarde la télévision.",exCs:"Dívám se na televizi."},
+  {fr:"tapis",art:"le",g:"m",cs:"koberec",cz:"tapi",type:"rug",pos:[-13,0.02,0],level:"A2",ex:"Le tapis est rouge.",exCs:"Koberec je červený."},
+  {fr:"ordinateur",art:"l'",g:"m",cs:"počítač",cz:"ordinatér",type:"computer",pos:[-9,0.78,-2],level:"A2",ex:"Je travaille sur l'ordinateur.",exCs:"Pracuji na počítači."},
+  {fr:"tasse",art:"la",g:"f",cs:"šálek",cz:"tas",type:"cup",pos:[-12.5,0.78,-1.6],level:"A2",ex:"Une tasse de café, s'il vous plaît.",exCs:"Šálek kávy, prosím."},
+  {fr:"miroir",art:"le",g:"m",cs:"zrcadlo",cz:"miroár",type:"mirror",pos:[-15.6,1.5,4],level:"A2",ex:"Je me regarde dans le miroir.",exCs:"Dívám se na sebe do zrcadla."},
+
+  // --- ZAHRADA (x:-2..12, z:-8..8) ---
+  {fr:"arbre",art:"l'",g:"m",cs:"strom",cz:"arbr",type:"tree",pos:[5,0,-6],level:"A1",ex:"L'arbre est très grand.",exCs:"Strom je velmi vysoký."},
+  {fr:"fleur",art:"la",g:"f",cs:"květina",cz:"flér",type:"flower",pos:[1.5,0,-4],level:"A1",ex:"Cette fleur sent bon.",exCs:"Tato květina krásně voní."},
+  {fr:"banc",art:"le",g:"m",cs:"lavička",cz:"bã",type:"bench",pos:[3,0,2],level:"A1",ex:"Il est assis sur le banc.",exCs:"Sedí na lavičce."},
+  {fr:"chien",art:"le",g:"m",cs:"pes",cz:"šjen",type:"dog",pos:[7,0,3],level:"A1",ex:"Le chien court dans le jardin.",exCs:"Pes běhá na zahradě."},
+  {fr:"chat",art:"le",g:"m",cs:"kočka",cz:"ša",type:"cat",pos:[2,0,4.5],level:"A1",ex:"Le chat est noir et blanc.",exCs:"Kočka je černobílá."},
+  {fr:"oiseau",art:"l'",g:"m",cs:"pták",cz:"oazo",type:"bird",pos:[8,2.6,-4],level:"A1",ex:"L'oiseau chante le matin.",exCs:"Pták ráno zpívá."},
+  {fr:"soleil",art:"le",g:"m",cs:"slunce",cz:"solej",type:"sun",pos:[16,11,-16],level:"A1",ex:"Le soleil brille aujourd'hui.",exCs:"Dnes svítí slunce."},
+  {fr:"fontaine",art:"la",g:"f",cs:"fontána",cz:"fonten",type:"fountain",pos:[9,0,6],level:"A2",ex:"La fontaine est au centre du parc.",exCs:"Fontána je uprostřed parku."},
+  {fr:"vélo",art:"le",g:"m",cs:"kolo",cz:"velo",type:"bike",pos:[11,0,-2],level:"A1",ex:"Je vais à l'école à vélo.",exCs:"Jezdím do školy na kole."},
+  {fr:"voiture",art:"la",g:"f",cs:"auto",cz:"voatür",type:"car",pos:[13,0,-7],level:"A1",ex:"Ma voiture est garée devant.",exCs:"Moje auto stojí vepředu."},
+  {fr:"maison",art:"la",g:"f",cs:"dům",cz:"mézõ",type:"houseSign",pos:[-10,3.6,0],level:"A1",ex:"J'habite dans une grande maison.",exCs:"Bydlím ve velkém domě."},
+
+  // --- NÁVES / JÍDLO (x:2..18, z:6..18) ---
+  {fr:"boulangerie",art:"la",g:"f",cs:"pekařství",cz:"bulãžri",type:"bakerySign",pos:[6,3.4,12],level:"A1",ex:"J'achète du pain à la boulangerie.",exCs:"Kupuji chleba v pekařství."},
+  {fr:"pain",art:"le",g:"m",cs:"chléb",cz:"pẽ",type:"bread",pos:[5,1.0,10.4],level:"A1",ex:"Le pain français est délicieux.",exCs:"Francouzský chléb je výborný."},
+  {fr:"baguette",art:"la",g:"f",cs:"bageta",cz:"baget",type:"baguette",pos:[6,1.0,10.4],level:"A1",ex:"Une baguette, s'il vous plaît.",exCs:"Jednu bagetu, prosím."},
+  {fr:"croissant",art:"le",g:"m",cs:"croissant",cz:"kroasã",type:"croissant",pos:[7,1.0,10.4],level:"A1",ex:"Je prends un croissant au beurre.",exCs:"Dám si máslový croissant."},
+  {fr:"gâteau",art:"le",g:"m",cs:"dort/koláč",cz:"gáto",type:"cake",pos:[6,1.0,11.2],level:"A1",ex:"Le gâteau au chocolat est prêt.",exCs:"Čokoládový dort je hotový."},
+  {fr:"café",art:"le",g:"m",cs:"káva / kavárna",cz:"kafé",type:"cafeSign",pos:[13,3.2,11],level:"A1",ex:"Je bois un café tous les matins.",exCs:"Piju kávu každé ráno."},
+  {fr:"marché",art:"le",g:"m",cs:"trh",cz:"marše",type:"marketSign",pos:[12,2.4,16],level:"A2",ex:"Le marché a lieu le samedi.",exCs:"Trh je v sobotu."},
+  {fr:"pomme",art:"la",g:"f",cs:"jablko",cz:"pom",type:"apple",pos:[11,1.0,15.4],level:"A1",ex:"Une pomme par jour...",exCs:"Jedno jablko denně..."},
+  {fr:"banane",art:"la",g:"f",cs:"banán",cz:"banan",type:"banana",pos:[11.8,1.0,15.4],level:"A1",ex:"La banane est jaune.",exCs:"Banán je žlutý."},
+  {fr:"orange",art:"l'",g:"f",cs:"pomeranč",cz:"oranž",type:"orange",pos:[12.6,1.0,15.4],level:"A1",ex:"Je bois un jus d'orange.",exCs:"Piju pomerančový džus."},
+  {fr:"fraise",art:"la",g:"f",cs:"jahoda",cz:"frez",type:"strawberry",pos:[13.4,1.0,15.4],level:"A1",ex:"Les fraises sont sucrées.",exCs:"Jahody jsou sladké."},
+  {fr:"fromage",art:"le",g:"m",cs:"sýr",cz:"fromaž",type:"cheese",pos:[12.2,1.0,16.2],level:"A1",ex:"La France a 365 fromages.",exCs:"Francie má 365 sýrů."},
+  {fr:"poisson",art:"le",g:"m",cs:"ryba",cz:"poasõ",type:"fish",pos:[13,1.0,16.2],level:"A2",ex:"On mange du poisson le vendredi.",exCs:"V pátek se jí ryba."},
+];
+
+/* =========================================================================
+   POSTAVY + DIALOGY (situace). Každý řádek se čte nahlas.
+   ========================================================================= */
+const NPCS = [
+  {id:"marie", name:"Marie", role:"kamarádka", emoji:"🙋‍♀️", color:0xec4899, pos:[1,0,7], dialogue:"greet"},
+  {id:"baker", name:"Le boulanger", role:"pekař", emoji:"👨‍🍳", color:0xf59e0b, pos:[6,0,11.6], dialogue:"bakery"},
+  {id:"waiter", name:"La serveuse", role:"servírka", emoji:"💁‍♀️", color:0x60a5fa, pos:[13,0,10], dialogue:"cafe"},
+  {id:"vendor", name:"Le marchand", role:"trhovec", emoji:"🧑‍🌾", color:0x34d399, pos:[12,0,17], dialogue:"market"},
+];
+
+const DIALOGUES = {
+  greet:{ title:"Faire connaissance", level:"A1", who:"marie", lines:[
+    {s:"npc",fr:"Bonjour ! Je m'appelle Marie. Et toi ?",cs:"Dobrý den! Jmenuji se Marie. A ty?"},
+    {s:"me",choices:[
+      {fr:"Salut ! Je m'appelle Adam.",cs:"Ahoj! Jmenuji se Adam.",good:true},
+      {fr:"Merci, au revoir !",cs:"Děkuji, na shledanou!",good:false,reply:{fr:"Oh... à bientôt alors !",cs:"Aha... tak zatím!"}},
+    ]},
+    {s:"npc",fr:"Enchantée ! Comment ça va ?",cs:"Těší mě! Jak se máš?"},
+    {s:"me",choices:[
+      {fr:"Ça va bien, merci. Et toi ?",cs:"Mám se dobře, díky. A ty?",good:true},
+      {fr:"Comme ci, comme ça.",cs:"Tak napůl.",good:true},
+    ]},
+    {s:"npc",fr:"Très bien ! Tu apprends le français ?",cs:"Skvěle! Učíš se francouzsky?"},
+    {s:"me",choices:[ {fr:"Oui, j'apprends le français !",cs:"Ano, učím se francouzsky!",good:true} ]},
+    {s:"npc",fr:"Bravo ! Bonne continuation. À bientôt !",cs:"Bravo! Hodně štěstí. Zatím!"},
+  ]},
+  bakery:{ title:"À la boulangerie", level:"A1", who:"baker", lines:[
+    {s:"npc",fr:"Bonjour ! Vous désirez ?",cs:"Dobrý den! Co si přejete?"},
+    {s:"me",choices:[
+      {fr:"Bonjour, une baguette, s'il vous plaît.",cs:"Dobrý den, jednu bagetu, prosím.",good:true},
+      {fr:"Je voudrais deux croissants.",cs:"Chtěl bych dva croissanty.",good:true},
+    ]},
+    {s:"npc",fr:"Et avec ceci ? Ce sera tout ?",cs:"A k tomu? Bude to vše?"},
+    {s:"me",choices:[
+      {fr:"Ce sera tout, merci.",cs:"To bude vše, děkuji.",good:true},
+      {fr:"Aussi un pain au chocolat.",cs:"Také jeden pain au chocolat.",good:true},
+    ]},
+    {s:"npc",fr:"Ça fait 3 euros 50. Merci !",cs:"Dělá to 3,50 eura. Děkuji!"},
+    {s:"me",choices:[ {fr:"Voilà. Bonne journée !",cs:"Tady to je. Hezký den!",good:true} ]},
+    {s:"npc",fr:"Bonne journée à vous aussi ! Au revoir.",cs:"I vám hezký den! Na shledanou."},
+  ]},
+  cafe:{ title:"Commander au café", level:"A2", who:"waiter", lines:[
+    {s:"npc",fr:"Bonjour, qu'est-ce que je vous sers ?",cs:"Dobrý den, co vám můžu nabídnout?"},
+    {s:"me",choices:[
+      {fr:"Un café crème, s'il vous plaît.",cs:"Jedno kafe s mlékem, prosím.",good:true},
+      {fr:"Je vais prendre un thé et une eau.",cs:"Dám si čaj a vodu.",good:true},
+    ]},
+    {s:"npc",fr:"Très bien. Vous voulez manger quelque chose ?",cs:"Výborně. Chcete něco k jídlu?"},
+    {s:"me",choices:[
+      {fr:"Oui, une part de gâteau au chocolat.",cs:"Ano, kousek čokoládového dortu.",good:true},
+      {fr:"Non merci, juste à boire.",cs:"Ne, díky, jen pití.",good:true},
+    ]},
+    {s:"npc",fr:"Parfait, j'arrive tout de suite.",cs:"Skvělé, hned to bude."},
+    {s:"me",choices:[ {fr:"Merci beaucoup. L'addition ensuite, s'il vous plaît.",cs:"Děkuji moc. Potom účet, prosím.",good:true} ]},
+    {s:"npc",fr:"Bien sûr. Bon appétit !",cs:"Samozřejmě. Dobrou chuť!"},
+  ]},
+  market:{ title:"Au marché", level:"B1", who:"vendor", lines:[
+    {s:"npc",fr:"Bonjour ! Mes fruits sont frais ce matin. Qu'est-ce qu'il vous faut ?",cs:"Dobrý den! Ovoce mám dnes čerstvé. Co potřebujete?"},
+    {s:"me",choices:[
+      {fr:"Je voudrais un kilo de pommes, s'il vous plaît.",cs:"Chtěl bych kilo jablek, prosím.",good:true},
+      {fr:"Combien coûtent les fraises ?",cs:"Kolik stojí jahody?",good:true,reply:{fr:"Trois euros la barquette. Elles sont délicieuses !",cs:"Tři eura za misku. Jsou výborné!"}},
+    ]},
+    {s:"npc",fr:"Avec plaisir. Vous voulez autre chose ?",cs:"S radostí. Chcete ještě něco?"},
+    {s:"me",choices:[
+      {fr:"Si elles ne sont pas trop chères, j'aimerais aussi des fraises.",cs:"Pokud nejsou moc drahé, vzal bych i jahody.",good:true},
+      {fr:"Ce sera tout pour aujourd'hui, merci.",cs:"To bude pro dnešek vše, díky.",good:true},
+    ]},
+    {s:"npc",fr:"Voilà ! Bonne dégustation et à la semaine prochaine.",cs:"Tady to je! Dobrou chuť a zase za týden."},
+  ]},
+};
+
+/* =========================================================================
+   LEKCE A1 -> B2 (gramatika česky + příklady + kvíz)
+   ========================================================================= */
+const LESSONS = [
+  /* ---------------- A1 ---------------- */
+  {level:"A1",title:"Výslovnost a abeceda",sub:"Jak francouzština zní",
+   html:`<p>Francouzština se nečte jako se píše. Pár klíčových pravidel:</p>
+   <ul>
+   <li>Koncové souhlásky se většinou <b>nečtou</b>: <code>petit</code> = „pti“, <code>grand</code> = „grã“.</li>
+   <li><code>ou</code> = „u“, <code>u</code> = ostré „ü“ (jako německé ü), <code>oi</code> = „oa“.</li>
+   <li><code>eu</code>/<code>œu</code> = něco mezi „e“ a „ö“ (<code>deux</code> = „dö“).</li>
+   <li><code>ch</code> = „š“, <code>j</code> = „ž“, <code>gn</code> = „ň“ (<code>montagne</code>).</li>
+   <li>Nosovky: <code>an/en</code>=„ã“, <code>on</code>=„õ“, <code>in/ain</code>=„ẽ“ (přes nos).</li>
+   <li>Přízvuk je vždy na <b>poslední</b> slabice.</li>
+   </ul>
+   <div class="callout">Tip: U každého slova v appce je tlačítko „Vyslovit 🔊“. Poslouchej a opakuj nahlas.</div>`,
+   ex:[{fr:"Bonjour",cs:"Dobrý den (bõžúr)"},{fr:"Merci beaucoup",cs:"Děkuji moc (mersi boku)"},{fr:"Au revoir",cs:"Na shledanou (o revoár)"}],
+   quiz:[
+     {q:"Jak se přibližně čte „beaucoup“?",o:["bókup","boku","beaukoup"],a:1,e:"Koncové -p se nečte: „boku“."},
+     {q:"Co znamená spřežka „ch“ ve francouzštině?",o:["č","š","k"],a:1,e:"„ch“ = „š“, např. chat = „ša“."},
+     {q:"Kde bývá ve francouzštině přízvuk?",o:["na první slabice","na poslední slabice","nahodile"],a:1,e:"Vždy na poslední slabice slova/skupiny."},
+   ]},
+  {level:"A1",title:"Pozdravy a zdvořilost",sub:"První fráze",
+   html:`<p>Základní společenské fráze, bez kterých se neobejdeš:</p>
+   <table><tr><th>Francouzsky</th><th>Česky</th></tr>
+   <tr><td>Bonjour / Bonsoir</td><td>Dobrý den / Dobrý večer</td></tr>
+   <tr><td>Salut</td><td>Ahoj (neformální)</td></tr>
+   <tr><td>S'il vous plaît / s'il te plaît</td><td>Prosím (vy / ty)</td></tr>
+   <tr><td>Merci (beaucoup)</td><td>Děkuji (moc)</td></tr>
+   <tr><td>De rien / Je vous en prie</td><td>Není zač</td></tr>
+   <tr><td>Pardon / Excusez-moi</td><td>Promiňte</td></tr>
+   <tr><td>Au revoir / À bientôt</td><td>Na shledanou / Zatím</td></tr></table>
+   <p>Vykání: <code>vous</code>. Tykání: <code>tu</code>. K cizím lidem vždy <code>vous</code>.</p>`,
+   ex:[{fr:"Comment allez-vous ?",cs:"Jak se máte? (formálně)"},{fr:"Ça va ?",cs:"Jak se máš? / Jde to?"},{fr:"Enchanté(e) !",cs:"Těší mě!"}],
+   quiz:[
+     {q:"Jak slušně řekneš „prosím“ neznámému člověku?",o:["s'il te plaît","s'il vous plaît","de rien"],a:1,e:"K cizím lidem vykáme: s'il vous plaît."},
+     {q:"„De rien“ znamená:",o:["Promiňte","Není zač","Na shledanou"],a:1,e:"Reakce na poděkování."},
+   ]},
+  {level:"A1",title:"Členy: le, la, les / un, une, des",sub:"Rod a určenost",
+   html:`<p>Každé podstatné jméno má <b>rod</b> (mužský/ženský) a člen.</p>
+   <h4>Určité členy</h4>
+   <ul><li><code>le</code> – mužský: <i>le chien</i> (pes)</li>
+   <li><code>la</code> – ženský: <i>la table</i> (stůl)</li>
+   <li><code>l'</code> – před samohláskou: <i>l'arbre, l'eau</i></li>
+   <li><code>les</code> – množné číslo (oba rody): <i>les chiens</i></li></ul>
+   <h4>Neurčité členy</h4>
+   <ul><li><code>un</code> (m), <code>une</code> (f), <code>des</code> (mn. č.)</li></ul>
+   <div class="callout">Rod se musíš učit <b>spolu se slovem</b>! Proto je v appce u každé věci barevný člen: 🔵 le · 🔴 la · 🟢 les.</div>
+   <p>Dělivý člen (množství něčeho): <code>du</code> (m), <code>de la</code> (f), <code>des</code> – <i>du pain, de l'eau</i>.</p>`,
+   ex:[{fr:"le soleil et la lune",cs:"slunce a měsíc"},{fr:"un café et une eau",cs:"kávu a vodu"},{fr:"Je voudrais du pain.",cs:"Chtěl bych chléb."}],
+   quiz:[
+     {q:"Který člen patří k „table“ (ženský rod)?",o:["le","la","les"],a:1,e:"la table."},
+     {q:"Doplň: „___ arbre est grand.“ (arbre = samohláska)",o:["le","la","l'"],a:2,e:"Před samohláskou se le/la krátí na l'."},
+     {q:"Neurčitý člen v množném čísle je:",o:["un","des","du"],a:1,e:"des chiens = (nějací) psi."},
+   ]},
+  {level:"A1",title:"Slovesa être a avoir",sub:"Být a mít",
+   html:`<p>Dvě nejdůležitější slovesa. Naučit nazpaměť!</p>
+   <table><tr><th>être (být)</th><th>avoir (mít)</th></tr>
+   <tr><td>je <b>suis</b></td><td>j'<b>ai</b></td></tr>
+   <tr><td>tu <b>es</b></td><td>tu <b>as</b></td></tr>
+   <tr><td>il/elle <b>est</b></td><td>il/elle <b>a</b></td></tr>
+   <tr><td>nous <b>sommes</b></td><td>nous <b>avons</b></td></tr>
+   <tr><td>vous <b>êtes</b></td><td>vous <b>avez</b></td></tr>
+   <tr><td>ils/elles <b>sont</b></td><td>ils/elles <b>ont</b></td></tr></table>
+   <p>Pozor: věk se říká přes <b>avoir</b>: <i>J'ai 20 ans</i> (je mi 20). Hlad/žízeň také: <i>j'ai faim, j'ai soif</i>.</p>`,
+   ex:[{fr:"Je suis tchèque.",cs:"Jsem Čech."},{fr:"Elle est fatiguée.",cs:"Je unavená."},{fr:"Nous avons un chien.",cs:"Máme psa."}],
+   quiz:[
+     {q:"„Nous ___ français.“ (être)",o:["sommes","avons","êtes"],a:0,e:"nous sommes."},
+     {q:"Jak řekneš „Je mi 20 let“?",o:["Je suis 20 ans","J'ai 20 ans","Je suis vingt"],a:1,e:"Věk přes avoir: J'ai 20 ans."},
+     {q:"„Ils ___ deux enfants.“ (avoir)",o:["sont","ont","avez"],a:1,e:"ils ont."},
+   ]},
+  {level:"A1",title:"Pravidelná slovesa -ER",sub:"Přítomný čas",
+   html:`<p>Většina sloves končí na <code>-er</code> (parler, manger, habiter…). Odtrhneš <code>-er</code> a přidáš koncovky:</p>
+   <table><tr><th>parler (mluvit)</th></tr>
+   <tr><td>je parl<b>e</b></td></tr><tr><td>tu parl<b>es</b></td></tr><tr><td>il/elle parl<b>e</b></td></tr>
+   <tr><td>nous parl<b>ons</b></td></tr><tr><td>vous parl<b>ez</b></td></tr><tr><td>ils/elles parl<b>ent</b></td></tr></table>
+   <p>Koncovky <code>-e, -es, -e, -ent</code> se <b>nečtou</b> (zní stejně!). Slyšitelné jsou jen <code>-ons</code> a <code>-ez</code>.</p>`,
+   ex:[{fr:"Je parle français.",cs:"Mluvím francouzsky."},{fr:"Nous habitons à Prague.",cs:"Bydlíme v Praze."},{fr:"Ils aiment le café.",cs:"Mají rádi kávu."}],
+   quiz:[
+     {q:"„Vous (chanter) ___ bien.“",o:["chantez","chantons","chante"],a:0,e:"vous → -ez: chantez."},
+     {q:"„Elle (habiter) ___ à Paris.“",o:["habites","habite","habitent"],a:1,e:"il/elle → -e."},
+   ]},
+  {level:"A1",title:"Čísla 0–100",sub:"Počítání",
+   html:`<p>0 zéro, 1 un, 2 deux, 3 trois, 4 quatre, 5 cinq, 6 six, 7 sept, 8 huit, 9 neuf, 10 dix.</p>
+   <p>11 onze, 12 douze, 13 treize, 14 quatorze, 15 quinze, 16 seize, pak 17 dix-sept, 18 dix-huit, 19 dix-neuf.</p>
+   <p>20 vingt, 30 trente, 40 quarante, 50 cinquante, 60 soixante.</p>
+   <div class="callout">Francouzské specialitky: 70 = <b>soixante-dix</b> (60+10), 80 = <b>quatre-vingts</b> (4×20), 90 = <b>quatre-vingt-dix</b> (4×20+10). 99 = quatre-vingt-dix-neuf!</div>`,
+   ex:[{fr:"vingt et un",cs:"21 (s „et“)"},{fr:"soixante-quinze",cs:"75 (60+15)"},{fr:"quatre-vingt-douze",cs:"92 (80+12)"}],
+   quiz:[
+     {q:"Kolik je „quatre-vingts“?",o:["48","80","90"],a:1,e:"4×20 = 80."},
+     {q:"Jak se řekne 70?",o:["septante","soixante-dix","sept-dix"],a:1,e:"Ve Francii 60+10 = soixante-dix."},
+   ]},
+  {level:"A1",title:"Otázky",sub:"Jak se ptát",
+   html:`<p>Tři způsoby, jak vytvořit otázku (od neformální po formální):</p>
+   <ol>
+   <li><b>Intonací</b>: <i>Tu parles français ?</i> (jen zvednutí hlasu)</li>
+   <li><b>Est-ce que</b> na začátku: <i>Est-ce que tu parles français ?</i></li>
+   <li><b>Inverzí</b> (formální): <i>Parles-tu français ?</i></li>
+   </ol>
+   <h4>Tázací slova</h4>
+   <table><tr><th>FR</th><th>CZ</th></tr>
+   <tr><td>qui</td><td>kdo</td></tr><tr><td>que / qu'est-ce que</td><td>co</td></tr>
+   <tr><td>où</td><td>kde / kam</td></tr><tr><td>quand</td><td>kdy</td></tr>
+   <tr><td>comment</td><td>jak</td></tr><tr><td>pourquoi</td><td>proč</td></tr>
+   <tr><td>combien</td><td>kolik</td></tr><tr><td>quel/quelle</td><td>který/která</td></tr></table>`,
+   ex:[{fr:"Où est la gare ?",cs:"Kde je nádraží?"},{fr:"Qu'est-ce que c'est ?",cs:"Co to je?"},{fr:"Combien ça coûte ?",cs:"Kolik to stojí?"}],
+   quiz:[
+     {q:"Co znamená „pourquoi“?",o:["kde","proč","kdy"],a:1,e:"pourquoi = proč (odpověď: parce que = protože)."},
+     {q:"Která otázka je formální (inverze)?",o:["Tu viens ?","Est-ce que tu viens ?","Viens-tu ?"],a:2,e:"Inverze podmět-sloveso: Viens-tu ?"},
+   ]},
+  /* ---------------- A2 ---------------- */
+  {level:"A2",title:"Passé composé",sub:"Minulý čas (dokončený děj)",
+   html:`<p>Pro vyprávění o tom, co se stalo. Skládá se z: <b>pomocné sloveso (avoir/être) v přítomném + příčestí minulé</b>.</p>
+   <p>Příčestí: -er → <b>-é</b> (parlé), -ir → <b>-i</b> (fini), -re → <b>-u</b> (vendu). Plus nepravidelná (été, eu, fait, pris, vu…).</p>
+   <h4>Pomocné avoir (většina sloves)</h4>
+   <p><i>J'ai mangé, tu as fini, il a vu…</i></p>
+   <h4>Pomocné être</h4>
+   <p>U sloves pohybu/změny stavu (aller, venir, partir, arriver, naître, mourir, rester, devenir…) a u zvratných. Příčestí se <b>shoduje</b> s podmětem v rodě a čísle: <i>Elle est allé<b>e</b>, ils sont parti<b>s</b>.</p>
+   <div class="callout">Pomůcka „DR &amp; MRS VANDERTRAMP“ = seznam sloves s être.</div>`,
+   ex:[{fr:"J'ai mangé une pomme.",cs:"Snědl jsem jablko."},{fr:"Elle est allée au marché.",cs:"Šla na trh."},{fr:"Nous avons vu un film.",cs:"Viděli jsme film."}],
+   quiz:[
+     {q:"„Hier, je ___ mangé.“",o:["suis","ai","as"],a:1,e:"manger → avoir: j'ai mangé."},
+     {q:"„Elle est ___ (aller) au cinéma.“",o:["allé","allée","allés"],a:1,e:"S être se příčestí shoduje: elle est allée."},
+     {q:"Příčestí od „finir“ je:",o:["finé","fini","finu"],a:1,e:"-ir → -i: fini."},
+   ]},
+  {level:"A2",title:"Imparfait",sub:"Minulý čas (popis, zvyk)",
+   html:`<p>Pro <b>popis</b> v minulosti, zvyky a okolnosti („býval/a“). Tvoří se z kmene 1. os. mn. č. přítomného času + koncovky:</p>
+   <p><code>-ais, -ais, -ait, -ions, -iez, -aient</code></p>
+   <p><i>nous parl<u>ons</u></i> → <i>je parl<b>ais</b>, il parl<b>ait</b>, ils parl<b>aient</b></i></p>
+   <h4>Imparfait vs passé composé</h4>
+   <ul><li><b>Imparfait</b> = pozadí, popis, opakování: <i>Il pleuvait, je lisais souvent…</i></li>
+   <li><b>Passé composé</b> = konkrétní dokončená událost: <i>Soudain, le téléphone a sonné.</i></li></ul>`,
+   ex:[{fr:"Quand j'étais petit, j'habitais à Lyon.",cs:"Když jsem byl malý, bydlel jsem v Lyonu."},{fr:"Il faisait beau.",cs:"Bylo hezky."},{fr:"Je regardais la télé quand tu as appelé.",cs:"Díval jsem se na TV, když jsi zavolal."}],
+   quiz:[
+     {q:"Které je imparfait?",o:["j'ai parlé","je parlais","je parlerai"],a:1,e:"-ais = imparfait."},
+     {q:"Pro opakovaný zvyk v minulosti použiješ:",o:["passé composé","imparfait"],a:1,e:"Zvyk/popis = imparfait."},
+   ]},
+  {level:"A2",title:"Budoucí čas",sub:"Futur proche a futur simple",
+   html:`<p><b>Futur proche</b> (blízká budoucnost) = <code>aller</code> v přítomném + infinitiv: <i>Je vais manger</i> (budu jíst / chystám se jíst).</p>
+   <p><b>Futur simple</b> = infinitiv + koncovky <code>-ai, -as, -a, -ons, -ez, -ont</code>:</p>
+   <p><i>je parler<b>ai</b>, tu finir<b>as</b>, il prendr<b>a</b>…</i></p>
+   <p>Nepravidelné kmeny: être→ser-, avoir→aur-, aller→ir-, faire→fer-, venir→viendr-, voir→verr-.</p>`,
+   ex:[{fr:"Demain, je vais voyager.",cs:"Zítra budu cestovat."},{fr:"Un jour, je parlerai bien français.",cs:"Jednou budu mluvit dobře francouzsky."},{fr:"Nous serons à Paris en mai.",cs:"V květnu budeme v Paříži."}],
+   quiz:[
+     {q:"Futur proche pro „jíst“:",o:["je mangerai","je vais manger","je mangeais"],a:1,e:"aller + infinitiv."},
+     {q:"Futur simple slovesa être (je):",o:["je serai","j'aurai","j'irai"],a:0,e:"être → ser-: je serai."},
+   ]},
+  {level:"A2",title:"Zvratná slovesa",sub:"se laver, se lever…",
+   html:`<p>Zvratná slovesa mají zájmeno <code>se</code>, které se mění podle osoby:</p>
+   <table><tr><th>se laver (mýt se)</th></tr>
+   <tr><td>je <b>me</b> lave</td></tr><tr><td>tu <b>te</b> laves</td></tr><tr><td>il/elle <b>se</b> lave</td></tr>
+   <tr><td>nous <b>nous</b> lavons</td></tr><tr><td>vous <b>vous</b> lavez</td></tr><tr><td>ils/elles <b>se</b> lavent</td></tr></table>
+   <p>V passé composé jdou s <b>être</b>: <i>je me suis levé(e)</i>.</p>
+   <p>Časté: se lever (vstávat), se coucher (jít spát), s'appeler (jmenovat se), se reposer (odpočívat), se dépêcher (pospíchat).</p>`,
+   ex:[{fr:"Je me lève à sept heures.",cs:"Vstávám v sedm."},{fr:"Comment tu t'appelles ?",cs:"Jak se jmenuješ?"},{fr:"Nous nous reposons le dimanche.",cs:"V neděli odpočíváme."}],
+   quiz:[
+     {q:"„Je ___ lave.“",o:["me","te","se"],a:0,e:"1. os.: je me lave."},
+     {q:"Zvratná slovesa v minulosti používají:",o:["avoir","être"],a:1,e:"Vždy être: je me suis levé."},
+   ]},
+  {level:"A2",title:"Stupňování přídavných jmen",sup:"",sub:"plus / moins / aussi",
+   html:`<p><b>Druhý stupeň</b> (komparativ):</p>
+   <ul><li><code>plus … que</code> = více … než: <i>plus grand que</i></li>
+   <li><code>moins … que</code> = méně … než</li>
+   <li><code>aussi … que</code> = stejně … jako</li></ul>
+   <p><b>Třetí stupeň</b> (superlativ): <code>le/la/les plus …</code> nebo <code>le moins …</code>: <i>le plus grand</i>.</p>
+   <div class="callout">Nepravidelné: bon → <b>meilleur</b> (lepší), bien → <b>mieux</b> (lépe).</div>
+   <p>Pozor: přídavné jméno se shoduje v rodě a čísle: <i>une grande maison, des livres intéressants</i>.</p>`,
+   ex:[{fr:"Le train est plus rapide que le bus.",cs:"Vlak je rychlejší než autobus."},{fr:"C'est le meilleur restaurant.",cs:"To je nejlepší restaurace."},{fr:"Elle est aussi grande que moi.",cs:"Je stejně vysoká jako já."}],
+   quiz:[
+     {q:"„plus grand ___ moi“",o:["que","de","comme"],a:0,e:"plus … que …"},
+     {q:"Nepravidelný komparativ od „bon“:",o:["plus bon","meilleur","mieux"],a:1,e:"bon → meilleur."},
+   ]},
+  /* ---------------- B1 ---------------- */
+  {level:"B1",title:"Předmětová zájmena",sub:"COD a COI",
+   html:`<p>Aby ses neopakoval, nahrazuješ podstatná jména zájmeny. Stojí <b>před slovesem</b>.</p>
+   <h4>Přímý předmět (COD) – koho/co</h4>
+   <p><code>me, te, le/la, nous, vous, les</code>: <i>Je vois Marie → Je <b>la</b> vois.</i></p>
+   <h4>Nepřímý předmět (COI) – komu (à qqn)</h4>
+   <p><code>me, te, lui, nous, vous, leur</code>: <i>Je parle à Paul → Je <b>lui</b> parle.</i></p>
+   <h4>Zájmena en / y</h4>
+   <ul><li><code>en</code> nahrazuje <i>de + …</i> nebo množství: <i>J'<b>en</b> veux deux.</i></li>
+   <li><code>y</code> nahrazuje místo / <i>à + věc</i>: <i>Je vais à Paris → J'<b>y</b> vais.</i></li></ul>`,
+   ex:[{fr:"Tu connais ce film ? – Oui, je le connais.",cs:"Znáš ten film? – Ano, znám ho."},{fr:"Je lui téléphone ce soir.",cs:"Zavolám mu/jí dnes večer."},{fr:"Des pommes ? J'en achète un kilo.",cs:"Jablka? Koupím jich kilo."}],
+   quiz:[
+     {q:"„Je vois le chien“ → nahraď „le chien“:",o:["Je le vois","Je lui vois","Je vois le"],a:0,e:"COD mužský: le → Je le vois."},
+     {q:"„Je téléphone à ma mère“ →",o:["Je la téléphone","Je lui téléphone","Je y téléphone"],a:1,e:"téléphoner à = COI → lui."},
+     {q:"„Tu vas au cinéma ?“ → „Oui, j'___ vais.“",o:["en","y","le"],a:1,e:"místo s „à“ → y."},
+   ]},
+  {level:"B1",title:"Conditionnel",sub:"Podmiňovací způsob",
+   html:`<p>Pro zdvořilost, přání, hypotézy („by“). Kmen jako u futur simple + koncovky imparfait <code>-ais, -ais, -ait, -ions, -iez, -aient</code>.</p>
+   <p><i>je voudr<b>ais</b></i> (chtěl bych), <i>j'aimer<b>ais</b></i> (rád bych), <i>il pourr<b>ait</b></i> (mohl by).</p>
+   <h4>Podmínkové věty</h4>
+   <p><code>Si + imparfait, … conditionnel</code>: <i>Si j'avais le temps, je voyagerais.</i> (Kdybych měl čas, cestoval bych.)</p>`,
+   ex:[{fr:"Je voudrais un café, s'il vous plaît.",cs:"Chtěl bych kávu, prosím."},{fr:"Tu pourrais m'aider ?",cs:"Mohl bys mi pomoct?"},{fr:"Si j'étais riche, j'achèterais une maison.",cs:"Kdybych byl bohatý, koupil bych dům."}],
+   quiz:[
+     {q:"Zdvořilé „chtěl bych“:",o:["je veux","je voudrais","je voulais"],a:1,e:"conditionnel: je voudrais."},
+     {q:"„Si j'avais le temps, je ___ (voyager).“",o:["voyage","voyagerais","voyagerai"],a:1,e:"Si + imparfait → conditionnel."},
+   ]},
+  {level:"B1",title:"Subjonctif (úvod)",sub:"Způsob nutnosti a citu",
+   html:`<p>Subjonctif vyjadřuje nutnost, přání, cit, pochybnost. Stojí ve vedlejší větě po <code>que</code>.</p>
+   <p>Tvar: kmen 3. os. mn. č. přítomného času (ils parl<u>ent</u>) + <code>-e, -es, -e, -ions, -iez, -ent</code>.</p>
+   <p>Spouštěče: <i>il faut que</i> (je třeba, aby), <i>je veux que</i>, <i>je suis content que</i>, <i>bien que</i> (ačkoli).</p>
+   <div class="callout">Nepravidelné: être → que je <b>sois</b>, avoir → que j'<b>aie</b>, aller → que j'<b>aille</b>, faire → que je <b>fasse</b>.</div>`,
+   ex:[{fr:"Il faut que tu fasses tes devoirs.",cs:"Je třeba, abys udělal úkoly."},{fr:"Je veux que tu sois heureux.",cs:"Chci, abys byl šťastný."},{fr:"Bien qu'il pleuve, je sors.",cs:"Ačkoli prší, jdu ven."}],
+   quiz:[
+     {q:"„Il faut que je ___ (être) à l'heure.“",o:["suis","sois","serai"],a:1,e:"subjonctif: que je sois."},
+     {q:"Subjonctif spouští spojení:",o:["parce que","il faut que","pendant que"],a:1,e:"„il faut que“ = nutnost → subjonctif."},
+   ]},
+  {level:"B1",title:"Vztažná zájmena",sub:"qui, que, dont, où",
+   html:`<p>Spojují dvě věty a odkazují na podstatné jméno:</p>
+   <ul>
+   <li><code>qui</code> = <b>podmět</b> vedlejší věty (kdo/který): <i>L'homme <b>qui</b> parle…</i></li>
+   <li><code>que</code> = <b>předmět</b> (kterého/který): <i>Le livre <b>que</b> je lis…</i></li>
+   <li><code>dont</code> = nahrazuje <i>de</i> (jehož/o kterém): <i>Le film <b>dont</b> je parle…</i></li>
+   <li><code>où</code> = místo nebo čas (kde/kdy): <i>La ville <b>où</b> j'habite…</i></li>
+   </ul>`,
+   ex:[{fr:"C'est la fille qui chante.",cs:"To je ta dívka, která zpívá."},{fr:"Voici le livre que j'aime.",cs:"Tady je kniha, kterou mám rád."},{fr:"Le jour où je suis arrivé…",cs:"Den, kdy jsem přijel…"}],
+   quiz:[
+     {q:"„L'homme ___ travaille ici.“ (podmět)",o:["qui","que","dont"],a:0,e:"podmět → qui."},
+     {q:"„Le livre ___ je lis.“ (předmět)",o:["qui","que","où"],a:1,e:"předmět → que."},
+   ]},
+  /* ---------------- B2 ---------------- */
+  {level:"B2",title:"Subjonctif — pokročile",sub:"Vyjadřování postojů",
+   html:`<p>Na úrovni B2 ovládáš subjonctif aktivně po řadě výrazů citu, pochybnosti a nutnosti:</p>
+   <ul><li>Cit: <i>je suis content/triste/surpris que…</i>, <i>j'ai peur que…</i></li>
+   <li>Pochybnost/negace názoru: <i>je ne pense pas que…</i>, <i>il est possible que…</i>, <i>douter que…</i></li>
+   <li>Spojky: <i>bien que, quoique</i> (ačkoli), <i>pour que, afin que</i> (aby), <i>avant que, jusqu'à ce que, à condition que</i></li></ul>
+   <div class="callout">Pozor na kontrast: <i>Je pense qu'il <b>vient</b></i> (indikativ – jistota) × <i>Je ne pense pas qu'il <b>vienne</b></i> (subjonctif – nejistota).</div>
+   <p>Po <i>le plus/le seul/le premier … qui/que</i> a po superlativu také často subjonctif.</p>`,
+   ex:[{fr:"Je doute qu'il vienne à temps.",cs:"Pochybuji, že přijde včas."},{fr:"Bien que ce soit difficile, je continue.",cs:"Ačkoli je to těžké, pokračuji."},{fr:"C'est le meilleur film que j'aie vu.",cs:"To je nejlepší film, jaký jsem viděl."}],
+   quiz:[
+     {q:"„Je ne pense pas qu'il ___ raison.“ (avoir)",o:["a","ait","aura"],a:1,e:"Negovaný názor → subjonctif: qu'il ait raison."},
+     {q:"Po „bien que“ následuje:",o:["indikativ","subjonctif","conditionnel"],a:1,e:"bien que vždy + subjonctif."},
+   ]},
+  {level:"B2",title:"Trpný rod a souslednost",sub:"Passif & discours rapporté",
+   html:`<p><b>Trpný rod</b> (la voix passive): <code>être</code> + příčestí minulé (shoduje se s podmětem). Původce uvozuje <i>par</i>.</p>
+   <p><i>La lettre <b>est écrite</b> par Paul.</i> (Dopis je psán Pavlem.)</p>
+   <h4>Nepřímá řeč (discours rapporté)</h4>
+   <p>Při převodu do minulosti se mění časy:</p>
+   <table><tr><th>Přímá řeč</th><th>Nepřímá (v minulosti)</th></tr>
+   <tr><td>présent</td><td>→ imparfait</td></tr>
+   <tr><td>passé composé</td><td>→ plus-que-parfait</td></tr>
+   <tr><td>futur</td><td>→ conditionnel</td></tr></table>
+   <p><i>Il a dit : „Je viendrai.“ → Il a dit qu'il <b>viendrait</b>.</i></p>`,
+   ex:[{fr:"Ce château a été construit au 17e siècle.",cs:"Tento zámek byl postaven v 17. století."},{fr:"Elle a dit qu'elle était fatiguée.",cs:"Řekla, že je unavená."},{fr:"Il m'a demandé si je venais.",cs:"Zeptal se mě, jestli přijdu."}],
+   quiz:[
+     {q:"Trpný rod se tvoří:",o:["avoir + příčestí","être + příčestí","aller + infinitiv"],a:1,e:"être + participe passé (+ par)."},
+     {q:"Přímá řeč „futur“ → v nepřímé řeči v minulosti:",o:["imparfait","conditionnel","subjonctif"],a:1,e:"futur → conditionnel."},
+   ]},
+  {level:"B2",title:"Spojovací výrazy a styl",sub:"Connecteurs logiques",
+   html:`<p>Pro plynulý projev na úrovni B2 potřebuješ logické spojky:</p>
+   <table><tr><th>Vztah</th><th>Výrazy</th></tr>
+   <tr><td>Příčina</td><td>parce que, car, puisque, comme, grâce à, à cause de</td></tr>
+   <tr><td>Důsledek</td><td>donc, alors, c'est pourquoi, par conséquent, si bien que</td></tr>
+   <tr><td>Odpor</td><td>mais, pourtant, cependant, néanmoins, malgré, bien que (+subj)</td></tr>
+   <tr><td>Účel</td><td>pour, afin de, pour que (+subj), afin que (+subj)</td></tr>
+   <tr><td>Podmínka</td><td>si, à condition que, sauf si, au cas où (+cond)</td></tr>
+   <tr><td>Posloupnost</td><td>d'abord, ensuite, puis, enfin, par ailleurs, en outre</td></tr></table>
+   <div class="callout">Tip pro esej/projev: uveď názor (à mon avis…), podpoř argumentem (en effet…), připusť protiklad (certes…, néanmoins…) a uzavři (en conclusion…).</div>`,
+   ex:[{fr:"Il pleut, c'est pourquoi je reste à la maison.",cs:"Prší, proto zůstávám doma."},{fr:"Malgré la pluie, nous sommes sortis.",cs:"Navzdory dešti jsme vyšli ven."},{fr:"À mon avis, ce film est excellent.",cs:"Podle mě je ten film výborný."}],
+   quiz:[
+     {q:"Které vyjadřuje odpor/kontrast?",o:["donc","cependant","puisque"],a:1,e:"cependant = nicméně, kontrast."},
+     {q:"„___ la pluie, on est sortis.“ (+podst. jméno)",o:["Bien que","Malgré","Pour que"],a:1,e:"Malgré + podstatné jméno (navzdory)."},
+   ]},
+];
+
+/* =========================================================================
+   STAV / POKROK (localStorage)
+   ========================================================================= */
+const SAVE_KEY="fr3d_save_v1";
+const Progress = {
+  data:{ xp:0, words:{}, lessons:{}, dialogues:{}, srs:{} },
+  load(){ try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(s) this.data=Object.assign(this.data,s);}catch(e){} },
+  save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(this.data)); }catch(e){} },
+  addXp(n){ this.data.xp+=n; this.save(); refreshHud(); },
+  learnWord(fr){ if(!this.data.words[fr]){ this.data.words[fr]=true; this.addXp(5); } else this.save(); },
+  wordCount(){ return Object.keys(this.data.words).length; },
+  doneLesson(i){ if(!this.data.lessons[i]){ this.data.lessons[i]=true; this.addXp(20);} this.save(); },
+  doneDialogue(id){ if(!this.data.dialogues[id]){ this.data.dialogues[id]=true; this.addXp(25);} this.save(); },
+  level(){ const x=this.data.xp; if(x<150)return"A1"; if(x<400)return"A2"; if(x<800)return"B1"; return"B2"; },
+};
+Progress.load();
+
+/* =========================================================================
+   VÝSLOVNOST (Web Speech)
+   ========================================================================= */
+const Speech = {
+  voice:null,
+  init(){
+    const pick=()=>{ const vs=speechSynthesis.getVoices();
+      this.voice = vs.find(v=>/fr-FR/i.test(v.lang)) || vs.find(v=>/^fr/i.test(v.lang)) || null; };
+    pick(); speechSynthesis.onvoiceschanged=pick;
+  },
+  say(text){
+    if(!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="fr-FR"; if(this.voice)u.voice=this.voice; u.rate=.92; u.pitch=1;
+    speechSynthesis.speak(u);
+  }
+};
+Speech.init();
+
+/* =========================================================================
+   THREE.JS — scéna
+   ========================================================================= */
+let scene, camera, renderer, labelRenderer, clock;
+const labels=[]; // {el, obj3d, item} pro objekty i NPC
+let yaw=0, pitch=0;
+const move={f:false,b:false,l:false,r:false};
+const PLAYER_Y=1.6;
+const BOUND=27;
+
+function initThree(){
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x9fd4ff);
+  scene.fog=new THREE.Fog(0x9fd4ff, 30, 75);
+
+  camera=new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 200);
+  camera.position.set(-2, PLAYER_Y, 9);
+  yaw=Math.PI; // koukej do scény
+
+  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  document.getElementById('app').appendChild(renderer.domElement);
+
+  labelRenderer=new CSS2DRenderer();
+  labelRenderer.setSize(innerWidth, innerHeight);
+  labelRenderer.domElement.style.position='fixed';
+  labelRenderer.domElement.style.top='0';
+  labelRenderer.domElement.style.left='0';
+  labelRenderer.domElement.style.pointerEvents='none';
+  labelRenderer.domElement.style.zIndex='5';
+  document.getElementById('app').appendChild(labelRenderer.domElement);
+
+  // světla
+  const hemi=new THREE.HemisphereLight(0xcfe8ff, 0x4a6b3a, 1.05); scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xfff3d6, 1.15); sun.position.set(12,18,-8); scene.add(sun);
+  const amb=new THREE.AmbientLight(0xffffff, .25); scene.add(amb);
+
+  buildGround();
+  buildHouse();
+  buildVillage();
+  buildVocab();
+  buildNpcs();
+  buildScenery();
+
+  clock=new THREE.Clock();
+  addEventListener('resize', onResize);
+}
+
+function onResize(){
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  labelRenderer.setSize(innerWidth, innerHeight);
+}
+
+/* ---- helpery geometrie ---- */
+const M=(c,opts={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.85,metalness:.05},opts));
+function box(w,h,d,c,mat){ const g=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat||M(c)); return g; }
+function cyl(rt,rb,h,c,seg=16){ return new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg), M(c)); }
+function sph(r,c,seg=18){ return new THREE.Mesh(new THREE.SphereGeometry(r,seg,seg), M(c)); }
+function cone(r,h,c,seg=16){ return new THREE.Mesh(new THREE.ConeGeometry(r,h,seg), M(c)); }
+function grp(...kids){ const g=new THREE.Group(); kids.forEach(k=>k&&g.add(k)); return g; }
+
+function buildGround(){
+  const g=new THREE.Mesh(new THREE.PlaneGeometry(70,70), M(0x6ab04c,{roughness:1}));
+  g.rotation.x=-Math.PI/2; scene.add(g);
+  // cesta
+  const path=new THREE.Mesh(new THREE.PlaneGeometry(4,46), M(0xc9b18b,{roughness:1}));
+  path.rotation.x=-Math.PI/2; path.position.set(2,0.01,2); scene.add(path);
+  const path2=new THREE.Mesh(new THREE.PlaneGeometry(30,4), M(0xc9b18b,{roughness:1}));
+  path2.rotation.x=-Math.PI/2; path2.position.set(2,0.01,12); scene.add(path2);
+}
+
+/* dům s nízkými zdmi (bez střechy, ať jsou popisky vidět) */
+function buildHouse(){
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(13,15), M(0xd8b48a,{roughness:1}));
+  fl.rotation.x=-Math.PI/2; fl.position.set(-10,0.02,-1); scene.add(fl);
+  const wc=0xede3d2, wh=2.4, t=.25;
+  const mkWall=(w,d,x,z)=>{ const m=box(w,wh,d,wc); m.position.set(x,wh/2,z); scene.add(m); };
+  mkWall(13,t,-10,-8.4);            // zadní
+  mkWall(t,15,-16.4,-1);            // levá
+  mkWall(t,15,-3.6,-1);             // pravá
+  // přední zeď s mezerou (dveře)
+  mkWall(4.5,t,-13.8,6.4);
+  mkWall(4.5,t,-6.2,6.4);
+}
+
+function buildVillage(){
+  // domečky/fasády na návsi
+  facade(6,12, 0xf2d6a2, 0xb5482f);    // boulangerie
+  facade(13,11, 0xf6e7c1, 0x7c4a2d);   // café
+  facade(12,17.5, 0xe9dcc3, 0x6c8f3a); // market stánek pozadí
+}
+function facade(x,z,wall,roof){
+  const b=box(5,3.2,4,wall); b.position.set(x,1.6,z); scene.add(b);
+  const r=cone(3.8,1.6,roof,4); r.rotation.y=Math.PI/4; r.position.set(x,4.0,z); scene.add(r);
+  const door=box(1,1.7,.15,0x6b4a2a); door.position.set(x, .85, z-2.02); scene.add(door);
+}
+
+/* dekorace navíc (stromy v pozadí, plot) */
+function buildScenery(){
+  const spots=[[-22,-18],[-18,-22],[20,-20],[24,-10],[-24,12],[22,22],[-20,22],[18,-26]];
+  spots.forEach(([x,z])=>scene.add(treeMesh(x,z, 1+Math.random()*0.6)));
+  // plot kolem zahrady
+  for(let i=-2;i<=14;i+=2){ const p=box(.12,1,.12,0xffffff); p.position.set(i,.5,-9); scene.add(p); }
+}
+function treeMesh(x,z,s=1){
+  const g=grp(); const trunk=cyl(.25*s,.32*s,1.6*s,0x8b5a2b); trunk.position.y=.8*s;
+  const c1=sph(1.1*s,0x3f9b46); c1.position.y=2.1*s;
+  const c2=sph(.8*s,0x4caf50); c2.position.set(.5*s,1.7*s,.3*s);
+  g.add(trunk,c1,c2); g.position.set(x,0,z); return g;
+}
+
+/* =========================================================================
+   STAVEBNICE objektů podle item.type
+   ========================================================================= */
+function buildShape(type){
+  switch(type){
+    case"door":{ const f=box(1.4,2.2,.12,0x7a4a25); const k=sph(.07,0xffd24a); k.position.set(.5,0,.1); return grp(f,k);}
+    case"window":{ const fr=box(1.4,1.4,.12,0xffffff); const gl=box(1.2,1.2,.05,0x9fd0ff,M(0x9fd0ff,{transparent:true,opacity:.6})); gl.position.z=.05; return grp(fr,gl);}
+    case"table":{ const top=box(1.6,.12,1,0xb5793f); top.position.y=.78; const g=grp(top); [[-.7,-.4],[.7,-.4],[-.7,.4],[.7,.4]].forEach(([x,z])=>{const l=box(.1,.78,.1,0x8a5a2c);l.position.set(x,.39,z);g.add(l);}); return g;}
+    case"chair":{ const s=box(.5,.1,.5,0x9c6b35); s.position.y=.5; const bk=box(.5,.6,.1,0x9c6b35); bk.position.set(0,.8,-.2); const g=grp(s,bk); [[-.2,-.2],[.2,-.2],[-.2,.2],[.2,.2]].forEach(([x,z])=>{const l=box(.07,.5,.07,0x7a4f25);l.position.set(x,.25,z);g.add(l);}); return g;}
+    case"sofa":{ const base=box(2.2,.5,.9,0x4f6bd8); base.position.y=.35; const back=box(2.2,.6,.25,0x4257b0); back.position.set(0,.7,-.32); const a1=box(.25,.6,.9,0x4257b0); a1.position.set(-1.0,.55,0); const a2=a1.clone(); a2.position.x=1.0; return grp(base,back,a1,a2);}
+    case"bed":{ const m=box(2,.4,3,0xf2f2f2); m.position.y=.5; const fr=box(2.1,.6,.2,0x6b4a2a); fr.position.set(0,.4,1.5); const pil=box(1.6,.2,.5,0x9fd0ff); pil.position.set(0,.75,-1.1); return grp(m,fr,pil);}
+    case"lamp":{ const base=cyl(.18,.22,.08,0x333); const pole=cyl(.04,.04,1.5,0x999); pole.position.y=.8; const sh=cone(.45,.5,0xffe08a); sh.position.y=1.7; sh.rotation.x=Math.PI; return grp(base,pole,sh);}
+    case"book":{ const b=box(.35,.06,.25,0xc0392b); const b2=box(.33,.05,.23,0x2980b9); b2.position.y=.06; return grp(b,b2);}
+    case"clock":{ const c=cyl(.05,.05,.42,0xffffff,24); c.rotation.x=Math.PI/2; const r=new THREE.Mesh(new THREE.TorusGeometry(.42,.05,8,24), M(0x333)); return grp(c,r);}
+    case"tv":{ const scr=box(1.8,1.0,.1,0x111); const st=box(.5,.1,.3,0x333); st.position.y=-.55; return grp(scr,st);}
+    case"rug":{ const r=box(2.6,.04,1.8,0xc0392b); return grp(r);}
+    case"computer":{ const scr=box(.7,.45,.05,0x111); scr.position.y=.45; const base=box(.3,.05,.2,0x222); const kb=box(.6,.03,.25,0x333); kb.position.set(0,0,.3); return grp(scr,base,kb);}
+    case"cup":{ const c=cyl(.12,.09,.18,0xffffff); c.position.y=.09; const h=new THREE.Mesh(new THREE.TorusGeometry(.06,.02,8,16),M(0xffffff)); h.position.set(.13,.09,0); return grp(c,h);}
+    case"mirror":{ const f=box(.9,1.4,.08,0xd4af37); const gl=box(.75,1.25,.05,0xcfeaff,M(0xcfeaff,{metalness:.6,roughness:.1})); gl.position.z=.04; return grp(f,gl);}
+    case"tree": return treeMesh(0,0,1.1);
+    case"flower":{ const st=cyl(.04,.04,.5,0x2e7d32); st.position.y=.25; const g=grp(st); const petal=[0xff5a8a,0xffd24a,0x9b59b6][Math.floor(Math.random()*3)]; for(let i=0;i<6;i++){const p=sph(.12,petal);p.position.set(Math.cos(i)*.16,.55,Math.sin(i)*.16);g.add(p);} const ce=sph(.1,0xffe066); ce.position.y=.55; g.add(ce); return g;}
+    case"bench":{ const s=box(1.6,.1,.5,0x9c6b35); s.position.y=.5; const b=box(1.6,.5,.1,0x9c6b35); b.position.set(0,.75,-.2); const g=grp(s,b); [[-.7,0],[.7,0]].forEach(([x])=>{const l=box(.1,.5,.5,0x6b4a2a);l.position.set(x,.25,0);g.add(l);}); return g;}
+    case"dog":{ const body=box(.8,.45,.35,0x8d6e3a); body.position.y=.55; const head=box(.4,.4,.35,0x8d6e3a); head.position.set(.55,.7,0); const sn=box(.2,.18,.2,0x6b4f28); sn.position.set(.78,.62,0); const tail=box(.3,.08,.08,0x8d6e3a); tail.position.set(-.5,.7,0); tail.rotation.z=.6; const g=grp(body,head,sn,tail); [[-.3,.15],[.3,.15],[-.3,-.15],[.3,-.15]].forEach(([x,z])=>{const l=box(.1,.4,.1,0x6b4f28);l.position.set(x,.2,z);g.add(l);}); const e1=sph(.05,0x000); e1.position.set(.7,.78,.1); const e2=e1.clone(); e2.position.z=-.1; g.add(e1,e2); return g;}
+    case"cat":{ const body=box(.55,.3,.25,0x444); body.position.y=.4; const head=sph(.22,0x444); head.position.set(.35,.55,0); const e1=cone(.1,.18,0x444); e1.position.set(.32,.74,.1); const e2=e1.clone(); e2.position.z=-.1; const tail=box(.35,.07,.07,0x444); tail.position.set(-.35,.5,0); tail.rotation.z=.9; const g=grp(body,head,e1,e2,tail); [[-.2,.08],[.2,.08],[-.2,-.08],[.2,-.08]].forEach(([x,z])=>{const l=box(.07,.3,.07,0x333);l.position.set(x,.15,z);g.add(l);}); return g;}
+    case"bird":{ const body=sph(.18,0x2196f3); const head=sph(.1,0x2196f3); head.position.set(.18,.1,0); const beak=cone(.05,.12,0xffb300); beak.rotation.z=-Math.PI/2; beak.position.set(.3,.08,0); const w=box(.05,.12,.22,0x1769aa); w.position.set(0,.05,0); return grp(body,head,beak,w);}
+    case"sun":{ const s=sph(1.5,0xffe066); s.material=new THREE.MeshBasicMaterial({color:0xffe066}); return grp(s);}
+    case"fountain":{ const base=cyl(1.2,1.4,.5,0x9aa7b5,20); base.position.y=.25; const water=cyl(1.0,1.0,.1,0x5fb6e6,20); water.position.y=.5; const col=cyl(.15,.2,1.0,0x9aa7b5); col.position.y=1.0; const top=cyl(.5,.1,.2,0x5fb6e6,16); top.position.y=1.5; return grp(base,water,col,top);}
+    case"bike":{ const w1=new THREE.Mesh(new THREE.TorusGeometry(.4,.06,8,20),M(0x222)); w1.position.set(-.6,.4,0); const w2=w1.clone(); w2.position.x=.6; const frame=box(1.1,.08,.06,0xd32f2f); frame.position.y=.55; const seat=box(.25,.08,.15,0x222); seat.position.set(-.5,.75,0); const bar=box(.06,.4,.06,0x444); bar.position.set(.6,.7,0); const g=grp(w1,w2,frame,seat,bar); g.rotation.y=Math.PI/2; return g;}
+    case"car":{ const body=box(2.2,.6,1.1,0xe74c3c); body.position.y=.5; const cab=box(1.2,.55,1.0,0xc0392b); cab.position.y=1.0; const g=grp(body,cab); [[-.7,.55],[.7,.55],[-.7,-.55],[.7,-.55]].forEach(([x,z])=>{const w=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.2,16),M(0x111));w.rotation.x=Math.PI/2;w.position.set(x,.3,z);g.add(w);}); return g;}
+    case"baguette":{ const b=cyl(.09,.09,.9,0xd9a441,12); b.rotation.z=Math.PI/2; return grp(b);}
+    case"bread":{ const b=sph(.3,0xc8923f); b.scale.set(1.4,.7,1); return grp(b);}
+    case"croissant":{ const c=new THREE.Mesh(new THREE.TorusGeometry(.18,.09,10,18,Math.PI*1.3),M(0xe0a23f)); c.rotation.x=Math.PI/2; return grp(c);}
+    case"cake":{ const base=cyl(.32,.34,.3,0x8d5a2b,20); base.position.y=.15; const cream=cyl(.33,.33,.08,0xffffff,20); cream.position.y=.34; const cherry=sph(.06,0xc0392b); cherry.position.y=.42; return grp(base,cream,cherry);}
+    case"apple":{ const a=sph(.22,0xe23b3b); const st=cyl(.02,.02,.12,0x5a3a1a); st.position.y=.24; return grp(a,st);}
+    case"banana":{ const b=new THREE.Mesh(new THREE.TorusGeometry(.22,.06,8,16,Math.PI),M(0xf1c40f)); b.rotation.x=Math.PI/2; return grp(b);}
+    case"orange": return grp(sph(.22,0xff9f1a));
+    case"strawberry":{ const s=sph(.16,0xe23b3b); s.scale.set(1,1.2,1); const lf=cone(.12,.1,0x2e7d32); lf.position.y=.18; return grp(s,lf);}
+    case"cheese":{ const c=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.25,3),M(0xf6c945)); c.rotation.y=Math.PI/6; return grp(c);}
+    case"fish":{ const b=sph(.25,0x76b6d6); b.scale.set(1.6,1,.5); const t=cone(.18,.3,0x5a9bbd); t.rotation.z=Math.PI/2; t.position.x=-.45; return grp(b,t);}
+    // cedule/budovy = jen sloup s velkým štítkem (geometrie je fasáda jinde)
+    case"houseSign": case"bakerySign": case"cafeSign": case"marketSign":{ const p=cyl(.06,.06,.4,0x555); return grp(p);}
+    default: return grp(box(.5,.5,.5,0xcccccc));
+  }
+}
+
+/* =========================================================================
+   POPISKY (CSS2D) + objekty
+   ========================================================================= */
+function genderClass(g){ return g==='m'?'m':g==='f'?'f':'pl'; }
+function labelText(item){
+  const sep=item.art.endsWith("'")?"":" ";
+  return `<span class="art">${item.art}${sep}</span>${item.fr}`;
+}
+function makeLabel(item, y, isNpc){
+  const el=document.createElement('div');
+  el.className='lbl '+(isNpc?'npc':genderClass(item.g));
+  if(!isNpc && Progress.data.words[item.fr]) el.classList.add('done');
+  el.innerHTML = isNpc ? `💬 ${item.name}` : labelText(item);
+  el.addEventListener('pointerdown', e=>{ e.stopPropagation(); });
+  el.addEventListener('click', e=>{ e.stopPropagation(); isNpc? startDialogue(item.dialogue) : openWord(item); });
+  const obj=new CSS2DObject(el); obj.position.set(0,y,0);
+  return {el,obj};
+}
+
+function buildVocab(){
+  VOCAB.forEach(item=>{
+    const shape=buildShape(item.type);
+    shape.position.set(item.pos[0], item.pos[1], item.pos[2]);
+    scene.add(shape);
+    // výška popisku podle typu
+    const bbox=new THREE.Box3().setFromObject(shape);
+    const h=Math.min(Math.max(bbox.max.y - item.pos[1], .5), 5)+.5;
+    const {el,obj}=makeLabel(item, h, false);
+    shape.add(obj);
+    labels.push({el, obj3d:shape, item, isNpc:false});
+  });
+}
+
+function buildNpcs(){
+  NPCS.forEach(n=>{
+    const g=grp();
+    const body=cyl(.28,.35,1.0,n.color); body.position.y=.6;
+    const head=sph(.26,0xffe0bd); head.position.y=1.35;
+    const hair=sph(.27,0x4a2f1a); hair.scale.y=.6; hair.position.y=1.5;
+    g.add(body,head,hair); g.position.set(n.pos[0],n.pos[1],n.pos[2]);
+    scene.add(g);
+    const {el,obj}=makeLabel(n, 1.95, true);
+    g.add(obj);
+    n._g=g;
+    labels.push({el, obj3d:g, item:n, isNpc:true});
+  });
+}
+
+/* =========================================================================
+   OVLÁDÁNÍ — pohyb + rozhlížení
+   ========================================================================= */
+let dragging=false, lastX=0, lastY=0;
+function initControls(){
+  const dom=renderer.domElement;
+  dom.addEventListener('pointerdown', e=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; });
+  addEventListener('pointerup', ()=>dragging=false);
+  addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx=e.clientX-lastX, dy=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY;
+    yaw -= dx*0.0035; pitch -= dy*0.0035;
+    pitch=Math.max(-1.1, Math.min(1.1, pitch));
+  });
+  addEventListener('keydown', e=>{
+    if(overlayOpen()) return;
+    const k=e.key.toLowerCase();
+    if(k==='w'||k==='arrowup')move.f=true;
+    else if(k==='s'||k==='arrowdown')move.b=true;
+    else if(k==='a'||k==='arrowleft')move.l=true;
+    else if(k==='d'||k==='arrowright')move.r=true;
+    else if(k==='e'){ interactNearest(); }
+    else if(k==='f'){ const n=nearestObject(); if(n) Speech.say((n.item.art?n.item.art+' ':'')+n.item.fr); }
+  });
+  addEventListener('keyup', e=>{
+    const k=e.key.toLowerCase();
+    if(k==='w'||k==='arrowup')move.f=false;
+    else if(k==='s'||k==='arrowdown')move.b=false;
+    else if(k==='a'||k==='arrowleft')move.l=false;
+    else if(k==='d'||k==='arrowright')move.r=false;
+  });
+  // mobil
+  document.querySelectorAll('#mobileMove .mb').forEach(b=>{
+    const dir=b.dataset.dir;
+    const on=e=>{e.preventDefault(); move[dir]=true;};
+    const off=e=>{e.preventDefault(); move[dir]=false;};
+    b.addEventListener('touchstart',on); b.addEventListener('touchend',off); b.addEventListener('touchcancel',off);
+    b.addEventListener('mousedown',on); b.addEventListener('mouseup',off); b.addEventListener('mouseleave',off);
+  });
+  if('ontouchstart' in window){ document.getElementById('mobileMove').style.display='grid'; }
+}
+
+function updateMovement(dt){
+  const speed=5.5*dt;
+  const sinY=Math.sin(yaw), cosY=Math.cos(yaw);
+  let fx=0,fz=0;
+  if(move.f){ fx-=sinY; fz-=cosY; }
+  if(move.b){ fx+=sinY; fz+=cosY; }
+  if(move.l){ fx-=cosY; fz+=sinY; }
+  if(move.r){ fx+=cosY; fz-=sinY; }
+  const len=Math.hypot(fx,fz)||1;
+  camera.position.x += (fx/len)*speed*(move.f||move.b||move.l||move.r?1:0);
+  camera.position.z += (fz/len)*speed*(move.f||move.b||move.l||move.r?1:0);
+  camera.position.x=Math.max(-BOUND,Math.min(BOUND,camera.position.x));
+  camera.position.z=Math.max(-BOUND,Math.min(BOUND,camera.position.z));
+  camera.position.y=PLAYER_Y;
+  const e=new THREE.Euler(pitch, yaw, 0, 'YXZ');
+  camera.quaternion.setFromEuler(e);
+}
+
+/* nejbližší interaktivní objekt v dosahu (pro křížek + klávesu E) */
+function nearestObject(range=4){
+  let best=null, bd=range;
+  for(const L of labels){
+    const p=new THREE.Vector3(); L.obj3d.getWorldPosition(p);
+    const d=p.distanceTo(camera.position);
+    if(d<bd){ bd=d; best=L; }
+  }
+  return best;
+}
+function interactNearest(){
+  const n=nearestObject();
+  if(!n) return;
+  n.isNpc? startDialogue(n.item.dialogue) : openWord(n.item);
+}
+
+/* zvýraznění nejbližšího + skrytí vzdálených popisků */
+function updateLabels(){
+  const near=nearestObject();
+  const cx=document.getElementById('crosshair');
+  cx.classList.toggle('active', !!near);
+  for(const L of labels){
+    const p=new THREE.Vector3(); L.obj3d.getWorldPosition(p);
+    const d=p.distanceTo(camera.position);
+    L.el.style.opacity = d>26?0 : d>16?0.45 : 1;
+    L.el.classList.toggle('near', L===near);
+  }
+}
+
+/* =========================================================================
+   UI — slovíčko
+   ========================================================================= */
+function openWord(item){
+  Progress.learnWord(item.fr);
+  // SRS: zařadit/aktualizovat
+  if(!Progress.data.srs[item.fr]) Progress.data.srs[item.fr]={ease:2.3,reps:0,due:Date.now()};
+  Progress.save();
+  markLabelDone(item.fr);
+  const gc=genderClass(item.g);
+  const gname=item.g==='m'?'mužský rod (le/un)':item.g==='f'?'ženský rod (la/une)':'množné číslo (les/des)';
+  const sep=item.art.endsWith("'")?"":" ";
+  const wp=document.getElementById('wordPanel');
+  wp.innerHTML=`
+    <div class="wp-top">
+      <div class="wbig"><span class="art ${gc}" style="color:var(--${gc})">${item.art}${sep}</span>${item.fr}</div>
+      <span class="gender ${gc}">${gname}</span>
+      <div class="cz">[${item.cz}]</div>
+      <div class="cs">🇨🇿 ${item.cs}</div>
+    </div>
+    <div class="ex">
+      <div class="fr">${item.ex}</div>
+      <div class="tr">${item.exCs}</div>
+    </div>
+    <div class="wp-actions">
+      <button class="spk" id="spkWord">🔊 ${item.art}${sep}${item.fr}</button>
+      <button class="spk" id="spkEx">🔊 Věta</button>
+      <button class="spk" id="closeWord">Zavřít</button>
+    </div>`;
+  wp.classList.add('show');
+  document.getElementById('spkWord').onclick=()=>Speech.say(item.art+' '+item.fr);
+  document.getElementById('spkEx').onclick=()=>Speech.say(item.ex);
+  document.getElementById('closeWord').onclick=()=>wp.classList.remove('show');
+  Speech.say(item.art+' '+item.fr);
+  refreshHud();
+}
+function markLabelDone(fr){
+  const L=labels.find(x=>!x.isNpc && x.item.fr===fr);
+  if(L) L.el.classList.add('done');
+}
+
+/* =========================================================================
+   UI — dialog
+   ========================================================================= */
+let dlgState=null;
+function startDialogue(id){
+  const d=DIALOGUES[id]; if(!d) return;
+  const npc=NPCS.find(n=>n.id===d.who)||{emoji:'🗣️',name:'?',role:''};
+  dlgState={d,npc,idx:0};
+  document.getElementById('wordPanel').classList.remove('show');
+  renderDlg();
+  document.getElementById('dlg').classList.add('show');
+}
+function renderDlg(){
+  const {d,npc,idx}=dlgState;
+  const box=document.getElementById('dlg');
+  if(idx>=d.lines.length){ // konec
+    Progress.doneDialogue(d.who+'_'+d.title);
+    box.innerHTML=`<div style="text-align:center;padding:1rem">
+      <div style="font-size:1.6rem">🎉</div>
+      <p style="margin:.4rem 0;font-weight:700">Situace dokončena: ${d.title}</p>
+      <p class="small">+25 XP · skvělá práce!</p>
+      <button class="btn primary" id="dlgDone" style="margin-top:.6rem">Zavřít</button></div>`;
+    document.getElementById('dlgDone').onclick=()=>box.classList.remove('show');
+    refreshHud();
+    return;
+  }
+  const line=d.lines[idx];
+  const head=`<div class="who"><div class="avatar">${npc.emoji}</div>
+     <div><div class="name">${idx<d.lines.length?npc.name:''}</div><div class="role">${d.title} · <span class="badge ${d.level}">${d.level}</span></div></div>
+     <button class="x" id="dlgX" style="margin-left:auto">✕</button></div>`;
+  if(line.s==='npc'){
+    box.innerHTML=head+`
+      <div class="line"><div class="fr">${line.fr}</div><div class="tr">${line.cs}</div></div>
+      <div class="bar"><button class="spk" id="dlgSpk">🔊 Přehrát</button>
+      <span class="progress">${idx+1}/${d.lines.length}</span>
+      <button class="btn primary" id="dlgNext">Dál ▶</button></div>`;
+    Speech.say(line.fr);
+    document.getElementById('dlgSpk').onclick=()=>Speech.say(line.fr);
+    document.getElementById('dlgNext').onclick=()=>{ dlgState.idx++; renderDlg(); };
+  } else { // můj výběr
+    const opts=line.choices.map((c,i)=>`<button class="choice" data-i="${i}">${c.fr}<span class="ctr">🇨🇿 ${c.cs}</span></button>`).join('');
+    box.innerHTML=head+`<p class="small" style="margin:.2rem 0 .4rem">Vyber odpověď:</p><div class="choices">${opts}</div>
+      <div class="bar"><span class="progress">${idx+1}/${d.lines.length}</span></div>`;
+    box.querySelectorAll('.choice').forEach(btn=>{
+      btn.onclick=()=>{
+        const c=line.choices[+btn.dataset.i];
+        Speech.say(c.fr);
+        Progress.addXp(3);
+        if(c.reply){
+          box.querySelector('.choices').innerHTML=`<div class="line"><div class="fr">${c.reply.fr}</div><div class="tr">${c.reply.cs}</div></div>`;
+          setTimeout(()=>{ dlgState.idx++; renderDlg(); }, 1600);
+        } else { dlgState.idx++; renderDlg(); }
+      };
+    });
+  }
+  document.getElementById('dlgX').onclick=()=>box.classList.remove('show');
+}
+
+/* =========================================================================
+   UI — overlay (lekce / opakování / nápověda)
+   ========================================================================= */
+function overlayOpen(){ return document.getElementById('overlay').classList.contains('show')
+  || document.getElementById('start').classList.contains('show'); }
+function openOverlay(title){ document.getElementById('ovTitle').textContent=title; document.getElementById('overlay').classList.add('show'); }
+function closeOverlay(){ document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('ovClose').onclick=closeOverlay;
+document.getElementById('overlay').addEventListener('click',e=>{ if(e.target.id==='overlay') closeOverlay(); });
+
+let activeLevel='A1';
+function openLessons(){
+  openOverlay('📖 Lekce — cesta z 0 na B2');
+  renderLessonList();
+}
+function renderLessonList(){
+  const levels=['A1','A2','B1','B2'];
+  const tabs=levels.map(l=>`<button class="levelTab ${l===activeLevel?'active':''}" data-l="${l}">${l}</button>`).join('');
+  const items=LESSONS.map((les,i)=>({les,i})).filter(x=>x.les.level===activeLevel);
+  const list=items.map(({les,i})=>`
+    <div class="lessonItem" data-i="${i}">
+      <div class="num">${i+1}</div>
+      <div><div class="t">${les.title}</div><div class="s">${les.sub}</div></div>
+      ${Progress.data.lessons[i]?'<div class="chk">✓</div>':''}
+    </div>`).join('');
+  const done=Object.keys(Progress.data.lessons).length;
+  document.getElementById('ovBody').innerHTML=`
+    <p class="small">Hotovo ${done}/${LESSONS.length} lekcí · Tvoje úroveň podle XP: <b>${Progress.level()}</b></p>
+    <div class="levelTabs">${tabs}</div><div id="lessonList">${list}</div>`;
+  document.querySelectorAll('.levelTab').forEach(t=>t.onclick=()=>{ activeLevel=t.dataset.l; renderLessonList(); });
+  document.querySelectorAll('.lessonItem').forEach(it=>it.onclick=()=>openLesson(+it.dataset.i));
+}
+function openLesson(i){
+  const les=LESSONS[i];
+  const ex=les.ex.map((e,k)=>`<div class="exline"><div><div class="fr">${e.fr}</div><div class="tr">${e.cs}</div></div>
+     <button class="spk" data-fr="${encodeURIComponent(e.fr)}">🔊</button></div>`).join('');
+  document.getElementById('ovTitle').textContent=`${les.level} · ${les.title}`;
+  document.getElementById('ovBody').innerHTML=`
+    <button class="btn ghost" id="backList">← Zpět na seznam</button>
+    <div class="lesson">${les.html}
+      <h4>Příklady</h4>${ex}
+      <h4>Kvíz</h4><div class="quiz" id="quiz"></div>
+    </div>`;
+  document.getElementById('backList').onclick=renderLessonList;
+  document.querySelectorAll('.exline .spk').forEach(b=>b.onclick=()=>Speech.say(decodeURIComponent(b.dataset.fr)));
+  renderQuiz(les, i);
+}
+function renderQuiz(les, lessonIdx){
+  const host=document.getElementById('quiz');
+  let correct=0, answered=0;
+  host.innerHTML=les.quiz.map((q,qi)=>`
+    <div class="q">${qi+1}. ${q.q}</div>
+    ${q.o.map((o,oi)=>`<button class="opt" data-q="${qi}" data-o="${oi}">${o}</button>`).join('')}
+    <div class="explain" id="ex${qi}">${q.e}</div>`).join('')
+    +`<div id="quizResult" class="small" style="margin-top:.8rem"></div>`;
+  host.querySelectorAll('.opt').forEach(btn=>{
+    btn.onclick=()=>{
+      const qi=+btn.dataset.q, oi=+btn.dataset.o, q=les.quiz[qi];
+      const group=host.querySelectorAll(`.opt[data-q="${qi}"]`);
+      if([...group].some(b=>b.disabled)) return;
+      group.forEach(b=>{ b.disabled=true; if(+b.dataset.o===q.a)b.classList.add('correct'); });
+      if(oi===q.a){ btn.classList.add('correct'); correct++; } else btn.classList.add('wrong');
+      document.getElementById('ex'+qi).classList.add('show');
+      answered++;
+      if(answered===les.quiz.length){
+        document.getElementById('quizResult').innerHTML=`Výsledek: <b>${correct}/${les.quiz.length}</b>. `+
+          (correct===les.quiz.length?'Perfektní! 🎉':'Projdi si vysvětlení a zkus to znovu.');
+        Progress.doneLesson(lessonIdx);
+        toast('Lekce hotová +20 XP');
+      }
+    };
+  });
+}
+
+/* =========================================================================
+   UI — opakování (kartičky, jednoduchý SRS)
+   ========================================================================= */
+function openReview(){
+  openOverlay('🃏 Opakování slovíček');
+  const learned=VOCAB.filter(v=>Progress.data.words[v.fr]);
+  if(learned.length===0){
+    document.getElementById('ovBody').innerHTML=`<p>Zatím nemáš žádná slovíčka. Jdi do 3D světa a klikej na věci — pak se ti tu objeví k opakování. 🙂</p>`;
+    return;
+  }
+  // fronta: nejdřív "due", jinak náhodně
+  const queue=[...learned].sort((a,b)=>(Progress.data.srs[a.fr]?.due||0)-(Progress.data.srs[b.fr]?.due||0));
+  let pos=0;
+  function card(){
+    const item=queue[pos%queue.length];
+    const gc=genderClass(item.g); const sep=item.art.endsWith("'")?"":" ";
+    document.getElementById('ovBody').innerHTML=`
+      <p class="small">Karta ${pos+1} · klikni na kartu pro otočení</p>
+      <div class="fc"><div class="fcInner" id="fcInner">
+        <div class="fcFace"><div class="big">🇨🇿 ${item.cs}</div><div class="sub">Jak to je francouzsky (i se členem)?</div></div>
+        <div class="fcFace fcBack"><div class="big"><span style="color:var(--${gc})">${item.art}${sep}</span>${item.fr}</div><div class="sub">[${item.cz}]</div></div>
+      </div></div>
+      <div class="fcGrade">
+        <button class="spk" id="fcSpk">🔊 Vyslovit</button>
+        <button class="btn" id="fcHard" style="border-color:var(--err)">😕 Těžké</button>
+        <button class="btn" id="fcOk">🙂 Dobré</button>
+        <button class="btn primary" id="fcEasy">😎 Snadné</button>
+      </div>`;
+    const inner=document.getElementById('fcInner');
+    inner.onclick=()=>inner.classList.toggle('flip');
+    document.getElementById('fcSpk').onclick=e=>{e.stopPropagation();Speech.say(item.art+' '+item.fr);};
+    const grade=(q)=>{ const s=Progress.data.srs[item.fr]||{ease:2.3,reps:0};
+      s.ease=Math.max(1.3, s.ease+(q-2)*0.12); s.reps=(s.reps||0)+1;
+      const days=q===1?0:Math.round(s.ease*s.reps);
+      s.due=Date.now()+days*86400000; Progress.data.srs[item.fr]=s; Progress.addXp(2); Progress.save();
+      pos++; card();
+    };
+    document.getElementById('fcHard').onclick=()=>grade(1);
+    document.getElementById('fcOk').onclick=()=>grade(2);
+    document.getElementById('fcEasy').onclick=()=>grade(3);
+  }
+  card();
+}
+
+/* =========================================================================
+   nápověda
+   ========================================================================= */
+function openHelp(){
+  openOverlay('❔ Jak hrát');
+  document.getElementById('ovBody').innerHTML=`
+   <div class="lesson">
+    <h4>Ovládání</h4>
+    <ul>
+     <li><b>Pohyb:</b> klávesy <code>W A S D</code> nebo šipky (na mobilu tlačítka vlevo dole).</li>
+     <li><b>Rozhlížení:</b> táhni myší (prstem) po obrazovce.</li>
+     <li><b>Slovíčko:</b> klikni na popisek nad věcí — vysloví se a ukáže člen, rod, překlad a větu.</li>
+     <li><b>Interakce zblízka:</b> přijdi k věci/postavě a stiskni <code>E</code>.</li>
+     <li><b>Vyslovit nejbližší:</b> <code>F</code>.</li>
+     <li><b>Mluvit s postavou (💬):</b> klikni na její jmenovku a projdi dialog s výběrem odpovědí.</li>
+    </ul>
+    <h4>Barvy členů</h4>
+    <p><span style="color:var(--m)">■ le / un</span> = mužský rod · <span style="color:var(--f)">■ la / une</span> = ženský rod · <span style="color:var(--pl)">■ les / des</span> = množné číslo.</p>
+    <h4>Postup z 0 na B2</h4>
+    <p>Sbírej slovíčka ve světě, plň situace s postavami a postupně projdi <b>Lekce</b> (A1 → B2). Za vše dostáváš XP a tvoje úroveň roste. Slovíčka si pak opakuj v <b>Opakování</b> (kartičky).</p>
+    <div class="callout">Vše se ukládá do prohlížeče — můžeš kdykoli zavřít a pokračovat.</div>
+   </div>`;
+}
+
+/* =========================================================================
+   HUD + toast
+   ========================================================================= */
+function refreshHud(){
+  document.getElementById('xpVal').textContent=Progress.data.xp;
+  document.getElementById('wordsVal').textContent=Progress.wordCount();
+  document.getElementById('lvlVal').textContent=Progress.level();
+}
+let toastT;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* =========================================================================
+   START / smyčka
+   ========================================================================= */
+document.getElementById('btnPlay').onclick=()=>{ document.getElementById('start').classList.remove('show'); };
+document.getElementById('btnStartLessons').onclick=()=>{ document.getElementById('start').classList.remove('show'); openLessons(); };
+document.getElementById('btnLessons').onclick=openLessons;
+document.getElementById('btnReview').onclick=openReview;
+document.getElementById('btnHelp').onclick=openHelp;
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),.05);
+  updateMovement(dt);
+  updateLabels();
+  renderer.render(scene,camera);
+  labelRenderer.render(scene,camera);
+}
+
+initThree();
+initControls();
+refreshHud();
+animate();
+</script>
+</body>
+</html>
