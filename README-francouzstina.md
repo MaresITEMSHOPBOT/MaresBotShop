@@ -15,20 +15,26 @@ přetáhnout do okna Chrome / Edge / Firefoxu).
 
 ## 🎮 Ovládání
 
+Na PC se ovládá jako běžná **FPS hra**: klikni do okna → myš ovládá rozhlížení
+(`Esc` myš zase uvolní / dá pauzu).
+
 | Akce | Klávesa / gesto |
 |---|---|
-| Pohyb | `W` `A` `S` `D` nebo šipky (na mobilu tlačítka vlevo dole) |
-| Rozhlížení | táhni myší / prstem po obrazovce |
-| Slovíčko | klikni na popisek nad věcí (vysloví se + ukáže rod, překlad, větu) |
-| Interakce zblízka | přijdi k věci/postavě a stiskni `E` |
-| Vyslovit nejbližší | `F` |
-| Mluvit s postavou (💬) | klikni na její jmenovku → dialog s výběrem odpovědí |
+| Spustit ovládání | klikni do okna (myš = rozhlížení), `Esc` = pauza |
+| Pohyb | `W` `A` `S` `D` nebo šipky (na mobilu tlačítka vlevo dole, rozhlížení tahem prstu) |
+| Interakce | zaměř věc/postavu křížkem uprostřed a **klikni** nebo stiskni `E` |
+| Vyslovit zaměřené | `F` |
+| Mluvit s postavou (💬) | zaměř ji a klikni → dialog s výběrem odpovědí |
+
+**Fyzika:** zdmi, nábytkem ani stromy neprojdeš — okolo nich se kloužeš.
 
 **Barvy členů:** 🔵 `le / un` = mužský rod · 🔴 `la / une` = ženský rod · 🟢 `les / des` = množné číslo.
 
 ## 📚 Co appka obsahuje
 
 - **3D svět** s ~40 popsanými objekty (nábytek, zvířata, jídlo, příroda…), každý se členem a rodem.
+- **Vylepšená grafika:** realistická obloha (Sky shader), měkké stíny, tone‑mapping, texturovaná tráva a cesta, mraky, hezčí stromy a budovy.
+- **FPS ovládání myší** (Pointer Lock) a **kolize** — neprojdeš zdmi ani nábytkem.
 - **Mluvené situace** s postavami: seznámení (A1), pekařství (A1), kavárna (A2), trh (B1) — vše se čte nahlas, s výběrem odpovědí.
 - **Lekce A1 → B2** (gramatika česky + příklady + kvízy): výslovnost, členy, être/avoir, slovesa -ER, čísla, otázky, passé composé, imparfait, budoucí čas, zvratná slovesa, stupňování, předmětová zájmena, conditionnel, subjonctif, vztažná zájmena, trpný rod, souslednost, spojovací výrazy…
 - **Opakování slovíček** formou kartiček s jednoduchým rozloženým opakováním (SRS).

@@ -36,6 +36,11 @@ canvas{display:block}
 #hint{left:50%;transform:translateX(-50%);bottom:14px;background:rgba(8,12,22,.7);border:1px solid var(--border);
   border-radius:12px;padding:.5rem .9rem;font-size:.8rem;color:var(--muted);text-align:center;max-width:92vw}
 #hint kbd{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:.05rem .4rem;color:var(--text);font-size:.78rem}
+#playHint{left:50%;top:52%;transform:translate(-50%,-50%);background:rgba(8,12,22,.82);border:1px solid var(--border);
+  border-radius:14px;padding:.7rem 1.1rem;font-size:.98rem;text-align:center;box-shadow:var(--shadow)}
+#playHint kbd{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:.05rem .4rem;color:var(--text);font-size:.85rem}
+body.locked #hint{opacity:.45}
+body.locked #topbar{opacity:.5}
 
 #crosshair{left:50%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border:2px solid rgba(255,255,255,.5);
   border-radius:50%;mix-blend-mode:difference}
@@ -198,7 +203,8 @@ canvas{display:block}
 </div>
 
 <div id="crosshair" class="hud"></div>
-<div id="hint" class="hud"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> pohyb · myš = rozhlížení · klikni na popisek = slovíčko · <kbd>E</kbd> = interakce · <kbd>F</kbd> = vyslovit</div>
+<div id="playHint" class="hud" style="display:none">🖱️ Klikni do okna — myš ovládá rozhlížení · <kbd>Esc</kbd> = pauza/myš zpět</div>
+<div id="hint" class="hud"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> pohyb · myš = rozhlížení · zaměř křížkem a <kbd>klikni</kbd>/<kbd>E</kbd> = interakce · <kbd>F</kbd> = vyslovit · <kbd>Esc</kbd> = pauza</div>
 
 <div class="mobileMove" id="mobileMove">
   <div class="mb up" data-dir="f">▲</div><div class="mb left" data-dir="l">◀</div>
@@ -251,6 +257,8 @@ canvas{display:block}
 <script type="module">
 import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { Sky } from 'three/addons/objects/Sky.js';
 
 /* =========================================================================
    DATA — slovíčka ve světě (rod přesně!). g: m=mužský, f=ženský, pl=množné.
@@ -685,20 +693,31 @@ const labels=[]; // {el, obj3d, item} pro objekty i NPC
 let yaw=0, pitch=0;
 const move={f:false,b:false,l:false,r:false};
 const PLAYER_Y=1.6;
+const PLAYER_R=0.38;
 const BOUND=27;
+let controls, useLock=false;
+let skyMesh=null, groundMesh=null;
+const colliders=[]; // AABB v rovině XZ pro kolize
+function addBox(cx,cz,hw,hd){ colliders.push({minX:cx-hw,maxX:cx+hw,minZ:cz-hd,maxZ:cz+hd}); }
+const SOLID={ table:[1.0,0.65], sofa:[1.2,0.6], bed:[1.1,1.6], bench:[0.9,0.45],
+  fountain:[1.45,1.45], car:[1.2,0.7], tree:[0.6,0.6], bike:[0.4,0.8], tv:[1.0,0.35] };
 
 function initThree(){
   scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x9fd4ff);
-  scene.fog=new THREE.Fog(0x9fd4ff, 30, 75);
+  scene.fog=new THREE.FogExp2(0xd5e7f2, 0.011);
 
-  camera=new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 200);
+  camera=new THREE.PerspectiveCamera(68, innerWidth/innerHeight, 0.1, 1200);
   camera.position.set(-2, PLAYER_Y, 9);
-  yaw=Math.PI; // koukej do scény
+  camera.lookAt(5, PLAYER_Y, 14);
 
-  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer=new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
   renderer.setSize(innerWidth, innerHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=0.72;
   document.getElementById('app').appendChild(renderer.domElement);
 
   labelRenderer=new CSS2DRenderer();
@@ -710,10 +729,28 @@ function initThree(){
   labelRenderer.domElement.style.zIndex='5';
   document.getElementById('app').appendChild(labelRenderer.domElement);
 
-  // světla
-  const hemi=new THREE.HemisphereLight(0xcfe8ff, 0x4a6b3a, 1.05); scene.add(hemi);
-  const sun=new THREE.DirectionalLight(0xfff3d6, 1.15); sun.position.set(12,18,-8); scene.add(sun);
-  const amb=new THREE.AmbientLight(0xffffff, .25); scene.add(amb);
+  // --- realistická obloha (Sky shader) ---
+  const sky=new Sky(); sky.scale.setScalar(800); scene.add(sky); skyMesh=sky;
+  const su=sky.material.uniforms;
+  su.turbidity.value=6; su.rayleigh.value=1.8;
+  su.mieCoefficient.value=0.005; su.mieDirectionalG.value=0.8;
+  const sunPos=new THREE.Vector3();
+  const phi=THREE.MathUtils.degToRad(90-34), theta=THREE.MathUtils.degToRad(150);
+  sunPos.setFromSphericalCoords(1, phi, theta);
+  su.sunPosition.value.copy(sunPos);
+
+  // --- světla ---
+  const hemi=new THREE.HemisphereLight(0xbcd9ff, 0x586b3a, 0.9); scene.add(hemi);
+  const amb=new THREE.AmbientLight(0xffffff, 0.28); scene.add(amb);
+  const sun=new THREE.DirectionalLight(0xfff2d6, 3.1);
+  sun.position.copy(sunPos).multiplyScalar(70);
+  sun.castShadow=true;
+  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.near=1; sun.shadow.camera.far=200;
+  sun.shadow.camera.left=-42; sun.shadow.camera.right=42;
+  sun.shadow.camera.top=42; sun.shadow.camera.bottom=-42;
+  sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.02;
+  scene.add(sun); scene.add(sun.target);
 
   buildGround();
   buildHouse();
@@ -722,8 +759,40 @@ function initThree(){
   buildNpcs();
   buildScenery();
 
+  // stíny pro všechny pevné meshe (vynech oblohu, zem a zářící slunce)
+  scene.traverse(o=>{
+    if(o.isMesh && o!==skyMesh && !(o.material && o.material.isMeshBasicMaterial)){
+      o.castShadow=true; o.receiveShadow=true;
+    }
+  });
+  if(groundMesh){ groundMesh.castShadow=false; groundMesh.receiveShadow=true; }
+
+  buildClouds();      // mraky až po nastavení stínů (samy stín nevrhají)
+  buildColliders();   // pevné zdi a budovy
   clock=new THREE.Clock();
   addEventListener('resize', onResize);
+}
+
+function buildClouds(){
+  for(let i=0;i<11;i++){
+    const cg=new THREE.Group(); const n=3+Math.floor(Math.random()*3);
+    for(let j=0;j<n;j++){
+      const s=new THREE.Mesh(new THREE.SphereGeometry(2+Math.random()*2.2,10,10),
+        new THREE.MeshLambertMaterial({color:0xffffff}));
+      s.position.set(j*2.6-3, Math.random()*1.2, Math.random()*2.2); s.scale.y=0.55;
+      s.castShadow=false; s.receiveShadow=false; cg.add(s);
+    }
+    cg.position.set(-60+Math.random()*120, 26+Math.random()*10, -60+Math.random()*120);
+    scene.add(cg);
+  }
+}
+
+function buildColliders(){
+  // zdi domu
+  addBox(-10,-8.4, 6.6,0.3); addBox(-16.4,-1, 0.3,7.6); addBox(-3.6,-1, 0.3,7.6);
+  addBox(-13.8,6.4, 2.4,0.3); addBox(-6.2,6.4, 2.4,0.3);
+  // budovy na návsi
+  addBox(6,12, 2.6,2.1); addBox(13,11, 2.6,2.1); addBox(12,17.5, 2.6,2.1);
 }
 
 function onResize(){
@@ -740,14 +809,26 @@ function sph(r,c,seg=18){ return new THREE.Mesh(new THREE.SphereGeometry(r,seg,s
 function cone(r,h,c,seg=16){ return new THREE.Mesh(new THREE.ConeGeometry(r,h,seg), M(c)); }
 function grp(...kids){ const g=new THREE.Group(); kids.forEach(k=>k&&g.add(k)); return g; }
 
+function makeGroundTex(base, strength){
+  const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d');
+  x.fillStyle=base; x.fillRect(0,0,128,128);
+  for(let i=0;i<2400;i++){ const a=Math.random()*strength;
+    x.fillStyle=(Math.random()<.5)?`rgba(255,255,255,${a*0.22})`:`rgba(0,0,0,${a*0.28})`;
+    x.fillRect(Math.random()*128, Math.random()*128, 1+Math.random()*2, 1+Math.random()*2); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping;
+  t.colorSpace=THREE.SRGBColorSpace; return t;
+}
 function buildGround(){
-  const g=new THREE.Mesh(new THREE.PlaneGeometry(70,70), M(0x6ab04c,{roughness:1}));
-  g.rotation.x=-Math.PI/2; scene.add(g);
-  // cesta
-  const path=new THREE.Mesh(new THREE.PlaneGeometry(4,46), M(0xc9b18b,{roughness:1}));
-  path.rotation.x=-Math.PI/2; path.position.set(2,0.01,2); scene.add(path);
-  const path2=new THREE.Mesh(new THREE.PlaneGeometry(30,4), M(0xc9b18b,{roughness:1}));
-  path2.rotation.x=-Math.PI/2; path2.position.set(2,0.01,12); scene.add(path2);
+  const grass=makeGroundTex('#5f9e43', 0.55); grass.repeat.set(30,30);
+  const g=new THREE.Mesh(new THREE.PlaneGeometry(120,120),
+    new THREE.MeshStandardMaterial({map:grass, roughness:1, metalness:0}));
+  g.rotation.x=-Math.PI/2; scene.add(g); groundMesh=g;
+  const sand=makeGroundTex('#cdb487', 0.4); sand.repeat.set(4,18);
+  const pmat=new THREE.MeshStandardMaterial({map:sand, roughness:1, metalness:0});
+  const path=new THREE.Mesh(new THREE.PlaneGeometry(4,46), pmat);
+  path.rotation.x=-Math.PI/2; path.position.set(2,0.012,2); scene.add(path);
+  const path2=new THREE.Mesh(new THREE.PlaneGeometry(30,4), pmat);
+  path2.rotation.x=-Math.PI/2; path2.position.set(2,0.012,12); scene.add(path2);
 }
 
 /* dům s nízkými zdmi (bez střechy, ať jsou popisky vidět) */
@@ -772,22 +853,32 @@ function buildVillage(){
 }
 function facade(x,z,wall,roof){
   const b=box(5,3.2,4,wall); b.position.set(x,1.6,z); scene.add(b);
-  const r=cone(3.8,1.6,roof,4); r.rotation.y=Math.PI/4; r.position.set(x,4.0,z); scene.add(r);
-  const door=box(1,1.7,.15,0x6b4a2a); door.position.set(x, .85, z-2.02); scene.add(door);
+  const r=cone(3.95,1.7,roof,4); r.rotation.y=Math.PI/4; r.position.set(x,4.05,z); scene.add(r);
+  const door=box(1.1,1.9,.18,0x5b3a1e); door.position.set(x, .95, z-2.02); scene.add(door);
+  [-1.5,1.5].forEach(dx=>{
+    const fr=box(1.0,1.0,.1,0xf2f2f2); fr.position.set(x+dx,1.85,z-2.0); scene.add(fr);
+    const gl=box(.78,.78,.12,0x8fd0ff,M(0x8fd0ff,{metalness:.35,roughness:.08,emissive:0x223a4d,emissiveIntensity:.4}));
+    gl.position.set(x+dx,1.85,z-2.04); scene.add(gl);
+  });
 }
 
 /* dekorace navíc (stromy v pozadí, plot) */
 function buildScenery(){
-  const spots=[[-22,-18],[-18,-22],[20,-20],[24,-10],[-24,12],[22,22],[-20,22],[18,-26]];
-  spots.forEach(([x,z])=>scene.add(treeMesh(x,z, 1+Math.random()*0.6)));
-  // plot kolem zahrady
-  for(let i=-2;i<=14;i+=2){ const p=box(.12,1,.12,0xffffff); p.position.set(i,.5,-9); scene.add(p); }
+  const spots=[[-22,-18],[-18,-22],[20,-20],[24,-10],[-24,12],[22,22],[-20,22],[18,-26],[-26,-4],[26,4]];
+  spots.forEach(([x,z])=>{ const s=1+Math.random()*0.6; scene.add(treeMesh(x,z,s)); addBox(x,z,0.55,0.55); });
+  // bílý plůtek kolem zahrady
+  for(let i=-2;i<=14;i+=1.2){
+    const p=box(.1,.9,.1,0xfafafa); p.position.set(i,.45,-9); scene.add(p);
+    if(i%2<1){ const rail=box(1.2,.12,.06,0xfafafa); rail.position.set(i+.6,.62,-9); scene.add(rail); }
+  }
 }
 function treeMesh(x,z,s=1){
-  const g=grp(); const trunk=cyl(.25*s,.32*s,1.6*s,0x8b5a2b); trunk.position.y=.8*s;
-  const c1=sph(1.1*s,0x3f9b46); c1.position.y=2.1*s;
-  const c2=sph(.8*s,0x4caf50); c2.position.set(.5*s,1.7*s,.3*s);
-  g.add(trunk,c1,c2); g.position.set(x,0,z); return g;
+  const g=grp();
+  const trunk=cyl(.17*s,.3*s,1.7*s,0x7a5230,10); trunk.position.y=.85*s; g.add(trunk);
+  const greens=[0x3f9b46,0x4caf50,0x58b85a,0x368f3e];
+  [[0,2.2,0,1.2],[.62,1.85,.32,.82],[-.5,1.95,.22,.86],[.12,2.65,-.2,.72],[-.25,2.2,-.45,.7]]
+    .forEach(([bx,by,bz,br],i)=>{ const c=sph(br*s,greens[i%greens.length],12); c.position.set(bx*s,by*s,bz*s); g.add(c); });
+  g.position.set(x,0,z); return g;
 }
 
 /* =========================================================================
@@ -859,6 +950,8 @@ function buildVocab(){
     const shape=buildShape(item.type);
     shape.position.set(item.pos[0], item.pos[1], item.pos[2]);
     scene.add(shape);
+    const sd=SOLID[item.type];
+    if(sd) addBox(item.pos[0], item.pos[2], sd[0], sd[1]);
     // výška popisku podle typu
     const bbox=new THREE.Box3().setFromObject(shape);
     const h=Math.min(Math.max(bbox.max.y - item.pos[1], .5), 5)+.5;
@@ -876,6 +969,7 @@ function buildNpcs(){
     const hair=sph(.27,0x4a2f1a); hair.scale.y=.6; hair.position.y=1.5;
     g.add(body,head,hair); g.position.set(n.pos[0],n.pos[1],n.pos[2]);
     scene.add(g);
+    addBox(n.pos[0], n.pos[2], 0.5, 0.5);
     const {el,obj}=makeLabel(n, 1.95, true);
     g.add(obj);
     n._g=g;
@@ -884,28 +978,45 @@ function buildNpcs(){
 }
 
 /* =========================================================================
-   OVLÁDÁNÍ — pohyb + rozhlížení
+   OVLÁDÁNÍ — FPS myš (Pointer Lock) + kolize; dotykový fallback
    ========================================================================= */
-let dragging=false, lastX=0, lastY=0;
+const raycaster=new THREE.Raycaster();
+function clearMove(){ move.f=move.b=move.l=move.r=false; }
+function uiBusy(){ return overlayOpen() || dlgOpen()
+  || document.getElementById('wordPanel').classList.contains('show'); }
+
 function initControls(){
-  const dom=renderer.domElement;
-  dom.addEventListener('pointerdown', e=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; });
-  addEventListener('pointerup', ()=>dragging=false);
-  addEventListener('pointermove', e=>{
-    if(!dragging) return;
-    const dx=e.clientX-lastX, dy=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY;
-    yaw -= dx*0.0035; pitch -= dy*0.0035;
-    pitch=Math.max(-1.1, Math.min(1.1, pitch));
-  });
+  useLock = ('pointerLockElement' in document) && !('ontouchstart' in window);
+  controls = new PointerLockControls(camera, document.body);
+  controls.pointerSpeed=1.0;
+  const playHint=document.getElementById('playHint');
+
+  if(useLock){
+    renderer.domElement.addEventListener('click', ()=>{ if(!uiBusy() && !controls.isLocked) controls.lock(); });
+    controls.addEventListener('lock', ()=>{ document.body.classList.add('locked'); if(playHint) playHint.style.display='none'; });
+    controls.addEventListener('unlock', ()=>{ document.body.classList.remove('locked'); clearMove();
+      if(playHint && !uiBusy()) playHint.style.display='block'; });
+    // klik ve hře = interakce s tím, na co se díváš (křížek)
+    document.addEventListener('mousedown', e=>{ if(controls.isLocked && e.button===0) interactCenter(); });
+  } else {
+    initTouchLook();
+  }
+
   addEventListener('keydown', e=>{
-    if(overlayOpen()) return;
     const k=e.key.toLowerCase();
+    if(k==='escape'){
+      if(document.getElementById('overlay').classList.contains('show')) closeOverlay();
+      else if(dlgOpen()) closeDlg();
+      else document.getElementById('wordPanel').classList.remove('show');
+      return;
+    }
+    if(uiBusy()) return;
     if(k==='w'||k==='arrowup')move.f=true;
     else if(k==='s'||k==='arrowdown')move.b=true;
     else if(k==='a'||k==='arrowleft')move.l=true;
     else if(k==='d'||k==='arrowright')move.r=true;
-    else if(k==='e'){ interactNearest(); }
-    else if(k==='f'){ const n=nearestObject(); if(n) Speech.say((n.item.art?n.item.art+' ':'')+n.item.fr); }
+    else if(k==='e'){ interactCenter(); }
+    else if(k==='f'){ const n=currentTarget(); if(n) Speech.say((n.item.art?n.item.art+' ':'')+n.item.fr); }
   });
   addEventListener('keyup', e=>{
     const k=e.key.toLowerCase();
@@ -914,37 +1025,77 @@ function initControls(){
     else if(k==='a'||k==='arrowleft')move.l=false;
     else if(k==='d'||k==='arrowright')move.r=false;
   });
-  // mobil
+
+  // mobilní D-pad
   document.querySelectorAll('#mobileMove .mb').forEach(b=>{
     const dir=b.dataset.dir;
     const on=e=>{e.preventDefault(); move[dir]=true;};
     const off=e=>{e.preventDefault(); move[dir]=false;};
-    b.addEventListener('touchstart',on); b.addEventListener('touchend',off); b.addEventListener('touchcancel',off);
+    b.addEventListener('touchstart',on,{passive:false}); b.addEventListener('touchend',off); b.addEventListener('touchcancel',off);
     b.addEventListener('mousedown',on); b.addEventListener('mouseup',off); b.addEventListener('mouseleave',off);
   });
   if('ontouchstart' in window){ document.getElementById('mobileMove').style.display='grid'; }
 }
 
-function updateMovement(dt){
-  const speed=5.5*dt;
-  const sinY=Math.sin(yaw), cosY=Math.cos(yaw);
-  let fx=0,fz=0;
-  if(move.f){ fx-=sinY; fz-=cosY; }
-  if(move.b){ fx+=sinY; fz+=cosY; }
-  if(move.l){ fx-=cosY; fz+=sinY; }
-  if(move.r){ fx+=cosY; fz-=sinY; }
-  const len=Math.hypot(fx,fz)||1;
-  camera.position.x += (fx/len)*speed*(move.f||move.b||move.l||move.r?1:0);
-  camera.position.z += (fz/len)*speed*(move.f||move.b||move.l||move.r?1:0);
-  camera.position.x=Math.max(-BOUND,Math.min(BOUND,camera.position.x));
-  camera.position.z=Math.max(-BOUND,Math.min(BOUND,camera.position.z));
-  camera.position.y=PLAYER_Y;
-  const e=new THREE.Euler(pitch, yaw, 0, 'YXZ');
-  camera.quaternion.setFromEuler(e);
+/* dotyk / desktop bez pointer locku: táhni prstem/myší pro rozhlížení */
+function initTouchLook(){
+  const e=new THREE.Euler().setFromQuaternion(camera.quaternion,'YXZ'); yaw=e.y; pitch=e.x;
+  const cv=renderer.domElement; let id=null, lx=0, ly=0;
+  cv.addEventListener('pointerdown', ev=>{ id=ev.pointerId; lx=ev.clientX; ly=ev.clientY; });
+  cv.addEventListener('pointermove', ev=>{ if(ev.pointerId!==id) return;
+    yaw -= (ev.clientX-lx)*0.005; pitch -= (ev.clientY-ly)*0.005;
+    pitch=Math.max(-1.2,Math.min(1.2,pitch)); lx=ev.clientX; ly=ev.clientY; });
+  const end=ev=>{ if(ev.pointerId===id) id=null; };
+  cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
 }
 
-/* nejbližší interaktivní objekt v dosahu (pro křížek + klávesu E) */
-function nearestObject(range=4){
+/* kolize: vytlač bod (px,pz) z překážek → klouzání podél stěn */
+function resolveCollision(px,pz){
+  for(const c of colliders){
+    const minX=c.minX-PLAYER_R, maxX=c.maxX+PLAYER_R, minZ=c.minZ-PLAYER_R, maxZ=c.maxZ+PLAYER_R;
+    if(px>minX && px<maxX && pz>minZ && pz<maxZ){
+      const dl=px-minX, dr=maxX-px, dt=pz-minZ, db=maxZ-pz;
+      const m=Math.min(dl,dr,dt,db);
+      if(m===dl)px=minX; else if(m===dr)px=maxX; else if(m===dt)pz=minZ; else pz=maxZ;
+    }
+  }
+  return [px,pz];
+}
+
+function updateMovement(dt){
+  if(!useLock){ camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ')); }
+  const canMove = useLock ? controls.isLocked : !uiBusy();
+  if(canMove){
+    const speed=5.0*dt;
+    const dir=new THREE.Vector3(); camera.getWorldDirection(dir); dir.y=0;
+    if(dir.lengthSq()<1e-6) dir.set(0,0,-1); dir.normalize();
+    const right=new THREE.Vector3().crossVectors(dir,new THREE.Vector3(0,1,0)).normalize();
+    let vx=0,vz=0;
+    if(move.f){vx+=dir.x;vz+=dir.z;} if(move.b){vx-=dir.x;vz-=dir.z;}
+    if(move.r){vx+=right.x;vz+=right.z;} if(move.l){vx-=right.x;vz-=right.z;}
+    const len=Math.hypot(vx,vz);
+    if(len>0){
+      vx=vx/len*speed; vz=vz/len*speed;
+      let px=camera.position.x+vx, pz=camera.position.z+vz;
+      [px,pz]=resolveCollision(px,pz);
+      camera.position.x=Math.max(-BOUND,Math.min(BOUND,px));
+      camera.position.z=Math.max(-BOUND,Math.min(BOUND,pz));
+    }
+  }
+  camera.position.y=PLAYER_Y;
+}
+
+/* co je na křížku (raycast ze středu), jinak nejbližší v dosahu */
+function lookedAt(maxDist=6){
+  raycaster.setFromCamera({x:0,y:0}, camera);
+  const hits=raycaster.intersectObjects(labels.map(l=>l.obj3d), true);
+  for(const h of hits){
+    let o=h.object;
+    while(o){ const L=labels.find(l=>l.obj3d===o); if(L) return h.distance<=maxDist? L : null; o=o.parent; }
+  }
+  return null;
+}
+function nearestObject(range=3.2){
   let best=null, bd=range;
   for(const L of labels){
     const p=new THREE.Vector3(); L.obj3d.getWorldPosition(p);
@@ -953,22 +1104,21 @@ function nearestObject(range=4){
   }
   return best;
 }
-function interactNearest(){
-  const n=nearestObject();
-  if(!n) return;
-  n.isNpc? startDialogue(n.item.dialogue) : openWord(n.item);
+function currentTarget(){ return lookedAt() || nearestObject(); }
+function interactCenter(){
+  const L=currentTarget(); if(!L) return;
+  L.isNpc? startDialogue(L.item.dialogue) : openWord(L.item);
 }
 
-/* zvýraznění nejbližšího + skrytí vzdálených popisků */
+/* zvýraznění cíle na křížku + skrytí vzdálených popisků */
 function updateLabels(){
-  const near=nearestObject();
-  const cx=document.getElementById('crosshair');
-  cx.classList.toggle('active', !!near);
+  const cur=currentTarget();
+  document.getElementById('crosshair').classList.toggle('active', !!cur);
   for(const L of labels){
     const p=new THREE.Vector3(); L.obj3d.getWorldPosition(p);
     const d=p.distanceTo(camera.position);
-    L.el.style.opacity = d>26?0 : d>16?0.45 : 1;
-    L.el.classList.toggle('near', L===near);
+    L.el.style.opacity = d>30?0 : d>18?0.5 : 1;
+    L.el.classList.toggle('near', L===cur);
   }
 }
 
@@ -976,6 +1126,7 @@ function updateLabels(){
    UI — slovíčko
    ========================================================================= */
 function openWord(item){
+  if(controls && controls.isLocked) controls.unlock();
   Progress.learnWord(item.fr);
   // SRS: zařadit/aktualizovat
   if(!Progress.data.srs[item.fr]) Progress.data.srs[item.fr]={ease:2.3,reps:0,due:Date.now()};
@@ -1017,8 +1168,11 @@ function markLabelDone(fr){
    UI — dialog
    ========================================================================= */
 let dlgState=null;
+function dlgOpen(){ return document.getElementById('dlg').classList.contains('show'); }
+function closeDlg(){ document.getElementById('dlg').classList.remove('show'); }
 function startDialogue(id){
   const d=DIALOGUES[id]; if(!d) return;
+  if(controls && controls.isLocked) controls.unlock();
   const npc=NPCS.find(n=>n.id===d.who)||{emoji:'🗣️',name:'?',role:''};
   dlgState={d,npc,idx:0};
   document.getElementById('wordPanel').classList.remove('show');
@@ -1076,8 +1230,11 @@ function renderDlg(){
    ========================================================================= */
 function overlayOpen(){ return document.getElementById('overlay').classList.contains('show')
   || document.getElementById('start').classList.contains('show'); }
-function openOverlay(title){ document.getElementById('ovTitle').textContent=title; document.getElementById('overlay').classList.add('show'); }
-function closeOverlay(){ document.getElementById('overlay').classList.remove('show'); }
+function openOverlay(title){ if(controls && controls.isLocked) controls.unlock();
+  const ph=document.getElementById('playHint'); if(ph) ph.style.display='none';
+  document.getElementById('ovTitle').textContent=title; document.getElementById('overlay').classList.add('show'); }
+function closeOverlay(){ document.getElementById('overlay').classList.remove('show');
+  const ph=document.getElementById('playHint'); if(ph && useLock && controls && !controls.isLocked) ph.style.display='block'; }
 document.getElementById('ovClose').onclick=closeOverlay;
 document.getElementById('overlay').addEventListener('click',e=>{ if(e.target.id==='overlay') closeOverlay(); });
 
@@ -1198,12 +1355,12 @@ function openHelp(){
    <div class="lesson">
     <h4>Ovládání</h4>
     <ul>
-     <li><b>Pohyb:</b> klávesy <code>W A S D</code> nebo šipky (na mobilu tlačítka vlevo dole).</li>
-     <li><b>Rozhlížení:</b> táhni myší (prstem) po obrazovce.</li>
-     <li><b>Slovíčko:</b> klikni na popisek nad věcí — vysloví se a ukáže člen, rod, překlad a větu.</li>
-     <li><b>Interakce zblízka:</b> přijdi k věci/postavě a stiskni <code>E</code>.</li>
-     <li><b>Vyslovit nejbližší:</b> <code>F</code>.</li>
-     <li><b>Mluvit s postavou (💬):</b> klikni na její jmenovku a projdi dialog s výběrem odpovědí.</li>
+     <li><b>Spustit ovládání:</b> klikni do okna — myš pak ovládá rozhlížení (jako v FPS hře). <code>Esc</code> = pauza a myš zpět.</li>
+     <li><b>Pohyb:</b> klávesy <code>W A S D</code> nebo šipky (na mobilu tlačítka vlevo dole, rozhlížení tažením prstu).</li>
+     <li><b>Interakce:</b> zaměř věc/postavu křížkem uprostřed a <b>klikni</b> nebo stiskni <code>E</code>. Slovíčko se vysloví a ukáže člen, rod, překlad a větu.</li>
+     <li><b>Vyslovit zaměřené:</b> <code>F</code>.</li>
+     <li><b>Mluvit s postavou (💬):</b> zaměř ji a klikni — projdeš dialog s výběrem odpovědí.</li>
+     <li><b>Fyzika:</b> zdmi, nábytkem ani stromy neprojdeš — okolo nich se kloužeš.</li>
     </ul>
     <h4>Barvy členů</h4>
     <p><span style="color:var(--m)">■ le / un</span> = mužský rod · <span style="color:var(--f)">■ la / une</span> = ženský rod · <span style="color:var(--pl)">■ les / des</span> = množné číslo.</p>
@@ -1228,7 +1385,8 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 /* =========================================================================
    START / smyčka
    ========================================================================= */
-document.getElementById('btnPlay').onclick=()=>{ document.getElementById('start').classList.remove('show'); };
+document.getElementById('btnPlay').onclick=()=>{ document.getElementById('start').classList.remove('show');
+  if(useLock) document.getElementById('playHint').style.display='block'; };
 document.getElementById('btnStartLessons').onclick=()=>{ document.getElementById('start').classList.remove('show'); openLessons(); };
 document.getElementById('btnLessons').onclick=openLessons;
 document.getElementById('btnReview').onclick=openReview;
