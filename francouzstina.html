@@ -265,6 +265,11 @@ import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { Sky } from 'three/addons/objects/Sky.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { SAOPass } from 'three/addons/postprocessing/SAOPass.js';
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 /* =========================================================================
    DATA — slovíčka ve světě (rod přesně!). g: m=mužský, f=ženský, pl=množné.
@@ -330,6 +335,11 @@ const THEMES=[
   {id:"time",t:"Čas a kalendář",e:"🕐"},{id:"school",t:"Škola a práce",e:"🏫"},
   {id:"verbs",t:"Slovesa",e:"🏃"},{id:"adj",t:"Přídavná jména",e:"🔆"},
   {id:"words",t:"Spojky a předložky",e:"🔗"},{id:"abstract",t:"Pocity a abstrakce",e:"💭"},
+  {id:"jobs",t:"Povolání",e:"🧑‍💼"},{id:"sports",t:"Sport a volný čas",e:"⚽"},
+  {id:"tech",t:"Technika a média",e:"💻"},{id:"country",t:"Země a národnosti",e:"🌍"},
+  {id:"music",t:"Hudba a umění",e:"🎵"},{id:"health",t:"Zdraví",e:"🩺"},
+  {id:"travel",t:"Cestování",e:"✈️"},{id:"kitchen",t:"Kuchyně a vaření",e:"🍳"},
+  {id:"adv",t:"Příslovce",e:"⏱️"},
   {id:"other",t:"Ostatní",e:"📦"},
 ];
 const TYPE_THEME={door:"house",window:"house",table:"house",chair:"house",sofa:"house",bed:"house",
@@ -547,6 +557,189 @@ const DICT=[
   {f:"monde",a:"le",g:"m",c:"svět",t:"abstract",l:"A1"},{f:"histoire",a:"l'",g:"f",c:"příběh/dějiny",t:"abstract",l:"A2"},
   {f:"mot",a:"le",g:"m",c:"slovo",t:"abstract",l:"A1"},{f:"langue",a:"la",g:"f",c:"jazyk/řeč",t:"abstract",l:"A1"},
   {f:"nom",a:"le",g:"m",c:"jméno",t:"abstract",l:"A1"},{f:"chose",a:"la",g:"f",c:"věc",t:"abstract",l:"A1"},
+  {f:"exemple",a:"l'",g:"m",c:"příklad",t:"abstract",l:"A2"},{f:"partie",a:"la",g:"f",c:"část",t:"abstract",l:"A2"},
+  {f:"groupe",a:"le",g:"m",c:"skupina",t:"abstract",l:"A2"},{f:"moitié",a:"la",g:"f",c:"polovina",t:"abstract",l:"A2"},
+  {f:"avenir",a:"l'",g:"m",c:"budoucnost",t:"abstract",l:"B1"},{f:"mémoire",a:"la",g:"f",c:"paměť",t:"abstract",l:"B1"},
+  {f:"besoin",a:"le",g:"m",c:"potřeba",t:"abstract",l:"B1"},{f:"sens",a:"le",g:"m",c:"smysl/význam",t:"abstract",l:"B1"},
+  {f:"but",a:"le",g:"m",c:"cíl",t:"abstract",l:"B1"},{f:"effort",a:"l'",g:"m",c:"úsilí",t:"abstract",l:"B1"},
+  {f:"doute",a:"le",g:"m",c:"pochybnost",t:"abstract",l:"B2"},{f:"pouvoir",a:"le",g:"m",c:"moc",t:"abstract",l:"B2"},
+  // POVOLÁNÍ
+  {f:"médecin",a:"le",g:"m",c:"lékař",t:"jobs",l:"A2"},{f:"infirmier",a:"l'",g:"m",c:"zdravotník",t:"jobs",l:"A2"},
+  {f:"avocat",a:"l'",g:"m",c:"právník",t:"jobs",l:"B1"},{f:"ingénieur",a:"l'",g:"m",c:"inženýr",t:"jobs",l:"A2"},
+  {f:"vendeur",a:"le",g:"m",c:"prodavač",t:"jobs",l:"A1"},{f:"serveur",a:"le",g:"m",c:"číšník",t:"jobs",l:"A1"},
+  {f:"cuisinier",a:"le",g:"m",c:"kuchař",t:"jobs",l:"A2"},{f:"boulanger",a:"le",g:"m",c:"pekař",t:"jobs",l:"A1"},
+  {f:"boucher",a:"le",g:"m",c:"řezník",t:"jobs",l:"A2"},{f:"coiffeur",a:"le",g:"m",c:"kadeřník",t:"jobs",l:"A2"},
+  {f:"pompier",a:"le",g:"m",c:"hasič",t:"jobs",l:"A2"},{f:"policier",a:"le",g:"m",c:"policista",t:"jobs",l:"A1"},
+  {f:"facteur",a:"le",g:"m",c:"pošťák",t:"jobs",l:"A2"},{f:"agriculteur",a:"l'",g:"m",c:"zemědělec",t:"jobs",l:"B1"},
+  {f:"chauffeur",a:"le",g:"m",c:"řidič",t:"jobs",l:"A2"},{f:"pilote",a:"le",g:"m",c:"pilot",t:"jobs",l:"A2"},
+  {f:"journaliste",a:"le",g:"m",c:"novinář",t:"jobs",l:"B1"},{f:"écrivain",a:"l'",g:"m",c:"spisovatel",t:"jobs",l:"B1"},
+  {f:"peintre",a:"le",g:"m",c:"malíř",t:"jobs",l:"B1"},{f:"acteur",a:"l'",g:"m",c:"herec",t:"jobs",l:"A2"},
+  {f:"chanteur",a:"le",g:"m",c:"zpěvák",t:"jobs",l:"A2"},{f:"architecte",a:"l'",g:"m",c:"architekt",t:"jobs",l:"B1"},
+  {f:"directeur",a:"le",g:"m",c:"ředitel",t:"jobs",l:"B1"},{f:"employé",a:"l'",g:"m",c:"zaměstnanec",t:"jobs",l:"A2"},
+  {f:"ouvrier",a:"l'",g:"m",c:"dělník",t:"jobs",l:"B1"},{f:"dentiste",a:"le",g:"m",c:"zubař",t:"jobs",l:"A2"},
+  {f:"vétérinaire",a:"le",g:"m",c:"veterinář",t:"jobs",l:"B1"},{f:"plombier",a:"le",g:"m",c:"instalatér",t:"jobs",l:"B1"},
+  {f:"mécanicien",a:"le",g:"m",c:"mechanik",t:"jobs",l:"B1"},{f:"jardinier",a:"le",g:"m",c:"zahradník",t:"jobs",l:"B1"},
+  // SPORT A VOLNÝ ČAS
+  {f:"sport",a:"le",g:"m",c:"sport",t:"sports",l:"A1"},{f:"football",a:"le",g:"m",c:"fotbal",t:"sports",l:"A1"},
+  {f:"basket",a:"le",g:"m",c:"basketbal",t:"sports",l:"A1"},{f:"tennis",a:"le",g:"m",c:"tenis",t:"sports",l:"A1"},
+  {f:"natation",a:"la",g:"f",c:"plavání",t:"sports",l:"A2"},{f:"ski",a:"le",g:"m",c:"lyžování",t:"sports",l:"A1"},
+  {f:"danse",a:"la",g:"f",c:"tanec",t:"sports",l:"A1"},{f:"gymnastique",a:"la",g:"f",c:"gymnastika",t:"sports",l:"A2"},
+  {f:"yoga",a:"le",g:"m",c:"jóga",t:"sports",l:"A2"},{f:"boxe",a:"la",g:"f",c:"box",t:"sports",l:"B1"},
+  {f:"équipe",a:"l'",g:"f",c:"tým",t:"sports",l:"A2"},{f:"match",a:"le",g:"m",c:"zápas",t:"sports",l:"A1"},
+  {f:"ballon",a:"le",g:"m",c:"míč",t:"sports",l:"A1"},{f:"jeu",a:"le",g:"m",c:"hra",t:"sports",l:"A1"},
+  {f:"joueur",a:"le",g:"m",c:"hráč",t:"sports",l:"A2"},{f:"stade",a:"le",g:"m",c:"stadion",t:"sports",l:"A2"},
+  {f:"médaille",a:"la",g:"f",c:"medaile",t:"sports",l:"B1"},{f:"champion",a:"le",g:"m",c:"šampion",t:"sports",l:"A2"},
+  {f:"loisir",a:"le",g:"m",c:"volný čas",t:"sports",l:"B1"},{f:"promenade",a:"la",g:"f",c:"procházka",t:"sports",l:"A2"},
+  {f:"randonnée",a:"la",g:"f",c:"turistika",t:"sports",l:"B1"},{f:"piscine",a:"la",g:"f",c:"bazén",t:"sports",l:"A1"},
+  // TECHNIKA A MÉDIA
+  {f:"téléphone",a:"le",g:"m",c:"telefon",t:"tech",l:"A1"},{f:"portable",a:"le",g:"m",c:"mobil",t:"tech",l:"A1"},
+  {f:"internet",a:"l'",g:"m",c:"internet",t:"tech",l:"A1"},{f:"écran",a:"l'",g:"m",c:"obrazovka",t:"tech",l:"A2"},
+  {f:"clavier",a:"le",g:"m",c:"klávesnice",t:"tech",l:"A2"},{f:"site",a:"le",g:"m",c:"web",t:"tech",l:"A2"},
+  {f:"application",a:"l'",g:"f",c:"aplikace",t:"tech",l:"A2"},{f:"courriel",a:"le",g:"m",c:"e-mail",t:"tech",l:"A2"},
+  {f:"mot de passe",a:"le",g:"m",c:"heslo",t:"tech",l:"A2"},{f:"fichier",a:"le",g:"m",c:"soubor",t:"tech",l:"B1"},
+  {f:"logiciel",a:"le",g:"m",c:"software",t:"tech",l:"B1"},{f:"réseau",a:"le",g:"m",c:"síť",t:"tech",l:"B1"},
+  {f:"vidéo",a:"la",g:"f",c:"video",t:"tech",l:"A1"},{f:"photo",a:"la",g:"f",c:"fotka",t:"tech",l:"A1"},
+  {f:"caméra",a:"la",g:"f",c:"kamera",t:"tech",l:"A2"},{f:"batterie",a:"la",g:"f",c:"baterie",t:"tech",l:"A2"},
+  {f:"chargeur",a:"le",g:"m",c:"nabíječka",t:"tech",l:"A2"},{f:"casque",a:"le",g:"m",c:"sluchátka",t:"tech",l:"A2"},
+  {f:"imprimante",a:"l'",g:"f",c:"tiskárna",t:"tech",l:"B1"},{f:"tablette",a:"la",g:"f",c:"tablet",t:"tech",l:"A2"},
+  {f:"robot",a:"le",g:"m",c:"robot",t:"tech",l:"A2"},{f:"clé USB",a:"la",g:"f",c:"flash disk",t:"tech",l:"B1"},
+  // ZEMĚ A NÁRODNOSTI
+  {f:"pays",a:"le",g:"m",c:"země/stát",t:"country",l:"A1"},{f:"France",a:"la",g:"f",c:"Francie",t:"country",l:"A1"},
+  {f:"Allemagne",a:"l'",g:"f",c:"Německo",t:"country",l:"A1"},{f:"Espagne",a:"l'",g:"f",c:"Španělsko",t:"country",l:"A1"},
+  {f:"Italie",a:"l'",g:"f",c:"Itálie",t:"country",l:"A1"},{f:"Angleterre",a:"l'",g:"f",c:"Anglie",t:"country",l:"A1"},
+  {f:"Tchéquie",a:"la",g:"f",c:"Česko",t:"country",l:"A1"},{f:"Europe",a:"l'",g:"f",c:"Evropa",t:"country",l:"A1"},
+  {f:"drapeau",a:"le",g:"m",c:"vlajka",t:"country",l:"A2"},{f:"frontière",a:"la",g:"f",c:"hranice",t:"country",l:"B1"},
+  {f:"nationalité",a:"la",g:"f",c:"národnost",t:"country",l:"A2"},{f:"capitale",a:"la",g:"f",c:"hlavní město",t:"country",l:"A2"},
+  {f:"français",a:"",g:"",c:"francouzský/Francouz",t:"country",l:"A1"},{f:"anglais",a:"",g:"",c:"anglický/Angličan",t:"country",l:"A1"},
+  {f:"allemand",a:"",g:"",c:"německý/Němec",t:"country",l:"A1"},{f:"espagnol",a:"",g:"",c:"španělský",t:"country",l:"A1"},
+  {f:"italien",a:"",g:"",c:"italský",t:"country",l:"A1"},{f:"tchèque",a:"",g:"",c:"český/Čech",t:"country",l:"A1"},
+  {f:"chinois",a:"",g:"",c:"čínský",t:"country",l:"A2"},{f:"américain",a:"",g:"",c:"americký",t:"country",l:"A1"},
+  // HUDBA A UMĚNÍ
+  {f:"musique",a:"la",g:"f",c:"hudba",t:"music",l:"A1"},{f:"chanson",a:"la",g:"f",c:"píseň",t:"music",l:"A1"},
+  {f:"instrument",a:"l'",g:"m",c:"nástroj",t:"music",l:"A2"},{f:"guitare",a:"la",g:"f",c:"kytara",t:"music",l:"A1"},
+  {f:"piano",a:"le",g:"m",c:"klavír",t:"music",l:"A1"},{f:"violon",a:"le",g:"m",c:"housle",t:"music",l:"A2"},
+  {f:"concert",a:"le",g:"m",c:"koncert",t:"music",l:"A2"},{f:"orchestre",a:"l'",g:"m",c:"orchestr",t:"music",l:"B1"},
+  {f:"art",a:"l'",g:"m",c:"umění",t:"music",l:"A2"},{f:"peinture",a:"la",g:"f",c:"malba",t:"music",l:"A2"},
+  {f:"dessin",a:"le",g:"m",c:"kresba",t:"music",l:"A2"},{f:"sculpture",a:"la",g:"f",c:"socha",t:"music",l:"B1"},
+  {f:"théâtre",a:"le",g:"m",c:"divadlo",t:"music",l:"A2"},{f:"cinéma",a:"le",g:"m",c:"kino",t:"music",l:"A1"},
+  {f:"film",a:"le",g:"m",c:"film",t:"music",l:"A1"},{f:"livre",a:"le",g:"m",c:"kniha",t:"music",l:"A1"},
+  // ZDRAVÍ
+  {f:"maladie",a:"la",g:"f",c:"nemoc",t:"health",l:"A2"},{f:"médicament",a:"le",g:"m",c:"lék",t:"health",l:"A2"},
+  {f:"docteur",a:"le",g:"m",c:"doktor",t:"health",l:"A1"},{f:"fièvre",a:"la",g:"f",c:"horečka",t:"health",l:"A2"},
+  {f:"rhume",a:"le",g:"m",c:"rýma",t:"health",l:"A2"},{f:"toux",a:"la",g:"f",c:"kašel",t:"health",l:"B1"},
+  {f:"douleur",a:"la",g:"f",c:"bolest",t:"health",l:"A2"},{f:"blessure",a:"la",g:"f",c:"zranění",t:"health",l:"B1"},
+  {f:"sang",a:"le",g:"m",c:"krev",t:"health",l:"A2"},{f:"peau",a:"la",g:"f",c:"kůže",t:"health",l:"A2"},
+  {f:"os",a:"l'",g:"m",c:"kost",t:"health",l:"A2"},{f:"muscle",a:"le",g:"m",c:"sval",t:"health",l:"B1"},
+  {f:"cerveau",a:"le",g:"m",c:"mozek",t:"health",l:"B1"},{f:"estomac",a:"l'",g:"m",c:"žaludek",t:"health",l:"B1"},
+  {f:"ordonnance",a:"l'",g:"f",c:"recept (lékařský)",t:"health",l:"B1"},{f:"urgence",a:"l'",g:"f",c:"pohotovost",t:"health",l:"B1"},
+  // CESTOVÁNÍ
+  {f:"voyage",a:"le",g:"m",c:"cesta",t:"travel",l:"A1"},{f:"vacances",a:"les",g:"pl",c:"prázdniny/dovolená",t:"travel",l:"A1"},
+  {f:"valise",a:"la",g:"f",c:"kufr",t:"travel",l:"A1"},{f:"passeport",a:"le",g:"m",c:"pas",t:"travel",l:"A1"},
+  {f:"aéroport",a:"l'",g:"m",c:"letiště",t:"travel",l:"A1"},{f:"carte",a:"la",g:"f",c:"mapa/karta",t:"travel",l:"A1"},
+  {f:"tourisme",a:"le",g:"m",c:"turistika",t:"travel",l:"B1"},{f:"touriste",a:"le",g:"m",c:"turista",t:"travel",l:"A2"},
+  {f:"séjour",a:"le",g:"m",c:"pobyt",t:"travel",l:"B1"},{f:"réservation",a:"la",g:"f",c:"rezervace",t:"travel",l:"A2"},
+  {f:"monument",a:"le",g:"m",c:"památka",t:"travel",l:"A2"},{f:"visite",a:"la",g:"f",c:"návštěva/prohlídka",t:"travel",l:"A2"},
+  {f:"souvenir",a:"le",g:"m",c:"vzpomínka/suvenýr",t:"travel",l:"A2"},{f:"départ",a:"le",g:"m",c:"odjezd",t:"travel",l:"A2"},
+  {f:"arrivée",a:"l'",g:"f",c:"příjezd",t:"travel",l:"A2"},{f:"étranger",a:"l'",g:"m",c:"cizinec/cizina",t:"travel",l:"B1"},
+  // KUCHYNĚ A VAŘENÍ
+  {f:"farine",a:"la",g:"f",c:"mouka",t:"kitchen",l:"A2"},{f:"huile",a:"l'",g:"f",c:"olej",t:"kitchen",l:"A2"},
+  {f:"vinaigre",a:"le",g:"m",c:"ocet",t:"kitchen",l:"B1"},{f:"sauce",a:"la",g:"f",c:"omáčka",t:"kitchen",l:"A2"},
+  {f:"crème",a:"la",g:"f",c:"smetana",t:"kitchen",l:"A2"},{f:"yaourt",a:"le",g:"m",c:"jogurt",t:"kitchen",l:"A1"},
+  {f:"glace",a:"la",g:"f",c:"zmrzlina",t:"kitchen",l:"A1"},{f:"bonbon",a:"le",g:"m",c:"bonbon",t:"kitchen",l:"A1"},
+  {f:"biscuit",a:"le",g:"m",c:"sušenka",t:"kitchen",l:"A1"},{f:"tarte",a:"la",g:"f",c:"koláč/dort",t:"kitchen",l:"A2"},
+  {f:"crêpe",a:"la",g:"f",c:"palačinka",t:"kitchen",l:"A1"},{f:"frites",a:"les",g:"pl",c:"hranolky",t:"kitchen",l:"A1"},
+  {f:"couteau",a:"le",g:"m",c:"nůž",t:"kitchen",l:"A1"},{f:"fourchette",a:"la",g:"f",c:"vidlička",t:"kitchen",l:"A1"},
+  {f:"cuillère",a:"la",g:"f",c:"lžíce",t:"kitchen",l:"A1"},{f:"assiette",a:"l'",g:"f",c:"talíř",t:"kitchen",l:"A1"},
+  {f:"verre",a:"le",g:"m",c:"sklenice",t:"kitchen",l:"A1"},{f:"bol",a:"le",g:"m",c:"miska",t:"kitchen",l:"A2"},
+  {f:"casserole",a:"la",g:"f",c:"hrnec",t:"kitchen",l:"B1"},{f:"poêle",a:"la",g:"f",c:"pánev",t:"kitchen",l:"B1"},
+  {f:"bouteille",a:"la",g:"f",c:"láhev",t:"kitchen",l:"A1"},{f:"recette",a:"la",g:"f",c:"recept",t:"kitchen",l:"A2"},
+  // VÍCE PŘÍRODY
+  {f:"colline",a:"la",g:"f",c:"kopec",t:"nature",l:"A2"},{f:"vallée",a:"la",g:"f",c:"údolí",t:"nature",l:"B1"},
+  {f:"désert",a:"le",g:"m",c:"poušť",t:"nature",l:"A2"},{f:"île",a:"l'",g:"f",c:"ostrov",t:"nature",l:"A2"},
+  {f:"océan",a:"l'",g:"m",c:"oceán",t:"nature",l:"A2"},{f:"côte",a:"la",g:"f",c:"pobřeží",t:"nature",l:"B1"},
+  {f:"champ",a:"le",g:"m",c:"pole",t:"nature",l:"A2"},{f:"branche",a:"la",g:"f",c:"větev",t:"nature",l:"A2"},
+  {f:"racine",a:"la",g:"f",c:"kořen",t:"nature",l:"B1"},{f:"sable",a:"le",g:"m",c:"písek",t:"nature",l:"A2"},
+  {f:"brouillard",a:"le",g:"m",c:"mlha",t:"nature",l:"B1"},{f:"tonnerre",a:"le",g:"m",c:"hrom",t:"nature",l:"B1"},
+  {f:"arc-en-ciel",a:"l'",g:"m",c:"duha",t:"nature",l:"A2"},{f:"climat",a:"le",g:"m",c:"podnebí",t:"nature",l:"B1"},
+  {f:"planète",a:"la",g:"f",c:"planeta",t:"nature",l:"A2"},{f:"pollution",a:"la",g:"f",c:"znečištění",t:"nature",l:"B1"},
+  // VÍCE SLOVES
+  {f:"chercher",a:"",g:"",c:"hledat",t:"verbs",l:"A1"},{f:"montrer",a:"",g:"",c:"ukázat",t:"verbs",l:"A1"},
+  {f:"porter",a:"",g:"",c:"nosit",t:"verbs",l:"A1"},{f:"tomber",a:"",g:"",c:"spadnout",t:"verbs",l:"A2"},
+  {f:"tourner",a:"",g:"",c:"otočit",t:"verbs",l:"A2"},{f:"suivre",a:"",g:"",c:"sledovat",t:"verbs",l:"A2"},
+  {f:"choisir",a:"",g:"",c:"vybrat",t:"verbs",l:"A1"},{f:"oublier",a:"",g:"",c:"zapomenout",t:"verbs",l:"A1"},
+  {f:"espérer",a:"",g:"",c:"doufat",t:"verbs",l:"A2"},{f:"croire",a:"",g:"",c:"věřit",t:"verbs",l:"A2"},
+  {f:"sembler",a:"",g:"",c:"zdát se",t:"verbs",l:"B1"},{f:"recevoir",a:"",g:"",c:"dostat",t:"verbs",l:"A2"},
+  {f:"offrir",a:"",g:"",c:"nabídnout/darovat",t:"verbs",l:"A2"},{f:"envoyer",a:"",g:"",c:"poslat",t:"verbs",l:"A2"},
+  {f:"apporter",a:"",g:"",c:"přinést",t:"verbs",l:"A2"},{f:"garder",a:"",g:"",c:"hlídat/nechat si",t:"verbs",l:"A2"},
+  {f:"laisser",a:"",g:"",c:"nechat",t:"verbs",l:"A2"},{f:"changer",a:"",g:"",c:"změnit",t:"verbs",l:"A1"},
+  {f:"essayer",a:"",g:"",c:"zkusit",t:"verbs",l:"A1"},{f:"réussir",a:"",g:"",c:"uspět",t:"verbs",l:"A2"},
+  {f:"expliquer",a:"",g:"",c:"vysvětlit",t:"verbs",l:"A2"},{f:"décider",a:"",g:"",c:"rozhodnout",t:"verbs",l:"A2"},
+  {f:"accepter",a:"",g:"",c:"přijmout",t:"verbs",l:"A2"},{f:"refuser",a:"",g:"",c:"odmítnout",t:"verbs",l:"A2"},
+  {f:"éviter",a:"",g:"",c:"vyhnout se",t:"verbs",l:"B1"},{f:"casser",a:"",g:"",c:"rozbít",t:"verbs",l:"A2"},
+  {f:"réparer",a:"",g:"",c:"opravit",t:"verbs",l:"A2"},{f:"construire",a:"",g:"",c:"stavět",t:"verbs",l:"B1"},
+  {f:"laver",a:"",g:"",c:"umýt",t:"verbs",l:"A1"},{f:"ranger",a:"",g:"",c:"uklidit",t:"verbs",l:"A2"},
+  {f:"allumer",a:"",g:"",c:"zapnout/rozsvítit",t:"verbs",l:"A2"},{f:"éteindre",a:"",g:"",c:"vypnout/zhasnout",t:"verbs",l:"A2"},
+  {f:"pousser",a:"",g:"",c:"tlačit",t:"verbs",l:"A2"},{f:"tirer",a:"",g:"",c:"táhnout",t:"verbs",l:"A2"},
+  {f:"jeter",a:"",g:"",c:"hodit/vyhodit",t:"verbs",l:"A2"},{f:"toucher",a:"",g:"",c:"dotknout se",t:"verbs",l:"A2"},
+  {f:"sourire",a:"",g:"",c:"usmívat se",t:"verbs",l:"A2"},{f:"crier",a:"",g:"",c:"křičet",t:"verbs",l:"A2"},
+  {f:"mentir",a:"",g:"",c:"lhát",t:"verbs",l:"B1"},{f:"nager",a:"",g:"",c:"plavat",t:"verbs",l:"A1"},
+  {f:"sauter",a:"",g:"",c:"skákat",t:"verbs",l:"A2"},{f:"voler",a:"",g:"",c:"létat/krást",t:"verbs",l:"A2"},
+  {f:"gagner",a:"",g:"",c:"vyhrát/vydělat",t:"verbs",l:"A1"},{f:"perdre",a:"",g:"",c:"ztratit/prohrát",t:"verbs",l:"A1"},
+  {f:"rester",a:"",g:"",c:"zůstat",t:"verbs",l:"A1"},{f:"entrer",a:"",g:"",c:"vejít",t:"verbs",l:"A1"},
+  {f:"monter",a:"",g:"",c:"vystoupit/nahoru",t:"verbs",l:"A2"},{f:"descendre",a:"",g:"",c:"sejít/dolů",t:"verbs",l:"A2"},
+  // VÍCE PŘÍDAVNÝCH JMEN
+  {f:"épais",a:"",g:"",c:"tlustý",t:"adj",l:"A2"},{f:"fin",a:"",g:"",c:"tenký/jemný",t:"adj",l:"A2"},
+  {f:"profond",a:"",g:"",c:"hluboký",t:"adj",l:"A2"},{f:"rond",a:"",g:"",c:"kulatý",t:"adj",l:"A2"},
+  {f:"carré",a:"",g:"",c:"čtvercový",t:"adj",l:"A2"},{f:"doux",a:"",g:"",c:"jemný/sladký",t:"adj",l:"A2"},
+  {f:"mouillé",a:"",g:"",c:"mokrý",t:"adj",l:"A2"},{f:"sec",a:"",g:"",c:"suchý",t:"adj",l:"A2"},
+  {f:"clair",a:"",g:"",c:"jasný/světlý",t:"adj",l:"A2"},{f:"sombre",a:"",g:"",c:"tmavý",t:"adj",l:"A2"},
+  {f:"brillant",a:"",g:"",c:"zářivý",t:"adj",l:"B1"},{f:"bruyant",a:"",g:"",c:"hlučný",t:"adj",l:"B1"},
+  {f:"calme",a:"",g:"",c:"klidný",t:"adj",l:"A2"},{f:"courageux",a:"",g:"",c:"odvážný",t:"adj",l:"B1"},
+  {f:"poli",a:"",g:"",c:"zdvořilý",t:"adj",l:"A2"},{f:"honnête",a:"",g:"",c:"poctivý",t:"adj",l:"B1"},
+  {f:"généreux",a:"",g:"",c:"štědrý",t:"adj",l:"B1"},{f:"drôle",a:"",g:"",c:"vtipný",t:"adj",l:"A2"},
+  {f:"sérieux",a:"",g:"",c:"vážný",t:"adj",l:"A2"},{f:"intelligent",a:"",g:"",c:"chytrý",t:"adj",l:"A2"},
+  {f:"prudent",a:"",g:"",c:"opatrný",t:"adj",l:"B1"},{f:"libre",a:"",g:"",c:"volný/svobodný",t:"adj",l:"A1"},
+  {f:"occupé",a:"",g:"",c:"zaneprázdněný",t:"adj",l:"A2"},{f:"prêt",a:"",g:"",c:"připravený",t:"adj",l:"A1"},
+  {f:"simple",a:"",g:"",c:"jednoduchý",t:"adj",l:"A1"},{f:"compliqué",a:"",g:"",c:"složitý",t:"adj",l:"A2"},
+  {f:"utile",a:"",g:"",c:"užitečný",t:"adj",l:"A2"},{f:"inutile",a:"",g:"",c:"zbytečný",t:"adj",l:"A2"},
+  {f:"normal",a:"",g:"",c:"normální",t:"adj",l:"A1"},{f:"étrange",a:"",g:"",c:"divný",t:"adj",l:"B1"},
+  {f:"parfait",a:"",g:"",c:"dokonalý",t:"adj",l:"A2"},{f:"gratuit",a:"",g:"",c:"zdarma",t:"adj",l:"A2"},
+  // PŘÍSLOVCE
+  {f:"vite",a:"",g:"",c:"rychle",t:"adv",l:"A1"},{f:"lentement",a:"",g:"",c:"pomalu",t:"adv",l:"A2"},
+  {f:"bien",a:"",g:"",c:"dobře",t:"adv",l:"A1"},{f:"mal",a:"",g:"",c:"špatně",t:"adv",l:"A1"},
+  {f:"ensemble",a:"",g:"",c:"spolu",t:"adv",l:"A1"},{f:"seul",a:"",g:"",c:"sám",t:"adv",l:"A1"},
+  {f:"vraiment",a:"",g:"",c:"opravdu",t:"adv",l:"A1"},{f:"presque",a:"",g:"",c:"skoro",t:"adv",l:"A2"},
+  {f:"environ",a:"",g:"",c:"přibližně",t:"adv",l:"A2"},{f:"surtout",a:"",g:"",c:"hlavně",t:"adv",l:"A2"},
+  {f:"heureusement",a:"",g:"",c:"naštěstí",t:"adv",l:"B1"},{f:"malheureusement",a:"",g:"",c:"bohužel",t:"adv",l:"B1"},
+  {f:"probablement",a:"",g:"",c:"pravděpodobně",t:"adv",l:"B1"},{f:"évidemment",a:"",g:"",c:"samozřejmě",t:"adv",l:"B1"},
+  {f:"soudain",a:"",g:"",c:"náhle",t:"adv",l:"B1"},{f:"bientôt",a:"",g:"",c:"brzy",t:"adv",l:"A1"},
+  {f:"tard",a:"",g:"",c:"pozdě",t:"adv",l:"A1"},{f:"tôt",a:"",g:"",c:"brzy/časně",t:"adv",l:"A1"},
+  {f:"longtemps",a:"",g:"",c:"dlouho",t:"adv",l:"A2"},{f:"partout",a:"",g:"",c:"všude",t:"adv",l:"A2"},
+  {f:"ailleurs",a:"",g:"",c:"jinde",t:"adv",l:"B1"},{f:"ensuite",a:"",g:"",c:"potom",t:"adv",l:"A2"},
+  // ČÍSLA (rozšíření)
+  {f:"quatre",a:"",g:"",c:"čtyři",t:"numbers",l:"A1"},{f:"cinq",a:"",g:"",c:"pět",t:"numbers",l:"A1"},
+  {f:"six",a:"",g:"",c:"šest",t:"numbers",l:"A1"},{f:"sept",a:"",g:"",c:"sedm",t:"numbers",l:"A1"},
+  {f:"huit",a:"",g:"",c:"osm",t:"numbers",l:"A1"},{f:"neuf",a:"",g:"",c:"devět",t:"numbers",l:"A1"},
+  {f:"vingt",a:"",g:"",c:"dvacet",t:"numbers",l:"A1"},{f:"trente",a:"",g:"",c:"třicet",t:"numbers",l:"A1"},
+  {f:"quarante",a:"",g:"",c:"čtyřicet",t:"numbers",l:"A1"},{f:"cinquante",a:"",g:"",c:"padesát",t:"numbers",l:"A1"},
+  {f:"soixante",a:"",g:"",c:"šedesát",t:"numbers",l:"A1"},{f:"million",a:"le",g:"m",c:"milion",t:"numbers",l:"A2"},
+  {f:"demi",a:"",g:"",c:"půl",t:"numbers",l:"A2"},{f:"double",a:"",g:"",c:"dvojitý",t:"numbers",l:"A2"},
+  // MĚSÍCE
+  {f:"janvier",a:"",g:"m",c:"leden",t:"time",l:"A1"},{f:"février",a:"",g:"m",c:"únor",t:"time",l:"A1"},
+  {f:"mars",a:"",g:"m",c:"březen",t:"time",l:"A1"},{f:"avril",a:"",g:"m",c:"duben",t:"time",l:"A1"},
+  {f:"mai",a:"",g:"m",c:"květen",t:"time",l:"A1"},{f:"juin",a:"",g:"m",c:"červen",t:"time",l:"A1"},
+  {f:"juillet",a:"",g:"m",c:"červenec",t:"time",l:"A1"},{f:"août",a:"",g:"m",c:"srpen",t:"time",l:"A1"},
+  {f:"septembre",a:"",g:"m",c:"září",t:"time",l:"A1"},{f:"octobre",a:"",g:"m",c:"říjen",t:"time",l:"A1"},
+  {f:"novembre",a:"",g:"m",c:"listopad",t:"time",l:"A1"},{f:"décembre",a:"",g:"m",c:"prosinec",t:"time",l:"A1"},
+  {f:"siècle",a:"le",g:"m",c:"století",t:"time",l:"B1"},{f:"moment",a:"le",g:"m",c:"chvíle",t:"time",l:"A1"},
+  // VÍCE DOMÁCNOSTI
+  {f:"rideau",a:"le",g:"m",c:"závěs",t:"house",l:"A2"},{f:"couverture",a:"la",g:"f",c:"deka",t:"house",l:"A2"},
+  {f:"oreiller",a:"l'",g:"m",c:"polštář",t:"house",l:"A2"},{f:"tiroir",a:"le",g:"m",c:"zásuvka",t:"house",l:"A2"},
+  {f:"placard",a:"le",g:"m",c:"skříňka",t:"house",l:"A2"},{f:"poubelle",a:"la",g:"f",c:"koš",t:"house",l:"A2"},
+  {f:"robinet",a:"le",g:"m",c:"kohoutek",t:"house",l:"B1"},{f:"ampoule",a:"l'",g:"f",c:"žárovka",t:"house",l:"B1"},
+  {f:"bougie",a:"la",g:"f",c:"svíčka",t:"house",l:"A2"},{f:"jouet",a:"le",g:"m",c:"hračka",t:"house",l:"A1"},
+  {f:"parapluie",a:"le",g:"m",c:"deštník",t:"house",l:"A2"},{f:"outil",a:"l'",g:"m",c:"nástroj",t:"house",l:"B1"},
+  {f:"marteau",a:"le",g:"m",c:"kladivo",t:"house",l:"B1"},{f:"ciseaux",a:"les",g:"pl",c:"nůžky",t:"house",l:"A2"},
 ];
 // sjednocená databáze (objevené ze světa + slovník), bez duplicit
 const TYPE_THEME_DEF="other";
@@ -1019,7 +1212,7 @@ const PLAYER_R=0.38;
 const BOUND=46;
 let controls, useLock=false;
 let sprint=false;
-let skyMesh=null, groundMesh=null, sunLight=null;
+let skyMesh=null, groundMesh=null, sunLight=null, composer=null;
 const sunOffset=new THREE.Vector3();
 const doors=[];        // otevíratelné dveře/okna
 const npcAgents=[];    // chodící postavy
@@ -1066,17 +1259,17 @@ function initThree(){
   su.sunPosition.value.copy(sunPos);
 
   // --- světla ---
-  const hemi=new THREE.HemisphereLight(0xbcd9ff, 0x586b3a, 0.9); scene.add(hemi);
-  const amb=new THREE.AmbientLight(0xffffff, 0.28); scene.add(amb);
-  const sun=new THREE.DirectionalLight(0xfff2d6, 3.1);
-  sunOffset.copy(sunPos).multiplyScalar(40);
+  const hemi=new THREE.HemisphereLight(0xcfe2ff, 0x5a6b42, 1.05); scene.add(hemi);
+  const amb=new THREE.AmbientLight(0xffffff, 0.34); scene.add(amb);
+  const sun=new THREE.DirectionalLight(0xfff1d0, 3.3);
+  sunOffset.copy(sunPos).multiplyScalar(42);
   sun.position.copy(sunOffset);
   sun.castShadow=true;
   sun.shadow.mapSize.set(2048,2048);
-  sun.shadow.camera.near=1; sun.shadow.camera.far=120;
-  sun.shadow.camera.left=-28; sun.shadow.camera.right=28;
-  sun.shadow.camera.top=28; sun.shadow.camera.bottom=-28;
-  sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.03;
+  sun.shadow.camera.near=1; sun.shadow.camera.far=130;
+  sun.shadow.camera.left=-30; sun.shadow.camera.right=30;
+  sun.shadow.camera.top=30; sun.shadow.camera.bottom=-30;
+  sun.shadow.bias=-0.0003; sun.shadow.normalBias=0.025;
   scene.add(sun); scene.add(sun.target); sunLight=sun;
 
   buildGround();
@@ -1087,6 +1280,7 @@ function initThree(){
   buildNpcs();
   buildScenery();
   buildStreetProps();
+  buildGrass();
 
   // stíny pro všechny pevné meshe (vynech oblohu, zem a zářící slunce)
   scene.traverse(o=>{
@@ -1097,9 +1291,46 @@ function initThree(){
   if(groundMesh){ groundMesh.castShadow=false; groundMesh.receiveShadow=true; }
 
   buildClouds();      // mraky až po nastavení stínů (samy stín nevrhají)
-  buildColliders();   // pevné zdi a budovy
+  buildColliders();   // zdi domu
+  setupPost();        // post-processing (ambient occlusion + SMAA) – s bezpečným fallbackem
   clock=new THREE.Clock();
   addEventListener('resize', onResize);
+}
+
+/* post-processing: ambient occlusion (SAO) + SMAA + výstup s tone-mappingem */
+function setupPost(){
+  try{
+    composer=new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene,camera));
+    const sao=new SAOPass(scene,camera);
+    if(sao.params){ sao.params.saoIntensity=0.018; sao.params.saoScale=6; sao.params.saoKernelRadius=24; sao.params.saoBlur=true; }
+    composer.addPass(sao);
+    composer.addPass(new SMAAPass(innerWidth*Math.min(devicePixelRatio,2), innerHeight*Math.min(devicePixelRatio,2)));
+    composer.addPass(new OutputPass());
+  }catch(e){ composer=null; console.warn('Post-processing vypnut (fallback na přímé renderování):', e); }
+}
+
+/* tráva (instancované trsy) – jen v zeleni mimo silnici */
+function buildGrass(){
+  const COUNT=2600;
+  const geo=new THREE.ConeGeometry(0.06,0.5,4); geo.translate(0,0.25,0);
+  const mat=new THREE.MeshStandardMaterial({color:0x5fa046,roughness:1,metalness:0,flatShading:true});
+  const mesh=new THREE.InstancedMesh(geo,mat,COUNT);
+  mesh.castShadow=false; mesh.receiveShadow=true;
+  const dummy=new THREE.Object3D(); const col=new THREE.Color(); let n=0;
+  for(let i=0;i<COUNT*2 && n<COUNT;i++){
+    const x=-44+Math.random()*88, z=-30+Math.random()*72;
+    if(Math.abs(x-2)<4.5) continue;                 // ne na silnici (svislá)
+    if(Math.abs(z-12)<4.5 && x>-32 && x<34) continue; // ne na silnici (vodorovná)
+    if(inTownRect(x,z)) continue;                   // ne v budovách / domě
+    dummy.position.set(x,0,z);
+    dummy.rotation.y=Math.random()*Math.PI;
+    const sc=0.7+Math.random()*0.9; dummy.scale.set(sc,sc*(0.8+Math.random()*0.6),sc);
+    dummy.updateMatrix(); mesh.setMatrixAt(n,dummy.matrix);
+    col.setHSL(0.28+Math.random()*0.06, 0.5, 0.32+Math.random()*0.12); mesh.setColorAt(n,col);
+    n++;
+  }
+  mesh.count=n; scene.add(mesh);
 }
 
 function buildClouds(){
@@ -1125,6 +1356,7 @@ function buildColliders(){
 function onResize(){
   camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
+  if(composer) composer.setSize(innerWidth, innerHeight);
   labelRenderer.setSize(innerWidth, innerHeight);
 }
 
@@ -1171,7 +1403,7 @@ function buildHouse(){
   mkWall(4.5,t,-13.8,6.4);
   mkWall(4.5,t,-6.2,6.4);
   // otevíratelné vchodové dveře v mezeře
-  addOpenable(-11.0, 6.4, 0, 2.0, 2.2, 0x6b4a2a, {fr:"porte",art:"la",g:"f",cs:"dveře",cz:"port",level:"A1"}, false);
+  addOpenable(-11.0, 6.4, 0, 2.0, 2.2, 0x6b4a2a, {fr:"porte",art:"la",g:"f",cs:"dveře",cz:"port",level:"A1"}, false, true);
   // otevíratelná okna v bočních zdech
   addOpenable(-16.27, -3.2, Math.PI/2, 1.3, 1.3, 0x9fd0ff, {fr:"fenêtre",art:"la",g:"f",cs:"okno",cz:"fnetr",level:"A1"}, true);
   addOpenable(-3.73, 2.0, -Math.PI/2, 1.3, 1.3, 0x9fd0ff, {fr:"fenêtre",art:"la",g:"f",cs:"okno",cz:"fnetr",level:"A1"}, true);
@@ -1179,13 +1411,13 @@ function buildHouse(){
 
 /* místa, kam chodí postavy */
 const PLACES=[
-  {id:"boulangerie",x:-8,z:18.5,va:"va à la boulangerie",vaCs:"jde do pekárny",at:"achète du pain",atCs:"kupuje chleba"},
-  {id:"cafe",x:2,z:18.5,va:"va au café",vaCs:"jde do kavárny",at:"boit un café",atCs:"pije kávu"},
-  {id:"parc",x:8,z:6,va:"se promène dans le parc",vaCs:"prochází se v parku",at:"profite du parc",atCs:"užívá si park"},
-  {id:"ecole",x:-18,z:19.5,va:"va à l'école",vaCs:"jde do školy",at:"attend devant l'école",atCs:"čeká před školou"},
-  {id:"marche",x:14,z:36.5,va:"va au marché",vaCs:"jde na trh",at:"fait les courses",atCs:"nakupuje"},
-  {id:"fontaine",x:3,z:9,va:"va à la fontaine",vaCs:"jde k fontáně",at:"se repose",atCs:"odpočívá"},
-  {id:"maison",x:-10,z:8,va:"rentre à la maison",vaCs:"jde domů",at:"est à la maison",atCs:"je doma"},
+  {id:"boulangerie",x:-14,z:24,va:"va à la boulangerie",vaCs:"jde do pekárny",at:"achète du pain",atCs:"kupuje chleba"},
+  {id:"cafe",x:14,z:24,va:"va au café",vaCs:"jde do kavárny",at:"boit un café",atCs:"pije kávu"},
+  {id:"ecole",x:-14,z:31,va:"va à l'école",vaCs:"jde do školy",at:"attend devant l'école",atCs:"čeká před školou"},
+  {id:"marche",x:-26,z:6,va:"va au marché",vaCs:"jde na trh",at:"fait les courses",atCs:"nakupuje"},
+  {id:"parc",x:8,z:4,va:"se promène dans le parc",vaCs:"prochází se v parku",at:"profite du parc",atCs:"užívá si park"},
+  {id:"fontaine",x:8,z:9,va:"va à la fontaine",vaCs:"jde k fontáně",at:"se repose",atCs:"odpočívá"},
+  {id:"maison",x:-10,z:9,va:"rentre à la maison",vaCs:"jde domů",at:"est à la maison",atCs:"je doma"},
 ];
 
 /* silnice + chodníky */
@@ -1198,14 +1430,20 @@ function buildRoads(){
 }
 
 /* otevíratelné dveře / okno (panel na pantu, animace v updateDoors) */
-function addOpenable(hx,hz,baseAngle,w,h,color,word,isWindow){
+function addOpenable(hx,hz,baseAngle,w,h,color,word,isWindow,blockWhenClosed){
   const yC=isWindow?1.4:h/2;
   const pivot=new THREE.Group(); pivot.position.set(hx,0,hz); pivot.rotation.y=baseAngle; scene.add(pivot);
   const mat=isWindow?M(color,{transparent:true,opacity:.55,metalness:.3,roughness:.1,emissive:0x2b4a5e,emissiveIntensity:.35}):M(color,{roughness:.7});
   const leaf=box(w,h,0.1,color,mat); leaf.position.set(w/2,yC,0); pivot.add(leaf);
   if(!isWindow){ const knob=sph(.06,0xffd24a); knob.position.set(w-0.16,yC,0.09); leaf.add(knob); }
-  const d={pivot,base:baseAngle,open:false,cur:0,target:0,openAngle:-Math.PI*0.62,word,isWindow};
+  const d={pivot,base:baseAngle,open:false,cur:0,target:0,openAngle:-Math.PI*0.62,word,isWindow,coll:null};
   doors.push(d);
+  if(blockWhenClosed){ // kolize jen když jsou zavřené → po otevření projdeš dovnitř
+    const cx=hx+Math.cos(baseAngle)*w/2, cz=hz-Math.sin(baseAngle)*w/2;
+    const hw=Math.abs(Math.cos(baseAngle))*w/2+Math.abs(Math.sin(baseAngle))*0.18;
+    const hd=Math.abs(Math.sin(baseAngle))*w/2+Math.abs(Math.cos(baseAngle))*0.18;
+    d.coll={minX:cx-hw,maxX:cx+hw,minZ:cz-hd,maxZ:cz+hd,active:true}; colliders.push(d.coll);
+  }
   const el=document.createElement('div'); el.className='lbl door';
   const obj=new CSS2DObject(el); obj.position.set(w/2,yC+h/2+0.25,0); pivot.add(obj);
   d.entry={el,obj3d:pivot,item:word,kind:'door',door:d};
@@ -1217,6 +1455,7 @@ function updateDoorLabel(d){
 }
 function toggleDoor(d){
   d.open=!d.open; d.target=d.open?d.openAngle:0;
+  if(d.coll) d.coll.active=!d.open;   // otevřené dveře nepřekáží
   discover(d.word.fr); discover(d.open?'ouvrir':'fermer');
   Speech.say((d.open?'ouvrir ':'fermer ')+d.word.art+' '+d.word.fr);
   updateDoorLabel(d);
@@ -1230,48 +1469,58 @@ function updateDoors(dt){
 
 /* jedna budova: tělo, střecha, okna na všech stranách, cedule se členem, otevíratelné dveře */
 const TOWN=[
-  {fr:"boulangerie",art:"la",g:"f",cs:"pekařství",x:-8,z:15,color:0xe9c79a,roof:0xb5482f,band:0x7a3b2a},
-  {fr:"café",art:"le",g:"m",cs:"kavárna",x:2,z:15,color:0xf3e2bd,roof:0x7c4a2d,band:0x4a2f1a},
-  {fr:"restaurant",art:"le",g:"m",cs:"restaurace",x:12,z:15,color:0xe7d3a8,roof:0x8a5a2d,band:0x6a3b1a},
-  {fr:"école",art:"l'",g:"f",cs:"škola",x:-18,z:16,color:0xd9c7a0,roof:0x6c8f3a,band:0x3a5a2a},
-  {fr:"magasin",art:"le",g:"m",cs:"obchod",x:22,z:16,color:0xcfe0e8,roof:0x35607a,band:0x244456},
-  {fr:"pharmacie",art:"la",g:"f",cs:"lékárna",x:-13,z:24,color:0xeaf0ea,roof:0x2e8b57,band:0x1e6b3e},
-  {fr:"banque",art:"la",g:"f",cs:"banka",x:-3,z:25,color:0xdfe3e8,roof:0x4a5568,band:0x2c3340},
-  {fr:"bibliothèque",art:"la",g:"f",cs:"knihovna",x:8,z:25,color:0xe5d2b8,roof:0x7a3b2a,band:0x5a2b1a},
-  {fr:"musée",art:"le",g:"m",cs:"muzeum",x:18,z:25,color:0xe8e2d2,roof:0x8a7a3a,band:0x6a5a2a,w:7,d:7,h:4.6},
-  {fr:"hôtel",art:"l'",g:"m",cs:"hotel",x:28,z:21,color:0xe3cda0,roof:0x6a4a2a,band:0x4a2f1a,h:5.2},
+  {fr:"boulangerie",art:"la",g:"f",cs:"pekařství",x:-14,z:20,color:0xe9c79a,roof:0xb5482f,band:0x7a3b2a},
+  {fr:"café",art:"le",g:"m",cs:"kavárna",x:14,z:20,color:0xf3e2bd,roof:0x7c4a2d,band:0x4a2f1a},
+  {fr:"restaurant",art:"le",g:"m",cs:"restaurace",x:14,z:27,color:0xe7d3a8,roof:0x8a5a2d,band:0x6a3b1a},
+  {fr:"école",art:"l'",g:"f",cs:"škola",x:-14,z:27,color:0xd9c7a0,roof:0x6c8f3a,band:0x3a5a2a,w:7,d:6},
+  {fr:"magasin",art:"le",g:"m",cs:"obchod",x:14,z:34,color:0xcfe0e8,roof:0x35607a,band:0x244456},
+  {fr:"bibliothèque",art:"la",g:"f",cs:"knihovna",x:-14,z:34,color:0xe5d2b8,roof:0x7a3b2a,band:0x5a2b1a},
+  {fr:"pharmacie",art:"la",g:"f",cs:"lékárna",x:14,z:0,color:0xeaf0ea,roof:0x2e8b57,band:0x1e6b3e},
+  {fr:"banque",art:"la",g:"f",cs:"banka",x:26,z:0,color:0xdfe3e8,roof:0x4a5568,band:0x2c3340},
   {fr:"hôpital",art:"l'",g:"m",cs:"nemocnice",x:-26,z:20,color:0xeef2f5,roof:0xc0392b,band:0x922b22,w:7,d:6,h:4.6},
-  {fr:"poste",art:"la",g:"f",cs:"pošta",x:-24,z:30,color:0xe6d0a0,roof:0xd4a017,band:0x9a7510},
-  {fr:"marché",art:"le",g:"m",cs:"trh",x:14,z:33,color:0xe9dcc3,roof:0x6c8f3a,band:0x3a5a2a},
-  {fr:"église",art:"l'",g:"f",cs:"kostel",x:-12,z:34,color:0xdfd6c0,roof:0x4a5568,band:0x2c3340,w:6,d:8,h:6.5},
-  {fr:"gare",art:"la",g:"f",cs:"nádraží",x:4,z:36,color:0xd8c4a0,roof:0x55402a,band:0x33261a,w:11,d:6,h:4.8},
+  {fr:"poste",art:"la",g:"f",cs:"pošta",x:-26,z:30,color:0xe6d0a0,roof:0xd4a017,band:0x9a7510},
+  {fr:"musée",art:"le",g:"m",cs:"muzeum",x:26,z:27,color:0xe8e2d2,roof:0x8a7a3a,band:0x6a5a2a,w:7,d:7,h:4.6},
+  {fr:"hôtel",art:"l'",g:"m",cs:"hotel",x:26,z:20,color:0xe3cda0,roof:0x6a4a2a,band:0x4a2f1a,h:5.2},
+  {fr:"gare",art:"la",g:"f",cs:"nádraží",x:26,z:34,color:0xd8c4a0,roof:0x55402a,band:0x33261a,w:9,d:6,h:4.8},
+  {fr:"marché",art:"le",g:"m",cs:"trh",x:-26,z:2,color:0xe9dcc3,roof:0x6c8f3a,band:0x3a5a2a},
+  {fr:"église",art:"l'",g:"f",cs:"kostel",x:-14,z:41,color:0xdfd6c0,roof:0x4a5568,band:0x2c3340,w:6,d:8,h:6.5},
 ];
 function buildTown(){ TOWN.forEach(building); }
 function building(s){
-  const w=s.w||6, d=s.d||6, h=s.h||3.8;
+  const w=s.w||6, d=s.d||6, h=s.h||3.8, t=0.25, gap=2.4, col=s.color;
   const G=new THREE.Group(); G.position.set(s.x,0,s.z); scene.add(G);
-  const body=box(w,h,d,s.color); body.position.y=h/2; G.add(body);
-  const roof=box(w*1.1,0.5,d*1.1,s.roof); roof.position.y=h+0.22; G.add(roof);
-  const band=box(w*0.96,0.55,0.12,s.band); band.position.set(0,h-0.55,d/2+0.07); G.add(band);
-  const winF=(lx,lz,side)=>{ // side: 'z' nebo 'x'
-    const fr = side==='z'? box(0.9,1.0,0.08,0xffffff) : box(0.08,1.0,0.9,0xffffff);
-    const gl = side==='z'? box(0.7,0.82,0.12,0x8fd0ff,M(0x8fd0ff,{metalness:.35,roughness:.08,emissive:0x2b4a5e,emissiveIntensity:.5}))
-                         : box(0.12,0.82,0.7,0x8fd0ff,M(0x8fd0ff,{metalness:.35,roughness:.08,emissive:0x2b4a5e,emissiveIntensity:.5}));
-    fr.position.set(lx,1.7,lz); gl.position.set(lx + (side==='x'?Math.sign(lx)*0.02:0), 1.7, lz + (side==='z'?Math.sign(lz)*0.02:0));
-    G.add(fr); G.add(gl);
-  };
-  [-w/4,w/4].forEach(lx=>{ winF(lx,d/2+0.02,'z'); winF(lx,-d/2-0.02,'z'); });
-  [-d/4,d/4].forEach(lz=>{ winF(w/2+0.02,lz,'x'); winF(-w/2-0.02,lz,'x'); });
-  addBox(s.x,s.z, w/2+0.1, d/2+0.1);
-  // otevíratelné dveře na přední straně (+z)
-  addOpenable(s.x-0.9, s.z+d/2+0.05, 0, 1.8, 2.2, 0x5b3a1e, {fr:"porte",art:"la",g:"f",cs:"dveře",level:"A1"}, false);
+  // podlaha + střecha
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(w-2*t,d-2*t), M(0xb89a72,{roughness:.95}));
+  floor.rotation.x=-Math.PI/2; floor.position.y=0.06; floor.receiveShadow=true; G.add(floor);
+  const roof=box(w+0.4,0.5,d+0.4,s.roof); roof.position.y=h+0.05; G.add(roof);
+  const band=box(w*0.9,0.5,0.1,s.band); band.position.set(0,h-0.55,d/2+t/2+0.02); G.add(band);
+  // zdi (přední s mezerou na dveře) + jejich kolize
+  const wall=(cx,cz,ww,dd)=>{ const m=box(ww,h,dd,col); m.position.set(cx,h/2,cz); G.add(m); addBox(s.x+cx,s.z+cz,ww/2,dd/2); };
+  wall(0,-d/2,w,t);                       // zadní
+  wall(-w/2,0,t,d);                       // levá
+  wall(w/2,0,t,d);                        // pravá
+  const segW=(w-gap)/2, segC=gap/2+segW/2;
+  wall(-segC,d/2,segW,t);                 // přední levá
+  wall( segC,d/2,segW,t);                 // přední pravá
+  const lintel=box(gap,h-2.3,t,col); lintel.position.set(0,2.3+(h-2.3)/2,d/2); G.add(lintel);
+  // okna (boky + zadní stěna)
+  const win=(cx,cz,ww,dd)=>{ const fr=box(ww+0.14,1.14,dd+0.06,0xf2f2f2); fr.position.set(cx,1.7,cz); G.add(fr);
+    const gl=box(ww,1.0,dd,0x8fd0ff,M(0x8fd0ff,{metalness:.3,roughness:.08,emissive:0x2b4a5e,emissiveIntensity:.45})); gl.position.set(cx,1.7,cz); G.add(gl); };
+  win(-w/2-0.01,-d/4,0.06,0.9); win(-w/2-0.01,d/4,0.06,0.9);
+  win(w/2+0.01,-d/4,0.06,0.9); win(w/2+0.01,d/4,0.06,0.9);
+  win(-w/4,-d/2-0.01,0.9,0.06); win(w/4,-d/2-0.01,0.9,0.06);
+  // jednoduchý interiér (pult)
+  const counter=box(w*0.5,1.0,0.6,0x8a5a2c); counter.position.set(0,0.5,-d/2+1.4); G.add(counter);
+  addBox(s.x,s.z-d/2+1.4,w*0.25,0.35);
+  // otevíratelné dveře (zavřené blokují, otevřené pustí dovnitř)
+  addOpenable(s.x-gap/2+0.1, s.z+d/2, 0, gap-0.2, 2.3, 0x5b3a1e, {fr:"porte",art:"la",g:"f",cs:"dveře",level:"A1"}, false, true);
   // cedule = název místa se členem (klikatelná)
   const word={fr:s.fr,art:s.art,g:s.g,cs:s.cs,level:s.level||"A1"};
   const el=document.createElement('div'); el.className='lbl '+genderClass(s.g); el.innerHTML=labelText(word);
   el.addEventListener('pointerdown',ev=>ev.stopPropagation());
   el.addEventListener('click',ev=>{ev.stopPropagation(); openWord(word);});
-  const obj=new CSS2DObject(el); obj.position.set(0,h+1.0,0); G.add(obj);
-  labels.push({el,obj3d:body,item:word,kind:'word'});
+  const obj=new CSS2DObject(el); obj.position.set(0,h+0.9,0); G.add(obj);
+  labels.push({el,obj3d:G,item:word,kind:'word'});
 }
 
 /* pouliční prvky: lampy, lavičky, květináče, stromořadí */
@@ -1291,9 +1540,33 @@ function streetBench(x,z,rot){ const b=buildShape('bench'); b.position.set(x,0,z
 function planter(x,z){ const pot=cyl(.5,.6,.5,0x9a6b3a,10); pot.position.set(x,.25,z); scene.add(pot); const f=buildShape('flower'); f.position.set(x,.5,z); scene.add(f); addBox(x,z,0.55,0.55); }
 
 /* dekorace navíc (stromy v pozadí, plot) */
+function inTownRect(x,z){ // hrubá kontrola, zda bod není v budově
+  for(const s of TOWN){ const w=(s.w||6)/2+1, d=(s.d||6)/2+1;
+    if(Math.abs(x-s.x)<w && Math.abs(z-s.z)<d) return true; }
+  if(x>-17 && x<-3 && z>-9 && z<7) return true; // dům
+  return false;
+}
+function onRoad(x,z){ return Math.abs(x-2)<4 || (Math.abs(z-12)<4 && x>-32 && x<34); }
+function bush(x,z){ const g=new THREE.Group();
+  [[0,0,0,.7],[.4,-.1,.2,.5],[-.35,-.05,.25,.55],[.1,.15,-.3,.5]].forEach(([bx,by,bz,br])=>{
+    const s=sph(br,[0x3f7d3a,0x4c9a45,0x356d34][Math.floor(Math.random()*3)],8); s.position.set(bx,.5+by,bz); g.add(s); });
+  g.position.set(x,0,z); scene.add(g); }
+function rock(x,z){ const r=new THREE.Mesh(new THREE.IcosahedronGeometry(.4+Math.random()*0.5,0), M(0x8a8f96,{roughness:1,flatShading:true}));
+  r.position.set(x,.25,z); r.rotation.set(Math.random(),Math.random(),Math.random()); scene.add(r); addBox(x,z,0.45,0.45); }
+function flowerPatch(x,z){ for(let i=0;i<5;i++){ const f=buildShape('flower'); f.position.set(x+(Math.random()*1.4-.7),0,z+(Math.random()*1.4-.7)); f.scale.setScalar(.7+Math.random()*.5); scene.add(f); } }
 function buildScenery(){
-  const spots=[[-22,-18],[-18,-22],[20,-20],[24,-10],[-24,12],[22,22],[-20,22],[18,-26],[-26,-4],[26,4]];
-  spots.forEach(([x,z])=>{ const s=1+Math.random()*0.6; scene.add(treeMesh(x,z,s)); addBox(x,z,0.55,0.55); });
+  const spots=[[-22,-18],[-18,-22],[20,-20],[24,-10],[-24,12],[22,22],[-20,22],[18,-26],[-26,-4],[26,4],
+    [30,14],[-30,2],[-30,26],[30,30],[10,-22],[-10,-22]];
+  spots.forEach(([x,z])=>{ const s=1+Math.random()*0.7; scene.add(treeMesh(x,z,s)); addBox(x,z,0.55,0.55); });
+  // keře, kameny, záhony (jen v zeleni)
+  let placed=0;
+  for(let i=0;i<400 && placed<70;i++){
+    const x=-42+Math.random()*84, z=-28+Math.random()*68;
+    if(onRoad(x,z) || inTownRect(x,z)) continue;
+    const r=Math.random();
+    if(r<0.45) bush(x,z); else if(r<0.75) rock(x,z); else flowerPatch(x,z);
+    placed++;
+  }
   // bílý plůtek kolem zahrady
   for(let i=-2;i<=14;i+=1.2){
     const p=box(.1,.9,.1,0xfafafa); p.position.set(i,.45,-9); scene.add(p);
@@ -1534,6 +1807,7 @@ function initTouchLook(){
 /* kolize: vytlač bod (px,pz) z překážek → klouzání podél stěn */
 function resolveCollision(px,pz){
   for(const c of colliders){
+    if(c.active===false) continue;   // otevřené dveře / vypnuté překážky
     const minX=c.minX-PLAYER_R, maxX=c.maxX+PLAYER_R, minZ=c.minZ-PLAYER_R, maxZ=c.maxZ+PLAYER_R;
     if(px>minX && px<maxX && pz>minZ && pz<maxZ){
       const dl=px-minX, dr=maxX-px, dt=pz-minZ, db=maxZ-pz;
@@ -1962,7 +2236,7 @@ function animate(){
     sunLight.target.updateMatrixWorld();
   }
   updateLabels();
-  renderer.render(scene,camera);
+  if(composer) composer.render(); else renderer.render(scene,camera);
   labelRenderer.render(scene,camera);
 }
 

@@ -23,6 +23,7 @@ Na PC se ovládá jako běžná **FPS hra**: klikni do okna → myš ovládá ro
 | Spustit ovládání | klikni do okna (myš = rozhlížení), `Esc` = pauza |
 | Pohyb | `W` `A` `S` `D` nebo šipky (na mobilu tlačítka vlevo dole, rozhlížení tahem prstu) |
 | Běh | drž `Shift` |
+| Vejít do budovy | otevři dveře (`E`) a projdi vchodem |
 | Interakce | zaměř křížkem uprostřed a **klikni** nebo stiskni `E` (nahoře svítí „[E] …") |
 | Otevřít / zavřít dveře a okna 🚪 | zaměř je a `E` / klik |
 | Vyslovit zaměřené | `F` |
@@ -34,10 +35,12 @@ Na PC se ovládá jako běžná **FPS hra**: klikni do okna → myš ovládá ro
 
 ## 📚 Co appka obsahuje
 
-- **3D město** s domem, zahradou a ~15 budovami (pekařství, kavárna, škola, lékárna, banka, knihovna, muzeum, kostel, nádraží…), silnicemi, lampami a lavičkami.
+- **3D město** s domem, zahradou a 15 budovami (pekařství, kavárna, škola, lékárna, banka, knihovna, muzeum, kostel, nádraží…), silnicemi, lampami, lavičkami, keři a kameny.
+- **Vejdeš dovnitř!** Budovy jsou duté — otevři dveře a vejdi (podlaha, interiér). Zavřené dveře blokují, otevřené pustí.
 - **Otevíratelné dveře a okna** (animované) u domu i u obchodů.
+- **Realističtější grafika:** post‑processing (ambient occlusion + vyhlazení hran SMAA), slunce sledující hráče s ostrými stíny, instancovaná tráva, mraky.
 - **Chodící lidé** — chodí po městě a u jména je **napsané, co dělají** (jde do pekárny / pije kávu / odpočívá u fontány…).
-- **📒 Slovník** — velká tematicky tříděná databáze (přes 400 slov): vyhledávání, řazení (A→Z / rod / úroveň), filtr podle témat. Co objevíš ve světě, **se sem samo uloží** (odznak „Objevené").
+- **📒 Slovník** — velká tematicky tříděná databáze (**přes 740 slov**, 29 témat): vyhledávání, řazení (A→Z / rod / úroveň), filtr podle témat. Co objevíš ve světě, **se sem samo uloží** (odznak „Objevené").
 - **📖 Knihovna gramatiky** — 25 lekcí A1 → B2 (výklad česky + příklady + kvízy): výslovnost, členy, slovesa a časy (présent, passé composé, imparfait, futur, plus‑que‑parfait…), zápor, zájmena, conditionnel, subjonctif, gérondif, trpný rod, souslednost, spojky…
 - **Vylepšená grafika:** realistická obloha, měkké stíny sledující hráče, tone‑mapping, texturovaná tráva a cesty, mraky.
 - **FPS ovládání myší** (Pointer Lock), běh a **kolize**.
