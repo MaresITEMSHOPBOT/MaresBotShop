@@ -129,6 +129,21 @@ body.locked #topbar{opacity:.5}
 .lessonItem .t{font-weight:700}
 .lessonItem .s{color:var(--muted);font-size:.8rem}
 .lessonItem .chk{margin-left:auto;color:var(--ok);font-weight:800}
+.bookbar{display:flex;align-items:center;gap:.6rem;justify-content:space-between;margin-bottom:.7rem;flex-wrap:wrap}
+.bookpage{background:linear-gradient(180deg,#fbf6e9,#f3ead2);color:#2a2418;border:1px solid #d8c9a3;
+  border-radius:10px;padding:1.1rem 1.3rem;box-shadow:inset 0 0 40px rgba(120,90,40,.08), var(--shadow);
+  font-family:Georgia,"Times New Roman",serif;line-height:1.65}
+.bookpage h3,.bookpage h4{color:#6a3b1a}
+.bookpage p{color:#2a2418}
+.bookpage code{background:#efe4c6;border-color:#d8c9a3;color:#5a3210}
+.bookpage table th{background:#efe4c6}
+.bookpage th,.bookpage td{border-color:#d8c9a3}
+.bookpage .exline{background:#efe6cd;border-color:#d8c9a3}
+.bookpage .exline .fr{color:#3a2a14}.bookpage .exline .tr{color:#6a5a3a}
+.bookpage .callout{background:rgba(180,130,40,.12);border-left-color:#b5832a}
+.bookpage .quiz .opt{background:#efe6cd;border-color:#d8c9a3;color:#2a2418}
+.bookpage .quiz .opt:hover{background:#e6d9b6}
+.booknav{display:flex;justify-content:space-between;gap:.5rem;margin-top:1rem}
 .lesson h3{margin:1rem 0 .5rem}
 .lesson h4{margin:.9rem 0 .35rem;color:var(--accent)}
 .lesson p{margin:.45rem 0;line-height:1.6;color:#dde6fb}
@@ -210,7 +225,7 @@ body.locked #topbar{opacity:.5}
 <div id="crosshair" class="hud"></div>
 <div id="prompt" class="hud" style="display:none"></div>
 <div id="playHint" class="hud" style="display:none">🖱️ Klikni do okna — myš ovládá rozhlížení · <kbd>Esc</kbd> = pauza/myš zpět</div>
-<div id="hint" class="hud"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> pohyb · <kbd>Shift</kbd> běh · myš = rozhlížení · zaměř a <kbd>klik</kbd>/<kbd>E</kbd> = interakce (otevři dveře 🚪, mluv 💬) · <kbd>F</kbd> = vyslovit · <kbd>Esc</kbd> = pauza</div>
+<div id="hint" class="hud"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> pohyb · <kbd>Shift</kbd> běh · myš = rozhlížení · <b>jen najeď na věc → info vpravo</b> (sbírá se do slovníku) · <kbd>E</kbd> = vyslovit / otevřít 🚪💬📖 · <kbd>Esc</kbd> = pauza</div>
 
 <div class="mobileMove" id="mobileMove">
   <div class="mb up" data-dir="f">▲</div><div class="mb left" data-dir="l">◀</div>
@@ -740,6 +755,112 @@ const DICT=[
   {f:"bougie",a:"la",g:"f",c:"svíčka",t:"house",l:"A2"},{f:"jouet",a:"le",g:"m",c:"hračka",t:"house",l:"A1"},
   {f:"parapluie",a:"le",g:"m",c:"deštník",t:"house",l:"A2"},{f:"outil",a:"l'",g:"m",c:"nástroj",t:"house",l:"B1"},
   {f:"marteau",a:"le",g:"m",c:"kladivo",t:"house",l:"B1"},{f:"ciseaux",a:"les",g:"pl",c:"nůžky",t:"house",l:"A2"},
+  // MĚSTO – další
+  {f:"mairie",a:"la",g:"f",c:"radnice",t:"city",l:"A2"},{f:"librairie",a:"la",g:"f",c:"knihkupectví",t:"city",l:"A2"},
+  {f:"fleuriste",a:"le",g:"m",c:"květinář(ství)",t:"city",l:"B1"},{f:"quartier",a:"le",g:"m",c:"čtvrť",t:"city",l:"A2"},
+  {f:"banlieue",a:"la",g:"f",c:"předměstí",t:"city",l:"B1"},{f:"trottoir",a:"le",g:"m",c:"chodník",t:"city",l:"A2"},
+  {f:"feu",a:"le",g:"m",c:"semafor/oheň",t:"city",l:"A2"},{f:"coin",a:"le",g:"m",c:"roh",t:"city",l:"A2"},
+  {f:"centre",a:"le",g:"m",c:"centrum",t:"city",l:"A1"},{f:"parking",a:"le",g:"m",c:"parkoviště",t:"city",l:"A1"},
+  {f:"usine",a:"l'",g:"f",c:"továrna",t:"city",l:"B1"},{f:"ferme",a:"la",g:"f",c:"farma",t:"city",l:"A2"},
+  {f:"château",a:"le",g:"m",c:"zámek/hrad",t:"city",l:"A2"},{f:"tour",a:"la",g:"f",c:"věž",t:"city",l:"A2"},
+  // RODINA – další
+  {f:"mari",a:"le",g:"m",c:"manžel",t:"people",l:"A2"},{f:"épouse",a:"l'",g:"f",c:"manželka",t:"people",l:"B1"},
+  {f:"fils",a:"le",g:"m",c:"syn",t:"people",l:"A1"},{f:"cousine",a:"la",g:"f",c:"sestřenice",t:"people",l:"A2"},
+  {f:"neveu",a:"le",g:"m",c:"synovec",t:"people",l:"B1"},{f:"nièce",a:"la",g:"f",c:"neteř",t:"people",l:"B1"},
+  {f:"adulte",a:"l'",g:"m",c:"dospělý",t:"people",l:"A2"},{f:"couple",a:"le",g:"m",c:"pár",t:"people",l:"A2"},
+  // TĚLO – další
+  {f:"doigt",a:"le",g:"m",c:"prst",t:"body",l:"A2"},{f:"genou",a:"le",g:"m",c:"koleno",t:"body",l:"A2"},
+  {f:"épaule",a:"l'",g:"f",c:"rameno",t:"body",l:"A2"},{f:"cou",a:"le",g:"m",c:"krk",t:"body",l:"A2"},
+  {f:"lèvre",a:"la",g:"f",c:"ret",t:"body",l:"B1"},{f:"joue",a:"la",g:"f",c:"tvář",t:"body",l:"B1"},
+  {f:"cheville",a:"la",g:"f",c:"kotník",t:"body",l:"B1"},{f:"ongle",a:"l'",g:"m",c:"nehet",t:"body",l:"B1"},
+  // ZVÍŘATA – další
+  {f:"animal",a:"l'",g:"m",c:"zvíře",t:"animals",l:"A1"},{f:"tigre",a:"le",g:"m",c:"tygr",t:"animals",l:"A2"},
+  {f:"singe",a:"le",g:"m",c:"opice",t:"animals",l:"A2"},{f:"girafe",a:"la",g:"f",c:"žirafa",t:"animals",l:"A2"},
+  {f:"crocodile",a:"le",g:"m",c:"krokodýl",t:"animals",l:"B1"},{f:"tortue",a:"la",g:"f",c:"želva",t:"animals",l:"A2"},
+  {f:"grenouille",a:"la",g:"f",c:"žába",t:"animals",l:"A2"},{f:"mouche",a:"la",g:"f",c:"moucha",t:"animals",l:"A2"},
+  {f:"fourmi",a:"la",g:"f",c:"mravenec",t:"animals",l:"B1"},{f:"araignée",a:"l'",g:"f",c:"pavouk",t:"animals",l:"A2"},
+  {f:"baleine",a:"la",g:"f",c:"velryba",t:"animals",l:"B1"},{f:"dauphin",a:"le",g:"m",c:"delfín",t:"animals",l:"B1"},
+  {f:"requin",a:"le",g:"m",c:"žralok",t:"animals",l:"B1"},{f:"aigle",a:"l'",g:"m",c:"orel",t:"animals",l:"B1"},
+  {f:"queue",a:"la",g:"f",c:"ocas/fronta",t:"animals",l:"A2"},{f:"aile",a:"l'",g:"f",c:"křídlo",t:"animals",l:"A2"},
+  // KUCHYNĚ / JÍDLO – další
+  {f:"steak",a:"le",g:"m",c:"steak",t:"kitchen",l:"A1"},{f:"saucisse",a:"la",g:"f",c:"klobása",t:"kitchen",l:"A2"},
+  {f:"épice",a:"l'",g:"f",c:"koření",t:"kitchen",l:"B1"},{f:"pizza",a:"la",g:"f",c:"pizza",t:"kitchen",l:"A1"},
+  {f:"hamburger",a:"le",g:"m",c:"hamburger",t:"kitchen",l:"A1"},{f:"plat",a:"le",g:"m",c:"chod/jídlo",t:"kitchen",l:"A2"},
+  {f:"menu",a:"le",g:"m",c:"jídelní lístek",t:"kitchen",l:"A1"},{f:"goût",a:"le",g:"m",c:"chuť",t:"kitchen",l:"A2"},
+  // OVOCE/ZELENINA – další
+  {f:"ananas",a:"l'",g:"m",c:"ananas",t:"fruitveg",l:"A2"},{f:"melon",a:"le",g:"m",c:"meloun",t:"fruitveg",l:"A2"},
+  {f:"abricot",a:"l'",g:"m",c:"meruňka",t:"fruitveg",l:"B1"},{f:"prune",a:"la",g:"f",c:"švestka",t:"fruitveg",l:"B1"},
+  {f:"framboise",a:"la",g:"f",c:"malina",t:"fruitveg",l:"B1"},{f:"concombre",a:"le",g:"m",c:"okurka",t:"fruitveg",l:"A2"},
+  {f:"poivron",a:"le",g:"m",c:"paprika",t:"fruitveg",l:"B1"},{f:"chou",a:"le",g:"m",c:"zelí",t:"fruitveg",l:"B1"},
+  {f:"ail",a:"l'",g:"m",c:"česnek",t:"fruitveg",l:"B1"},{f:"salade",a:"la",g:"f",c:"salát",t:"fruitveg",l:"A1"},
+  // OBLEČENÍ – další
+  {f:"jean",a:"le",g:"m",c:"džíny",t:"clothes",l:"A1"},{f:"short",a:"le",g:"m",c:"kraťasy",t:"clothes",l:"A2"},
+  {f:"costume",a:"le",g:"m",c:"oblek",t:"clothes",l:"B1"},{f:"cravate",a:"la",g:"f",c:"kravata",t:"clothes",l:"B1"},
+  {f:"gant",a:"le",g:"m",c:"rukavice",t:"clothes",l:"A2"},{f:"écharpe",a:"l'",g:"f",c:"šála",t:"clothes",l:"A2"},
+  {f:"ceinture",a:"la",g:"f",c:"pásek",t:"clothes",l:"A2"},{f:"bague",a:"la",g:"f",c:"prsten",t:"clothes",l:"B1"},
+  {f:"poche",a:"la",g:"f",c:"kapsa",t:"clothes",l:"A2"},{f:"taille",a:"la",g:"f",c:"velikost/pas",t:"clothes",l:"A2"},
+  // SLOVESA – další
+  {f:"rentrer",a:"",g:"",c:"vrátit se domů",t:"verbs",l:"A1"},{f:"rencontrer",a:"",g:"",c:"potkat",t:"verbs",l:"A2"},
+  {f:"présenter",a:"",g:"",c:"představit",t:"verbs",l:"A2"},{f:"aider",a:"",g:"",c:"pomoci",t:"verbs",l:"A1"},
+  {f:"téléphoner",a:"",g:"",c:"telefonovat",t:"verbs",l:"A1"},{f:"visiter",a:"",g:"",c:"navštívit",t:"verbs",l:"A1"},
+  {f:"voyager",a:"",g:"",c:"cestovat",t:"verbs",l:"A1"},{f:"réserver",a:"",g:"",c:"rezervovat",t:"verbs",l:"A2"},
+  {f:"payer",a:"",g:"",c:"platit",t:"verbs",l:"A1"},{f:"coûter",a:"",g:"",c:"stát (cena)",t:"verbs",l:"A1"},
+  {f:"vendre",a:"",g:"",c:"prodat",t:"verbs",l:"A1"},{f:"cuisiner",a:"",g:"",c:"vařit",t:"verbs",l:"A1"},
+  {f:"nettoyer",a:"",g:"",c:"uklízet",t:"verbs",l:"A2"},{f:"dessiner",a:"",g:"",c:"kreslit",t:"verbs",l:"A2"},
+  {f:"danser",a:"",g:"",c:"tančit",t:"verbs",l:"A1"},{f:"conduire",a:"",g:"",c:"řídit",t:"verbs",l:"A2"},
+  {f:"rêver",a:"",g:"",c:"snít",t:"verbs",l:"A2"},{f:"rire",a:"",g:"",c:"smát se",t:"verbs",l:"A2"},
+  {f:"pleurer",a:"",g:"",c:"plakat",t:"verbs",l:"A2"},{f:"se lever",a:"",g:"",c:"vstávat",t:"verbs",l:"A1"},
+  {f:"se coucher",a:"",g:"",c:"jít spát",t:"verbs",l:"A1"},{f:"s'habiller",a:"",g:"",c:"oblékat se",t:"verbs",l:"A2"},
+  {f:"se dépêcher",a:"",g:"",c:"spěchat",t:"verbs",l:"A2"},{f:"se reposer",a:"",g:"",c:"odpočívat",t:"verbs",l:"A2"},
+  {f:"profiter",a:"",g:"",c:"užít si",t:"verbs",l:"B1"},{f:"obtenir",a:"",g:"",c:"získat",t:"verbs",l:"B1"},
+  {f:"proposer",a:"",g:"",c:"navrhnout",t:"verbs",l:"B1"},{f:"permettre",a:"",g:"",c:"umožnit",t:"verbs",l:"B1"},
+  {f:"améliorer",a:"",g:"",c:"zlepšit",t:"verbs",l:"B2"},{f:"développer",a:"",g:"",c:"rozvíjet",t:"verbs",l:"B2"},
+  {f:"considérer",a:"",g:"",c:"považovat",t:"verbs",l:"B2"},{f:"reconnaître",a:"",g:"",c:"poznat/uznat",t:"verbs",l:"B2"},
+  {f:"empêcher",a:"",g:"",c:"zabránit",t:"verbs",l:"B2"},
+  // PŘÍDAVNÁ JMÉNA – další
+  {f:"meilleur",a:"",g:"",c:"lepší/nejlepší",t:"adj",l:"A2"},{f:"pire",a:"",g:"",c:"horší",t:"adj",l:"B1"},
+  {f:"prochain",a:"",g:"",c:"příští",t:"adj",l:"A1"},{f:"frais",a:"",g:"",c:"čerstvý/chladný",t:"adj",l:"A2"},
+  {f:"délicieux",a:"",g:"",c:"výborný (chuť)",t:"adj",l:"A2"},{f:"sucré",a:"",g:"",c:"sladký",t:"adj",l:"A2"},
+  {f:"salé",a:"",g:"",c:"slaný",t:"adj",l:"A2"},{f:"gros",a:"",g:"",c:"velký/tlustý",t:"adj",l:"A1"},
+  {f:"mince",a:"",g:"",c:"hubený",t:"adj",l:"A2"},{f:"large",a:"",g:"",c:"široký",t:"adj",l:"A2"},
+  {f:"haut",a:"",g:"",c:"vysoký",t:"adj",l:"A1"},{f:"bas",a:"",g:"",c:"nízký",t:"adj",l:"A2"},
+  {f:"lourd",a:"",g:"",c:"těžký",t:"adj",l:"A2"},{f:"léger",a:"",g:"",c:"lehký",t:"adj",l:"A2"},
+  {f:"pauvre",a:"",g:"",c:"chudý",t:"adj",l:"A2"},{f:"riche",a:"",g:"",c:"bohatý",t:"adj",l:"A2"},
+  {f:"différent",a:"",g:"",c:"odlišný",t:"adj",l:"A2"},{f:"ancien",a:"",g:"",c:"starý/bývalý",t:"adj",l:"B1"},
+  {f:"moderne",a:"",g:"",c:"moderní",t:"adj",l:"A2"},{f:"naturel",a:"",g:"",c:"přírodní",t:"adj",l:"A2"},
+  {f:"nombreux",a:"",g:"",c:"četný",t:"adj",l:"B1"},{f:"connu",a:"",g:"",c:"známý",t:"adj",l:"A2"},
+  // POCITY / ABSTRAKCE – další
+  {f:"sentiment",a:"le",g:"m",c:"cit",t:"abstract",l:"B1"},{f:"émotion",a:"l'",g:"f",c:"emoce",t:"abstract",l:"B1"},
+  {f:"surprise",a:"la",g:"f",c:"překvapení",t:"abstract",l:"A2"},{f:"honte",a:"la",g:"f",c:"stud",t:"abstract",l:"B1"},
+  {f:"fierté",a:"la",g:"f",c:"hrdost",t:"abstract",l:"B2"},{f:"ennui",a:"l'",g:"m",c:"nuda",t:"abstract",l:"B1"},
+  {f:"stress",a:"le",g:"m",c:"stres",t:"abstract",l:"B1"},{f:"confiance",a:"la",g:"f",c:"důvěra",t:"abstract",l:"B1"},
+  {f:"courage",a:"le",g:"m",c:"odvaha",t:"abstract",l:"B1"},{f:"patience",a:"la",g:"f",c:"trpělivost",t:"abstract",l:"B1"},
+  {f:"succès",a:"le",g:"m",c:"úspěch",t:"abstract",l:"A2"},{f:"échec",a:"l'",g:"m",c:"neúspěch",t:"abstract",l:"B1"},
+  {f:"choix",a:"le",g:"m",c:"volba",t:"abstract",l:"A2"},{f:"décision",a:"la",g:"f",c:"rozhodnutí",t:"abstract",l:"B1"},
+  {f:"opinion",a:"l'",g:"f",c:"názor",t:"abstract",l:"B1"},{f:"avis",a:"l'",g:"m",c:"názor",t:"abstract",l:"A2"},
+  {f:"projet",a:"le",g:"m",c:"plán/projekt",t:"abstract",l:"A2"},{f:"droit",a:"le",g:"m",c:"právo",t:"abstract",l:"B1"},
+  {f:"loi",a:"la",g:"f",c:"zákon",t:"abstract",l:"B1"},{f:"règle",a:"la",g:"f",c:"pravidlo",t:"abstract",l:"A2"},
+  {f:"culture",a:"la",g:"f",c:"kultura",t:"abstract",l:"A2"},{f:"société",a:"la",g:"f",c:"společnost",t:"abstract",l:"B1"},
+  {f:"nature",a:"la",g:"f",c:"příroda/povaha",t:"abstract",l:"A1"},
+  // ČAS – další
+  {f:"week-end",a:"le",g:"m",c:"víkend",t:"time",l:"A1"},{f:"date",a:"la",g:"f",c:"datum",t:"time",l:"A1"},
+  {f:"calendrier",a:"le",g:"m",c:"kalendář",t:"time",l:"A2"},{f:"horaire",a:"l'",g:"m",c:"jízdní řád/rozvrh",t:"time",l:"B1"},
+  {f:"retard",a:"le",g:"m",c:"zpoždění",t:"time",l:"A2"},{f:"fois",a:"la",g:"f",c:"krát",t:"time",l:"A1"},
+  {f:"époque",a:"l'",g:"f",c:"doba/éra",t:"time",l:"B1"},{f:"durée",a:"la",g:"f",c:"trvání",t:"time",l:"B1"},
+  // ŠKOLA – další
+  {f:"leçon",a:"la",g:"f",c:"lekce",t:"school",l:"A1"},{f:"exercice",a:"l'",g:"m",c:"cvičení",t:"school",l:"A1"},
+  {f:"phrase",a:"la",g:"f",c:"věta",t:"school",l:"A2"},{f:"grammaire",a:"la",g:"f",c:"gramatika",t:"school",l:"A2"},
+  {f:"verbe",a:"le",g:"m",c:"sloveso",t:"school",l:"A2"},{f:"note",a:"la",g:"f",c:"známka/poznámka",t:"school",l:"A2"},
+  {f:"diplôme",a:"le",g:"m",c:"diplom",t:"school",l:"B1"},{f:"gomme",a:"la",g:"f",c:"guma",t:"school",l:"A2"},
+  {f:"tableau",a:"le",g:"m",c:"tabule/obraz",t:"school",l:"A2"},{f:"sac à dos",a:"le",g:"m",c:"batoh",t:"school",l:"A1"},
+  // SPOJKY / PŘÍSLOVCE – další
+  {f:"pourtant",a:"",g:"",c:"přesto",t:"words",l:"B1"},{f:"cependant",a:"",g:"",c:"nicméně",t:"words",l:"B1"},
+  {f:"alors",a:"",g:"",c:"tedy/tak",t:"words",l:"A1"},{f:"puis",a:"",g:"",c:"pak",t:"words",l:"A1"},
+  {f:"enfin",a:"",g:"",c:"konečně",t:"words",l:"A2"},{f:"d'abord",a:"",g:"",c:"nejdřív",t:"words",l:"A2"},
+  {f:"par exemple",a:"",g:"",c:"například",t:"words",l:"A2"},{f:"malgré",a:"",g:"",c:"navzdory",t:"words",l:"B1"},
+  {f:"grâce à",a:"",g:"",c:"díky (čemu)",t:"words",l:"B1"},{f:"à cause de",a:"",g:"",c:"kvůli",t:"words",l:"B1"},
+  {f:"selon",a:"",g:"",c:"podle",t:"words",l:"B1"},{f:"vers",a:"",g:"",c:"k/kolem",t:"words",l:"A2"},
+  {f:"contre",a:"",g:"",c:"proti",t:"words",l:"A2"},{f:"environ",a:"",g:"",c:"přibližně",t:"words",l:"A2"},
 ];
 // sjednocená databáze (objevené ze světa + slovník), bez duplicit
 const TYPE_THEME_DEF="other";
@@ -1172,7 +1293,7 @@ const Progress = {
   load(){ try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(s) this.data=Object.assign(this.data,s);}catch(e){} },
   save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(this.data)); }catch(e){} },
   addXp(n){ this.data.xp+=n; this.save(); refreshHud(); },
-  learnWord(fr){ if(!this.data.words[fr]){ this.data.words[fr]=true; this.addXp(5); } else this.save(); },
+  learnWord(fr){ if(!this.data.words[fr]){ this.data.words[fr]=true; this.addXp(5); } },
   wordCount(){ return Object.keys(this.data.words).length; },
   doneLesson(i){ if(!this.data.lessons[i]){ this.data.lessons[i]=true; this.addXp(20);} this.save(); },
   doneDialogue(id){ if(!this.data.dialogues[id]){ this.data.dialogues[id]=true; this.addXp(25);} this.save(); },
@@ -1209,7 +1330,7 @@ let yaw=0, pitch=0;
 const move={f:false,b:false,l:false,r:false};
 const PLAYER_Y=1.6;
 const PLAYER_R=0.38;
-const BOUND=46;
+const BOUND=90;
 let controls, useLock=false;
 let sprint=false;
 let skyMesh=null, groundMesh=null, sunLight=null, composer=null;
@@ -1223,7 +1344,7 @@ const SOLID={ table:[1.0,0.65], sofa:[1.2,0.6], bed:[1.1,1.6], bench:[0.9,0.45],
 
 function initThree(){
   scene=new THREE.Scene();
-  scene.fog=new THREE.FogExp2(0xd5e7f2, 0.011);
+  scene.fog=new THREE.FogExp2(0xd5e7f2, 0.0058);
 
   camera=new THREE.PerspectiveCamera(68, innerWidth/innerHeight, 0.1, 1200);
   camera.position.set(-2, PLAYER_Y, 9);
@@ -1312,16 +1433,16 @@ function setupPost(){
 
 /* tráva (instancované trsy) – jen v zeleni mimo silnici */
 function buildGrass(){
-  const COUNT=2600;
+  const COUNT=5200;
   const geo=new THREE.ConeGeometry(0.06,0.5,4); geo.translate(0,0.25,0);
   const mat=new THREE.MeshStandardMaterial({color:0x5fa046,roughness:1,metalness:0,flatShading:true});
   const mesh=new THREE.InstancedMesh(geo,mat,COUNT);
   mesh.castShadow=false; mesh.receiveShadow=true;
   const dummy=new THREE.Object3D(); const col=new THREE.Color(); let n=0;
   for(let i=0;i<COUNT*2 && n<COUNT;i++){
-    const x=-44+Math.random()*88, z=-30+Math.random()*72;
+    const x=-90+Math.random()*180, z=-70+Math.random()*150;
     if(Math.abs(x-2)<4.5) continue;                 // ne na silnici (svislá)
-    if(Math.abs(z-12)<4.5 && x>-32 && x<34) continue; // ne na silnici (vodorovná)
+    if(onRoad(x,z)) continue;                        // ne na silnicích
     if(inTownRect(x,z)) continue;                   // ne v budovách / domě
     dummy.position.set(x,0,z);
     dummy.rotation.y=Math.random()*Math.PI;
@@ -1378,16 +1499,10 @@ function makeGroundTex(base, strength){
   t.colorSpace=THREE.SRGBColorSpace; return t;
 }
 function buildGround(){
-  const grass=makeGroundTex('#5f9e43', 0.55); grass.repeat.set(30,30);
-  const g=new THREE.Mesh(new THREE.PlaneGeometry(120,120),
+  const grass=makeGroundTex('#5f9e43', 0.55); grass.repeat.set(60,60);
+  const g=new THREE.Mesh(new THREE.PlaneGeometry(220,220),
     new THREE.MeshStandardMaterial({map:grass, roughness:1, metalness:0}));
   g.rotation.x=-Math.PI/2; scene.add(g); groundMesh=g;
-  const sand=makeGroundTex('#cdb487', 0.4); sand.repeat.set(4,18);
-  const pmat=new THREE.MeshStandardMaterial({map:sand, roughness:1, metalness:0});
-  const path=new THREE.Mesh(new THREE.PlaneGeometry(4,46), pmat);
-  path.rotation.x=-Math.PI/2; path.position.set(2,0.012,2); scene.add(path);
-  const path2=new THREE.Mesh(new THREE.PlaneGeometry(30,4), pmat);
-  path2.rotation.x=-Math.PI/2; path2.position.set(2,0.012,12); scene.add(path2);
 }
 
 /* dům s nízkými zdmi (bez střechy, ať jsou popisky vidět) */
@@ -1407,14 +1522,29 @@ function buildHouse(){
   // otevíratelná okna v bočních zdech
   addOpenable(-16.27, -3.2, Math.PI/2, 1.3, 1.3, 0x9fd0ff, {fr:"fenêtre",art:"la",g:"f",cs:"okno",cz:"fnetr",level:"A1"}, true);
   addOpenable(-3.73, 2.0, -Math.PI/2, 1.3, 1.3, 0x9fd0ff, {fr:"fenêtre",art:"la",g:"f",cs:"okno",cz:"fnetr",level:"A1"}, true);
+  // 📖 učebnice gramatiky na stole (otevře Knihovnu)
+  addLibraryBook(-12, 0.9, -2);
+}
+function addLibraryBook(x,y,z){
+  const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=0.3;
+  const cover=box(0.5,0.09,0.66,0x8a3b2a); const pages=box(0.46,0.07,0.6,0xf4ecd6); pages.position.y=0.02;
+  const spine=box(0.5,0.09,0.06,0x6a2b1a); spine.position.z=-0.3;
+  g.add(cover,pages,spine); scene.add(g);
+  const el=document.createElement('div'); el.className='lbl door';
+  el.innerHTML='📖 <span class="art">[E]</span> Učebnice gramatiky';
+  el.addEventListener('pointerdown',ev=>ev.stopPropagation());
+  el.addEventListener('click',ev=>{ev.stopPropagation(); openLessons();});
+  const obj=new CSS2DObject(el); obj.position.set(0,0.55,0); g.add(obj);
+  labels.push({el,obj3d:g,item:{fr:'livre',art:'le',g:'m',cs:'kniha'},kind:'word',action:'library',css:obj});
 }
 
 /* místa, kam chodí postavy */
 const PLACES=[
-  {id:"boulangerie",x:-14,z:24,va:"va à la boulangerie",vaCs:"jde do pekárny",at:"achète du pain",atCs:"kupuje chleba"},
-  {id:"cafe",x:14,z:24,va:"va au café",vaCs:"jde do kavárny",at:"boit un café",atCs:"pije kávu"},
-  {id:"ecole",x:-14,z:31,va:"va à l'école",vaCs:"jde do školy",at:"attend devant l'école",atCs:"čeká před školou"},
-  {id:"marche",x:-26,z:6,va:"va au marché",vaCs:"jde na trh",at:"fait les courses",atCs:"nakupuje"},
+  {id:"boulangerie",x:28,z:26,va:"va à la boulangerie",vaCs:"jde do pekárny",at:"achète du pain",atCs:"kupuje chleba"},
+  {id:"cafe",x:12,z:26,va:"va au café",vaCs:"jde do kavárny",at:"boit un café",atCs:"pije kávu"},
+  {id:"ecole",x:-28,z:26,va:"va à l'école",vaCs:"jde do školy",at:"attend devant l'école",atCs:"čeká před školou"},
+  {id:"marche",x:-40,z:-2,va:"va au marché",vaCs:"jde na trh",at:"fait les courses",atCs:"nakupuje"},
+  {id:"musee",x:28,z:48,va:"va au musée",vaCs:"jde do muzea",at:"visite le musée",atCs:"prohlíží muzeum"},
   {id:"parc",x:8,z:4,va:"se promène dans le parc",vaCs:"prochází se v parku",at:"profite du parc",atCs:"užívá si park"},
   {id:"fontaine",x:8,z:9,va:"va à la fontaine",vaCs:"jde k fontáně",at:"se repose",atCs:"odpočívá"},
   {id:"maison",x:-10,z:9,va:"rentre à la maison",vaCs:"jde domů",at:"est à la maison",atCs:"je doma"},
@@ -1423,10 +1553,12 @@ const PLACES=[
 /* silnice + chodníky */
 function buildRoads(){
   const road=new THREE.MeshStandardMaterial({color:0x3b3f47,roughness:1,metalness:0});
-  const r1=new THREE.Mesh(new THREE.PlaneGeometry(6,58),road); r1.rotation.x=-Math.PI/2; r1.position.set(2,0.02,12); r1.castShadow=false; scene.add(r1);
-  const r2=new THREE.Mesh(new THREE.PlaneGeometry(70,6),road); r2.rotation.x=-Math.PI/2; r2.position.set(2,0.02,12); r2.castShadow=false; scene.add(r2);
+  const mk=(w,d,x,z)=>{ const r=new THREE.Mesh(new THREE.PlaneGeometry(w,d),road); r.rotation.x=-Math.PI/2; r.position.set(x,0.02,z); r.castShadow=false; r.receiveShadow=true; scene.add(r); };
+  mk(7,150, 2,12);        // hlavní třída (svislá)
+  mk(160,7, 2,12); mk(160,6, 2,34); mk(160,6, 2,56);   // vodorovné
+  mk(6,92, -20,20); mk(6,92, 20,20);                   // boční svislé
   const line=new THREE.MeshStandardMaterial({color:0xe8c84a,roughness:1});
-  for(let z=-14;z<40;z+=4){ const d=new THREE.Mesh(new THREE.PlaneGeometry(0.28,2),line); d.rotation.x=-Math.PI/2; d.position.set(2,0.03,z); d.castShadow=false; scene.add(d); }
+  for(let z=-60;z<82;z+=4){ const d=new THREE.Mesh(new THREE.PlaneGeometry(0.3,2),line); d.rotation.x=-Math.PI/2; d.position.set(2,0.03,z); d.castShadow=false; scene.add(d); }
 }
 
 /* otevíratelné dveře / okno (panel na pantu, animace v updateDoors) */
@@ -1446,7 +1578,7 @@ function addOpenable(hx,hz,baseAngle,w,h,color,word,isWindow,blockWhenClosed){
   }
   const el=document.createElement('div'); el.className='lbl door';
   const obj=new CSS2DObject(el); obj.position.set(w/2,yC+h/2+0.25,0); pivot.add(obj);
-  d.entry={el,obj3d:pivot,item:word,kind:'door',door:d};
+  d.entry={el,obj3d:pivot,item:word,kind:'door',door:d,css:obj};
   labels.push(d.entry); updateDoorLabel(d);
 }
 function updateDoorLabel(d){
@@ -1469,21 +1601,32 @@ function updateDoors(dt){
 
 /* jedna budova: tělo, střecha, okna na všech stranách, cedule se členem, otevíratelné dveře */
 const TOWN=[
-  {fr:"boulangerie",art:"la",g:"f",cs:"pekařství",x:-14,z:20,color:0xe9c79a,roof:0xb5482f,band:0x7a3b2a},
-  {fr:"café",art:"le",g:"m",cs:"kavárna",x:14,z:20,color:0xf3e2bd,roof:0x7c4a2d,band:0x4a2f1a},
-  {fr:"restaurant",art:"le",g:"m",cs:"restaurace",x:14,z:27,color:0xe7d3a8,roof:0x8a5a2d,band:0x6a3b1a},
-  {fr:"école",art:"l'",g:"f",cs:"škola",x:-14,z:27,color:0xd9c7a0,roof:0x6c8f3a,band:0x3a5a2a,w:7,d:6},
-  {fr:"magasin",art:"le",g:"m",cs:"obchod",x:14,z:34,color:0xcfe0e8,roof:0x35607a,band:0x244456},
-  {fr:"bibliothèque",art:"la",g:"f",cs:"knihovna",x:-14,z:34,color:0xe5d2b8,roof:0x7a3b2a,band:0x5a2b1a},
-  {fr:"pharmacie",art:"la",g:"f",cs:"lékárna",x:14,z:0,color:0xeaf0ea,roof:0x2e8b57,band:0x1e6b3e},
-  {fr:"banque",art:"la",g:"f",cs:"banka",x:26,z:0,color:0xdfe3e8,roof:0x4a5568,band:0x2c3340},
-  {fr:"hôpital",art:"l'",g:"m",cs:"nemocnice",x:-26,z:20,color:0xeef2f5,roof:0xc0392b,band:0x922b22,w:7,d:6,h:4.6},
-  {fr:"poste",art:"la",g:"f",cs:"pošta",x:-26,z:30,color:0xe6d0a0,roof:0xd4a017,band:0x9a7510},
-  {fr:"musée",art:"le",g:"m",cs:"muzeum",x:26,z:27,color:0xe8e2d2,roof:0x8a7a3a,band:0x6a5a2a,w:7,d:7,h:4.6},
-  {fr:"hôtel",art:"l'",g:"m",cs:"hotel",x:26,z:20,color:0xe3cda0,roof:0x6a4a2a,band:0x4a2f1a,h:5.2},
-  {fr:"gare",art:"la",g:"f",cs:"nádraží",x:26,z:34,color:0xd8c4a0,roof:0x55402a,band:0x33261a,w:9,d:6,h:4.8},
-  {fr:"marché",art:"le",g:"m",cs:"trh",x:-26,z:2,color:0xe9dcc3,roof:0x6c8f3a,band:0x3a5a2a},
-  {fr:"église",art:"l'",g:"f",cs:"kostel",x:-14,z:41,color:0xdfd6c0,roof:0x4a5568,band:0x2c3340,w:6,d:8,h:6.5},
+  // řada z=-6
+  {fr:"marché",art:"le",g:"m",cs:"trh",x:-40,z:-6,color:0xe9dcc3,roof:0x6c8f3a,band:0x3a5a2a},
+  {fr:"banque",art:"la",g:"f",cs:"banka",x:-28,z:-6,color:0xdfe3e8,roof:0x4a5568,band:0x2c3340},
+  {fr:"pharmacie",art:"la",g:"f",cs:"lékárna",x:12,z:-6,color:0xeaf0ea,roof:0x2e8b57,band:0x1e6b3e},
+  {fr:"supermarché",art:"le",g:"m",cs:"supermarket",x:28,z:-6,color:0xcfe0e8,roof:0x35607a,band:0x244456,w:7,d:6},
+  {fr:"poste",art:"la",g:"f",cs:"pošta",x:40,z:-6,color:0xe6d0a0,roof:0xd4a017,band:0x9a7510},
+  // řada z=22
+  {fr:"hôpital",art:"l'",g:"m",cs:"nemocnice",x:-40,z:22,color:0xeef2f5,roof:0xc0392b,band:0x922b22,w:7,d:6,h:4.6},
+  {fr:"école",art:"l'",g:"f",cs:"škola",x:-28,z:22,color:0xd9c7a0,roof:0x6c8f3a,band:0x3a5a2a,w:7,d:6},
+  {fr:"mairie",art:"la",g:"f",cs:"radnice",x:-12,z:22,color:0xe6dec8,roof:0x556070,band:0x33405a,h:4.6},
+  {fr:"café",art:"le",g:"m",cs:"kavárna",x:12,z:22,color:0xf3e2bd,roof:0x7c4a2d,band:0x4a2f1a},
+  {fr:"boulangerie",art:"la",g:"f",cs:"pekařství",x:28,z:22,color:0xe9c79a,roof:0xb5482f,band:0x7a3b2a},
+  {fr:"magasin",art:"le",g:"m",cs:"obchod",x:40,z:22,color:0xcfe0e8,roof:0x35607a,band:0x244456},
+  // řada z=44
+  {fr:"stade",art:"le",g:"m",cs:"stadion",x:-40,z:44,color:0xdfe6df,roof:0x4a7a4a,band:0x2e5a2e,w:8,d:7,h:5},
+  {fr:"bibliothèque",art:"la",g:"f",cs:"knihovna",x:-28,z:44,color:0xe5d2b8,roof:0x7a3b2a,band:0x5a2b1a,action:"library"},
+  {fr:"cinéma",art:"le",g:"m",cs:"kino",x:-12,z:44,color:0xe2d6b8,roof:0x4a2f5a,band:0x33204a},
+  {fr:"restaurant",art:"le",g:"m",cs:"restaurace",x:12,z:44,color:0xe7d3a8,roof:0x8a5a2d,band:0x6a3b1a},
+  {fr:"musée",art:"le",g:"m",cs:"muzeum",x:28,z:44,color:0xe8e2d2,roof:0x8a7a3a,band:0x6a5a2a,w:7,d:7,h:4.6},
+  {fr:"hôtel",art:"l'",g:"m",cs:"hotel",x:40,z:44,color:0xe3cda0,roof:0x6a4a2a,band:0x4a2f1a,h:5.2},
+  // řada z=66
+  {fr:"théâtre",art:"le",g:"m",cs:"divadlo",x:-40,z:66,color:0xe6d3c0,roof:0x7a2f3a,band:0x5a1f2a,h:5},
+  {fr:"gare",art:"la",g:"f",cs:"nádraží",x:-28,z:66,color:0xd8c4a0,roof:0x55402a,band:0x33261a,w:9,d:6,h:4.8},
+  {fr:"église",art:"l'",g:"f",cs:"kostel",x:-12,z:66,color:0xdfd6c0,roof:0x4a5568,band:0x2c3340,w:6,d:8,h:6.5},
+  {fr:"librairie",art:"la",g:"f",cs:"knihkupectví",x:12,z:66,color:0xe5d8c0,roof:0x6a4a3a,band:0x4a2f1a},
+  {fr:"fleuriste",art:"le",g:"m",cs:"květinářství",x:28,z:66,color:0xeae0d0,roof:0x3a8a5a,band:0x2e6a3e},
 ];
 function buildTown(){ TOWN.forEach(building); }
 function building(s){
@@ -1518,17 +1661,19 @@ function building(s){
   const word={fr:s.fr,art:s.art,g:s.g,cs:s.cs,level:s.level||"A1"};
   const el=document.createElement('div'); el.className='lbl '+genderClass(s.g); el.innerHTML=labelText(word);
   el.addEventListener('pointerdown',ev=>ev.stopPropagation());
-  el.addEventListener('click',ev=>{ev.stopPropagation(); openWord(word);});
+  el.addEventListener('click',ev=>{ev.stopPropagation(); s.action? doAction(s.action) : openWord(word);});
   const obj=new CSS2DObject(el); obj.position.set(0,h+0.9,0); G.add(obj);
-  labels.push({el,obj3d:G,item:word,kind:'word'});
+  labels.push({el,obj3d:G,item:word,kind:'word',css:obj,action:s.action});
 }
 
 /* pouliční prvky: lampy, lavičky, květináče, stromořadí */
 function buildStreetProps(){
-  [-8,-2,4,10,20,26,32].forEach(z=>{ lampPost(5.4,z); lampPost(-1.4,z); });
-  streetBench(6.0,8,Math.PI); streetBench(-2.0,16,0); streetBench(6.0,28,Math.PI);
-  planter(-2.0,4); planter(6.0,22); planter(-2.0,30);
-  for(let z=-8;z<=34;z+=6){ scene.add(treeMesh(-3.4,z,1)); addBox(-3.4,z,0.5,0.5); scene.add(treeMesh(7.4,z,1)); addBox(7.4,z,0.5,0.5); }
+  // lampy a stromy podél hlavní třídy
+  for(let z=-58;z<=78;z+=8){ lampPost(5.6,z); lampPost(-1.6,z);
+    if(z%16<1){ scene.add(treeMesh(-3.6,z,1)); addBox(-3.6,z,0.5,0.5); scene.add(treeMesh(7.6,z,1)); addBox(7.6,z,0.5,0.5); } }
+  // lavičky a květináče u třídy
+  for(let z=0;z<=72;z+=12){ streetBench((z/12)%2?6.2:-2.2, z, (z/12)%2?Math.PI:0); }
+  [[-2.2,4],[6.2,30],[-2.2,52],[6.2,64]].forEach(([x,z])=>planter(x,z));
 }
 function lampPost(x,z){
   const pole=cyl(.08,.1,3.2,0x2c3038); pole.position.set(x,1.6,z); scene.add(pole);
@@ -1546,7 +1691,12 @@ function inTownRect(x,z){ // hrubá kontrola, zda bod není v budově
   if(x>-17 && x<-3 && z>-9 && z<7) return true; // dům
   return false;
 }
-function onRoad(x,z){ return Math.abs(x-2)<4 || (Math.abs(z-12)<4 && x>-32 && x<34); }
+function onRoad(x,z){
+  if(Math.abs(x-2)<4) return true;
+  if((Math.abs(x+20)<3.5||Math.abs(x-20)<3.5) && z>-26 && z<66) return true;
+  if((Math.abs(z-12)<4||Math.abs(z-34)<3.5||Math.abs(z-56)<3.5) && x>-78 && x<82) return true;
+  return false;
+}
 function bush(x,z){ const g=new THREE.Group();
   [[0,0,0,.7],[.4,-.1,.2,.5],[-.35,-.05,.25,.55],[.1,.15,-.3,.5]].forEach(([bx,by,bz,br])=>{
     const s=sph(br,[0x3f7d3a,0x4c9a45,0x356d34][Math.floor(Math.random()*3)],8); s.position.set(bx,.5+by,bz); g.add(s); });
@@ -1555,13 +1705,18 @@ function rock(x,z){ const r=new THREE.Mesh(new THREE.IcosahedronGeometry(.4+Math
   r.position.set(x,.25,z); r.rotation.set(Math.random(),Math.random(),Math.random()); scene.add(r); addBox(x,z,0.45,0.45); }
 function flowerPatch(x,z){ for(let i=0;i<5;i++){ const f=buildShape('flower'); f.position.set(x+(Math.random()*1.4-.7),0,z+(Math.random()*1.4-.7)); f.scale.setScalar(.7+Math.random()*.5); scene.add(f); } }
 function buildScenery(){
-  const spots=[[-22,-18],[-18,-22],[20,-20],[24,-10],[-24,12],[22,22],[-20,22],[18,-26],[-26,-4],[26,4],
-    [30,14],[-30,2],[-30,26],[30,30],[10,-22],[-10,-22]];
-  spots.forEach(([x,z])=>{ const s=1+Math.random()*0.7; scene.add(treeMesh(x,z,s)); addBox(x,z,0.55,0.55); });
+  // aleje stromů po stranách hlavní třídy + rozptýlené stromy po celé mapě
+  let trees=0;
+  for(let i=0;i<700 && trees<150;i++){
+    const x=-86+Math.random()*172, z=-66+Math.random()*146;
+    if(onRoad(x,z) || inTownRect(x,z)) continue;
+    if(Math.abs(x-2)<8 && z>-60 && z<78 && Math.random()<0.7){ /* hustší alej u třídy */ }
+    const s=1+Math.random()*0.7; scene.add(treeMesh(x,z,s)); addBox(x,z,0.55,0.55); trees++;
+  }
   // keře, kameny, záhony (jen v zeleni)
   let placed=0;
-  for(let i=0;i<400 && placed<70;i++){
-    const x=-42+Math.random()*84, z=-28+Math.random()*68;
+  for(let i=0;i<1400 && placed<220;i++){
+    const x=-86+Math.random()*172, z=-66+Math.random()*146;
     if(onRoad(x,z) || inTownRect(x,z)) continue;
     const r=Math.random();
     if(r<0.45) bush(x,z); else if(r<0.75) rock(x,z); else flowerPatch(x,z);
@@ -1658,7 +1813,7 @@ function buildVocab(){
     const h=Math.min(Math.max(bbox.max.y - item.pos[1], .5), 5)+.5;
     const {el,obj}=makeLabel(item, h, false);
     shape.add(obj);
-    labels.push({el, obj3d:shape, item, isNpc:false});
+    labels.push({el, obj3d:shape, item, isNpc:false, css:obj});
   });
 }
 
@@ -1690,7 +1845,7 @@ function buildNpcs(){
     el.addEventListener('click',ev=>{ ev.stopPropagation(); interactNpc(n, g); });
     const obj=new CSS2DObject(el); obj.position.set(0,2.25,0); g.add(obj);
     const agent={group:g, npc:n, el, place:null, state:"idle", timer:Math.random()*3, speed:1.3+Math.random()*0.7, phase:Math.random()*6};
-    agent.entry={el, obj3d:g, item:n, kind:"npc", agent};
+    agent.entry={el, obj3d:g, item:n, kind:"npc", agent, css:obj};
     labels.push(agent.entry); npcAgents.push(agent);
     pickDestination(agent);
   });
@@ -1842,60 +1997,70 @@ function updateMovement(dt){
 }
 
 /* co je na křížku (raycast ze středu), jinak nejbližší v dosahu */
-function lookedAt(maxDist=6){
+const _tmpV=new THREE.Vector3();
+let curTarget=null, _pickList=null, _pickLen=-1, _targT=0;
+function pickList(){ if(_pickLen!==labels.length){ _pickList=labels.map(l=>l.obj3d); _pickLen=labels.length; } return _pickList; }
+function lookedAt(maxDist=7.5){
   raycaster.setFromCamera({x:0,y:0}, camera);
-  const hits=raycaster.intersectObjects(labels.map(l=>l.obj3d), true);
+  const hits=raycaster.intersectObjects(pickList(), true);
   for(const h of hits){
     let o=h.object;
     while(o){ const L=labels.find(l=>l.obj3d===o); if(L) return h.distance<=maxDist? L : null; o=o.parent; }
   }
   return null;
 }
-function nearestObject(range=3.2){
+function nearestObject(range=3.5){
   let best=null, bd=range;
-  for(const L of labels){
-    const p=new THREE.Vector3(); L.obj3d.getWorldPosition(p);
-    const d=p.distanceTo(camera.position);
-    if(d<bd){ bd=d; best=L; }
-  }
+  for(const L of labels){ L.obj3d.getWorldPosition(_tmpV); const d=_tmpV.distanceTo(camera.position); if(d<bd){ bd=d; best=L; } }
   return best;
 }
 function currentTarget(){ return lookedAt() || nearestObject(); }
+function doAction(a){ if(a==='library') openLessons(); else if(a==='dico') openDictionary(); }
 function interactCenter(){
   const L=currentTarget(); if(!L) return;
   if(L.kind==='door'){ toggleDoor(L.door); return; }
   if(L.kind==='npc'){ interactNpc(L.item, L.obj3d); return; }
-  openWord(L.item);
+  if(L.action){ doAction(L.action); return; }
+  openWord(L.item); // E = vyslovit (info je vidět už z najetí)
 }
 
-/* zvýraznění cíle na křížku + nápověda [E] + skrytí vzdálených popisků */
-function updateLabels(){
-  const cur=currentTarget();
+/* throttlované zaměřování (~14×/s) — plynulost + „najetí = info vpravo" */
+function refreshTargeting(dt){
+  if(uiBusy()) return;
+  _targT-=dt; if(_targT>0) return; _targT=0.07;
+  const cur=lookedAt()||nearestObject();
+  if(cur!==curTarget){ onTargetChange(cur); curTarget=cur; }
+  for(const L of labels){
+    L.obj3d.getWorldPosition(_tmpV); const d=_tmpV.distanceTo(camera.position);
+    const vis=d<48; if(L.css) L.css.visible=vis;
+    if(vis) L.el.style.opacity = d>32?0.4 : 1;
+  }
+}
+function onTargetChange(cur){
   document.getElementById('crosshair').classList.toggle('active', !!cur);
   const pr=document.getElementById('prompt');
   if(cur){
-    let txt = cur.kind==='door' ? (cur.door.open?'[E] Zavřít':'[E] Otevřít')
-            : cur.kind==='npc'  ? (cur.item.dialogue?'[E] Mluvit':'[E] Poslechnout')
-            : '[E] Prozkoumat slovo';
-    pr.textContent=txt; pr.style.display='block';
+    pr.innerHTML = cur.kind==='door' ? (cur.door.open?'[E] Zavřít':'[E] Otevřít')
+      : cur.kind==='npc' ? (cur.item.dialogue?'[E] Mluvit 💬':'[E] Poslechnout')
+      : cur.action==='library' ? '[E] Otevřít učebnici 📖'
+      : '[E] vyslovit 🔊';
+    pr.style.display='block';
+    if(cur.kind==='word' && !cur.action) previewWord(cur.item);  // ← najetí ukáže info vpravo
   } else pr.style.display='none';
-  for(const L of labels){
-    const p=new THREE.Vector3(); L.obj3d.getWorldPosition(p);
-    const d=p.distanceTo(camera.position);
-    L.el.style.opacity = d>34?0 : d>20?0.5 : 1;
-    L.el.classList.toggle('near', L===cur);
-  }
+  if(curTarget) curTarget.el.classList.remove('near');
+  if(cur) cur.el.classList.add('near');
 }
 
 /* =========================================================================
    UI — slovíčko
    ========================================================================= */
-function openWord(item){
-  if(controls && controls.isLocked) controls.unlock();
+function openWord(item){ showWordPanel(item, true); }   // klik / E → i vysloví
+function previewWord(item){ showWordPanel(item, false); } // jen najetí → tiše ukáže
+function showWordPanel(item, speak){
+  const wasNew=!Progress.data.words[item.fr];
   Progress.learnWord(item.fr);
-  // SRS: zařadit/aktualizovat
-  if(!Progress.data.srs[item.fr]) Progress.data.srs[item.fr]={ease:2.3,reps:0,due:Date.now()};
-  Progress.save();
+  if(!Progress.data.srs[item.fr]){ Progress.data.srs[item.fr]={ease:2.3,reps:0,due:Date.now()}; Progress.save(); }
+  else if(wasNew) Progress.save();
   markLabelDone(item.fr);
   const gc=item.g?genderClass(item.g):'';
   const gname=item.g==='m'?'mužský rod (le/un)':item.g==='f'?'ženský rod (la/une)':item.g==='pl'?'množné číslo (les/des)':'';
@@ -1920,7 +2085,7 @@ function openWord(item){
   document.getElementById('spkWord').onclick=()=>Speech.say(speakWord);
   if(item.ex){ const se=document.getElementById('spkEx'); if(se) se.onclick=()=>Speech.say(item.ex); }
   document.getElementById('closeWord').onclick=()=>wp.classList.remove('show');
-  Speech.say(speakWord);
+  if(speak) Speech.say(speakWord);
   refreshHud();
 }
 function markLabelDone(fr){
@@ -2004,10 +2169,11 @@ document.getElementById('overlay').addEventListener('click',e=>{ if(e.target.id=
 
 let activeLevel='A1';
 function openLessons(){
-  openOverlay('📖 Lekce — cesta z 0 na B2');
+  openOverlay('📖 Učebnice francouzštiny — A1 → B2');
   renderLessonList();
 }
 function renderLessonList(){
+  document.getElementById('ovTitle').textContent='📖 Učebnice francouzštiny — A1 → B2';
   const levels=['A1','A2','B1','B2'];
   const tabs=levels.map(l=>`<button class="levelTab ${l===activeLevel?'active':''}" data-l="${l}">${l}</button>`).join('');
   const items=LESSONS.map((les,i)=>({les,i})).filter(x=>x.les.level===activeLevel);
@@ -2019,7 +2185,8 @@ function renderLessonList(){
     </div>`).join('');
   const done=Object.keys(Progress.data.lessons).length;
   document.getElementById('ovBody').innerHTML=`
-    <p class="small">Hotovo ${done}/${LESSONS.length} lekcí · Tvoje úroveň podle XP: <b>${Progress.level()}</b></p>
+    <p class="small">📚 Obsah učebnice · hotovo ${done}/${LESSONS.length} kapitol · tvoje úroveň podle XP: <b>${Progress.level()}</b>.
+       Otevři kapitolu a čti jako v knize — pak můžeš <b>listovat</b> ◀ ▶.</p>
     <div class="levelTabs">${tabs}</div><div id="lessonList">${list}</div>`;
   document.querySelectorAll('.levelTab').forEach(t=>t.onclick=()=>{ activeLevel=t.dataset.l; renderLessonList(); });
   document.querySelectorAll('.lessonItem').forEach(it=>it.onclick=()=>openLesson(+it.dataset.i));
@@ -2028,15 +2195,24 @@ function openLesson(i){
   const les=LESSONS[i];
   const ex=les.ex.map((e,k)=>`<div class="exline"><div><div class="fr">${e.fr}</div><div class="tr">${e.cs}</div></div>
      <button class="spk" data-fr="${encodeURIComponent(e.fr)}">🔊</button></div>`).join('');
-  document.getElementById('ovTitle').textContent=`${les.level} · ${les.title}`;
+  document.getElementById('ovTitle').textContent=`📖 ${les.level} · ${les.title}`;
+  const prev = i>0 ? `<button class="btn" id="prevL">◀ ${LESSONS[i-1].title}</button>` : '<span></span>';
+  const next = i<LESSONS.length-1 ? `<button class="btn" id="nextL">${LESSONS[i+1].title} ▶</button>` : '<span></span>';
   document.getElementById('ovBody').innerHTML=`
-    <button class="btn ghost" id="backList">← Zpět na seznam</button>
-    <div class="lesson">${les.html}
-      <h4>Příklady</h4>${ex}
-      <h4>Kvíz</h4><div class="quiz" id="quiz"></div>
-    </div>`;
+    <div class="bookbar"><button class="btn ghost" id="backList">📚 Obsah</button>
+      <span class="small">Kapitola ${i+1}/${LESSONS.length} · <span class="badge ${les.level}">${les.level}</span> ${les.sub}</span></div>
+    <div class="bookpage lesson">
+      <h3 style="margin-top:0">${les.title}</h3>
+      ${les.html}
+      <h4>📝 Příklady</h4>${ex}
+      <h4>🧠 Procvič se</h4><div class="quiz" id="quiz"></div>
+    </div>
+    <div class="booknav">${prev}${next}</div>`;
   document.getElementById('backList').onclick=renderLessonList;
+  const pv=document.getElementById('prevL'); if(pv) pv.onclick=()=>openLesson(i-1);
+  const nx=document.getElementById('nextL'); if(nx) nx.onclick=()=>openLesson(i+1);
   document.querySelectorAll('.exline .spk').forEach(b=>b.onclick=()=>Speech.say(decodeURIComponent(b.dataset.fr)));
+  const body=document.getElementById('ovBody'); if(body) body.scrollTop=0;
   renderQuiz(les, i);
 }
 function renderQuiz(les, lessonIdx){
@@ -2224,6 +2400,21 @@ document.getElementById('btnLessons').onclick=openLessons;
 document.getElementById('btnReview').onclick=openReview;
 document.getElementById('btnHelp').onclick=openHelp;
 
+let _warm=0,_fpsAcc=0,_fpsN=0,_qDone=false;
+function autoQuality(dt){
+  if(_qDone) return;
+  if(_warm++<30) return;                 // přeskoč rozjezd
+  _fpsAcc+=dt; _fpsN++;
+  if(_fpsN>=70){
+    const avg=_fpsAcc/_fpsN;
+    if(avg>0.030){                        // < ~33 FPS → uber kvalitu kvůli plynulosti
+      if(composer){ composer=null; }
+      renderer.setPixelRatio(Math.min(devicePixelRatio,1.2));
+      toast('⚙️ Nízké FPS → zapnut plynulý režim');
+    }
+    _qDone=true;
+  }
+}
 function animate(){
   requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),.05);
@@ -2235,9 +2426,10 @@ function animate(){
     sunLight.target.position.set(camera.position.x, 0, camera.position.z);
     sunLight.target.updateMatrixWorld();
   }
-  updateLabels();
+  refreshTargeting(dt);
   if(composer) composer.render(); else renderer.render(scene,camera);
   labelRenderer.render(scene,camera);
+  autoQuality(dt);
 }
 
 initThree();

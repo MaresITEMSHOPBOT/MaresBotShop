@@ -24,10 +24,9 @@ Na PC se ovládá jako běžná **FPS hra**: klikni do okna → myš ovládá ro
 | Pohyb | `W` `A` `S` `D` nebo šipky (na mobilu tlačítka vlevo dole, rozhlížení tahem prstu) |
 | Běh | drž `Shift` |
 | Vejít do budovy | otevři dveře (`E`) a projdi vchodem |
-| Interakce | zaměř křížkem uprostřed a **klikni** nebo stiskni `E` (nahoře svítí „[E] …") |
-| Otevřít / zavřít dveře a okna 🚪 | zaměř je a `E` / klik |
-| Vyslovit zaměřené | `F` |
-| Mluvit s postavou (💬) | zaměř ji a klikni → dialog s výběrem odpovědí |
+| Zjistit, co to je | **jen na věc najeď** — vpravo se hned ukáže člen, rod, překlad i věta (a slovo se přidá do slovníku). Žádné klikání! |
+| Vyslovit / otevřít | stiskni `E` (vysloví slovo, otevře dveře 🚪, učebnici 📖, dá řeč s postavou 💬) |
+| Mluvit s postavou (💬) | zaměř ji a `E` → dialog s výběrem odpovědí |
 
 **Fyzika:** zdmi, budovami, nábytkem ani stromy neprojdeš — okolo nich se kloužeš.
 
@@ -35,13 +34,15 @@ Na PC se ovládá jako běžná **FPS hra**: klikni do okna → myš ovládá ro
 
 ## 📚 Co appka obsahuje
 
-- **3D město** s domem, zahradou a 15 budovami (pekařství, kavárna, škola, lékárna, banka, knihovna, muzeum, kostel, nádraží…), silnicemi, lampami, lavičkami, keři a kameny.
+- **Velké 3D město** s domem, zahradou a 22 budovami na mřížce ulic (pekařství, kavárna, škola, radnice, lékárna, banka, knihovna, muzeum, kino, divadlo, stadion, kostel, nádraží, hotel…), s lampami, lavičkami, stromy, keři a kameny.
+- **Najetím poznáš věc** — info se ukáže vpravo samo, bez klikání, a slovo se přidá do slovníku.
+- **Plynulost:** zaměřování je odlehčené (throttle) a hra si při nízkém FPS sama sníží kvalitu (vypne post‑processing).
 - **Vejdeš dovnitř!** Budovy jsou duté — otevři dveře a vejdi (podlaha, interiér). Zavřené dveře blokují, otevřené pustí.
 - **Otevíratelné dveře a okna** (animované) u domu i u obchodů.
 - **Realističtější grafika:** post‑processing (ambient occlusion + vyhlazení hran SMAA), slunce sledující hráče s ostrými stíny, instancovaná tráva, mraky.
 - **Chodící lidé** — chodí po městě a u jména je **napsané, co dělají** (jde do pekárny / pije kávu / odpočívá u fontány…).
-- **📒 Slovník** — velká tematicky tříděná databáze (**přes 740 slov**, 29 témat): vyhledávání, řazení (A→Z / rod / úroveň), filtr podle témat. Co objevíš ve světě, **se sem samo uloží** (odznak „Objevené").
-- **📖 Knihovna gramatiky** — 25 lekcí A1 → B2 (výklad česky + příklady + kvízy): výslovnost, členy, slovesa a časy (présent, passé composé, imparfait, futur, plus‑que‑parfait…), zápor, zájmena, conditionnel, subjonctif, gérondif, trpný rod, souslednost, spojky…
+- **📒 Slovník** — velká tematicky tříděná databáze (**přes 920 slov**, 30 témat): vyhledávání, řazení (A→Z / rod / úroveň), filtr podle témat. Co objevíš ve světě (najetím), **se sem samo uloží** (odznak „Objevené").
+- **📖 Učebnice gramatiky** — 25 kapitol A1 → B2 jako kniha (papírový vzhled, **listování ◀ ▶**), výklad česky + příklady + kvízy: výslovnost, členy, slovesa a časy (présent, passé composé, imparfait, futur, plus‑que‑parfait…), zápor, zájmena, conditionnel, subjonctif, gérondif, trpný rod, souslednost, spojky… Otevřeš ji tlačítkem **📖 Knihovna** nahoře, nebo přímo ve světě (**knihovna** v městě / **kniha na stole** v domě → `E`).
 - **Vylepšená grafika:** realistická obloha, měkké stíny sledující hráče, tone‑mapping, texturovaná tráva a cesty, mraky.
 - **FPS ovládání myší** (Pointer Lock), běh a **kolize**.
 - **🃏 Opakování** kartičkami (SRS) + **XP a pokrok** se ukládají do prohlížeče.
