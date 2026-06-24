@@ -342,6 +342,16 @@ const VOCAB = [
   {fr:"fraise",art:"la",g:"f",cs:"jahoda",cz:"frez",type:"strawberry",pos:[13.4,1.0,15.4],level:"A1",ex:"Les fraises sont sucrées.",exCs:"Jahody jsou sladké."},
   {fr:"fromage",art:"le",g:"m",cs:"sýr",cz:"fromaž",type:"cheese",pos:[12.2,1.0,16.2],level:"A1",ex:"La France a 365 fromages.",exCs:"Francie má 365 sýrů."},
   {fr:"poisson",art:"le",g:"m",cs:"ryba",cz:"poasõ",type:"fish",pos:[13,1.0,16.2],level:"A2",ex:"On mange du poisson le vendredi.",exCs:"V pátek se jí ryba."},
+  // doprava, bazén, banka/peníze, muzeum
+  {fr:"bus",art:"le",g:"m",cs:"autobus",cz:"büs",type:"bus",pos:[6,0,-2],level:"A1",ex:"Je prends le bus pour aller en ville.",exCs:"Jedu autobusem do města."},
+  {fr:"tram",art:"le",g:"m",cs:"tramvaj",cz:"tram",type:"tram",pos:[6,0,30],level:"A2",ex:"Le tram s'arrête ici.",exCs:"Tramvaj zastavuje tady."},
+  {fr:"métro",art:"le",g:"m",cs:"metro",cz:"metro",type:"metro",pos:[-17,0,9],level:"A1",ex:"On va plus vite en métro.",exCs:"Metrem je to rychlejší."},
+  {fr:"train",art:"le",g:"m",cs:"vlak",cz:"trẽ",type:"train",pos:[-20,0,61],level:"A1",ex:"Le train part à midi.",exCs:"Vlak odjíždí v poledne."},
+  {fr:"piscine",art:"la",g:"f",cs:"bazén / koupaliště",cz:"pisin",type:"pool",pos:[-46,0,28],level:"A1",ex:"Je nage à la piscine.",exCs:"Plavu v bazénu."},
+  {fr:"distributeur",art:"le",g:"m",cs:"bankomat",cz:"distribütér",type:"atm",pos:[-24,0,-1],level:"B1",ex:"Je retire de l'argent au distributeur.",exCs:"Vybírám peníze z bankomatu."},
+  {fr:"argent",art:"l'",g:"m",cs:"peníze",cz:"aržã",type:"money",pos:[-24,1.05,-0.3],level:"A1",ex:"Je n'ai pas beaucoup d'argent.",exCs:"Nemám moc peněz."},
+  {fr:"épée",art:"l'",g:"f",cs:"meč (exponát)",cz:"epe",type:"sword",pos:[21,0,44],level:"B1",ex:"Le chevalier porte une épée.",exCs:"Rytíř nosí meč."},
+  {fr:"bouclier",art:"le",g:"m",cs:"štít (exponát)",cz:"buklje",type:"shield",pos:[22.6,0,44],level:"B2",ex:"Le bouclier protège le soldat.",exCs:"Štít chrání vojáka."},
 ];
 
 /* =========================================================================
@@ -371,7 +381,9 @@ const TYPE_THEME={door:"house",window:"house",table:"house",chair:"house",sofa:"
   houseSign:"city",bakerySign:"city",cafeSign:"city",marketSign:"city",fountain:"city",
   bread:"food",baguette:"food",croissant:"food",cake:"food",cheese:"food",fish:"animals",
   apple:"fruitveg",banana:"fruitveg",orange:"fruitveg",strawberry:"fruitveg",
-  tree:"nature",flower:"nature",sun:"nature",bike:"transport",car:"transport"};
+  tree:"nature",flower:"nature",sun:"nature",bike:"transport",car:"transport",
+  bus:"transport",tram:"transport",metro:"transport",train:"transport",
+  pool:"sports",atm:"city",money:"school",sword:"other",shield:"other"};
 const DICT=[
   // fráze
   {f:"bonjour",a:"",g:"",c:"dobrý den",t:"phrases",l:"A1"},{f:"bonsoir",a:"",g:"",c:"dobrý večer",t:"phrases",l:"A1"},
@@ -870,6 +882,17 @@ const DICT=[
   {f:"grâce à",a:"",g:"",c:"díky (čemu)",t:"words",l:"B1"},{f:"à cause de",a:"",g:"",c:"kvůli",t:"words",l:"B1"},
   {f:"selon",a:"",g:"",c:"podle",t:"words",l:"B1"},{f:"vers",a:"",g:"",c:"k/kolem",t:"words",l:"A2"},
   {f:"contre",a:"",g:"",c:"proti",t:"words",l:"A2"},{f:"environ",a:"",g:"",c:"přibližně",t:"words",l:"A2"},
+  // doprava / koupání / peníze / muzeum (slovní zásoba)
+  {f:"transport",a:"le",g:"m",c:"doprava",t:"transport",l:"A2"},{f:"station",a:"la",g:"f",c:"stanice",t:"transport",l:"A1"},
+  {f:"arrêt",a:"l'",g:"m",c:"zastávka",t:"transport",l:"A2"},{f:"quai",a:"le",g:"m",c:"nástupiště",t:"transport",l:"B1"},
+  {f:"voyageur",a:"le",g:"m",c:"cestující",t:"transport",l:"B1"},{f:"conducteur",a:"le",g:"m",c:"řidič/strojvedoucí",t:"transport",l:"B1"},
+  {f:"piscine",a:"la",g:"f",c:"bazén",t:"sports",l:"A1"},{f:"maillot",a:"le",g:"m",c:"plavky/dres",t:"clothes",l:"A2"},
+  {f:"serviette",a:"la",g:"f",c:"ručník",t:"sports",l:"A2"},{f:"plongeon",a:"le",g:"m",c:"skok do vody",t:"sports",l:"B2"},
+  {f:"pièce",a:"la",g:"f",c:"mince/místnost",t:"school",l:"A2"},{f:"carte bancaire",a:"la",g:"f",c:"platební karta",t:"school",l:"A2"},
+  {f:"compte",a:"le",g:"m",c:"účet",t:"school",l:"B1"},{f:"prix",a:"le",g:"m",c:"cena",t:"school",l:"A1"},
+  {f:"arme",a:"l'",g:"f",c:"zbraň",t:"other",l:"B1"},{f:"épée",a:"l'",g:"f",c:"meč",t:"other",l:"B1"},
+  {f:"bouclier",a:"le",g:"m",c:"štít",t:"other",l:"B2"},{f:"armure",a:"l'",g:"f",c:"brnění",t:"other",l:"B2"},
+  {f:"chevalier",a:"le",g:"m",c:"rytíř",t:"other",l:"B1"},{f:"canon",a:"le",g:"m",c:"dělo",t:"other",l:"B2"},
 ];
 // sjednocená databáze (objevené ze světa + slovník), bez duplicit
 const TYPE_THEME_DEF="other";
@@ -890,6 +913,10 @@ const NPCS = [
   {id:"baker", name:"Le boulanger", role:"pekař", emoji:"👨‍🍳", color:0xf59e0b, pos:[6,0,11.6], dialogue:"bakery"},
   {id:"waiter", name:"La serveuse", role:"servírka", emoji:"💁‍♀️", color:0x60a5fa, pos:[13,0,10], dialogue:"cafe"},
   {id:"vendor", name:"Le marchand", role:"trhovec", emoji:"🧑‍🌾", color:0x34d399, pos:[12,0,17], dialogue:"market"},
+  {id:"teacher", name:"Le professeur", role:"učitel", emoji:"👨‍🏫", color:0x3498db, pos:[-28,0,25], dialogue:"school", skin:0xe0ac69, hair:0x2b1b0e},
+  {id:"doctor", name:"La médecin", role:"lékařka", emoji:"👩‍⚕️", color:0xeaf2f5, pos:[-40,0,25], dialogue:"doctor", skin:0xffd9b3, hair:0x4a2f1a},
+  {id:"clerk", name:"Le guichetier", role:"pokladní", emoji:"🎫", color:0x8e44ad, pos:[-22,0,62], dialogue:"station", skin:0xf1c27d, hair:0x111111},
+  {id:"shopkeeper", name:"Le vendeur", role:"prodavač", emoji:"🛍️", color:0xe67e22, pos:[40,0,25], dialogue:"shopping", skin:0xc68642, hair:0x6b4a2a},
 ];
 
 const DIALOGUES = {
@@ -950,6 +977,42 @@ const DIALOGUES = {
       {fr:"Ce sera tout pour aujourd'hui, merci.",cs:"To bude pro dnešek vše, díky.",good:true},
     ]},
     {s:"npc",fr:"Voilà ! Bonne dégustation et à la semaine prochaine.",cs:"Tady to je! Dobrou chuť a zase za týden."},
+  ]},
+  school:{ title:"À l'école", level:"A2", who:"teacher", lines:[
+    {s:"npc",fr:"Bonjour ! Aujourd'hui, on apprend les couleurs. Tu es prêt ?",cs:"Dobrý den! Dnes se učíme barvy. Jsi připravený?"},
+    {s:"me",choices:[ {fr:"Oui, je suis prêt !",cs:"Ano, jsem připravený!",good:true},{fr:"Un peu nerveux, mais oui.",cs:"Trochu nervózní, ale ano.",good:true} ]},
+    {s:"npc",fr:"Très bien. Comment dit-on « modrá » en français ?",cs:"Výborně. Jak se řekne « modrá » francouzsky?"},
+    {s:"me",choices:[ {fr:"C'est « bleu ».",cs:"Je to « bleu ».",good:true},{fr:"Euh… « vert » ?",cs:"Ehm… « vert »?",good:false,reply:{fr:"Presque ! « vert », c'est zelená. Modrá = bleu.",cs:"Skoro! « vert » je zelená. Modrá = bleu."}} ]},
+    {s:"npc",fr:"Parfait. Et maintenant, écris une phrase simple.",cs:"Skvělé. A teď napiš jednoduchou větu."},
+    {s:"me",choices:[ {fr:"Le ciel est bleu.",cs:"Nebe je modré.",good:true},{fr:"J'aime la couleur bleue.",cs:"Mám rád modrou barvu.",good:true} ]},
+    {s:"npc",fr:"Bravo ! Tu progresses vite. À demain !",cs:"Bravo! Děláš rychlé pokroky. Zítra na shledanou!"},
+  ]},
+  doctor:{ title:"Chez le médecin", level:"B1", who:"doctor", lines:[
+    {s:"npc",fr:"Bonjour, asseyez-vous. Qu'est-ce qui ne va pas ?",cs:"Dobrý den, posaďte se. Co vám je?"},
+    {s:"me",choices:[ {fr:"J'ai mal à la tête depuis hier.",cs:"Od včerejška mě bolí hlava.",good:true},{fr:"J'ai de la fièvre et je tousse.",cs:"Mám horečku a kašlu.",good:true} ]},
+    {s:"npc",fr:"Je vois. Vous avez d'autres symptômes ?",cs:"Rozumím. Máte další příznaky?"},
+    {s:"me",choices:[ {fr:"Je suis très fatigué.",cs:"Jsem hodně unavený.",good:true},{fr:"Non, c'est tout.",cs:"Ne, to je vše.",good:true} ]},
+    {s:"npc",fr:"Ce n'est pas grave. Reposez-vous et buvez beaucoup d'eau.",cs:"Není to vážné. Odpočívejte a pijte hodně vody."},
+    {s:"me",choices:[ {fr:"Merci, docteur. J'ai besoin d'une ordonnance ?",cs:"Děkuji, doktorko. Potřebuji recept?",good:true} ]},
+    {s:"npc",fr:"Oui, voici une ordonnance. Prenez ce médicament deux fois par jour.",cs:"Ano, tady je recept. Berte tento lék dvakrát denně."},
+  ]},
+  station:{ title:"À la gare", level:"A2", who:"clerk", lines:[
+    {s:"npc",fr:"Bonjour ! Vous allez où ?",cs:"Dobrý den! Kam jedete?"},
+    {s:"me",choices:[ {fr:"Un billet pour Paris, s'il vous plaît.",cs:"Jeden lístek do Paříže, prosím.",good:true},{fr:"À quelle heure part le prochain train ?",cs:"V kolik jede příští vlak?",good:true,reply:{fr:"Le prochain train part à 14 h 30, quai numéro 3.",cs:"Příští vlak jede ve 14:30, nástupiště číslo 3."}} ]},
+    {s:"npc",fr:"Aller simple ou aller-retour ?",cs:"Jen tam, nebo zpáteční?"},
+    {s:"me",choices:[ {fr:"Un aller-retour, s'il vous plaît.",cs:"Zpáteční, prosím.",good:true},{fr:"Un aller simple.",cs:"Jen tam.",good:true} ]},
+    {s:"npc",fr:"Ça fait 45 euros. Vous payez par carte ?",cs:"Dělá to 45 eur. Platíte kartou?"},
+    {s:"me",choices:[ {fr:"Oui, par carte. Merci !",cs:"Ano, kartou. Děkuji!",good:true} ]},
+    {s:"npc",fr:"Voici votre billet. Bon voyage !",cs:"Tady je váš lístek. Šťastnou cestu!"},
+  ]},
+  shopping:{ title:"Au magasin", level:"A2", who:"shopkeeper", lines:[
+    {s:"npc",fr:"Bonjour, je peux vous aider ?",cs:"Dobrý den, můžu vám pomoct?"},
+    {s:"me",choices:[ {fr:"Je cherche un pull bleu.",cs:"Hledám modrý svetr.",good:true},{fr:"Je regarde juste, merci.",cs:"Jen se dívám, díky.",good:true,reply:{fr:"Pas de souci, prenez votre temps.",cs:"Žádný problém, dejte si načas."}} ]},
+    {s:"npc",fr:"Quelle taille faites-vous ?",cs:"Jakou máte velikost?"},
+    {s:"me",choices:[ {fr:"Du M, je pense.",cs:"Asi M.",good:true},{fr:"Je ne sais pas exactement.",cs:"Přesně nevím.",good:true} ]},
+    {s:"npc",fr:"Voici. Il coûte 25 euros. Vous le prenez ?",cs:"Tady je. Stojí 25 eur. Berete ho?"},
+    {s:"me",choices:[ {fr:"Oui, je le prends.",cs:"Ano, beru ho.",good:true},{fr:"C'est un peu cher, merci quand même.",cs:"Je trochu drahý, ale díky.",good:true} ]},
+    {s:"npc",fr:"Très bien, bonne journée !",cs:"Výborně, hezký den!"},
   ]},
 };
 
@@ -1342,7 +1405,7 @@ const PLAYER_R=0.38;
 const BOUND=90;
 let controls, useLock=false;
 let sprint=false;
-let skyMesh=null, groundMesh=null, sunLight=null, composer=null;
+let skyMesh=null, groundMesh=null, sunLight=null, composer=null, grassMesh=null;
 const sunOffset=new THREE.Vector3();
 /* --- profily kvality (kvůli plynulosti); výchozí "low" = plynulé --- */
 const QUALITY_PRESETS={
@@ -1358,7 +1421,8 @@ const npcAgents=[];    // chodící postavy
 const colliders=[]; // AABB v rovině XZ pro kolize
 function addBox(cx,cz,hw,hd){ colliders.push({minX:cx-hw,maxX:cx+hw,minZ:cz-hd,maxZ:cz+hd}); }
 const SOLID={ table:[1.0,0.65], sofa:[1.2,0.6], bed:[1.1,1.6], bench:[0.9,0.45],
-  fountain:[1.45,1.45], car:[1.2,0.7], tree:[0.6,0.6], bike:[0.4,0.8], tv:[1.0,0.35] };
+  fountain:[1.45,1.45], car:[1.2,0.7], tree:[0.6,0.6], bike:[0.4,0.8], tv:[1.0,0.35],
+  bus:[1.7,0.9], tram:[1.7,1.0], train:[1.6,1.5], pool:[4.2,2.7], atm:[0.5,0.5], metro:[1.2,1.2] };
 
 function initThree(){
   scene=new THREE.Scene();
@@ -1469,7 +1533,7 @@ function buildGrass(){
     col.setHSL(0.28+Math.random()*0.06, 0.5, 0.32+Math.random()*0.12); mesh.setColorAt(n,col);
     n++;
   }
-  mesh.count=n; scene.add(mesh);
+  mesh.count=n; grassMesh=mesh; scene.add(mesh);
 }
 
 function buildClouds(){
@@ -1796,6 +1860,34 @@ function buildShape(type){
     case"fish":{ const b=sph(.25,0x76b6d6); b.scale.set(1.6,1,.5); const t=cone(.18,.3,0x5a9bbd); t.rotation.z=Math.PI/2; t.position.x=-.45; return grp(b,t);}
     // cedule/budovy = jen sloup s velkým štítkem (geometrie je fasáda jinde)
     case"houseSign": case"bakerySign": case"cafeSign": case"marketSign":{ const p=cyl(.06,.06,.4,0x555); return grp(p);}
+    case"bus":{ const b=box(3.4,1.5,1.5,0xe6b800); b.position.y=1.05; const g=grp(b);
+      const st=box(3.2,0.5,1.45,0x224); st.position.y=1.55; g.add(st);
+      for(let i=-1.2;i<=1.2;i+=0.55){ const w=box(0.4,0.5,0.05,0x9fd0ff,M(0x9fd0ff,{emissive:0x223,emissiveIntensity:.3})); w.position.set(i,1.2,0.76); g.add(w);}
+      [[-1.0,0.8],[1.0,0.8],[-1.0,-0.8],[1.0,-0.8]].forEach(([x,z])=>{const wh=cyl(.32,.32,.25,0x111);wh.rotation.x=Math.PI/2;wh.position.set(x,.32,z);g.add(wh);}); return g;}
+    case"tram":{ const b=box(3.6,1.7,1.4,0xc0392b); b.position.y=1.1; const g=grp(b);
+      const stripe=box(3.62,0.25,1.42,0xf1f1f1); stripe.position.y=1.25; g.add(stripe);
+      for(let i=-1.3;i<=1.3;i+=0.6){const w=box(0.45,0.6,0.05,0x9fd0ff,M(0x9fd0ff,{emissive:0x223,emissiveIntensity:.3}));w.position.set(i,1.25,0.72);g.add(w);} return g;}
+    case"metro":{ const g=grp(); const hole=box(2,0.1,1.4,0x111); hole.position.y=0.06; g.add(hole);
+      [-1,1].forEach(x=>{const r=box(0.08,0.9,1.4,0xdddddd);r.position.set(x,0.5,0);g.add(r);});
+      const pylon=box(0.5,2.2,0.5,0x0b5fa5); pylon.position.y=1.1; g.add(pylon);
+      const m=box(0.46,0.46,0.08,0xffffff); m.position.set(0,2.0,0.27); g.add(m); return g;}
+    case"train":{ const g=grp(); const loco=box(3,1.8,1.6,0x2c3e6a); loco.position.y=1.1; g.add(loco);
+      const cab=box(1.4,1.0,1.6,0x223a6a); cab.position.set(1.0,2.0,0); g.add(cab);
+      const wag=box(3,1.6,1.6,0x556070); wag.position.set(-3.3,1.0,0); g.add(wag);
+      [-3.3,-1,1].forEach(x=>{const w=box(0.5,0.6,0.05,0x9fd0ff);w.position.set(x,1.4,0.82);g.add(w);});
+      [[-4,0.8],[-2.6,0.8],[0.6,0.8],[-4,-0.8],[-2.6,-0.8],[0.6,-0.8]].forEach(([x,z])=>{const wh=cyl(.35,.35,.2,0x111);wh.rotation.x=Math.PI/2;wh.position.set(x,.35,z);g.add(wh);}); return g;}
+    case"pool":{ const g=grp(); const water=box(8,0.3,5,0x2aa6e0,M(0x2aa6e0,{transparent:true,opacity:.75,metalness:.2,roughness:.05})); water.position.y=0.18; g.add(water);
+      const rim=(w,d,x,z)=>{const r=box(w,0.4,d,0xdfe6ea);r.position.set(x,0.2,z);g.add(r);};
+      rim(8.6,0.4,0,2.7); rim(8.6,0.4,0,-2.7); rim(0.4,5.8,4.3,0); rim(0.4,5.8,-4.3,0);
+      const lad=box(0.1,0.6,0.4,0xcfd8dc); lad.position.set(3.6,0.5,2.2); g.add(lad); return g;}
+    case"atm":{ const g=grp(); const m=box(0.8,1.6,0.5,0x33414d); m.position.y=0.8; g.add(m);
+      const scr=box(0.5,0.4,0.06,0x0a3); scr.position.set(0,1.2,0.27); g.add(scr);
+      const kp=box(0.4,0.25,0.06,0x222); kp.position.set(0,0.85,0.27); g.add(kp); return g;}
+    case"money":{ const g=grp(); for(let i=0;i<3;i++){const c=cyl(.12,.12,.04,0xf1c40f,16);c.position.set(-0.18+i*0.02,0.02+i*0.045,0);g.add(c);} const bill=box(.5,.01,.26,0x2ecc71); bill.position.set(0.18,0.02,0); bill.rotation.y=0.3; g.add(bill); return g;}
+    case"sword":{ const g=grp(); const ped=cyl(.28,.34,.9,0x6b6f76,12); ped.position.y=.45; g.add(ped);
+      const blade=box(.06,1.0,.14,0xd7dde2); blade.position.y=1.5; const guard=box(.06,.08,.5,0x8a6d3b); guard.position.y=1.0; const hilt=box(.06,.3,.1,0x5a3b1a); hilt.position.y=.85; g.add(blade,guard,hilt); g.rotation.z=0.12; return g;}
+    case"shield":{ const g=grp(); const ped=cyl(.28,.34,.9,0x6b6f76,12); ped.position.y=.45; g.add(ped);
+      const disc=cyl(.45,.45,.12,0x8e1b1b,6); disc.rotation.x=Math.PI/2; disc.position.y=1.35; const cross=box(.1,.7,.14,0xf1c40f); cross.position.y=1.35; const cross2=box(.5,.14,.14,0xf1c40f); cross2.position.y=1.35; g.add(disc,cross,cross2); return g;}
     default: return grp(box(.5,.5,.5,0xcccccc));
   }
 }
@@ -1835,28 +1927,41 @@ function buildVocab(){
   });
 }
 
-function makePerson(color){
+function makePerson(opts){
+  opts=opts||{}; const color=opts.color||0x4f6bd8, skin=opts.skin||0xffd9b3, hairc=opts.hair||0x4a2f1a;
   const g=new THREE.Group();
   const legL=box(.16,.7,.16,0x33405a); legL.position.set(-.12,.35,0);
   const legR=box(.16,.7,.16,0x33405a); legR.position.set(.12,.35,0);
   const body=cyl(.26,.32,.85,color); body.position.y=1.05;
-  const head=sph(.24,0xffe0bd); head.position.y=1.72;
-  const hair=sph(.25,0x4a2f1a); hair.scale.y=.55; hair.position.y=1.86;
+  const head=sph(.24,skin,16); head.position.y=1.72;
+  const hair=sph(.255,hairc,12); hair.scale.set(1,.62,1); hair.position.y=1.87;
   const armL=box(.1,.6,.1,color); armL.position.set(-.34,1.05,0);
   const armR=box(.1,.6,.1,color); armR.position.set(.34,1.05,0);
   g.add(legL,legR,body,head,hair,armL,armR);
+  // obličej na přední straně (+z): oči (bělmo + zornička), obočí, nos, ústa
+  const eye=(x)=>{ const w=sph(.045,0xffffff,8); w.position.set(x,1.76,0.205);
+    const p=sph(.022,0x20140a,8); p.position.set(x,1.76,0.238); g.add(w,p); };
+  eye(-0.085); eye(0.085);
+  [-0.085,0.085].forEach(x=>{ const b=box(.09,.02,.03,hairc); b.position.set(x,1.83,0.225); g.add(b); });
+  const nose=sph(.03,skin,6); nose.position.set(0,1.71,0.235); g.add(nose);
+  const mouth=box(.1,.025,.02,0xb5645a); mouth.position.set(0,1.64,0.225); g.add(mouth);
   g.userData={legL,legR}; return g;
 }
+const SKIN=[0xffd9b3,0xf1c27d,0xe0ac69,0xc68642,0x8d5524];
+const HAIR=[0x2b1b0e,0x4a2f1a,0x6b4a2a,0x111111,0xa6772e,0xcaa472];
 const NPC_EXTRA=[
-  {id:"p1",name:"Léa",role:"chodec",color:0x8e44ad},{id:"p2",name:"Hugo",role:"chodec",color:0x2e86c1},
-  {id:"p3",name:"Emma",role:"chodec",color:0x16a085},{id:"p4",name:"Louis",role:"chodec",color:0xd35400},
-  {id:"p5",name:"Chloé",role:"chodec",color:0xc0392b},
+  {id:"p1",name:"Léa",color:0x8e44ad,skin:SKIN[0],hair:HAIR[1]},{id:"p2",name:"Hugo",color:0x2e86c1,skin:SKIN[1],hair:HAIR[0]},
+  {id:"p3",name:"Emma",color:0x16a085,skin:SKIN[2],hair:HAIR[5]},{id:"p4",name:"Louis",color:0xd35400,skin:SKIN[3],hair:HAIR[3]},
+  {id:"p5",name:"Chloé",color:0xc0392b,skin:SKIN[0],hair:HAIR[2]},{id:"p6",name:"Lucas",color:0x2c3e50,skin:SKIN[4],hair:HAIR[3]},
+  {id:"p7",name:"Manon",color:0xe67e22,skin:SKIN[1],hair:HAIR[4]},{id:"p8",name:"Jules",color:0x27ae60,skin:SKIN[2],hair:HAIR[1]},
+  {id:"p9",name:"Inès",color:0x9b59b6,skin:SKIN[3],hair:HAIR[0]},{id:"p10",name:"Tom",color:0x34495e,skin:SKIN[0],hair:HAIR[5]},
+  {id:"p11",name:"Sarah",color:0x1abc9c,skin:SKIN[1],hair:HAIR[2]},{id:"p12",name:"Noah",color:0x7f8c8d,skin:SKIN[4],hair:HAIR[3]},
 ];
 function buildNpcs(){
   const all=[...NPCS, ...NPC_EXTRA];
   all.forEach((n,i)=>{
-    const g=makePerson(n.color);
-    const start = n.pos || [(-6+Math.random()*16), 0, (4+Math.random()*26)];
+    const g=makePerson(n);
+    const start = n.pos || [(-52+Math.random()*104), 0, (-28+Math.random()*92)];
     g.position.set(start[0],0,start[2]); scene.add(g);
     const el=document.createElement('div'); el.className='lbl npc';
     el.addEventListener('pointerdown',ev=>ev.stopPropagation());
@@ -1908,8 +2013,9 @@ function updateNpcs(dt){
    ========================================================================= */
 const raycaster=new THREE.Raycaster();
 function clearMove(){ move.f=move.b=move.l=move.r=false; }
-function uiBusy(){ return overlayOpen() || dlgOpen()
-  || document.getElementById('wordPanel').classList.contains('show'); }
+/* slovíčkový panel vpravo NEblokuje pohyb (je to jen info, mění se podle pohledu).
+   Blokují jen velká okna (lekce/slovník/nastavení) a dialog. */
+function uiBusy(){ return overlayOpen() || dlgOpen(); }
 
 function initControls(){
   useLock = ('pointerLockElement' in document) && !('ontouchstart' in window);
@@ -2433,19 +2539,22 @@ function openSettings(){
   document.querySelectorAll('#ovBody .lessonItem').forEach(b=>b.onclick=()=>setQuality(b.dataset.q));
 }
 
-let _warm=0,_fpsAcc=0,_fpsN=0,_qDone=false;
-function autoQuality(dt){
-  if(_qDone) return;
-  if(_warm++<30) return;                 // přeskoč rozjezd
+/* samoopravná plynulost: průběžně měří FPS a po krocích ubírá náročnost,
+   dokud není plynulo (funguje i v rušných místech a po dialogu) */
+let _warm=0,_fpsAcc=0,_fpsN=0,_perfStep=0;
+function degradeOnce(){
+  _perfStep++;
+  if(_perfStep===1 && composer){ composer=null; toast('⚙️ Plynulost: vypnuty efekty'); return; }
+  if(_perfStep<=2){ if(renderer.shadowMap.enabled){ renderer.shadowMap.enabled=false; if(sunLight)sunLight.castShadow=false; scene.traverse(o=>{if(o.isMesh)o.receiveShadow=false;}); toast('⚙️ Plynulost: vypnuty stíny'); return; } }
+  if(_perfStep<=3){ renderer.setPixelRatio(1); if(grassMesh)grassMesh.visible=false; toast('⚙️ Plynulost: úsporný režim'); return; }
+}
+function adaptPerf(dt){
+  if(_perfStep>=3) return;        // už jsme na minimu
+  if(_warm++<40) return;          // přeskoč rozjezd / načítání
   _fpsAcc+=dt; _fpsN++;
-  if(_fpsN>=70){
-    const avg=_fpsAcc/_fpsN;
-    if(avg>0.030){                        // < ~33 FPS → uber kvalitu kvůli plynulosti
-      if(composer){ composer=null; }
-      renderer.setPixelRatio(Math.min(devicePixelRatio,1.2));
-      toast('⚙️ Nízké FPS → zapnut plynulý režim');
-    }
-    _qDone=true;
+  if(_fpsN>=90){                  // okno ~90 snímků
+    const avg=_fpsAcc/_fpsN; _fpsAcc=0; _fpsN=0;
+    if(avg>0.027) degradeOnce();  // < ~37 FPS → uber krok
   }
 }
 function animate(){
@@ -2462,7 +2571,7 @@ function animate(){
   refreshTargeting(dt);
   if(composer) composer.render(); else renderer.render(scene,camera);
   labelRenderer.render(scene,camera);
-  autoQuality(dt);
+  adaptPerf(dt);
 }
 
 initThree();

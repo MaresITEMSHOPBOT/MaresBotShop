@@ -52,8 +52,11 @@ Na PC se ovládá jako běžná **FPS hra**: klikni do okna → myš ovládá ro
 ## 📚 Co appka obsahuje
 
 - **Velké 3D město** s domem, zahradou a 22 budovami na mřížce ulic (pekařství, kavárna, škola, radnice, lékárna, banka, knihovna, muzeum, kino, divadlo, stadion, kostel, nádraží, hotel…), s lampami, lavičkami, stromy, keři a kameny.
-- **Najetím poznáš věc** — info se ukáže vpravo samo, bez klikání, a slovo se přidá do slovníku.
-- **Plynulost:** zaměřování je odlehčené (throttle) a hra si při nízkém FPS sama sníží kvalitu (vypne post‑processing).
+- **Najetím poznáš věc** — info se ukáže vpravo samo, **nemusíš nic zavírat a pohybuješ se dál** (panel se mění podle pohledu).
+- **Doprava a místa:** autobus, tramvaj, metro, vlak (u nádraží), auto, kolo, **bazén/koupaliště**, **bankomat a peníze** u banky, **muzejní exponáty** (meč, štít).
+- **20 postav s obličeji** (oči, obočí, nos, ústa, různé pleti a vlasy), které chodí po městě a je u nich napsané, co dělají.
+- **8 mluvených situací:** seznámení, pekařství, kavárna, trh, **škola, u lékaře, na nádraží, nákup v obchodě** — s výběrem odpovědí a překladem.
+- **Plynulost:** odlehčené zaměřování + **samoopravný režim** — když hra pozná nízké FPS, postupně ubírá náročnost (efekty → stíny → úsporný režim), dokud neběží plynule.
 - **Vejdeš dovnitř!** Budovy jsou duté — otevři dveře a vejdi (podlaha, interiér). Zavřené dveře blokují, otevřené pustí.
 - **Otevíratelné dveře a okna** (animované) u domu i u obchodů.
 - **Realističtější grafika:** post‑processing (ambient occlusion + vyhlazení hran SMAA), slunce sledující hráče s ostrými stíny, instancovaná tráva, mraky.
