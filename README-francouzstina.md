@@ -22,23 +22,30 @@ Na PC se ovládá jako běžná **FPS hra**: klikni do okna → myš ovládá ro
 |---|---|
 | Spustit ovládání | klikni do okna (myš = rozhlížení), `Esc` = pauza |
 | Pohyb | `W` `A` `S` `D` nebo šipky (na mobilu tlačítka vlevo dole, rozhlížení tahem prstu) |
-| Interakce | zaměř věc/postavu křížkem uprostřed a **klikni** nebo stiskni `E` |
+| Běh | drž `Shift` |
+| Interakce | zaměř křížkem uprostřed a **klikni** nebo stiskni `E` (nahoře svítí „[E] …") |
+| Otevřít / zavřít dveře a okna 🚪 | zaměř je a `E` / klik |
 | Vyslovit zaměřené | `F` |
 | Mluvit s postavou (💬) | zaměř ji a klikni → dialog s výběrem odpovědí |
 
-**Fyzika:** zdmi, nábytkem ani stromy neprojdeš — okolo nich se kloužeš.
+**Fyzika:** zdmi, budovami, nábytkem ani stromy neprojdeš — okolo nich se kloužeš.
 
 **Barvy členů:** 🔵 `le / un` = mužský rod · 🔴 `la / une` = ženský rod · 🟢 `les / des` = množné číslo.
 
 ## 📚 Co appka obsahuje
 
-- **3D svět** s ~40 popsanými objekty (nábytek, zvířata, jídlo, příroda…), každý se členem a rodem.
-- **Vylepšená grafika:** realistická obloha (Sky shader), měkké stíny, tone‑mapping, texturovaná tráva a cesta, mraky, hezčí stromy a budovy.
-- **FPS ovládání myší** (Pointer Lock) a **kolize** — neprojdeš zdmi ani nábytkem.
-- **Mluvené situace** s postavami: seznámení (A1), pekařství (A1), kavárna (A2), trh (B1) — vše se čte nahlas, s výběrem odpovědí.
-- **Lekce A1 → B2** (gramatika česky + příklady + kvízy): výslovnost, členy, être/avoir, slovesa -ER, čísla, otázky, passé composé, imparfait, budoucí čas, zvratná slovesa, stupňování, předmětová zájmena, conditionnel, subjonctif, vztažná zájmena, trpný rod, souslednost, spojovací výrazy…
-- **Opakování slovíček** formou kartiček s jednoduchým rozloženým opakováním (SRS).
-- **Pokrok a XP** se automaticky ukládají do prohlížeče (localStorage).
+- **3D město** s domem, zahradou a ~15 budovami (pekařství, kavárna, škola, lékárna, banka, knihovna, muzeum, kostel, nádraží…), silnicemi, lampami a lavičkami.
+- **Otevíratelné dveře a okna** (animované) u domu i u obchodů.
+- **Chodící lidé** — chodí po městě a u jména je **napsané, co dělají** (jde do pekárny / pije kávu / odpočívá u fontány…).
+- **📒 Slovník** — velká tematicky tříděná databáze (přes 400 slov): vyhledávání, řazení (A→Z / rod / úroveň), filtr podle témat. Co objevíš ve světě, **se sem samo uloží** (odznak „Objevené").
+- **📖 Knihovna gramatiky** — 25 lekcí A1 → B2 (výklad česky + příklady + kvízy): výslovnost, členy, slovesa a časy (présent, passé composé, imparfait, futur, plus‑que‑parfait…), zápor, zájmena, conditionnel, subjonctif, gérondif, trpný rod, souslednost, spojky…
+- **Vylepšená grafika:** realistická obloha, měkké stíny sledující hráče, tone‑mapping, texturovaná tráva a cesty, mraky.
+- **FPS ovládání myší** (Pointer Lock), běh a **kolize**.
+- **🃏 Opakování** kartičkami (SRS) + **XP a pokrok** se ukládají do prohlížeče.
+
+> Pozn. k „20 000 slovům": aktivní slovní zásoba na úrovni **B2 je ~4–5 tisíc slov**
+> (20 k+ je spíš C2 / rodilý mluvčí). Slovník je navržený tak, aby šel libovolně
+> rozšiřovat — stačí přidávat položky do pole `DICT` v souboru.
 
 ## ➕ Jak přidat vlastní obsah
 
