@@ -1,0 +1,24 @@
+{
+  "name": "francais-3d",
+  "version": "1.0.0",
+  "description": "Français 3D — nauč se francouzsky od nuly do B2 (desktopová verze)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.francais3d.app",
+    "productName": "Francais3D",
+    "extraResources": [
+      { "from": "../francouzstina.html", "to": "francouzstina.html" }
+    ],
+    "win": { "target": "nsis" },
+    "mac": { "target": "dmg" },
+    "linux": { "target": "AppImage" }
+  }
+}

@@ -219,6 +219,7 @@ body.locked #topbar{opacity:.5}
   <button class="btn ghost clickable" id="btnDict">📒 Slovník</button>
   <button class="btn ghost clickable" id="btnLessons">📖 Knihovna</button>
   <button class="btn ghost clickable" id="btnReview">🃏 Opakování</button>
+  <button class="btn ghost clickable" id="btnSettings">⚙️</button>
   <button class="btn ghost clickable" id="btnHelp">❔</button>
 </div>
 
@@ -250,11 +251,19 @@ body.locked #topbar{opacity:.5}
       <div class="f"><div class="ic">🗣️</div><div class="t">Mluvené situace</div><div class="d">Kavárna, pekařství, trh — vše se čte nahlas</div></div>
       <div class="f"><div class="ic">📖</div><div class="t">Lekce A1→B2</div><div class="d">Gramatika česky + kvízy a kartičky</div></div>
     </div>
+    <div class="row" style="justify-content:center;margin:.2rem 0 .6rem">
+      <span class="small">🎮 Grafika (kvůli plynulosti):</span>
+      <select id="qSel" style="padding:.4rem .6rem;border-radius:10px;border:1px solid var(--border);background:var(--panel2);color:var(--text)">
+        <option value="low">Nízká — plynulé (doporučeno)</option>
+        <option value="medium">Střední</option>
+        <option value="high">Vysoká — hezké (silný PC)</option>
+      </select>
+    </div>
     <div class="startBtns">
       <button class="btn primary" id="btnPlay">▶ Začít hrát</button>
       <button class="btn" id="btnStartLessons">📖 Rovnou na lekce</button>
     </div>
-    <p class="small" style="margin-top:.8rem">Tip: nejlepší se zvukem zapnutým. Pro výslovnost appka používá hlas prohlížeče (Web Speech).</p>
+    <p class="small" style="margin-top:.8rem">Seká se? Nech <b>Nízkou</b> kvalitu. Zvuk zapnutý = výslovnost (hlas prohlížeče).</p>
   </div></div>
 </div>
 
@@ -1335,6 +1344,15 @@ let controls, useLock=false;
 let sprint=false;
 let skyMesh=null, groundMesh=null, sunLight=null, composer=null;
 const sunOffset=new THREE.Vector3();
+/* --- profily kvality (kvůli plynulosti); výchozí "low" = plynulé --- */
+const QUALITY_PRESETS={
+  low:   {label:'Nízká — plynulé', post:false, shadows:false, shadowSize:1024, grass:0,    trees:55,  props:55,  pr:1.0, fog:0.0085},
+  medium:{label:'Střední',         post:false, shadows:true,  shadowSize:2048, grass:2500, trees:110, props:140, pr:1.4, fog:0.0068},
+  high:  {label:'Vysoká — hezké',  post:true,  shadows:true,  shadowSize:2048, grass:5000, trees:150, props:220, pr:2.0, fog:0.0058},
+};
+function loadQuality(){ try{ return localStorage.getItem('fr3d_quality')||'low'; }catch(e){ return 'low'; } }
+let QKEY=loadQuality(); let Q=QUALITY_PRESETS[QKEY]||QUALITY_PRESETS.low;
+function setQuality(k){ try{ localStorage.setItem('fr3d_quality',k); }catch(e){} location.reload(); }
 const doors=[];        // otevíratelné dveře/okna
 const npcAgents=[];    // chodící postavy
 const colliders=[]; // AABB v rovině XZ pro kolize
@@ -1344,7 +1362,7 @@ const SOLID={ table:[1.0,0.65], sofa:[1.2,0.6], bed:[1.1,1.6], bench:[0.9,0.45],
 
 function initThree(){
   scene=new THREE.Scene();
-  scene.fog=new THREE.FogExp2(0xd5e7f2, 0.0058);
+  scene.fog=new THREE.FogExp2(0xd5e7f2, Q.fog);
 
   camera=new THREE.PerspectiveCamera(68, innerWidth/innerHeight, 0.1, 1200);
   camera.position.set(-2, PLAYER_Y, 9);
@@ -1352,8 +1370,8 @@ function initThree(){
 
   renderer=new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
   renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  renderer.shadowMap.enabled=true;
+  renderer.setPixelRatio(Math.min(devicePixelRatio,Q.pr));
+  renderer.shadowMap.enabled=Q.shadows;
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -1385,8 +1403,8 @@ function initThree(){
   const sun=new THREE.DirectionalLight(0xfff1d0, 3.3);
   sunOffset.copy(sunPos).multiplyScalar(42);
   sun.position.copy(sunOffset);
-  sun.castShadow=true;
-  sun.shadow.mapSize.set(2048,2048);
+  sun.castShadow=Q.shadows;
+  sun.shadow.mapSize.set(Q.shadowSize,Q.shadowSize);
   sun.shadow.camera.near=1; sun.shadow.camera.far=130;
   sun.shadow.camera.left=-30; sun.shadow.camera.right=30;
   sun.shadow.camera.top=30; sun.shadow.camera.bottom=-30;
@@ -1413,7 +1431,7 @@ function initThree(){
 
   buildClouds();      // mraky až po nastavení stínů (samy stín nevrhají)
   buildColliders();   // zdi domu
-  setupPost();        // post-processing (ambient occlusion + SMAA) – s bezpečným fallbackem
+  if(Q.post) setupPost();   // post-processing jen ve „Vysoké" kvalitě
   clock=new THREE.Clock();
   addEventListener('resize', onResize);
 }
@@ -1433,7 +1451,7 @@ function setupPost(){
 
 /* tráva (instancované trsy) – jen v zeleni mimo silnici */
 function buildGrass(){
-  const COUNT=5200;
+  const COUNT=Q.grass; if(!COUNT) return;
   const geo=new THREE.ConeGeometry(0.06,0.5,4); geo.translate(0,0.25,0);
   const mat=new THREE.MeshStandardMaterial({color:0x5fa046,roughness:1,metalness:0,flatShading:true});
   const mesh=new THREE.InstancedMesh(geo,mat,COUNT);
@@ -1707,7 +1725,7 @@ function flowerPatch(x,z){ for(let i=0;i<5;i++){ const f=buildShape('flower'); f
 function buildScenery(){
   // aleje stromů po stranách hlavní třídy + rozptýlené stromy po celé mapě
   let trees=0;
-  for(let i=0;i<700 && trees<150;i++){
+  for(let i=0;i<900 && trees<Q.trees;i++){
     const x=-86+Math.random()*172, z=-66+Math.random()*146;
     if(onRoad(x,z) || inTownRect(x,z)) continue;
     if(Math.abs(x-2)<8 && z>-60 && z<78 && Math.random()<0.7){ /* hustší alej u třídy */ }
@@ -1715,7 +1733,7 @@ function buildScenery(){
   }
   // keře, kameny, záhony (jen v zeleni)
   let placed=0;
-  for(let i=0;i<1400 && placed<220;i++){
+  for(let i=0;i<1600 && placed<Q.props;i++){
     const x=-86+Math.random()*172, z=-66+Math.random()*146;
     if(onRoad(x,z) || inTownRect(x,z)) continue;
     const r=Math.random();
@@ -2398,7 +2416,22 @@ document.getElementById('btnStartLessons').onclick=()=>{ document.getElementById
 document.getElementById('btnDict').onclick=openDictionary;
 document.getElementById('btnLessons').onclick=openLessons;
 document.getElementById('btnReview').onclick=openReview;
+document.getElementById('btnSettings').onclick=openSettings;
 document.getElementById('btnHelp').onclick=openHelp;
+(function(){ const qs=document.getElementById('qSel'); if(qs){ qs.value=QKEY; qs.onchange=()=>setQuality(qs.value); } })();
+function openSettings(){
+  openOverlay('⚙️ Nastavení grafiky a plynulosti');
+  const opt=(k)=>{ const p=QUALITY_PRESETS[k]; return `<button class="lessonItem" data-q="${k}" style="width:100%">
+    <div class="num">${k===QKEY?'✓':''}</div>
+    <div><div class="t">${p.label}</div><div class="s">${k==='low'?'bez stínů a efektů, málo detailů — nejvyšší plynulost':k==='medium'?'stíny zapnuté, střední detaily':'stíny + ambient occlusion + max detaily (silný PC)'}</div></div>
+  </button>`; };
+  document.getElementById('ovBody').innerHTML=`
+    <p class="small">Pokud se hra <b>seká</b>, zvol <b>Nízkou</b> kvalitu. Změna se projeví po krátkém znovunačtení.
+       Aktuální: <b>${Q.label}</b>.</p>
+    ${opt('low')}${opt('medium')}${opt('high')}
+    <p class="small" style="margin-top:.8rem">💡 Tip: appka navíc sama sníží kvalitu, když zjistí nízké FPS. Pro úplně samostatné okno je ke stažení i desktopová verze (viz README).</p>`;
+  document.querySelectorAll('#ovBody .lessonItem').forEach(b=>b.onclick=()=>setQuality(b.dataset.q));
+}
 
 let _warm=0,_fpsAcc=0,_fpsN=0,_qDone=false;
 function autoQuality(dt){

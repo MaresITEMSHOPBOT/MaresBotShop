@@ -6,12 +6,29 @@ přes strukturované lekce **A1 → B2**.
 
 ## ▶ Jak to spustit
 
-Stačí otevřít soubor **`francouzstina.html`** v prohlížeči (dvojklik, nebo
+**Nejjednodušší:** otevři **`francouzstina.html`** v prohlížeči (dvojklik, nebo
 přetáhnout do okna Chrome / Edge / Firefoxu).
+
+**Jako samostatná appka v okně (bez instalace):** dvojklik na
+**`Spustit-hru-Windows.bat`** (Windows) nebo **`Spustit-hru-Mac.command`** (macOS)
+— otevře hru v režimu „aplikace" (vlastní okno bez lišty prohlížeče).
+Musí být ve stejné složce jako `francouzstina.html`.
+
+**Skutečná desktopová aplikace (.exe/.dmg):** viz složka **`desktop/`** (Electron).
 
 > Pro 3D a zvuk je potřeba moderní prohlížeč a **připojení k internetu**
 > (knihovna Three.js se načítá z CDN; po prvním načtení se cachuje).
 > Výslovnost používá hlas prohlížeče (Web Speech API) — zapni si zvuk.
+
+## ⚡ Seká se? → Nastav grafiku na Nízkou
+
+Na úvodní obrazovce (a kdykoli přes **⚙️** nahoře) zvol **kvalitu grafiky**:
+- **Nízká — plynulé** (výchozí): bez stínů a efektů, minimum detailů → nejvyšší FPS.
+- **Střední**: stíny zapnuté.
+- **Vysoká — hezké**: stíny + ambient occlusion + max detailů (jen pro silný PC/grafiku).
+
+Hra navíc sama sníží kvalitu, když pozná nízké FPS. Pozn.: desktopová/Electron
+verze běží na stejném jádře jako prohlížeč — **plynulost řeší tahle volba, ne obal**.
 
 ## 🎮 Ovládání
 
