@@ -172,7 +172,7 @@
 
         /* Final summary — appears when the plane lands and STAYS, so the message is clear */
         .journey-summary {
-            text-align: center; margin-top: 3rem; opacity: 0; transform: translateY(12px);
+            text-align: center; margin-top: 7rem; opacity: 0; transform: translateY(12px);
             transition: opacity 0.9s ease, transform 0.9s ease;
         }
         .journey-summary.lit { opacity: 1; transform: none; }
@@ -424,7 +424,7 @@
         <div class="collection-grid">
 
             <!-- Product 1: Blind Statue — LIE / DIE / LIVE / DIVE -->
-            <div class="product-card reveal" onclick="openModal('Blind Statue Hoodie', 'LIE. DIE. LIVE. DIVE. One print, four words — everyone sees something different. Halftone Venus statue, MARES star-field back with the Open Your Eyes script. Heavyweight organic hoodie.', '€85.00', document.getElementById('tee-1').innerHTML)">
+            <div class="product-card reveal" onclick="openModal('Blind Statue Hoodie', 'LIE. DIE. LIVE. DIVE. One print, four words — everyone sees something different. Halftone Venus statue, MARES star-field back with the Open Your Eyes script. Heavyweight organic hoodie.', '€85.00', document.getElementById('tee-1').innerHTML, 'tee-1')">
                 <div class="studio-shot shade-1" id="tee-1">
                     <svg class="svg-hoodie-base" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
                         <defs>
@@ -434,39 +434,23 @@
                             </radialGradient>
                             <filter id="hshadow1"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-opacity="0.85"/></filter>
                             <filter id="glow1" x="-60%" y="-60%" width="220%" height="220%">
-                                <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#ffffff" flood-opacity="0.9"/>
+                                <feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-color="#ffffff" flood-opacity="0.95"/>
                             </filter>
                             <pattern id="dots1" width="5" height="5" patternUnits="userSpaceOnUse">
                                 <circle cx="1.2" cy="1.2" r="0.7" fill="#000" opacity="0.28"/>
                             </pattern>
                         </defs>
 
-                        <!-- FRONT VIEW -->
-                        <g transform="translate(-24, 0)" filter="url(#hshadow1)">
-                            <!-- sleeves -->
-                            <path d="M 66 102 L 48 252 L 92 264 L 92 160 Z" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1.5"/>
-                            <path d="M 334 102 L 352 252 L 308 264 L 308 160 Z" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1.5"/>
-                            <!-- body -->
-                            <path d="M 200 28 C 156 28 138 50 136 74 L 66 102 L 48 252 L 92 264 L 92 462 L 308 462 L 308 264 L 352 252 L 334 102 L 264 74 C 262 50 244 28 200 28 Z" fill="url(#hgrad1)" stroke="#333" stroke-width="1.5"/>
-                            <!-- hood opening + drawstrings -->
-                            <path d="M 152 82 C 170 120 230 120 248 82 C 230 100 170 100 152 82 Z" fill="#060606" stroke="#2a2a2a" stroke-width="1.5"/>
-                            <path d="M 188 102 L 186 132 M 212 102 L 214 132" stroke="#3a3a3a" stroke-width="3" stroke-linecap="round"/>
-                            <path d="M 92 438 L 308 438" stroke="#1c1c1c" stroke-width="2"/>
+                        <!-- FRONT VIEW (boxy cut like the mockup) -->
+                        <g transform="translate(-30,0)" filter="url(#hshadow1)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="url(#hgrad1)" stroke="#333" stroke-width="1.5"/>
+                            <path d="M 160 40 C 175 72 225 72 240 40 C 224 58 176 58 160 40 Z" fill="#060606" stroke="#282828" stroke-width="1.5"/>
+                            <path d="M 94 130 L 66 258 M 306 130 L 334 258" stroke="#1e1e1e" stroke-width="1.5"/>
+                            <path d="M 94 436 L 306 436" stroke="#1c1c1c" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="120" cy="120" r="1.2" opacity="0.8"/><circle cx="160" cy="105" r="0.9" opacity="0.6"/><circle cx="250" cy="112" r="1.3" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.2" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="0.9" opacity="0.5"/><circle cx="265" cy="205" r="1.1" opacity="0.7"/><circle cx="300" cy="245" r="1.2" opacity="0.8"/><circle cx="75" cy="220" r="0.9" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.2" opacity="0.8"/><circle cx="160" cy="330" r="0.9" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.2" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="0.8" opacity="0.5"/><circle cx="175" cy="405" r="1.1" opacity="0.7"/><circle cx="240" cy="420" r="1.3" opacity="0.8"/><circle cx="290" cy="390" r="0.9" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="0.9" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="0.9" opacity="0.6"/><circle cx="98" cy="270" r="0.9" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="0.8" opacity="0.5"/><circle cx="70" cy="180" r="0.9" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="0.8" opacity="0.4"/><circle cx="255" cy="160" r="0.9" opacity="0.5"/></g>
+                            <text x="200" y="86" font-family="Inter, sans-serif" font-style="italic" font-weight="700" font-size="12" letter-spacing="6" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
 
-                            <!-- star field -->
-                            <g fill="#fff">
-                                <circle cx="120" cy="140" r="1.2" opacity="0.8"/><circle cx="160" cy="120" r="0.9" opacity="0.6"/><circle cx="250" cy="135" r="1.3" opacity="0.9"/><circle cx="285" cy="160" r="1" opacity="0.6"/>
-                                <circle cx="105" cy="210" r="1" opacity="0.7"/><circle cx="140" cy="300" r="1.2" opacity="0.8"/><circle cx="260" cy="300" r="1" opacity="0.6"/><circle cx="295" cy="240" r="1.2" opacity="0.8"/>
-                                <circle cx="115" cy="360" r="1" opacity="0.6"/><circle cx="175" cy="410" r="1.1" opacity="0.7"/><circle cx="240" cy="395" r="1.3" opacity="0.8"/><circle cx="290" cy="340" r="0.9" opacity="0.5"/>
-                                <circle cx="200" cy="150" r="0.8" opacity="0.5"/><circle cx="135" cy="250" r="0.8" opacity="0.5"/><circle cx="270" cy="210" r="0.8" opacity="0.5"/><circle cx="210" cy="430" r="0.9" opacity="0.6"/>
-                                <circle cx="98" cy="300" r="0.9" opacity="0.5"/><circle cx="305" cy="390" r="0.8" opacity="0.5"/><circle cx="60" cy="180" r="0.9" opacity="0.6"/><circle cx="340" cy="190" r="0.9" opacity="0.6"/>
-                            </g>
-
-                            <!-- MARES -->
-                            <text x="200" y="142" font-family="Inter, sans-serif" font-weight="700" font-size="13" letter-spacing="7" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
-
-                            <!-- GRAPHIC: Halftone Venus statue head -->
-                            <g transform="translate(200,252) rotate(-7)">
+                            <g transform="translate(200,248) rotate(-7) scale(1.32)">
                                 <!-- neck & bust cut -->
                                 <path d="M -16 36 C -14 54 -15 66 -20 78 L 24 76 C 17 62 16 50 18 34 C 8 44 -6 45 -16 36 Z" fill="#d6d6d6"/>
                                 <path d="M -20 78 L 24 76 C 25 80 24 83 20 84 L -16 84 C -20 82 -21 80 -20 78 Z" fill="#b0b0b0"/>
@@ -532,26 +516,17 @@
                                     <ellipse cx="14" cy="-94" rx="17" ry="12" transform="rotate(-14 14 -94)"/>
                                 </g>
                             </g>
-
-                            <!-- LAYERED WORDS: LIE · DIE · LIVE · DIVE -->
-                            <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle">
-                                <text x="152" y="210" font-size="42">LI</text>
-                                <text x="256" y="222" font-size="42">E</text>
-                                <text x="146" y="290" font-size="42" filter="url(#glow1)">DI</text>
-                                <text x="240" y="330" font-size="42" filter="url(#glow1)">VE</text>
-                            </g>
-
-                            <!-- OPEN YOUR EYES -->
-                            <text x="200" y="408" font-family="Inter, sans-serif" font-weight="700" font-size="12" letter-spacing="5" fill="#26c6da" text-anchor="middle" opacity="0.9">OPEN YOUR EYES</text>
+                            <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="140" y="198" font-size="52">LI</text><text x="268" y="212" font-size="52" filter="url(#glow1)">E</text><text x="134" y="292" font-size="52" filter="url(#glow1)">DI</text><text x="252" y="336" font-size="52" filter="url(#glow1)">VE</text></g>
+                            <text x="200" y="414" font-family="Inter, sans-serif" font-weight="700" font-size="13" letter-spacing="5" fill="#26c6da" text-anchor="middle" opacity="0.92">OPEN YOUR EYES</text>
                         </g>
 
                         <!-- BACK VIEW (small, bottom-right like the mockup) -->
-                        <g transform="translate(224, 242) scale(0.44)" filter="url(#hshadow1)">
-                            <path d="M 200 28 C 156 28 138 50 136 74 L 66 102 L 48 252 L 92 264 L 92 462 L 308 462 L 308 264 L 352 252 L 334 102 L 264 74 C 262 50 244 28 200 28 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2"/>
-                            <path d="M 148 78 C 154 34 246 34 252 78 C 234 98 166 98 148 78 Z" fill="#131313" stroke="#333" stroke-width="2"/>
-                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="1.6" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="1.8" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="1.5" opacity="0.5"/><circle cx="300" cy="330" r="1.5" opacity="0.5"/><circle cx="140" cy="240" r="1.5" opacity="0.5"/><circle cx="270" cy="300" r="1.4" opacity="0.6"/></g>
-                            <text x="200" y="250" font-family="'Caveat', cursive" font-size="60" fill="#fff" text-anchor="middle" transform="rotate(-3 200 250)">open your</text>
-                            <text x="200" y="316" font-family="'Caveat', cursive" font-size="60" fill="#fff" text-anchor="middle" transform="rotate(-3 200 306)">eyes</text>
+                        <g transform="translate(242,258) scale(0.40)" filter="url(#hshadow1)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
+                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="1.6" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="1.8" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="1.5" opacity="0.5"/><circle cx="300" cy="330" r="1.5" opacity="0.5"/><circle cx="140" cy="240" r="1.5" opacity="0.5"/><circle cx="270" cy="300" r="1.4" opacity="0.6"/><circle cx="200" cy="180" r="1.4" opacity="0.5"/></g>
+                            <text x="200" y="252" font-family="'Caveat', cursive" font-size="62" fill="#fff" text-anchor="middle" transform="rotate(-3 200 252)">open your</text>
+                            <text x="200" y="320" font-family="'Caveat', cursive" font-size="62" fill="#fff" text-anchor="middle" transform="rotate(-3 200 310)">eyes</text>
                         </g>
                     </svg>
                 </div>
@@ -562,7 +537,7 @@
             </div>
 
             <!-- Product 2: Duality — HAVE / LOVE / HATE -->
-            <div class="product-card reveal" onclick="openModal('Duality Hoodie', 'HAVE. LOVE. HATE. What you read first is up to you — everyone sees something different. Halftone eye collage, MARES star-field back with the Open Your Eyes script. Heavyweight organic hoodie.', '€75.00', document.getElementById('tee-2').innerHTML)">
+            <div class="product-card reveal" onclick="openModal('Duality Hoodie', 'HAVE. LOVE. HATE. What you read first is up to you — everyone sees something different. Halftone eye collage, MARES star-field back with the Open Your Eyes script. Heavyweight organic hoodie.', '€75.00', document.getElementById('tee-2').innerHTML, 'tee-2')">
                 <div class="studio-shot shade-2" id="tee-2">
                     <svg class="svg-hoodie-base" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
                         <defs>
@@ -572,63 +547,44 @@
                             </radialGradient>
                             <filter id="hshadow2"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-opacity="0.85"/></filter>
                             <filter id="glow2" x="-60%" y="-60%" width="220%" height="220%">
-                                <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#ffffff" flood-opacity="0.9"/>
+                                <feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-color="#ffffff" flood-opacity="0.95"/>
                             </filter>
                             <pattern id="dots2" width="5" height="5" patternUnits="userSpaceOnUse">
                                 <circle cx="1.2" cy="1.2" r="0.7" fill="#000" opacity="0.28"/>
                             </pattern>
                         </defs>
 
-                        <!-- FRONT VIEW -->
-                        <g transform="translate(-24, 0)" filter="url(#hshadow2)">
-                            <path d="M 66 102 L 48 252 L 92 264 L 92 160 Z" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1.5"/>
-                            <path d="M 334 102 L 352 252 L 308 264 L 308 160 Z" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1.5"/>
-                            <path d="M 200 28 C 156 28 138 50 136 74 L 66 102 L 48 252 L 92 264 L 92 462 L 308 462 L 308 264 L 352 252 L 334 102 L 264 74 C 262 50 244 28 200 28 Z" fill="url(#hgrad2)" stroke="#333" stroke-width="1.5"/>
-                            <path d="M 152 82 C 170 120 230 120 248 82 C 230 100 170 100 152 82 Z" fill="#060606" stroke="#2a2a2a" stroke-width="1.5"/>
-                            <path d="M 188 102 L 186 132 M 212 102 L 214 132" stroke="#3a3a3a" stroke-width="3" stroke-linecap="round"/>
-                            <path d="M 92 438 L 308 438" stroke="#1c1c1c" stroke-width="2"/>
+                        <!-- FRONT VIEW (boxy cut like the mockup) -->
+                        <g transform="translate(-30,0)" filter="url(#hshadow2)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="url(#hgrad2)" stroke="#333" stroke-width="1.5"/>
+                            <path d="M 160 40 C 175 72 225 72 240 40 C 224 58 176 58 160 40 Z" fill="#060606" stroke="#282828" stroke-width="1.5"/>
+                            <path d="M 94 130 L 66 258 M 306 130 L 334 258" stroke="#1e1e1e" stroke-width="1.5"/>
+                            <path d="M 94 436 L 306 436" stroke="#1c1c1c" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="120" cy="120" r="1.2" opacity="0.8"/><circle cx="160" cy="105" r="0.9" opacity="0.6"/><circle cx="250" cy="112" r="1.3" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.2" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="0.9" opacity="0.5"/><circle cx="265" cy="205" r="1.1" opacity="0.7"/><circle cx="300" cy="245" r="1.2" opacity="0.8"/><circle cx="75" cy="220" r="0.9" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.2" opacity="0.8"/><circle cx="160" cy="330" r="0.9" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.2" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="0.8" opacity="0.5"/><circle cx="175" cy="405" r="1.1" opacity="0.7"/><circle cx="240" cy="420" r="1.3" opacity="0.8"/><circle cx="290" cy="390" r="0.9" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="0.9" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="0.9" opacity="0.6"/><circle cx="98" cy="270" r="0.9" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="0.8" opacity="0.5"/><circle cx="70" cy="180" r="0.9" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="0.8" opacity="0.4"/><circle cx="255" cy="160" r="0.9" opacity="0.5"/></g>
+                            <text x="200" y="86" font-family="Inter, sans-serif" font-style="italic" font-weight="700" font-size="12" letter-spacing="6" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
 
-                            <g fill="#fff">
-                                <circle cx="120" cy="140" r="1.2" opacity="0.8"/><circle cx="160" cy="120" r="0.9" opacity="0.6"/><circle cx="250" cy="135" r="1.3" opacity="0.9"/><circle cx="285" cy="160" r="1" opacity="0.6"/>
-                                <circle cx="105" cy="210" r="1" opacity="0.7"/><circle cx="140" cy="300" r="1.2" opacity="0.8"/><circle cx="260" cy="300" r="1" opacity="0.6"/><circle cx="295" cy="240" r="1.2" opacity="0.8"/>
-                                <circle cx="115" cy="360" r="1" opacity="0.6"/><circle cx="175" cy="410" r="1.1" opacity="0.7"/><circle cx="240" cy="395" r="1.3" opacity="0.8"/><circle cx="290" cy="340" r="0.9" opacity="0.5"/>
-                                <circle cx="200" cy="150" r="0.8" opacity="0.5"/><circle cx="135" cy="250" r="0.8" opacity="0.5"/><circle cx="270" cy="210" r="0.8" opacity="0.5"/><circle cx="210" cy="430" r="0.9" opacity="0.6"/>
-                                <circle cx="98" cy="300" r="0.9" opacity="0.5"/><circle cx="305" cy="390" r="0.8" opacity="0.5"/><circle cx="60" cy="180" r="0.9" opacity="0.6"/><circle cx="340" cy="190" r="0.9" opacity="0.6"/>
-                            </g>
-
-                            <text x="200" y="142" font-family="Inter, sans-serif" font-weight="700" font-size="13" letter-spacing="7" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
-
-                            <!-- GRAPHIC: tilted halftone photo strip with an eye -->
-                            <g transform="translate(200,245) rotate(10)">
-                                <rect x="-48" y="-90" width="96" height="180" fill="#cfcfcf" opacity="0.9"/>
+                            <g transform="translate(200,242) rotate(10) scale(1.38)">
+                                <rect x="-48" y="-90" width="96" height="180" fill="#9a9a9a" opacity="0.95"/>
                                 <rect x="-48" y="-90" width="96" height="180" fill="url(#dots2)"/>
                                 <g transform="translate(0,8)">
-                                    <path d="M -36 0 Q 0 -24 36 0 Q 0 24 -36 0 Z" fill="#f2f2f2" stroke="#333" stroke-width="2"/>
+                                    <path d="M -36 0 Q 0 -24 36 0 Q 0 24 -36 0 Z" fill="#d8d8d8" stroke="#2e2e2e" stroke-width="2"/>
                                     <circle r="13" fill="#555"/>
                                     <circle r="6" fill="#111"/>
                                     <circle cx="4" cy="-4" r="2.5" fill="#fff"/>
                                     <path d="M -36 -8 Q 0 -32 36 -8" fill="none" stroke="#444" stroke-width="3"/>
                                 </g>
                             </g>
-
-                            <!-- LAYERED WORDS: HAVE · LOVE · HATE -->
-                            <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle">
-                                <text x="148" y="198" font-size="42">LO</text>
-                                <text x="134" y="260" font-size="42">HA</text>
-                                <text x="264" y="242" font-size="42">TE</text>
-                                <text x="240" y="328" font-size="42" filter="url(#glow2)">VE</text>
-                            </g>
-
-                            <text x="200" y="408" font-family="Inter, sans-serif" font-weight="700" font-size="12" letter-spacing="5" fill="#26c6da" text-anchor="middle" opacity="0.9">OPEN YOUR EYES</text>
+                            <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="146" y="192" font-size="52">LO</text><text x="130" y="264" font-size="52">HA</text><text x="272" y="242" font-size="52">TE</text><text x="248" y="342" font-size="52" filter="url(#glow2)">VE</text></g>
+                            <text x="200" y="414" font-family="Inter, sans-serif" font-weight="700" font-size="13" letter-spacing="5" fill="#26c6da" text-anchor="middle" opacity="0.92">OPEN YOUR EYES</text>
                         </g>
 
                         <!-- BACK VIEW (small, bottom-right like the mockup) -->
-                        <g transform="translate(224, 242) scale(0.44)" filter="url(#hshadow1)">
-                            <path d="M 200 28 C 156 28 138 50 136 74 L 66 102 L 48 252 L 92 264 L 92 462 L 308 462 L 308 264 L 352 252 L 334 102 L 264 74 C 262 50 244 28 200 28 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2"/>
-                            <path d="M 148 78 C 154 34 246 34 252 78 C 234 98 166 98 148 78 Z" fill="#131313" stroke="#333" stroke-width="2"/>
-                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="1.6" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="1.8" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="1.5" opacity="0.5"/><circle cx="300" cy="330" r="1.5" opacity="0.5"/><circle cx="140" cy="240" r="1.5" opacity="0.5"/><circle cx="270" cy="300" r="1.4" opacity="0.6"/></g>
-                            <text x="200" y="250" font-family="'Caveat', cursive" font-size="60" fill="#fff" text-anchor="middle" transform="rotate(-3 200 250)">open your</text>
-                            <text x="200" y="316" font-family="'Caveat', cursive" font-size="60" fill="#fff" text-anchor="middle" transform="rotate(-3 200 306)">eyes</text>
+                        <g transform="translate(242,258) scale(0.40)" filter="url(#hshadow2)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
+                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="1.6" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="1.8" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="1.5" opacity="0.5"/><circle cx="300" cy="330" r="1.5" opacity="0.5"/><circle cx="140" cy="240" r="1.5" opacity="0.5"/><circle cx="270" cy="300" r="1.4" opacity="0.6"/><circle cx="200" cy="180" r="1.4" opacity="0.5"/></g>
+                            <text x="200" y="252" font-family="'Caveat', cursive" font-size="62" fill="#fff" text-anchor="middle" transform="rotate(-3 200 252)">open your</text>
+                            <text x="200" y="320" font-family="'Caveat', cursive" font-size="62" fill="#fff" text-anchor="middle" transform="rotate(-3 200 310)">eyes</text>
                         </g>
                     </svg>
                 </div>
@@ -639,7 +595,7 @@
             </div>
 
             <!-- Product 3: Planetary Heart — HEART / EARTH / ART / TEAR -->
-            <div class="product-card reveal" onclick="openModal('Planetary Heart Hoodie', 'HEART. EARTH. ART. TEAR. Five letters hiding four truths — everyone sees something different. Anatomical heart print, MARES star-field back with the Open Your Eyes script. Heavyweight organic hoodie.', '€89.00', document.getElementById('tee-3').innerHTML)">
+            <div class="product-card reveal" onclick="openModal('Planetary Heart Hoodie', 'HEART. EARTH. ART. TEAR. Five letters hiding four truths — everyone sees something different. Anatomical heart print, MARES star-field back with the Open Your Eyes script. Heavyweight organic hoodie.', '€89.00', document.getElementById('tee-3').innerHTML, 'tee-3')">
                 <div class="studio-shot shade-3" id="tee-3">
                     <svg class="svg-hoodie-base" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
                         <defs>
@@ -649,34 +605,23 @@
                             </radialGradient>
                             <filter id="hshadow3"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-opacity="0.85"/></filter>
                             <filter id="glow3" x="-60%" y="-60%" width="220%" height="220%">
-                                <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#ffffff" flood-opacity="0.9"/>
+                                <feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-color="#ffffff" flood-opacity="0.95"/>
                             </filter>
                             <pattern id="dots3" width="5" height="5" patternUnits="userSpaceOnUse">
                                 <circle cx="1.2" cy="1.2" r="0.7" fill="#000" opacity="0.28"/>
                             </pattern>
                         </defs>
 
-                        <!-- FRONT VIEW -->
-                        <g transform="translate(-24, 0)" filter="url(#hshadow3)">
-                            <path d="M 66 102 L 48 252 L 92 264 L 92 160 Z" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1.5"/>
-                            <path d="M 334 102 L 352 252 L 308 264 L 308 160 Z" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1.5"/>
-                            <path d="M 200 28 C 156 28 138 50 136 74 L 66 102 L 48 252 L 92 264 L 92 462 L 308 462 L 308 264 L 352 252 L 334 102 L 264 74 C 262 50 244 28 200 28 Z" fill="url(#hgrad3)" stroke="#333" stroke-width="1.5"/>
-                            <path d="M 152 82 C 170 120 230 120 248 82 C 230 100 170 100 152 82 Z" fill="#060606" stroke="#2a2a2a" stroke-width="1.5"/>
-                            <path d="M 188 102 L 186 132 M 212 102 L 214 132" stroke="#3a3a3a" stroke-width="3" stroke-linecap="round"/>
-                            <path d="M 92 438 L 308 438" stroke="#1c1c1c" stroke-width="2"/>
+                        <!-- FRONT VIEW (boxy cut like the mockup) -->
+                        <g transform="translate(-30,0)" filter="url(#hshadow3)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="url(#hgrad3)" stroke="#333" stroke-width="1.5"/>
+                            <path d="M 160 40 C 175 72 225 72 240 40 C 224 58 176 58 160 40 Z" fill="#060606" stroke="#282828" stroke-width="1.5"/>
+                            <path d="M 94 130 L 66 258 M 306 130 L 334 258" stroke="#1e1e1e" stroke-width="1.5"/>
+                            <path d="M 94 436 L 306 436" stroke="#1c1c1c" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="120" cy="120" r="1.2" opacity="0.8"/><circle cx="160" cy="105" r="0.9" opacity="0.6"/><circle cx="250" cy="112" r="1.3" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.2" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="0.9" opacity="0.5"/><circle cx="265" cy="205" r="1.1" opacity="0.7"/><circle cx="300" cy="245" r="1.2" opacity="0.8"/><circle cx="75" cy="220" r="0.9" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.2" opacity="0.8"/><circle cx="160" cy="330" r="0.9" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.2" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="0.8" opacity="0.5"/><circle cx="175" cy="405" r="1.1" opacity="0.7"/><circle cx="240" cy="420" r="1.3" opacity="0.8"/><circle cx="290" cy="390" r="0.9" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="0.9" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="0.9" opacity="0.6"/><circle cx="98" cy="270" r="0.9" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="0.8" opacity="0.5"/><circle cx="70" cy="180" r="0.9" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="0.8" opacity="0.4"/><circle cx="255" cy="160" r="0.9" opacity="0.5"/></g>
+                            <text x="200" y="86" font-family="Inter, sans-serif" font-style="italic" font-weight="700" font-size="12" letter-spacing="6" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
 
-                            <g fill="#fff">
-                                <circle cx="120" cy="140" r="1.2" opacity="0.8"/><circle cx="160" cy="120" r="0.9" opacity="0.6"/><circle cx="250" cy="135" r="1.3" opacity="0.9"/><circle cx="285" cy="160" r="1" opacity="0.6"/>
-                                <circle cx="105" cy="210" r="1" opacity="0.7"/><circle cx="140" cy="300" r="1.2" opacity="0.8"/><circle cx="260" cy="300" r="1" opacity="0.6"/><circle cx="295" cy="240" r="1.2" opacity="0.8"/>
-                                <circle cx="115" cy="360" r="1" opacity="0.6"/><circle cx="175" cy="410" r="1.1" opacity="0.7"/><circle cx="240" cy="395" r="1.3" opacity="0.8"/><circle cx="290" cy="340" r="0.9" opacity="0.5"/>
-                                <circle cx="200" cy="150" r="0.8" opacity="0.5"/><circle cx="135" cy="250" r="0.8" opacity="0.5"/><circle cx="270" cy="210" r="0.8" opacity="0.5"/><circle cx="210" cy="430" r="0.9" opacity="0.6"/>
-                                <circle cx="98" cy="300" r="0.9" opacity="0.5"/><circle cx="305" cy="390" r="0.8" opacity="0.5"/><circle cx="60" cy="180" r="0.9" opacity="0.6"/><circle cx="340" cy="190" r="0.9" opacity="0.6"/>
-                            </g>
-
-                            <text x="200" y="142" font-family="Inter, sans-serif" font-weight="700" font-size="13" letter-spacing="7" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
-
-                            <!-- GRAPHIC: anatomical heart -->
-                            <g transform="translate(200,254) scale(1.08)">
+                            <g transform="translate(200,252) scale(1.3)">
                                 <!-- aorta arch -->
                                 <path d="M 6 -54 C 2 -74 14 -84 24 -78 C 32 -72 32 -60 28 -52" fill="none" stroke="#c6c6c6" stroke-width="12" stroke-linecap="round" opacity="0.95"/>
                                 <!-- pulmonary trunk -->
@@ -686,7 +631,7 @@
                                 <!-- left atrium lobe -->
                                 <path d="M 28 -48 C 44 -56 58 -42 55 -26 C 53 -14 44 -8 34 -10 Z" fill="#c0c0c0" opacity="0.9"/>
                                 <!-- main heart body with apex -->
-                                <path d="M 8 -56 C -12 -68 -38 -60 -46 -38 C -55 -14 -48 12 -34 30 C -21 47 -2 62 18 70 C 27 73 35 67 37 57 C 45 28 50 -8 40 -34 C 34 -50 24 -60 8 -56 Z" fill="#d2d2d2" opacity="0.92"/>
+                                <path d="M 8 -56 C -12 -68 -38 -60 -46 -38 C -55 -14 -48 12 -34 30 C -21 47 -2 62 18 70 C 27 73 35 67 37 57 C 45 28 50 -8 40 -34 C 34 -50 24 -60 8 -56 Z" fill="#c9c9c9" opacity="0.94"/>
                                 <!-- septum groove -->
                                 <path d="M 2 -50 C -8 -20 -6 22 14 62" stroke="#969696" stroke-width="3" fill="none" opacity="0.8"/>
                                 <!-- coronary veins -->
@@ -694,26 +639,17 @@
                                 <!-- halftone dots overlay -->
                                 <path d="M 8 -56 C -12 -68 -38 -60 -46 -38 C -55 -14 -48 12 -34 30 C -21 47 -2 62 18 70 C 27 73 35 67 37 57 C 45 28 50 -8 40 -34 C 34 -50 24 -60 8 -56 Z" fill="url(#dots3)"/>
                             </g>
-
-                            <!-- LAYERED LETTERS: HEART · EARTH · ART · TEAR -->
-                            <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle">
-                                <text x="140" y="198" font-size="46">H</text>
-                                <text x="266" y="192" font-size="46" filter="url(#glow3)">E</text>
-                                <text x="132" y="268" font-size="46">A</text>
-                                <text x="270" y="274" font-size="46">R</text>
-                                <text x="202" y="346" font-size="46">T</text>
-                            </g>
-
-                            <text x="200" y="408" font-family="Inter, sans-serif" font-weight="700" font-size="12" letter-spacing="5" fill="#26c6da" text-anchor="middle" opacity="0.9">OPEN YOUR EYES</text>
+                            <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="134" y="192" font-size="52">H</text><text x="272" y="186" font-size="52" filter="url(#glow3)">E</text><text x="124" y="270" font-size="52">A</text><text x="278" y="274" font-size="52">R</text><text x="200" y="354" font-size="52">T</text></g>
+                            <text x="200" y="414" font-family="Inter, sans-serif" font-weight="700" font-size="13" letter-spacing="5" fill="#26c6da" text-anchor="middle" opacity="0.92">OPEN YOUR EYES</text>
                         </g>
 
                         <!-- BACK VIEW (small, bottom-right like the mockup) -->
-                        <g transform="translate(224, 242) scale(0.44)" filter="url(#hshadow1)">
-                            <path d="M 200 28 C 156 28 138 50 136 74 L 66 102 L 48 252 L 92 264 L 92 462 L 308 462 L 308 264 L 352 252 L 334 102 L 264 74 C 262 50 244 28 200 28 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2"/>
-                            <path d="M 148 78 C 154 34 246 34 252 78 C 234 98 166 98 148 78 Z" fill="#131313" stroke="#333" stroke-width="2"/>
-                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="1.6" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="1.8" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="1.5" opacity="0.5"/><circle cx="300" cy="330" r="1.5" opacity="0.5"/><circle cx="140" cy="240" r="1.5" opacity="0.5"/><circle cx="270" cy="300" r="1.4" opacity="0.6"/></g>
-                            <text x="200" y="250" font-family="'Caveat', cursive" font-size="60" fill="#fff" text-anchor="middle" transform="rotate(-3 200 250)">open your</text>
-                            <text x="200" y="316" font-family="'Caveat', cursive" font-size="60" fill="#fff" text-anchor="middle" transform="rotate(-3 200 306)">eyes</text>
+                        <g transform="translate(242,258) scale(0.40)" filter="url(#hshadow3)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
+                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="1.6" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="1.8" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="1.5" opacity="0.5"/><circle cx="300" cy="330" r="1.5" opacity="0.5"/><circle cx="140" cy="240" r="1.5" opacity="0.5"/><circle cx="270" cy="300" r="1.4" opacity="0.6"/><circle cx="200" cy="180" r="1.4" opacity="0.5"/></g>
+                            <text x="200" y="252" font-family="'Caveat', cursive" font-size="62" fill="#fff" text-anchor="middle" transform="rotate(-3 200 252)">open your</text>
+                            <text x="200" y="320" font-family="'Caveat', cursive" font-size="62" fill="#fff" text-anchor="middle" transform="rotate(-3 200 310)">eyes</text>
                         </g>
                     </svg>
                 </div>
@@ -759,7 +695,7 @@
                 <div style="background: rgba(38, 198, 218, 0.1); border-left: 3px solid var(--accent-cyan); padding: 15px; margin-bottom: 2rem;">
                     <p style="margin:0; font-size: 0.85rem; color: #fff;">🌍 <strong>Protectors of the Earth</strong><br>By purchasing this, <strong>5%</strong> is donated to environmental projects. Produced strictly on demand = <strong>Zero Waste</strong>.</p>
                 </div>
-                <button class="btn">Add to Cart</button>
+                <a class="btn" id="modalBuyBtn" href="#" target="_blank" rel="noopener" style="display:block; text-align:center; text-decoration:none;">Buy Now</a>
             </div>
         </div>
     </div>
@@ -823,8 +759,19 @@
         window.addEventListener("scroll", reveal);
         reveal();
 
+        // --- Shopify checkout wiring ---
+        // Cart permalinks: https://<shop-domain>/cart/<variantId>:1 goes straight to checkout
+        const SHOPIFY = {
+            domain: '', // filled after products are created in Shopify
+            products: {
+                'tee-1': { variantId: '' },
+                'tee-2': { variantId: '' },
+                'tee-3': { variantId: '' }
+            }
+        };
+
         // --- Modal Logic ---
-        function openModal(title, desc, price, svgHtml) {
+        function openModal(title, desc, price, svgHtml, productKey) {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalDesc').innerText = desc;
             document.getElementById('modalPrice').innerText = price;
@@ -832,6 +779,20 @@
             // Render the exact same SVG in the modal for a close-up
             document.getElementById('modalImage').innerHTML = svgHtml;
             document.getElementById('modalImage').querySelector('.svg-hoodie-base').style.width = '90%';
+
+            const btn = document.getElementById('modalBuyBtn');
+            const conf = SHOPIFY.products[productKey];
+            if (SHOPIFY.domain && conf && conf.variantId) {
+                btn.href = 'https://' + SHOPIFY.domain + '/cart/' + conf.variantId + ':1';
+                btn.textContent = 'Buy Now';
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            } else {
+                btn.removeAttribute('href');
+                btn.textContent = 'Coming Soon';
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+            }
 
             document.getElementById('modalOverlay').classList.add('active');
             document.body.style.overflow = 'hidden';
