@@ -256,6 +256,57 @@
             .journey-summary { opacity: 1; transform: none; }
         }
 
+        /* --- MUSIC TOGGLE --- */
+        .music-btn { cursor: pointer; color: var(--text-muted) !important; transition: all .3s; }
+        .music-btn.on { color: var(--accent-cyan) !important; text-shadow: 0 0 12px var(--accent-glow); }
+
+        /* --- CART --- */
+        .cart-btn { cursor: pointer; }
+        .cart-count {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px;
+            background: var(--accent-cyan); color: #000; border-radius: 9px;
+            font-size: 0.7rem; font-weight: 900; vertical-align: middle;
+        }
+        .cart-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 2900; opacity: 0; pointer-events: none; transition: opacity .3s; }
+        .cart-overlay.show { opacity: 1; pointer-events: auto; }
+        .cart-drawer {
+            position: fixed; top: 0; right: -420px; width: 400px; max-width: 92vw; height: 100vh;
+            background: #0a0a0a; border-left: 1px solid var(--accent-cyan); z-index: 3000;
+            display: flex; flex-direction: column; transition: right 0.35s cubic-bezier(.4,0,.2,1);
+            box-shadow: -20px 0 60px rgba(0,0,0,0.6);
+        }
+        .cart-drawer.open { right: 0; }
+        .cart-head { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .cart-head h3 { text-transform: uppercase; letter-spacing: 3px; font-size: 1rem; }
+        .cart-close { font-size: 2rem; cursor: pointer; line-height: 1; }
+        .cart-items { flex: 1; overflow-y: auto; padding: 1rem 1.5rem; }
+        .cart-empty { color: var(--text-muted); text-align: center; margin-top: 3rem; font-size: 0.9rem; }
+        .cart-item { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        .cart-thumb { width: 64px; height: 72px; background: #071b15; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .cart-thumb svg { width: 92%; height: 92%; }
+        .cart-item h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .cart-item .meta { font-size: 0.75rem; color: var(--text-muted); }
+        .qty-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+        .qty-btn { width: 22px; height: 22px; border: 1px solid var(--border-color); background: transparent; color: #fff; cursor: pointer; font-weight: bold; border-radius: 3px; }
+        .qty-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .cart-item .line-price { font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem; }
+        .remove-item { font-size: 0.7rem; color: var(--text-muted); cursor: pointer; background: none; border: none; text-decoration: underline; margin-top: 4px; }
+        .cart-foot { padding: 1.5rem; border-top: 1px solid var(--border-color); }
+        .cart-total-row { display: flex; justify-content: space-between; font-weight: 900; margin-bottom: 1rem; letter-spacing: 1px; }
+        .cart-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; text-align: center; display: none; }
+        .size-label { font-size: .75rem; text-transform: uppercase; letter-spacing: 2px; color: #888; margin-bottom: 8px; }
+        .size-row { display: flex; gap: 8px; margin-bottom: 2rem; }
+        .size-pill { width: 44px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); cursor: pointer; font-weight: 700; font-size: 0.85rem; border-radius: 4px; transition: all .2s; }
+        .size-pill:hover { border-color: var(--accent-cyan); }
+        .size-pill.sel { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--accent-cyan); color: #000; font-weight: 700; padding: 12px 26px; border-radius: 30px;
+            opacity: 0; pointer-events: none; transition: all .3s; z-index: 4000; letter-spacing: 1px; font-size: .85rem;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
         .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
         footer { text-align: center; padding: 3rem; border-top: 1px solid var(--border-color); color: #555; position: relative;}
@@ -276,6 +327,8 @@
         <div class="nav-links">
             <a href="#about">The Code</a>
             <a href="#collection">Season 1</a>
+            <a class="music-btn" id="musicBtn" onclick="toggleMusic()">&#9835; Sound Off</a>
+            <a class="cart-btn" onclick="toggleCart(true)">Cart<span class="cart-count" id="cartCount">0</span></a>
         </div>
     </nav>
 
@@ -679,6 +732,22 @@
         <p>&copy; 2026 MARES. Strictly No Plastics.</p>
     </footer>
 
+    <!-- CART DRAWER -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
+    <aside class="cart-drawer" id="cartDrawer">
+        <div class="cart-head">
+            <h3>Your Cart</h3>
+            <span class="cart-close" onclick="toggleCart(false)">&times;</span>
+        </div>
+        <div class="cart-items" id="cartItems"></div>
+        <div class="cart-foot">
+            <div class="cart-total-row"><span>Total</span><span id="cartTotal">€0.00</span></div>
+            <button class="btn" onclick="checkout()">Checkout</button>
+            <div class="cart-note" id="cartNote">Online checkout is being connected to Shopify — ordering opens very soon. Your cart is saved in this browser.</div>
+        </div>
+    </aside>
+    <div class="toast" id="toast">Added to cart ✓</div>
+
     <!-- MODAL OVERLAY -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
@@ -695,7 +764,14 @@
                 <div style="background: rgba(38, 198, 218, 0.1); border-left: 3px solid var(--accent-cyan); padding: 15px; margin-bottom: 2rem;">
                     <p style="margin:0; font-size: 0.85rem; color: #fff;">🌍 <strong>Protectors of the Earth</strong><br>By purchasing this, <strong>5%</strong> is donated to environmental projects. Produced strictly on demand = <strong>Zero Waste</strong>.</p>
                 </div>
-                <a class="btn" id="modalBuyBtn" href="#" target="_blank" rel="noopener" style="display:block; text-align:center; text-decoration:none;">Buy Now</a>
+                <div class="size-label">Size</div>
+                <div class="size-row" id="sizeRow">
+                    <div class="size-pill" onclick="selSize(this)">S</div>
+                    <div class="size-pill sel" onclick="selSize(this)">M</div>
+                    <div class="size-pill" onclick="selSize(this)">L</div>
+                    <div class="size-pill" onclick="selSize(this)">XL</div>
+                </div>
+                <button class="btn" id="modalBuyBtn" onclick="addToCartFromModal()">Add to Cart</button>
             </div>
         </div>
     </div>
@@ -770,8 +846,210 @@
             }
         };
 
+        // --- Ambient background music (generated with Web Audio, no files needed) ---
+        let audioCtx = null, musicChain = null, musicTimers = [], padVoices = [], musicOn = false, chordIdx = 0;
+        const CHORDS = [
+            [110.00, 164.81, 220.00, 329.63], // A minor
+            [87.31, 130.81, 174.61, 261.63],  // F major
+            [98.00, 146.83, 196.00, 293.66],  // G major
+            [82.41, 123.47, 164.81, 246.94]   // E minor
+        ];
+
+        function buildAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const master = audioCtx.createGain(); master.gain.value = 0;
+            const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 900; filter.Q.value = 0.7;
+            const delay = audioCtx.createDelay(1.5); delay.delayTime.value = 0.45;
+            const fb = audioCtx.createGain(); fb.gain.value = 0.35;
+            delay.connect(fb); fb.connect(delay);
+            filter.connect(master); filter.connect(delay); delay.connect(master);
+            master.connect(audioCtx.destination);
+            // slow LFO breathing on the filter
+            const lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.05;
+            const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 260;
+            lfo.connect(lfoGain); lfoGain.connect(filter.frequency); lfo.start();
+            musicChain = { master, filter, delay };
+        }
+
+        function playChord(freqs) {
+            const t = audioCtx.currentTime;
+            padVoices.forEach(v => {
+                v.gain.gain.cancelScheduledValues(t);
+                v.gain.gain.setValueAtTime(v.gain.gain.value, t);
+                v.gain.gain.linearRampToValueAtTime(0, t + 4);
+                v.oscs.forEach(o => o.stop(t + 4.3));
+            });
+            padVoices = [];
+            freqs.forEach(f => {
+                const g = audioCtx.createGain(); g.gain.value = 0;
+                g.connect(musicChain.filter);
+                const oscs = [-5, 4].map(det => {
+                    const o = audioCtx.createOscillator();
+                    o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
+                    o.connect(g); o.start(); return o;
+                });
+                g.gain.linearRampToValueAtTime(0.04, t + 3.5);
+                padVoices.push({ gain: g, oscs: oscs });
+            });
+            // soft sub-bass swell under the chord
+            const sub = audioCtx.createGain(); sub.gain.value = 0;
+            const so = audioCtx.createOscillator(); so.type = 'sine'; so.frequency.value = freqs[0] / 2;
+            so.connect(sub); sub.connect(musicChain.master);
+            so.start();
+            sub.gain.linearRampToValueAtTime(0.11, t + 2.5);
+            sub.gain.setTargetAtTime(0, t + 6, 1.4);
+            so.stop(t + 12);
+        }
+
+        function pluck() {
+            if (!musicOn || !audioCtx) return;
+            if (Math.random() < 0.5) {
+                const chord = CHORDS[chordIdx];
+                const f = chord[1 + Math.floor(Math.random() * (chord.length - 1))] * (Math.random() < 0.5 ? 2 : 4);
+                const t = audioCtx.currentTime;
+                const g = audioCtx.createGain(); g.gain.value = 0;
+                g.connect(musicChain.filter); g.connect(musicChain.delay);
+                const o = audioCtx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+                o.connect(g); o.start();
+                g.gain.linearRampToValueAtTime(0.085, t + 0.02);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
+                o.stop(t + 1.9);
+            }
+        }
+
+        function startMusic() {
+            if (!audioCtx) buildAudio();
+            audioCtx.resume();
+            musicOn = true;
+            const t = audioCtx.currentTime;
+            musicChain.master.gain.cancelScheduledValues(t);
+            musicChain.master.gain.setValueAtTime(musicChain.master.gain.value, t);
+            musicChain.master.gain.linearRampToValueAtTime(0.16, t + 3);
+            playChord(CHORDS[chordIdx]);
+            musicTimers.push(setInterval(() => {
+                chordIdx = (chordIdx + 1) % CHORDS.length;
+                playChord(CHORDS[chordIdx]);
+            }, 8000));
+            musicTimers.push(setInterval(pluck, 1050));
+        }
+
+        function stopMusic() {
+            musicOn = false;
+            musicTimers.forEach(clearInterval); musicTimers = [];
+            if (!audioCtx) return;
+            const t = audioCtx.currentTime;
+            musicChain.master.gain.cancelScheduledValues(t);
+            musicChain.master.gain.setValueAtTime(musicChain.master.gain.value, t);
+            musicChain.master.gain.linearRampToValueAtTime(0, t + 1.2);
+            setTimeout(() => { if (!musicOn && audioCtx) audioCtx.suspend(); }, 1400);
+        }
+
+        function setMusicBtn() {
+            const btn = document.getElementById('musicBtn');
+            btn.classList.toggle('on', musicOn);
+            btn.innerHTML = musicOn ? '&#9835; Sound On' : '&#9835; Sound Off';
+        }
+
+        function toggleMusic() {
+            if (musicOn) { stopMusic(); localStorage.setItem('mares_music', 'off'); }
+            else { startMusic(); localStorage.setItem('mares_music', 'on'); }
+            setMusicBtn();
+        }
+
+        // Browsers only allow audio after a user gesture: start on the first
+        // click/tap unless the visitor turned the music off before.
+        document.addEventListener('pointerdown', function autoStart(e) {
+            if (e.target.closest('#musicBtn')) { document.removeEventListener('pointerdown', autoStart); return; }
+            if (!musicOn && localStorage.getItem('mares_music') !== 'off') { startMusic(); setMusicBtn(); }
+            document.removeEventListener('pointerdown', autoStart);
+        });
+
+        // --- Products & Cart ---
+        const PRODUCTS = {
+            'tee-1': { name: 'Blind Statue Hoodie', price: 85 },
+            'tee-2': { name: 'Duality Hoodie', price: 75 },
+            'tee-3': { name: 'Planetary Heart Hoodie', price: 89 }
+        };
+        let currentProductKey = null;
+        let cart = [];
+        try { cart = JSON.parse(localStorage.getItem('mares_cart') || '[]'); } catch (e) { cart = []; }
+        cart = cart.filter(i => PRODUCTS[i.key]);
+
+        const fmt = n => '\u20ac' + n.toFixed(2);
+        function saveCart() { localStorage.setItem('mares_cart', JSON.stringify(cart)); }
+
+        function selSize(el) {
+            document.querySelectorAll('#sizeRow .size-pill').forEach(p => p.classList.remove('sel'));
+            el.classList.add('sel');
+        }
+
+        function addToCartFromModal() {
+            if (!currentProductKey) return;
+            const size = document.querySelector('#sizeRow .size-pill.sel').innerText;
+            const found = cart.find(i => i.key === currentProductKey && i.size === size);
+            if (found) found.qty += 1; else cart.push({ key: currentProductKey, size: size, qty: 1 });
+            saveCart(); renderCart(); closeModal(); toggleCart(true); showToast();
+        }
+
+        function showToast() {
+            const t = document.getElementById('toast');
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 1800);
+        }
+
+        function toggleCart(open) {
+            document.getElementById('cartDrawer').classList.toggle('open', open);
+            document.getElementById('cartOverlay').classList.toggle('show', open);
+        }
+
+        function changeQty(idx, d) {
+            cart[idx].qty += d;
+            if (cart[idx].qty <= 0) cart.splice(idx, 1);
+            saveCart(); renderCart();
+        }
+        function removeItem(idx) { cart.splice(idx, 1); saveCart(); renderCart(); }
+
+        function renderCart() {
+            const wrap = document.getElementById('cartItems');
+            document.getElementById('cartCount').innerText = cart.reduce((a, i) => a + i.qty, 0);
+            if (!cart.length) {
+                wrap.innerHTML = '<div class="cart-empty">Your cart is empty.<br>Open your eyes \u2014 and pick a hoodie.</div>';
+            } else {
+                wrap.innerHTML = cart.map((i, idx) => {
+                    const p = PRODUCTS[i.key];
+                    return '<div class="cart-item">'
+                        + '<div class="cart-thumb">' + document.getElementById(i.key).innerHTML + '</div>'
+                        + '<div><h4>' + p.name + '</h4>'
+                        + '<div class="meta">Size ' + i.size + '</div>'
+                        + '<div class="qty-row">'
+                        + '<button class="qty-btn" onclick="changeQty(' + idx + ',-1)">\u2212</button>'
+                        + '<span>' + i.qty + '</span>'
+                        + '<button class="qty-btn" onclick="changeQty(' + idx + ',1)">+</button>'
+                        + '</div></div>'
+                        + '<div style="text-align:right;">'
+                        + '<div class="line-price">' + fmt(p.price * i.qty) + '</div>'
+                        + '<button class="remove-item" onclick="removeItem(' + idx + ')">remove</button>'
+                        + '</div></div>';
+                }).join('');
+            }
+            document.getElementById('cartTotal').innerText = fmt(cart.reduce((a, i) => a + PRODUCTS[i.key].price * i.qty, 0));
+        }
+
+        function checkout() {
+            if (!cart.length) return;
+            const ready = SHOPIFY.domain && cart.every(i => SHOPIFY.products[i.key] && SHOPIFY.products[i.key].variantId);
+            if (ready) {
+                const items = cart.map(i => SHOPIFY.products[i.key].variantId + ':' + i.qty).join(',');
+                window.open('https://' + SHOPIFY.domain + '/cart/' + items, '_blank');
+            } else {
+                document.getElementById('cartNote').style.display = 'block';
+            }
+        }
+        renderCart();
+
         // --- Modal Logic ---
         function openModal(title, desc, price, svgHtml, productKey) {
+            currentProductKey = productKey;
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalDesc').innerText = desc;
             document.getElementById('modalPrice').innerText = price;
@@ -779,20 +1057,6 @@
             // Render the exact same SVG in the modal for a close-up
             document.getElementById('modalImage').innerHTML = svgHtml;
             document.getElementById('modalImage').querySelector('.svg-hoodie-base').style.width = '90%';
-
-            const btn = document.getElementById('modalBuyBtn');
-            const conf = SHOPIFY.products[productKey];
-            if (SHOPIFY.domain && conf && conf.variantId) {
-                btn.href = 'https://' + SHOPIFY.domain + '/cart/' + conf.variantId + ':1';
-                btn.textContent = 'Buy Now';
-                btn.style.opacity = '1';
-                btn.style.pointerEvents = 'auto';
-            } else {
-                btn.removeAttribute('href');
-                btn.textContent = 'Coming Soon';
-                btn.style.opacity = '0.5';
-                btn.style.pointerEvents = 'none';
-            }
 
             document.getElementById('modalOverlay').classList.add('active');
             document.body.style.overflow = 'hidden';
