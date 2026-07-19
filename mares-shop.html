@@ -61,9 +61,18 @@
         }
 
         /* --- NAVIGATION --- */
+        .promo-bar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 42px; z-index: 1002;
+            background: var(--accent-cyan); color: #000;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            font-weight: 800; letter-spacing: 1.5px; font-size: 0.82rem; text-transform: uppercase; cursor: pointer;
+        }
+        .promo-bar svg { width: 30px; height: 19px; }
+        .promo-bar:hover { filter: brightness(1.1); }
+
         nav {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 1.5rem 5%; position: fixed; top: 0; width: 100%;
+            padding: 1.5rem 5%; position: fixed; top: 42px; width: 100%;
             background: rgba(2, 2, 2, 0.9); backdrop-filter: blur(20px);
             z-index: 1000; border-bottom: 1px solid var(--border-color);
         }
@@ -81,7 +90,7 @@
         /* --- HERO & PLANET --- */
         .hero {
             min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 10rem 20px 4rem 20px; position: relative;
+            text-align: center; padding: 11rem 20px 4rem 20px; position: relative;
         }
         .hero h1 {
             font-size: 6.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: 12px; margin-bottom: 1rem;
@@ -153,39 +162,33 @@
         .section { padding: 8rem 5%; border-top: 1px solid var(--border-color); position: relative; }
         .section-title { font-size: 3rem; font-weight: 900; text-transform: uppercase; text-align: center; margin-bottom: 4rem; letter-spacing: 5px; }
 
-        .plane-journey {
-            position: relative; width: 100%; max-width: 1200px; height: 300px; margin: 0 auto;
-            background: url('data:image/svg+xml;utf8,<svg opacity="0.1" viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg"><path d="M0,150 Q300,50 600,150 T1200,150" fill="none" stroke="white" stroke-width="2" stroke-dasharray="10,10"/></svg>') no-repeat center;
-            background-size: 100% 100%; display: flex; align-items: center;
+        .journey-vert { position: relative; max-width: 900px; margin: 0 auto; padding: 3rem 0 1rem 0; }
+        .journey-vroute { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 0; }
+        .v-plane-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; pointer-events: none; }
+        .v-plane {
+            fill: #fff; filter: drop-shadow(0 0 10px var(--accent-cyan));
+            offset-path: path("M 200 0 C 330 180 70 360 200 540 C 330 720 70 900 200 1080 C 330 1260 70 1440 200 1620 C 330 1800 70 1980 200 2160 L 200 2400");
+            offset-distance: 0%; offset-rotate: auto 90deg;
+            will-change: offset-distance;
         }
-        .flight-path-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible; }
-        .point {
-            position: absolute; text-align: center; width: 150px;
-            opacity: 0; transform: translateX(-50%) translateY(14px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+        .v-stop {
+            position: relative; z-index: 2; text-align: center; margin: 0 auto; max-width: 460px;
+            padding: 8.5rem 20px;
+            opacity: 0; transform: translateY(30px); transition: opacity .7s ease, transform .7s ease;
         }
-        .point.lit { opacity: 1; transform: translateX(-50%) translateY(0); }
-        .point h3 { font-size: 3.5rem; color: var(--accent-cyan); font-weight: 900; margin-bottom: 5px; text-shadow: 0 0 15px var(--accent-glow); }
-        .point p { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
-        .point span { font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 5px; text-transform: none; font-weight: normal;}
-
-        .pt-m { left: 10%; top: 30px; }
-        .pt-a { left: 30%; top: 180px; }
-        .pt-r { left: 50%; top: 30px; }
-        .pt-e { left: 70%; top: 180px; }
-        .pt-s { left: 90%; top: 30px; }
-
-        /* The airplane: flies ONCE when scrolled into view, then stays parked at the end */
-        .airplane {
-            width: 30px; height: 30px; fill: #fff; filter: drop-shadow(0 0 10px var(--accent-cyan));
-            offset-path: path("M 0 150 Q 300 50 600 150 T 1200 150");
-            offset-distance: 0%;
-        }
-        .journey-scroll { height: 320vh; position: relative; }
-        .journey-sticky { position: sticky; top: 100px; }
-        .stop-art { width: 46px; height: 46px; margin: 0 auto 6px auto; }
+        .v-stop.lit { opacity: 1; transform: none; }
+        .v-stop h3 { font-size: 4rem; color: var(--accent-cyan); font-weight: 900; text-shadow: 0 0 18px var(--accent-glow); line-height: 1; margin-bottom: 6px; }
+        .v-stop p { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; }
+        .v-stop span { font-size: .85rem; color: var(--text-muted); display: block; margin-top: 6px; }
+        .stop-art { width: 54px; height: 54px; margin: 0 auto 10px auto; }
         .stop-art svg { width: 100%; height: 100%; stroke: var(--accent-cyan); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 8px var(--accent-glow)); }
-        .airplane { will-change: offset-distance; }
+        /* the section background deepens as the plane descends */
+        #about { transition: background-color 1.2s ease; }
+        #about[data-stage="1"] { background-color: #04150f; }
+        #about[data-stage="2"] { background-color: #06231c; }
+        #about[data-stage="3"] { background-color: #072d29; }
+        #about[data-stage="4"] { background-color: #083433; }
+        #about[data-stage="5"] { background-color: #0a3d2f; }
 
         /* Final summary — appears when the plane lands and STAYS, so the message is clear */
         .journey-summary {
@@ -269,23 +272,21 @@
         @media (max-width: 900px) {
             .modal-content { grid-template-columns: 1fr; } .modal-image { min-height: 300px; }
             .hero h1 { font-size: 3.5rem; }
-            .plane-journey { display: none; }
-            .journey-scroll { height: auto; }
-            .journey-sticky { position: static; }
-            .journey-summary { opacity: 1; transform: none; }
         }
 
         /* --- DISCOUNT EYE --- */
         .discount-fab {
             position: fixed; left: 26px; bottom: 26px; z-index: 2500;
             display: flex; align-items: center; gap: 10px;
-            background: rgba(4, 16, 14, 0.92); border: 1px solid var(--accent-cyan);
-            border-radius: 40px; padding: 10px 18px 10px 12px; cursor: pointer;
-            animation: fabPulse 2.6s infinite; transition: transform .2s;
+            background: var(--accent-cyan); border: none;
+            border-radius: 40px; padding: 13px 24px 13px 15px; cursor: pointer;
+            animation: fabPulse 2.6s infinite, fabBounce 2.4s ease-in-out infinite;
+            transition: transform .2s;
         }
+        @keyframes fabBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
         .discount-fab:hover { transform: scale(1.07); }
         .discount-fab svg { width: 34px; height: 22px; }
-        .discount-fab span { font-size: 0.78rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: var(--accent-cyan); }
+        .discount-fab span { font-size: 0.9rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #000; }
         @keyframes fabPulse { 0%, 100% { box-shadow: 0 0 12px rgba(38,198,218,0.25); } 50% { box-shadow: 0 0 28px rgba(38,198,218,0.6); } }
         .discount-overlay {
             position: fixed; inset: 0; background: rgba(1,3,3,0.94); z-index: 4500;
@@ -441,6 +442,12 @@
 
     <div class="ambient-bg"></div>
 
+    <!-- PROMO BAR -->
+    <div class="promo-bar" onclick="openDiscount()">
+        <svg viewBox="0 0 200 120"><g><path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#000" stroke="#012" stroke-width="7"/><circle cx="100" cy="60" r="26" fill="#012"/><circle cx="100" cy="60" r="10.5" fill="#26c6da"/><circle cx="107" cy="53" r="5" fill="#fff"/></g></svg>
+        <span>Click me &mdash; I&rsquo;ll wink you 10&nbsp;% off</span>
+    </div>
+
     <nav>
         <a href="#" class="logo">Mares</a>
         <div class="nav-links">
@@ -552,31 +559,37 @@
     <!-- PLANE ANIMATION SECTION -->
     <section id="about" class="section">
         <h2 class="section-title reveal">The Journey of MARES</h2>
-        <div class="journey-scroll" id="journeyScroll">
-        <div class="journey-sticky">
-        <div class="plane-journey reveal" id="planeJourney">
-            <!-- Flight Path -->
-            <svg class="flight-path-svg" viewBox="0 0 1200 300">
-                <path id="routePath" d="M 0 150 Q 300 50 600 150 T 1200 150" fill="none"/>
-                <path d="M 0 150 Q 300 50 600 150 T 1200 150" fill="none" stroke="rgba(38,198,218,0.2)" stroke-width="3" stroke-dasharray="15 15"/>
-                <!-- Plane -->
-                <g class="airplane">
-                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                </g>
+        <div class="journey-vert" id="journeyVert">
+            <svg class="journey-vroute" viewBox="0 0 400 2400" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M 200 0 C 330 180 70 360 200 540 C 330 720 70 900 200 1080 C 330 1260 70 1440 200 1620 C 330 1800 70 1980 200 2160 L 200 2400" fill="none" stroke="rgba(38,198,218,0.22)" stroke-width="3" stroke-dasharray="14 14"/>
             </svg>
+            <svg class="v-plane-svg" viewBox="0 0 24 24"><g id="vPlane" class="v-plane"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></g></svg>
+            <div class="v-stop" id="vs-0">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 24 40 C 10 34 8 18 24 8 C 40 18 38 34 24 40 Z M 24 38 L 24 14" fill="none"/></svg></div>
+                <h3>M</h3><p>Materials</p><span>Recycled &amp; Organic</span>
+            </div>
+            <div class="v-stop" id="vs-1">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 12 24 C 12 18 20 18 24 24 C 28 30 36 30 36 24 C 36 18 28 18 24 24 C 20 30 12 30 12 24 Z" fill="none"/></svg></div>
+                <h3>A</h3><p>Adaptability</p><span>Timeless Design</span>
+            </div>
+            <div class="v-stop" id="vs-2">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 33 15 A 12 12 0 0 0 15 15 M 15 15 L 13 9 M 15 15 L 21 13 M 15 33 A 12 12 0 0 0 33 33 M 33 33 L 35 39 M 33 33 L 27 35" fill="none"/></svg></div>
+                <h3>R</h3><p>Recycling</p><span>Pre-owned Bazaar</span>
+            </div>
+            <div class="v-stop" id="vs-3">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="none"/><ellipse cx="24" cy="24" rx="6" ry="14" fill="none"/><path d="M 10 24 L 38 24" /><circle cx="24" cy="24" r="3" fill="#26c6da" stroke="none"/></svg></div>
+                <h3>E</h3><p>Environment</p><span>5% to the Planet</span>
+            </div>
+            <div class="v-stop" id="vs-4">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 24 40 L 24 20 M 24 20 C 24 12 30 8 38 8 C 38 16 32 20 24 20 M 24 26 C 24 20 18 16 10 16 C 10 24 16 26 24 26" fill="none"/></svg></div>
+                <h3>S</h3><p>Sustainability</p><span>Zero Waste Print</span>
+            </div>
 
-            <!-- Text Nodes -->
-            <div class="point pt-m" id="pt-m"><div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 24 40 C 10 34 8 18 24 8 C 40 18 38 34 24 40 Z M 24 38 L 24 14" fill="none"/></svg></div><h3>M</h3><p>Materials</p><span>Recycled &amp; Organic</span></div>
-            <div class="point pt-a" id="pt-a"><div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 12 24 C 12 18 20 18 24 24 C 28 30 36 30 36 24 C 36 18 28 18 24 24 C 20 30 12 30 12 24 Z" fill="none"/></svg></div><h3>A</h3><p>Adaptability</p><span>Timeless Design</span></div>
-            <div class="point pt-r" id="pt-r"><div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 33 15 A 12 12 0 0 0 15 15 M 15 15 L 13 9 M 15 15 L 21 13 M 15 33 A 12 12 0 0 0 33 33 M 33 33 L 35 39 M 33 33 L 27 35" fill="none"/></svg></div><h3>R</h3><p>Recycling</p><span>Pre-owned Bazaar</span></div>
-            <div class="point pt-e" id="pt-e"><div class="stop-art"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="none"/><ellipse cx="24" cy="24" rx="6" ry="14" fill="none"/><path d="M 10 24 L 38 24" /><circle cx="24" cy="24" r="3" fill="#26c6da" stroke="none"/></svg></div><h3>E</h3><p>Environment</p><span>5% to the Planet</span></div>
-            <div class="point pt-s" id="pt-s"><div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 24 40 L 24 20 M 24 20 C 24 12 30 8 38 8 C 38 16 32 20 24 20 M 24 26 C 24 20 18 16 10 16 C 10 24 16 26 24 26" fill="none"/></svg></div><h3>S</h3><p>Sustainability</p><span>Zero Waste Print</span></div>
-        </div>
-
-        <!-- Final message: stays on screen after the plane lands -->
-        <div class="journey-summary" id="journeySummary">
-            <div class="word">M · A · R · E · S</div>
-        </div>
+            <!-- Final message: stays on screen at the end of the journey -->
+            <div class="journey-summary" id="journeySummary">
+                <div class="word">M · A · R · E · S</div>
+                <div class="meaning">Materials · Adaptability · Recycling · Environment · Sustainability</div>
+            </div>
         </div>
             <div class="meaning">Materials · Adaptability · Recycling · Environment · Sustainability</div>
         </div>
@@ -640,6 +653,13 @@
                                 <stop offset="60%" stop-color="#c4c4c4"/>
                                 <stop offset="100%" stop-color="#9a9a9a"/>
                             </linearGradient>
+                            <filter id="soft1" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.4"/></filter>
+                            <filter id="soft1b" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.1"/></filter>
+                            <radialGradient id="hairGrad1" cx="45%" cy="25%" r="80%">
+                                <stop offset="0%" stop-color="#dcdcdc"/>
+                                <stop offset="60%" stop-color="#b3b3b3"/>
+                                <stop offset="100%" stop-color="#878787"/>
+                            </radialGradient>
                         </defs>
 
                         <!-- BACK VIEW (behind, bottom-right like the mockup) -->
@@ -658,98 +678,89 @@
                             <g fill="#fff"><circle cx="120" cy="120" r="1.9" opacity="0.8"/><circle cx="160" cy="105" r="1.4" opacity="0.6"/><circle cx="250" cy="112" r="2.0" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.9" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="1.4" opacity="0.5"/><circle cx="265" cy="205" r="1.7" opacity="0.7"/><circle cx="300" cy="245" r="1.9" opacity="0.8"/><circle cx="75" cy="220" r="1.4" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.9" opacity="0.8"/><circle cx="160" cy="330" r="1.4" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.9" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="1.2" opacity="0.5"/><circle cx="175" cy="405" r="1.7" opacity="0.7"/><circle cx="240" cy="420" r="2.0" opacity="0.8"/><circle cx="290" cy="390" r="1.4" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="1.4" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="1.4" opacity="0.6"/><circle cx="98" cy="270" r="1.4" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="1.2" opacity="0.5"/><circle cx="70" cy="180" r="1.4" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="1.2" opacity="0.4"/><circle cx="255" cy="160" r="1.4" opacity="0.5"/><circle cx="85" cy="120" r="1.2" opacity="0.5"/><circle cx="230" cy="90" r="1.4" opacity="0.6"/><circle cx="170" cy="95" r="1.2" opacity="0.5"/><circle cx="310" cy="120" r="1.4" opacity="0.6"/><circle cx="75" cy="320" r="1.4" opacity="0.5"/><circle cx="90" cy="410" r="1.2" opacity="0.5"/><circle cx="215" cy="370" r="1.4" opacity="0.6"/><circle cx="150" cy="375" r="1.2" opacity="0.5"/><circle cx="265" cy="255" r="1.2" opacity="0.5"/><circle cx="180" cy="265" r="1.4" opacity="0.5"/><circle cx="120" cy="255" r="1.1" opacity="0.4"/><circle cx="300" cy="425" r="1.4" opacity="0.6"/><circle cx="225" cy="200" r="1.1" opacity="0.4"/><circle cx="160" cy="215" r="1.1" opacity="0.4"/></g>
                             <text x="200" y="86" font-family="'Playfair Display', Georgia, serif" font-style="italic" font-weight="500" font-size="15" letter-spacing="6" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
 
-                            <g style="filter: drop-shadow(0 0 10px rgba(255,255,255,0.33));">
-                            <g transform="translate(200,252) rotate(-5) scale(1.35)" filter="url(#grain1)">
-                                <!-- curls behind the head -->
-                                <g>
-                                    <circle cx="-32" cy="-46" r="11" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M -37.5 -46 A 5.5 5.5 0 1 1 -28.15 -42.15" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="-20" cy="-60" r="12" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M -26.0 -60 A 6.0 6.0 0 1 1 -15.8 -55.8" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="-4" cy="-66" r="12" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M -10.0 -66 A 6.0 6.0 0 1 1 0.1999999999999993 -61.8" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="12" cy="-64" r="12" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M 6.0 -64 A 6.0 6.0 0 1 1 16.2 -59.8" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="26" cy="-54" r="11" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M 20.5 -54 A 5.5 5.5 0 1 1 29.85 -50.15" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="36" cy="-40" r="9" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M 31.5 -40 A 4.5 4.5 0 1 1 39.15 -36.85" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="-38" cy="-32" r="9" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M -42.5 -32 A 4.5 4.5 0 1 1 -34.85 -28.85" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="-12" cy="-72" r="8" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M -16.0 -72 A 4.0 4.0 0 1 1 -9.2 -69.2" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="4" cy="-73" r="8" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M 0.0 -73 A 4.0 4.0 0 1 1 6.8 -70.2" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="20" cy="-70" r="8" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M 16.0 -70 A 4.0 4.0 0 1 1 22.8 -67.2" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="40" cy="-26" r="7" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M 36.5 -26 A 3.5 3.5 0 1 1 42.45 -23.55" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="-42" cy="-18" r="7" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M -45.5 -18 A 3.5 3.5 0 1 1 -39.55 -15.55" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="38" cy="-10" r="6" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M 35.0 -10 A 3.0 3.0 0 1 1 40.1 -7.9" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="-40" cy="-4" r="6" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M -43.0 -4 A 3.0 3.0 0 1 1 -37.9 -1.9000000000000004" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                </g>
-
+                            <g style="filter: drop-shadow(0 0 12px rgba(255,255,255,0.3));">
+                            <g transform="translate(200,250) rotate(-4) scale(1.35)" filter="url(#grain1)">
+                                <!-- hair mass: centre-parted waves gathered low (Venus de Milo) -->
+                                <path d="M -34 4 C -43 -14 -44 -44 -34 -60 C -25 -75 -8 -83 6 -81 C 22 -79 35 -67 38 -51 C 41 -34 39 -12 32 4 C 23 -4 13 -6 4 -5 C -9 -8 -24 -3 -34 4 Z" fill="url(#hairGrad1)"/>
+                                <!-- low chignon at the nape -->
+                                
                                 <!-- face -->
-                                <path d="M -28 -44 C -34 -24 -33 0 -26 16 C -19 32 -10 42 0 44 C 10 42 19 32 26 16 C 33 0 34 -24 28 -44 C 14 -54 -14 -54 -28 -44 Z" fill="url(#faceShade1)" stroke="#9c9c9c" stroke-width="0.6"/>
+                                <path d="M -26 -38 C -31 -20 -30 2 -23 16 C -17 30 -9 40 0 43 C 9 40 17 30 23 16 C 30 2 31 -20 26 -38 C 13 -47 -13 -47 -26 -38 Z" fill="url(#faceShade1)"/>
 
-                                <!-- curls over the forehead -->
-                                <g>
-                                    <circle cx="-20" cy="-40" r="7" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M -23.5 -40 A 3.5 3.5 0 1 1 -17.55 -37.55" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="-6" cy="-44" r="7" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M -9.5 -44 A 3.5 3.5 0 1 1 -3.5500000000000003 -41.55" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="8" cy="-43" r="7" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M 4.5 -43 A 3.5 3.5 0 1 1 10.45 -40.55" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
-                                    <circle cx="20" cy="-38" r="6" fill="url(#curlShade1)" stroke="#8f8f8f" stroke-width="0.5"/>
-                                    <path d="M 17.0 -38 A 3.0 3.0 0 1 1 22.1 -35.9" fill="none" stroke="#9a9a9a" stroke-width="0.9" opacity="0.7"/>
+                                <!-- soft sculpted shading (blurred) -->
+                                <g filter="url(#soft1)">
+                                    <path d="M -26 -38 C -12 -45 12 -45 26 -38 C 12 -41 -12 -41 -26 -38 Z" fill="#9e9e9e" opacity="0.7"/>
+                                    <ellipse cx="-11" cy="-15" rx="8.5" ry="5.5" fill="#a9a9a9" opacity="0.75"/>
+                                    <ellipse cx="12" cy="-15" rx="8.5" ry="5.5" fill="#a4a4a4" opacity="0.8"/>
+                                    <path d="M -3 -20 C -5 -8 -6 2 -7 8 L -3 8 Z" fill="#acacac" opacity="0.7"/>
+                                    <ellipse cx="18" cy="6" rx="8" ry="12" fill="#b0b0b0" opacity="0.6"/>
+                                    <ellipse cx="-14" cy="2" rx="8" ry="10" fill="#f6f6f6" opacity="0.65"/>
+                                    <ellipse cx="-3" cy="-30" rx="13" ry="7" fill="#f4f4f4" opacity="0.55"/>
+                                    <ellipse cx="-22" cy="-24" rx="5" ry="8" fill="#b3b3b3" opacity="0.5"/>
+                                    <ellipse cx="23" cy="-23" rx="5" ry="8" fill="#a8a8a8" opacity="0.55"/>
+                                    <ellipse cx="0" cy="31" rx="6" ry="2.5" fill="#a6a6a6" opacity="0.6"/>
+                                    <ellipse cx="0" cy="37" rx="5" ry="3" fill="#eeeeee" opacity="0.5"/>
+                                    <path d="M -14 38 C -6 44 8 44 16 36 C 8 40 -6 41 -14 38 Z" fill="#9c9c9c" opacity="0.6"/>
+                                    <ellipse cx="2" cy="50" rx="14" ry="6" fill="#9e9e9e" opacity="0.65"/>
                                 </g>
 
-                                <!-- brow ridge -->
-                                <path d="M -21 -22 C -15 -27 -6 -27 -3 -23 M 3 -23 C 6 -27 15 -27 21 -22" stroke="#8a8a8a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                                <!-- brows: gentle, low arcs -->
+                                <path d="M -20 -21 C -15 -24.5 -7 -25 -3 -22.5 M 4 -22.5 C 8 -25 15 -24.5 20 -20.5" stroke="#8b8b8b" stroke-width="1.9" fill="none" stroke-linecap="round" filter="url(#soft1b)"/>
 
-                                <!-- eye sockets & serene blank eyes -->
-                                <ellipse cx="-11" cy="-15" rx="9" ry="6" fill="#c0c0c0" opacity="0.55"/>
-                                <ellipse cx="11" cy="-15" rx="9" ry="6" fill="#c0c0c0" opacity="0.55"/>
-                                <path d="M -19 -14 C -15 -18 -8 -18 -4 -14 C -8 -10 -15 -10 -19 -14 Z" fill="#dedede"/>
-                                <path d="M 4 -14 C 8 -18 15 -18 19 -14 C 15 -10 8 -10 4 -14 Z" fill="#dedede"/>
-                                <path d="M -19 -14 C -15 -18 -8 -18 -4 -14 M 4 -14 C 8 -18 15 -18 19 -14" stroke="#6f6f6f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                                <!-- heavy-lidded carved eyes -->
+                                <path d="M -19 -17.5 C -14 -19.5 -8 -19.5 -4 -17 M 4 -17 C 8 -19.5 14 -19.5 19 -17" stroke="#989898" stroke-width="1.6" fill="none" stroke-linecap="round" filter="url(#soft1b)"/>
+                                <path d="M -19 -13.5 C -14 -15.8 -8 -15.8 -4 -13.5 C -8 -11.4 -14 -11.4 -19 -13.5 Z" fill="#c9c9c9" opacity="0.85"/>
+                                <path d="M 4 -13.5 C 8 -15.8 14 -15.8 19 -13.2 C 14 -11.1 8 -11.4 4 -13.5 Z" fill="#c9c9c9" opacity="0.85"/>
+                                <path d="M -19 -13.5 C -14 -15.8 -8 -15.8 -4 -13.5 M 4 -13.5 C 8 -15.8 14 -15.8 19 -13.2" stroke="#7c7c7c" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                                <path d="M -17.5 -11.2 C -13 -9.8 -9 -9.8 -5.5 -11.2 M 5.5 -11.2 C 9 -9.8 13 -9.8 17.5 -10.9" stroke="#b2b2b2" stroke-width="0.9" fill="none" stroke-linecap="round"/>
 
-                                <!-- sculpted straight nose -->
-                                <path d="M -1 -21 C -3 -12 -4 -2 -5 6 C -6 10 -5 12 -3 13 L 2 13 C 4 12 4 10 4 7 C 3 -2 2 -12 2 -21 Z" fill="#d8d8d8" opacity="0.85"/>
-                                <path d="M -1 -21 C -3 -12 -4 -2 -5 6" stroke="#a0a0a0" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-                                <ellipse cx="0" cy="10" rx="4.2" ry="3" fill="#cfcfcf" opacity="0.8"/>
-                                <path d="M -7 12 C -9 13 -9 14.5 -7.5 15 M 7 11.5 C 9 12.5 9 14 7.5 14.5" stroke="#8f8f8f" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+                                <!-- straight Greek nose flowing from the brow -->
+                                <path d="M -2.5 -21 C -3.5 -12 -4 -3 -4.5 4" stroke="#b0b0b0" stroke-width="1.1" fill="none" stroke-linecap="round" filter="url(#soft1b)"/>
+                                <ellipse cx="0" cy="7.5" rx="4" ry="3" fill="#d6d6d6"/>
+                                <path d="M -5.5 10 C -7 11 -7 12.8 -5.5 13.3 M 5.5 9.6 C 7 10.6 7 12.4 5.5 12.9" stroke="#8f8f8f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                                <path d="M -3.5 13 C -1 14.4 2 14.4 4.5 12.8" stroke="#949494" stroke-width="1.1" fill="none" stroke-linecap="round" filter="url(#soft1b)"/>
 
-                                <!-- full lips (god of love) -->
-                                <path d="M -10 22 C -5 19 -2 19 0 21 C 2 19 5 19 10 22 C 5 25.5 -5 25.5 -10 22 Z" fill="#ababab"/>
-                                <path d="M -8 26 C -4 30 4 30 8 26 C 4 24.5 -4 24.5 -8 26 Z" fill="#bdbdbd"/>
-                                <path d="M -10 23 C -4 26 4 26 10 23" stroke="#6e6e6e" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-                                <path d="M -5 31 C -2 32.5 2 32.5 5 31" stroke="#b5b5b5" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                                <!-- small full mouth -->
+                                <path d="M -8.5 21 C -4 18.5 -1.5 18.5 0 20 C 1.5 18.5 4 18.5 8.5 21 C 4 23.5 -4 23.5 -8.5 21 Z" fill="#a5a5a5"/>
+                                <path d="M -8.5 21.5 C -3 24 3 24 8.5 21.5" stroke="#6d6d6d" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+                                <path d="M -7 25.5 C -3 28.5 3 28.5 7 25.5 C 3 24.6 -3 24.6 -7 25.5 Z" fill="#c2c2c2"/>
+                                <path d="M -4.5 30.5 C -1.5 32 1.5 32 4.5 30.5" stroke="#b0b0b0" stroke-width="1.1" fill="none" stroke-linecap="round" filter="url(#soft1b)"/>
 
-                                <!-- chin, cheeks, jaw modelling -->
-                                <ellipse cx="0" cy="36" rx="7" ry="4.5" fill="#d9d9d9" opacity="0.5"/>
-                                <path d="M 24 -4 C 27 6 25 16 19 24" stroke="#b5b5b5" stroke-width="4" fill="none" opacity="0.45"/>
-                                <path d="M -24 -6 C -27 4 -25 14 -20 22" stroke="#f2f2f2" stroke-width="3" fill="none" opacity="0.5"/>
-                                <path d="M -12 41 C -4 46 6 45 14 39" stroke="#adadad" stroke-width="2" fill="none" opacity="0.6"/>
+                                <!-- centre-parted wavy hair strands -->
+                                <g fill="none" stroke-linecap="round" filter="url(#soft1b)">
+                                    <path d="M 1 -42 C 1 -54 2 -64 3 -76" stroke="#8f8f8f" stroke-width="1.3"/>
+                                    <path d="M 0 -44 C -12 -49 -22 -45 -29 -35" stroke="#a2a2a2" stroke-width="1.7"/>
+                                    <path d="M 1 -54 C -12 -59 -25 -53 -32 -41" stroke="#c9c9c9" stroke-width="1.5"/>
+                                    <path d="M 2 -62 C -10 -68 -24 -62 -31 -50" stroke="#a2a2a2" stroke-width="1.7"/>
+                                    <path d="M 2 -72 C -8 -78 -20 -74 -28 -63" stroke="#c9c9c9" stroke-width="1.5"/>
+                                    <path d="M 2 -44 C 13 -50 23 -46 30 -37" stroke="#a2a2a2" stroke-width="1.7"/>
+                                    <path d="M 3 -54 C 15 -60 27 -54 33 -43" stroke="#c9c9c9" stroke-width="1.5"/>
+                                    <path d="M 3 -62 C 12 -68 25 -63 33 -51" stroke="#a2a2a2" stroke-width="1.7"/>
+                                    <path d="M 4 -72 C 10 -79 21 -75 29 -64" stroke="#c9c9c9" stroke-width="1.5"/>
+                                    <path d="M -29 -35 C -33 -26 -32 -14 -28 -6" stroke="#9a9a9a" stroke-width="1.7"/>
+                                    <path d="M 30 -37 C 35 -28 35 -16 30 -7" stroke="#9a9a9a" stroke-width="1.7"/>
+                                </g>
 
-                                <!-- neck & bust cut -->
-                                <path d="M -13 40 C -12 54 -13 64 -17 74 L 21 72 C 16 60 15 48 16 38 C 8 46 -5 46 -13 40 Z" fill="url(#neckShade1)"/>
-                                <path d="M 2 46 C 4 56 4 64 3 70" stroke="#b0b0b0" stroke-width="1.2" fill="none" opacity="0.7"/>
-                                <path d="M -26 74 L 30 72 C 32 77 31 81 28 82 L -28 84 C -30 80 -29 77 -26 74 Z" fill="#969696"/>
-                                <path d="M -26 74 L 30 72" stroke="#e8e8e8" stroke-width="1" opacity="0.6"/>
+                                <!-- neck, clavicle and drape cut -->
+                                <path d="M -12 40 C -11 52 -12 62 -15 72 L 20 70 C 15 58 14 47 15 37 C 7 44 -5 45 -12 40 Z" fill="url(#neckShade1)"/>
+                                <path d="M 3 46 C 5 56 5 63 4 69" stroke="#b0b0b0" stroke-width="1.1" fill="none" opacity="0.7" filter="url(#soft1b)"/>
+                                <path d="M -24 72 C -10 79 12 79 26 70 L 28 82 C 10 89 -12 89 -26 84 Z" fill="#b5b5b5"/>
+                                <g stroke="#8f8f8f" stroke-width="1.2" fill="none" opacity="0.8" filter="url(#soft1b)">
+                                    <path d="M -18 76 C -12 80 -4 82 2 82"/>
+                                    <path d="M 6 81 C 14 80 20 77 24 74"/>
+                                    <path d="M -22 79 C -14 84 0 86 10 84"/>
+                                </g>
 
                                 <!-- halftone dots -->
-                                <g fill="url(#dots1)" opacity="0.7">
-                                    <path d="M -28 -44 C -34 -24 -33 0 -26 16 C -19 32 -10 42 0 44 C 10 42 19 32 26 16 C 33 0 34 -24 28 -44 C 14 -54 -14 -54 -28 -44 Z"/>
-                                    <path d="M -13 40 C -12 54 -13 64 -17 74 L 21 72 C 16 60 15 48 16 38 C 8 46 -5 46 -13 40 Z"/>
+                                <g fill="url(#dots1)" opacity="0.65">
+                                    <path d="M -26 -38 C -31 -20 -30 2 -23 16 C -17 30 -9 40 0 43 C 9 40 17 30 23 16 C 30 2 31 -20 26 -38 C 13 -47 -13 -47 -26 -38 Z"/>
+                                    <path d="M -34 4 C -43 -14 -44 -44 -34 -60 C -25 -75 -8 -83 6 -81 C 22 -79 35 -67 38 -51 C 41 -34 39 -12 32 4 C 23 -4 13 -6 4 -5 C -9 -8 -24 -3 -34 4 Z"/>
+                                    <path d="M -12 40 C -11 52 -12 62 -15 72 L 20 70 C 15 58 14 47 15 37 C 7 44 -5 45 -12 40 Z"/>
                                 </g>
                             </g>
                         </g>
                             <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="152" y="198" font-size="46">LI</text><text x="256" y="210" font-size="46" filter="url(#glow1)">E</text><text x="148" y="290" font-size="46" filter="url(#glow1)">DI</text><text x="244" y="332" font-size="46" filter="url(#glow1)">VE</text></g>
-                            <text x="200" y="414" font-family="'Playfair Display', Georgia, serif" font-style="italic" font-weight="500" font-size="15" letter-spacing="4" fill="#26c6da" text-anchor="middle" opacity="0.92">OPEN YOUR EYES</text>
+                            <text x="200" y="418" font-family="'Great Vibes', cursive" font-size="27" letter-spacing="1" fill="#26c6da" text-anchor="middle" opacity="0.95">open your eyes</text>
                         </g>
 
                         
@@ -832,7 +843,7 @@
                                 </g>
                             </g>
                             <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="154" y="196" font-size="46">LO</text><text x="142" y="262" font-size="46">HA</text><text x="260" y="240" font-size="46">TE</text><text x="246" y="336" font-size="46" filter="url(#glow2)">VE</text></g>
-                            <text x="200" y="414" font-family="'Playfair Display', Georgia, serif" font-style="italic" font-weight="500" font-size="15" letter-spacing="4" fill="#26c6da" text-anchor="middle" opacity="0.92">OPEN YOUR EYES</text>
+                            <text x="200" y="418" font-family="'Great Vibes', cursive" font-size="27" letter-spacing="1" fill="#26c6da" text-anchor="middle" opacity="0.95">open your eyes</text>
                         </g>
 
                         
@@ -920,7 +931,7 @@
                                 <path d="M 8 -56 C -12 -68 -38 -60 -46 -38 C -55 -14 -48 12 -34 30 C -21 47 -2 62 18 70 C 27 73 35 67 37 57 C 45 28 50 -8 40 -34 C 34 -50 24 -60 8 -56 Z" fill="url(#hlines3)"/>
                             </g></g>
                             <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="134" y="192" font-size="52">H</text><text x="272" y="186" font-size="52" filter="url(#glow3)">E</text><text x="124" y="270" font-size="52">A</text><text x="278" y="274" font-size="52">R</text><text x="200" y="354" font-size="52">T</text></g>
-                            <text x="200" y="414" font-family="'Playfair Display', Georgia, serif" font-style="italic" font-weight="500" font-size="15" letter-spacing="4" fill="#26c6da" text-anchor="middle" opacity="0.92">OPEN YOUR EYES</text>
+                            <text x="200" y="418" font-family="'Great Vibes', cursive" font-size="27" letter-spacing="1" fill="#26c6da" text-anchor="middle" opacity="0.95">open your eyes</text>
                         </g>
 
                         
@@ -954,8 +965,8 @@
 
     <!-- DISCOUNT EYE -->
     <div class="discount-fab" id="discountFab" onclick="openDiscount()" title="A little secret for you">
-        <svg viewBox="0 0 200 120"><g><path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="7"/><circle cx="100" cy="60" r="26" fill="#26c6da"/><circle cx="100" cy="60" r="10.5" fill="#000"/><circle cx="107" cy="53" r="5" fill="#fff"/></g></svg>
-        <span>-10 %</span>
+        <svg viewBox="0 0 200 120"><g><path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#000" stroke="#012" stroke-width="7"/><circle cx="100" cy="60" r="26" fill="#012"/><circle cx="100" cy="60" r="10.5" fill="#26c6da"/><circle cx="107" cy="53" r="5" fill="#fff"/></g></svg>
+        <span>Get &minus;10 %</span>
     </div>
     <div class="discount-overlay" id="discountOverlay">
         <div class="discount-box">
@@ -1055,20 +1066,24 @@
                 `${formatTime(Math.floor((distance % (1000 * 60)) / 1000))}`;
         }, 1000);
 
-        // --- Journey of MARES: the plane flies along the route as you scroll ---
+        // --- Journey of MARES: the plane descends along the route as you scroll ---
         (function () {
-            const wrap = document.getElementById('journeyScroll');
-            const plane = document.querySelector('.airplane');
-            const points = ['pt-m', 'pt-a', 'pt-r', 'pt-e', 'pt-s'];
-            const marks = [0.14, 0.33, 0.52, 0.71, 0.9];
-            if (!wrap || !plane) return;
+            const vert = document.getElementById('journeyVert');
+            const plane = document.getElementById('vPlane');
+            const about = document.getElementById('about');
+            const stops = ['vs-0', 'vs-1', 'vs-2', 'vs-3', 'vs-4'];
+            if (!vert || !plane) return;
             function onScroll() {
-                const total = wrap.offsetHeight - window.innerHeight;
-                if (total <= 0) return;
-                const progress = Math.min(1, Math.max(0, -wrap.getBoundingClientRect().top / total));
+                const r = vert.getBoundingClientRect();
+                const vh = window.innerHeight;
+                const progress = Math.min(1, Math.max(0, (vh * 0.62 - r.top) / r.height));
                 plane.style.offsetDistance = (progress * 100).toFixed(2) + '%';
-                points.forEach((id, i) => document.getElementById(id).classList.toggle('lit', progress >= marks[i]));
-                document.getElementById('journeySummary').classList.toggle('lit', progress >= 0.96);
+                about.setAttribute('data-stage', String(Math.min(5, Math.max(0, Math.ceil(progress * 5)))));
+                stops.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el.getBoundingClientRect().top < vh * 0.82) el.classList.add('lit');
+                });
+                if (progress >= 0.97) document.getElementById('journeySummary').classList.add('lit');
             }
             window.addEventListener('scroll', onScroll, { passive: true });
             window.addEventListener('resize', onScroll);
