@@ -123,3 +123,31 @@ Drop 1 „#OpenYourEyes" — zítra.
 - Stories dávej denně, i kdyby jen detail potisku nebo slzu z animace webu.
 - Až pojede Shopify, dej odkaz do bia a do stories (sticker Link).
 - Nahrávka obrazovky webu s animací letadla a mrkajícím okem = skvělý Reel na D-day.
+
+---
+
+## AKTUALIZACE: IG + FB startovací sada
+
+### Instagram — první příspěvek
+- Vizuál: `social-post1.png` (1080×1080, teaser s okem) — případně `social-post2.png` s mikinou Venuše (reálný design).
+- Popisek: viz „Příspěvek 1" výše. Do bia dej ✍️ text z sekce BIO.
+- Profilovka: `social-profile.png`.
+
+### Facebook — první příspěvek
+- Vizuál: `social-fbpost1.png` (1200×630, na šířku — ideální pro FB feed/link post).
+- Úvodní (cover) fotka stránky: `social-banner.png`.
+- Popisek:
+```
+Něco se chystá. 👁
+
+MARES — udržitelný streetwear, který nutí přemýšlet.
+5 % z každého nákupu jde planetě. Zero waste. Tisk jen na objednávku.
+
+Season 1 „#openyoureyes" startuje už brzy.
+Sledujte nás, ať vám drop neuteče. 🔔
+```
+
+### Web
+Na e-shopu je nyní dole tlačítko pro zkopírování #openyoureyes a tlačítka
+Follow on Instagram / Facebook — odkazy se nastavují v `mares-shop.html`
+v konstantě `SOCIAL` (doplň svoje profily).
