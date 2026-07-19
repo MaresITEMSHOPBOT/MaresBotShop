@@ -268,6 +268,29 @@
             .journey-summary { opacity: 1; transform: none; }
         }
 
+        /* --- EYE CURSOR (desktop) --- */
+        @media (pointer: fine) {
+            * { cursor: none !important; }
+        }
+        .eye-cursor {
+            position: fixed; top: 0; left: 0; width: 36px; height: 25px; z-index: 6000;
+            pointer-events: none; transform: translate(-50%, -50%); display: none;
+        }
+        .eye-cursor svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 7px var(--accent-glow)); }
+        .eye-cursor .cur-eye { transform-origin: 100px 60px; }
+        .eye-cursor.blink .cur-eye { animation: curBlink .3s ease; }
+        @keyframes curBlink { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.07); } }
+        .cursor-tear {
+            position: fixed; width: 11px; height: 15px; z-index: 5999; pointer-events: none;
+            fill: var(--accent-cyan); filter: drop-shadow(0 0 6px var(--accent-glow));
+            animation: cursorTearFall .95s ease-in forwards;
+        }
+        @keyframes cursorTearFall {
+            0% { opacity: 0; transform: translate(-50%, 0) scale(.5); }
+            20% { opacity: 1; transform: translate(-50%, 12px) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, 78px) scale(1); }
+        }
+
         /* --- ADD-TO-CART BLINK ANIMATION --- */
         .blink-overlay {
             position: fixed; inset: 0; background: rgba(1,3,3,0.97); z-index: 5000;
@@ -277,32 +300,36 @@
         .blink-overlay.show { opacity: 1; visibility: visible; }
         .blink-eye { width: min(62vw, 420px); height: auto; filter: drop-shadow(0 0 45px var(--accent-glow)); }
         .big-eye { transform-origin: 100px 60px; }
-        .blink-overlay.show .big-eye { animation: overlayBlink 1.5s ease .25s 1 both; }
+        .blink-overlay.show .big-eye { animation: overlayBlink 1.4s ease .2s 1 both; }
         @keyframes overlayBlink {
-            0%, 30%, 60%, 100% { transform: scaleY(1); }
-            15%, 45% { transform: scaleY(0.05); }
+            0%, 32%, 68%, 100% { transform: scaleY(1); }
+            44%, 56% { transform: scaleY(0.05); }
         }
+        .blink-eye-wrap { position: relative; line-height: 0; }
         .mares-write { width: min(70vw, 470px); height: auto; }
         .write-text {
             fill: rgba(255,255,255,0); stroke: #fff; stroke-width: 1.5;
             stroke-dasharray: 780; stroke-dashoffset: 780;
         }
         .blink-overlay.phase-write .write-text {
-            animation: writeMares 1.9s ease-out forwards, inkFill .7s ease 1.5s forwards;
+            animation: writeMares 1.8s ease-out forwards, inkFill .7s ease 1.4s forwards;
         }
+        .blink-overlay.phase-write .write-reveal { animation: revealSweep 1.7s ease-out forwards; }
+        @keyframes revealSweep { to { width: 420px; } }
         @keyframes writeMares { to { stroke-dashoffset: 0; } }
         @keyframes inkFill { to { fill: rgba(255,255,255,1); } }
+        /* tear starts at the eye's lower lid and rolls down from it */
         .blink-tear-big {
-            position: absolute; top: 26%; left: 50%; width: 36px; height: 50px;
+            position: absolute; top: 74%; left: 50%; width: 36px; height: 50px;
             fill: var(--accent-cyan); filter: drop-shadow(0 0 16px var(--accent-glow));
             opacity: 0; transform: translateX(-50%);
         }
-        .blink-overlay.phase-tear .blink-tear-big { animation: overlayTear 1.4s ease-in forwards; }
+        .blink-overlay.phase-tear .blink-tear-big { animation: overlayTear 1.5s ease-in forwards; }
         @keyframes overlayTear {
-            0% { top: 26%; opacity: 0; transform: translateX(-50%) scale(.5); }
-            18% { opacity: 1; transform: translateX(-50%) scale(1); }
-            75% { opacity: 1; }
-            100% { top: 80%; opacity: 0; transform: translateX(-50%) scale(1); }
+            0% { top: 74%; opacity: 0; transform: translateX(-50%) scale(.45); }
+            16% { opacity: 1; transform: translateX(-50%) scale(1); }
+            70% { opacity: 1; }
+            100% { top: 260%; opacity: 0; transform: translateX(-50%) scale(1); }
         }
 
         /* --- MUSIC TOGGLE --- */
@@ -541,18 +568,28 @@
                             <pattern id="dots1" width="5" height="5" patternUnits="userSpaceOnUse">
                                 <circle cx="1.2" cy="1.2" r="0.7" fill="#000" opacity="0.28"/>
                             </pattern>
+                            <pattern id="hlines1" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-4)">
+                                <path d="M0 1.5 H3" stroke="#000" stroke-width="0.85" opacity="0.3"/>
+                            </pattern>
                         </defs>
+
+                        <!-- BACK VIEW (behind, bottom-right like the mockup) -->
+                        <g transform="translate(206,240) scale(0.5)" filter="url(#hshadow1)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
+                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="2.5" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="2.6" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="2.3" opacity="0.5"/><circle cx="300" cy="330" r="2.3" opacity="0.5"/><circle cx="140" cy="240" r="2.3" opacity="0.5"/><circle cx="270" cy="300" r="2.2" opacity="0.6"/><circle cx="200" cy="180" r="2.2" opacity="0.5"/></g>
+                            <text x="238" y="252" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 252)">open your</text>
+                            <text x="238" y="326" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 316)">eyes</text>
+                        </g>
 
                         <!-- FRONT VIEW (boxy cut like the mockup) -->
                         <g transform="translate(-30,0)" filter="url(#hshadow1)">
                             <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="url(#hgrad1)" stroke="#333" stroke-width="1.5"/>
                             <path d="M 160 40 C 175 72 225 72 240 40 C 224 58 176 58 160 40 Z" fill="#060606" stroke="#282828" stroke-width="1.5"/>
-                            <path d="M 94 130 L 66 258 M 306 130 L 334 258" stroke="#1e1e1e" stroke-width="1.5"/>
-                            <path d="M 94 436 L 306 436" stroke="#1c1c1c" stroke-width="2"/>
-                            <g fill="#fff"><circle cx="120" cy="120" r="1.2" opacity="0.8"/><circle cx="160" cy="105" r="0.9" opacity="0.6"/><circle cx="250" cy="112" r="1.3" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.2" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="0.9" opacity="0.5"/><circle cx="265" cy="205" r="1.1" opacity="0.7"/><circle cx="300" cy="245" r="1.2" opacity="0.8"/><circle cx="75" cy="220" r="0.9" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.2" opacity="0.8"/><circle cx="160" cy="330" r="0.9" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.2" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="0.8" opacity="0.5"/><circle cx="175" cy="405" r="1.1" opacity="0.7"/><circle cx="240" cy="420" r="1.3" opacity="0.8"/><circle cx="290" cy="390" r="0.9" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="0.9" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="0.9" opacity="0.6"/><circle cx="98" cy="270" r="0.9" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="0.8" opacity="0.5"/><circle cx="70" cy="180" r="0.9" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="0.8" opacity="0.4"/><circle cx="255" cy="160" r="0.9" opacity="0.5"/><circle cx="85" cy="120" r="0.8" opacity="0.5"/><circle cx="230" cy="90" r="0.9" opacity="0.6"/><circle cx="170" cy="95" r="0.8" opacity="0.5"/><circle cx="310" cy="120" r="0.9" opacity="0.6"/><circle cx="75" cy="320" r="0.9" opacity="0.5"/><circle cx="90" cy="410" r="0.8" opacity="0.5"/><circle cx="215" cy="370" r="0.9" opacity="0.6"/><circle cx="150" cy="375" r="0.8" opacity="0.5"/><circle cx="265" cy="255" r="0.8" opacity="0.5"/><circle cx="180" cy="265" r="0.9" opacity="0.5"/><circle cx="120" cy="255" r="0.7" opacity="0.4"/><circle cx="300" cy="425" r="0.9" opacity="0.6"/><circle cx="225" cy="200" r="0.7" opacity="0.4"/><circle cx="160" cy="215" r="0.7" opacity="0.4"/></g>
+                            <g fill="#fff"><circle cx="120" cy="120" r="1.9" opacity="0.8"/><circle cx="160" cy="105" r="1.4" opacity="0.6"/><circle cx="250" cy="112" r="2.0" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.9" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="1.4" opacity="0.5"/><circle cx="265" cy="205" r="1.7" opacity="0.7"/><circle cx="300" cy="245" r="1.9" opacity="0.8"/><circle cx="75" cy="220" r="1.4" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.9" opacity="0.8"/><circle cx="160" cy="330" r="1.4" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.9" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="1.2" opacity="0.5"/><circle cx="175" cy="405" r="1.7" opacity="0.7"/><circle cx="240" cy="420" r="2.0" opacity="0.8"/><circle cx="290" cy="390" r="1.4" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="1.4" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="1.4" opacity="0.6"/><circle cx="98" cy="270" r="1.4" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="1.2" opacity="0.5"/><circle cx="70" cy="180" r="1.4" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="1.2" opacity="0.4"/><circle cx="255" cy="160" r="1.4" opacity="0.5"/><circle cx="85" cy="120" r="1.2" opacity="0.5"/><circle cx="230" cy="90" r="1.4" opacity="0.6"/><circle cx="170" cy="95" r="1.2" opacity="0.5"/><circle cx="310" cy="120" r="1.4" opacity="0.6"/><circle cx="75" cy="320" r="1.4" opacity="0.5"/><circle cx="90" cy="410" r="1.2" opacity="0.5"/><circle cx="215" cy="370" r="1.4" opacity="0.6"/><circle cx="150" cy="375" r="1.2" opacity="0.5"/><circle cx="265" cy="255" r="1.2" opacity="0.5"/><circle cx="180" cy="265" r="1.4" opacity="0.5"/><circle cx="120" cy="255" r="1.1" opacity="0.4"/><circle cx="300" cy="425" r="1.4" opacity="0.6"/><circle cx="225" cy="200" r="1.1" opacity="0.4"/><circle cx="160" cy="215" r="1.1" opacity="0.4"/></g>
                             <text x="200" y="86" font-family="Georgia, serif" font-style="italic" font-weight="400" font-size="14" letter-spacing="6" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
 
-                            <g transform="translate(200,248) rotate(-7) scale(1.32)">
+                            <g transform="translate(200,248) rotate(-7) scale(1.32)" style="filter: drop-shadow(0 0 9px rgba(255,255,255,0.3));">
                                 <!-- neck & bust cut -->
                                 <path d="M -16 36 C -14 54 -15 66 -20 78 L 24 76 C 17 62 16 50 18 34 C 8 44 -6 45 -16 36 Z" fill="#d6d6d6"/>
                                 <path d="M -20 78 L 24 76 C 25 80 24 83 20 84 L -16 84 C -20 82 -21 80 -20 78 Z" fill="#b0b0b0"/>
@@ -617,19 +654,18 @@
                                     <path d="M -16 36 C -14 54 -15 66 -20 78 L 24 76 C 17 62 16 50 18 34 C 8 44 -6 45 -16 36 Z"/>
                                     <ellipse cx="14" cy="-94" rx="17" ry="12" transform="rotate(-14 14 -94)"/>
                                 </g>
+                                <g fill="url(#hlines1)">
+                                    <path d="M -36 20 C -50 -4 -52 -40 -42 -62 C -34 -80 -16 -92 4 -92 C 24 -92 40 -82 46 -64 C 54 -42 52 -10 40 12 C 34 22 -20 24 -36 20 Z"/>
+                                    <path d="M -29 -42 C -33 -20 -31 2 -24 16 C -17 30 -9 40 0 42 C 9 40 17 30 24 16 C 31 2 33 -20 29 -42 C 15 -51 -15 -51 -29 -42 Z"/>
+                                    <path d="M -16 36 C -14 54 -15 66 -20 78 L 24 76 C 17 62 16 50 18 34 C 8 44 -6 45 -16 36 Z"/>
+                                    <ellipse cx="14" cy="-94" rx="17" ry="12" transform="rotate(-14 14 -94)"/>
+                                </g>
                             </g>
                             <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="140" y="198" font-size="52">LI</text><text x="268" y="212" font-size="52" filter="url(#glow1)">E</text><text x="134" y="292" font-size="52" filter="url(#glow1)">DI</text><text x="252" y="336" font-size="52" filter="url(#glow1)">VE</text></g>
                             <text x="200" y="414" font-family="Georgia, serif" font-style="italic" font-weight="400" font-size="14" letter-spacing="4" fill="#26c6da" text-anchor="middle" opacity="0.92">OPEN YOUR EYES</text>
                         </g>
 
-                        <!-- BACK VIEW (small, bottom-right like the mockup) -->
-                        <g transform="translate(242,258) scale(0.40)" filter="url(#hshadow1)">
-                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
-                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
-                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="1.6" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="1.8" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="1.5" opacity="0.5"/><circle cx="300" cy="330" r="1.5" opacity="0.5"/><circle cx="140" cy="240" r="1.5" opacity="0.5"/><circle cx="270" cy="300" r="1.4" opacity="0.6"/><circle cx="200" cy="180" r="1.4" opacity="0.5"/></g>
-                            <text x="200" y="252" font-family="'Great Vibes', 'Caveat', cursive" font-size="72" fill="#fff" text-anchor="middle" transform="rotate(-3 200 252)">open your</text>
-                            <text x="200" y="326" font-family="'Great Vibes', 'Caveat', cursive" font-size="72" fill="#fff" text-anchor="middle" transform="rotate(-3 200 316)">eyes</text>
-                        </g>
+                        
                     </svg>
                 </div>
                 <div class="product-info">
@@ -654,40 +690,46 @@
                             <pattern id="dots2" width="5" height="5" patternUnits="userSpaceOnUse">
                                 <circle cx="1.2" cy="1.2" r="0.7" fill="#000" opacity="0.28"/>
                             </pattern>
+                            <pattern id="hlines2" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-3)">
+                                <path d="M0 1.5 H3" stroke="#000" stroke-width="0.85" opacity="0.28"/>
+                            </pattern>
                         </defs>
+
+                        <!-- BACK VIEW (behind, bottom-right like the mockup) -->
+                        <g transform="translate(206,240) scale(0.5)" filter="url(#hshadow2)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
+                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="2.5" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="2.6" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="2.3" opacity="0.5"/><circle cx="300" cy="330" r="2.3" opacity="0.5"/><circle cx="140" cy="240" r="2.3" opacity="0.5"/><circle cx="270" cy="300" r="2.2" opacity="0.6"/><circle cx="200" cy="180" r="2.2" opacity="0.5"/></g>
+                            <text x="238" y="252" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 252)">open your</text>
+                            <text x="238" y="326" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 316)">eyes</text>
+                        </g>
 
                         <!-- FRONT VIEW (boxy cut like the mockup) -->
                         <g transform="translate(-30,0)" filter="url(#hshadow2)">
                             <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="url(#hgrad2)" stroke="#333" stroke-width="1.5"/>
                             <path d="M 160 40 C 175 72 225 72 240 40 C 224 58 176 58 160 40 Z" fill="#060606" stroke="#282828" stroke-width="1.5"/>
-                            <path d="M 94 130 L 66 258 M 306 130 L 334 258" stroke="#1e1e1e" stroke-width="1.5"/>
-                            <path d="M 94 436 L 306 436" stroke="#1c1c1c" stroke-width="2"/>
-                            <g fill="#fff"><circle cx="120" cy="120" r="1.2" opacity="0.8"/><circle cx="160" cy="105" r="0.9" opacity="0.6"/><circle cx="250" cy="112" r="1.3" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.2" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="0.9" opacity="0.5"/><circle cx="265" cy="205" r="1.1" opacity="0.7"/><circle cx="300" cy="245" r="1.2" opacity="0.8"/><circle cx="75" cy="220" r="0.9" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.2" opacity="0.8"/><circle cx="160" cy="330" r="0.9" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.2" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="0.8" opacity="0.5"/><circle cx="175" cy="405" r="1.1" opacity="0.7"/><circle cx="240" cy="420" r="1.3" opacity="0.8"/><circle cx="290" cy="390" r="0.9" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="0.9" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="0.9" opacity="0.6"/><circle cx="98" cy="270" r="0.9" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="0.8" opacity="0.5"/><circle cx="70" cy="180" r="0.9" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="0.8" opacity="0.4"/><circle cx="255" cy="160" r="0.9" opacity="0.5"/><circle cx="85" cy="120" r="0.8" opacity="0.5"/><circle cx="230" cy="90" r="0.9" opacity="0.6"/><circle cx="170" cy="95" r="0.8" opacity="0.5"/><circle cx="310" cy="120" r="0.9" opacity="0.6"/><circle cx="75" cy="320" r="0.9" opacity="0.5"/><circle cx="90" cy="410" r="0.8" opacity="0.5"/><circle cx="215" cy="370" r="0.9" opacity="0.6"/><circle cx="150" cy="375" r="0.8" opacity="0.5"/><circle cx="265" cy="255" r="0.8" opacity="0.5"/><circle cx="180" cy="265" r="0.9" opacity="0.5"/><circle cx="120" cy="255" r="0.7" opacity="0.4"/><circle cx="300" cy="425" r="0.9" opacity="0.6"/><circle cx="225" cy="200" r="0.7" opacity="0.4"/><circle cx="160" cy="215" r="0.7" opacity="0.4"/></g>
+                            <g fill="#fff"><circle cx="120" cy="120" r="1.9" opacity="0.8"/><circle cx="160" cy="105" r="1.4" opacity="0.6"/><circle cx="250" cy="112" r="2.0" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.9" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="1.4" opacity="0.5"/><circle cx="265" cy="205" r="1.7" opacity="0.7"/><circle cx="300" cy="245" r="1.9" opacity="0.8"/><circle cx="75" cy="220" r="1.4" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.9" opacity="0.8"/><circle cx="160" cy="330" r="1.4" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.9" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="1.2" opacity="0.5"/><circle cx="175" cy="405" r="1.7" opacity="0.7"/><circle cx="240" cy="420" r="2.0" opacity="0.8"/><circle cx="290" cy="390" r="1.4" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="1.4" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="1.4" opacity="0.6"/><circle cx="98" cy="270" r="1.4" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="1.2" opacity="0.5"/><circle cx="70" cy="180" r="1.4" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="1.2" opacity="0.4"/><circle cx="255" cy="160" r="1.4" opacity="0.5"/><circle cx="85" cy="120" r="1.2" opacity="0.5"/><circle cx="230" cy="90" r="1.4" opacity="0.6"/><circle cx="170" cy="95" r="1.2" opacity="0.5"/><circle cx="310" cy="120" r="1.4" opacity="0.6"/><circle cx="75" cy="320" r="1.4" opacity="0.5"/><circle cx="90" cy="410" r="1.2" opacity="0.5"/><circle cx="215" cy="370" r="1.4" opacity="0.6"/><circle cx="150" cy="375" r="1.2" opacity="0.5"/><circle cx="265" cy="255" r="1.2" opacity="0.5"/><circle cx="180" cy="265" r="1.4" opacity="0.5"/><circle cx="120" cy="255" r="1.1" opacity="0.4"/><circle cx="300" cy="425" r="1.4" opacity="0.6"/><circle cx="225" cy="200" r="1.1" opacity="0.4"/><circle cx="160" cy="215" r="1.1" opacity="0.4"/></g>
                             <text x="200" y="86" font-family="Georgia, serif" font-style="italic" font-weight="400" font-size="14" letter-spacing="6" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
 
                             <g transform="translate(200,242) rotate(10) scale(1.38)">
-                                <rect x="-48" y="-90" width="96" height="180" fill="#9a9a9a" opacity="0.95"/>
-                                <rect x="-48" y="-90" width="96" height="180" fill="url(#dots2)"/>
-                                <g transform="translate(0,8)">
+                                <path d="M -50 -96 L 46 -88 L 52 88 L -42 94 Z" fill="#a2a2a2" opacity="0.96"/>
+                                <path d="M -50 -96 L 46 -88 L 52 88 L -42 94 Z" fill="url(#dots2)"/>
+                                <path d="M -50 -96 L 46 -88 L 52 88 L -42 94 Z" fill="url(#hlines2)"/>
+                                <g transform="translate(0,4) scale(1.25)">
                                     <path d="M -36 0 Q 0 -24 36 0 Q 0 24 -36 0 Z" fill="#d8d8d8" stroke="#2e2e2e" stroke-width="2"/>
                                     <circle r="13" fill="#555"/>
                                     <circle r="6" fill="#111"/>
                                     <circle cx="4" cy="-4" r="2.5" fill="#fff"/>
                                     <path d="M -36 -8 Q 0 -32 36 -8" fill="none" stroke="#444" stroke-width="3"/>
+                                    <path d="M -30 14 Q 0 26 30 14" fill="none" stroke="#555" stroke-width="1.5" opacity="0.7"/>
+                                    <path d="M -26 -14 L -31 -22 M -12 -19 L -14 -28 M 2 -20 L 2 -29 M 16 -18 L 19 -27 M 28 -13 L 33 -20" stroke="#3a3a3a" stroke-width="1.7" stroke-linecap="round"/>
                                 </g>
                             </g>
                             <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="146" y="192" font-size="52">LO</text><text x="130" y="264" font-size="52">HA</text><text x="272" y="242" font-size="52">TE</text><text x="248" y="342" font-size="52" filter="url(#glow2)">VE</text></g>
                             <text x="200" y="414" font-family="Georgia, serif" font-style="italic" font-weight="400" font-size="14" letter-spacing="4" fill="#26c6da" text-anchor="middle" opacity="0.92">OPEN YOUR EYES</text>
                         </g>
 
-                        <!-- BACK VIEW (small, bottom-right like the mockup) -->
-                        <g transform="translate(242,258) scale(0.40)" filter="url(#hshadow2)">
-                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
-                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
-                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="1.6" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="1.8" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="1.5" opacity="0.5"/><circle cx="300" cy="330" r="1.5" opacity="0.5"/><circle cx="140" cy="240" r="1.5" opacity="0.5"/><circle cx="270" cy="300" r="1.4" opacity="0.6"/><circle cx="200" cy="180" r="1.4" opacity="0.5"/></g>
-                            <text x="200" y="252" font-family="'Great Vibes', 'Caveat', cursive" font-size="72" fill="#fff" text-anchor="middle" transform="rotate(-3 200 252)">open your</text>
-                            <text x="200" y="326" font-family="'Great Vibes', 'Caveat', cursive" font-size="72" fill="#fff" text-anchor="middle" transform="rotate(-3 200 316)">eyes</text>
-                        </g>
+                        
                     </svg>
                 </div>
                 <div class="product-info">
@@ -712,47 +754,50 @@
                             <pattern id="dots3" width="5" height="5" patternUnits="userSpaceOnUse">
                                 <circle cx="1.2" cy="1.2" r="0.7" fill="#000" opacity="0.28"/>
                             </pattern>
+                            <pattern id="hlines3" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-2)">
+                                <path d="M0 1.5 H3" stroke="#000" stroke-width="0.85" opacity="0.3"/>
+                            </pattern>
                         </defs>
+
+                        <!-- BACK VIEW (behind, bottom-right like the mockup) -->
+                        <g transform="translate(206,240) scale(0.5)" filter="url(#hshadow3)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
+                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="2.5" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="2.6" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="2.3" opacity="0.5"/><circle cx="300" cy="330" r="2.3" opacity="0.5"/><circle cx="140" cy="240" r="2.3" opacity="0.5"/><circle cx="270" cy="300" r="2.2" opacity="0.6"/><circle cx="200" cy="180" r="2.2" opacity="0.5"/></g>
+                            <text x="238" y="252" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 252)">open your</text>
+                            <text x="238" y="326" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 316)">eyes</text>
+                        </g>
 
                         <!-- FRONT VIEW (boxy cut like the mockup) -->
                         <g transform="translate(-30,0)" filter="url(#hshadow3)">
                             <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="url(#hgrad3)" stroke="#333" stroke-width="1.5"/>
                             <path d="M 160 40 C 175 72 225 72 240 40 C 224 58 176 58 160 40 Z" fill="#060606" stroke="#282828" stroke-width="1.5"/>
-                            <path d="M 94 130 L 66 258 M 306 130 L 334 258" stroke="#1e1e1e" stroke-width="1.5"/>
-                            <path d="M 94 436 L 306 436" stroke="#1c1c1c" stroke-width="2"/>
-                            <g fill="#fff"><circle cx="120" cy="120" r="1.2" opacity="0.8"/><circle cx="160" cy="105" r="0.9" opacity="0.6"/><circle cx="250" cy="112" r="1.3" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.2" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="0.9" opacity="0.5"/><circle cx="265" cy="205" r="1.1" opacity="0.7"/><circle cx="300" cy="245" r="1.2" opacity="0.8"/><circle cx="75" cy="220" r="0.9" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.2" opacity="0.8"/><circle cx="160" cy="330" r="0.9" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.2" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="0.8" opacity="0.5"/><circle cx="175" cy="405" r="1.1" opacity="0.7"/><circle cx="240" cy="420" r="1.3" opacity="0.8"/><circle cx="290" cy="390" r="0.9" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="0.9" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="0.9" opacity="0.6"/><circle cx="98" cy="270" r="0.9" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="0.8" opacity="0.5"/><circle cx="70" cy="180" r="0.9" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="0.8" opacity="0.4"/><circle cx="255" cy="160" r="0.9" opacity="0.5"/><circle cx="85" cy="120" r="0.8" opacity="0.5"/><circle cx="230" cy="90" r="0.9" opacity="0.6"/><circle cx="170" cy="95" r="0.8" opacity="0.5"/><circle cx="310" cy="120" r="0.9" opacity="0.6"/><circle cx="75" cy="320" r="0.9" opacity="0.5"/><circle cx="90" cy="410" r="0.8" opacity="0.5"/><circle cx="215" cy="370" r="0.9" opacity="0.6"/><circle cx="150" cy="375" r="0.8" opacity="0.5"/><circle cx="265" cy="255" r="0.8" opacity="0.5"/><circle cx="180" cy="265" r="0.9" opacity="0.5"/><circle cx="120" cy="255" r="0.7" opacity="0.4"/><circle cx="300" cy="425" r="0.9" opacity="0.6"/><circle cx="225" cy="200" r="0.7" opacity="0.4"/><circle cx="160" cy="215" r="0.7" opacity="0.4"/></g>
+                            <g fill="#fff"><circle cx="120" cy="120" r="1.9" opacity="0.8"/><circle cx="160" cy="105" r="1.4" opacity="0.6"/><circle cx="250" cy="112" r="2.0" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.9" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="1.4" opacity="0.5"/><circle cx="265" cy="205" r="1.7" opacity="0.7"/><circle cx="300" cy="245" r="1.9" opacity="0.8"/><circle cx="75" cy="220" r="1.4" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.9" opacity="0.8"/><circle cx="160" cy="330" r="1.4" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.9" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="1.2" opacity="0.5"/><circle cx="175" cy="405" r="1.7" opacity="0.7"/><circle cx="240" cy="420" r="2.0" opacity="0.8"/><circle cx="290" cy="390" r="1.4" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="1.4" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="1.4" opacity="0.6"/><circle cx="98" cy="270" r="1.4" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="1.2" opacity="0.5"/><circle cx="70" cy="180" r="1.4" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="1.2" opacity="0.4"/><circle cx="255" cy="160" r="1.4" opacity="0.5"/><circle cx="85" cy="120" r="1.2" opacity="0.5"/><circle cx="230" cy="90" r="1.4" opacity="0.6"/><circle cx="170" cy="95" r="1.2" opacity="0.5"/><circle cx="310" cy="120" r="1.4" opacity="0.6"/><circle cx="75" cy="320" r="1.4" opacity="0.5"/><circle cx="90" cy="410" r="1.2" opacity="0.5"/><circle cx="215" cy="370" r="1.4" opacity="0.6"/><circle cx="150" cy="375" r="1.2" opacity="0.5"/><circle cx="265" cy="255" r="1.2" opacity="0.5"/><circle cx="180" cy="265" r="1.4" opacity="0.5"/><circle cx="120" cy="255" r="1.1" opacity="0.4"/><circle cx="300" cy="425" r="1.4" opacity="0.6"/><circle cx="225" cy="200" r="1.1" opacity="0.4"/><circle cx="160" cy="215" r="1.1" opacity="0.4"/></g>
                             <text x="200" y="86" font-family="Georgia, serif" font-style="italic" font-weight="400" font-size="14" letter-spacing="6" fill="#26c6da" text-anchor="middle" opacity="0.95">MARES</text>
 
-                            <g transform="translate(200,252) scale(1.3)">
+                            <g transform="translate(200,252) scale(1.3)" style="filter: drop-shadow(0 0 9px rgba(255,255,255,0.3));">
                                 <!-- aorta arch -->
-                                <path d="M 6 -54 C 2 -74 14 -84 24 -78 C 32 -72 32 -60 28 -52" fill="none" stroke="#c6c6c6" stroke-width="12" stroke-linecap="round" opacity="0.95"/>
+                                <path d="M 6 -54 C 2 -74 14 -84 24 -78 C 32 -72 32 -60 28 -52" fill="none" stroke="#b8b8b8" stroke-width="12" stroke-linecap="round" opacity="0.95"/>
                                 <!-- pulmonary trunk -->
-                                <path d="M -12 -52 C -14 -66 -8 -76 4 -78" fill="none" stroke="#b4b4b4" stroke-width="9" stroke-linecap="round" opacity="0.9"/>
+                                <path d="M -12 -52 C -14 -66 -8 -76 4 -78" fill="none" stroke="#a8a8a8" stroke-width="9" stroke-linecap="round" opacity="0.9"/>
                                 <!-- small vessels branching up -->
-                                <path d="M 12 -78 L 10 -92 M 20 -80 L 22 -94 M 28 -74 L 34 -88" stroke="#ababab" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+                                <path d="M 12 -78 L 10 -92 M 20 -80 L 22 -94 M 28 -74 L 34 -88" stroke="#b0b0b0" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
                                 <!-- left atrium lobe -->
-                                <path d="M 28 -48 C 44 -56 58 -42 55 -26 C 53 -14 44 -8 34 -10 Z" fill="#c0c0c0" opacity="0.9"/>
+                                <path d="M 28 -48 C 44 -56 58 -42 55 -26 C 53 -14 44 -8 34 -10 Z" fill="#aeaeae" stroke="#3a3a3a" stroke-width="1" opacity="0.95"/>
                                 <!-- main heart body with apex -->
-                                <path d="M 8 -56 C -12 -68 -38 -60 -46 -38 C -55 -14 -48 12 -34 30 C -21 47 -2 62 18 70 C 27 73 35 67 37 57 C 45 28 50 -8 40 -34 C 34 -50 24 -60 8 -56 Z" fill="#c9c9c9" opacity="0.94"/>
+                                <path d="M 8 -56 C -12 -68 -38 -60 -46 -38 C -55 -14 -48 12 -34 30 C -21 47 -2 62 18 70 C 27 73 35 67 37 57 C 45 28 50 -8 40 -34 C 34 -50 24 -60 8 -56 Z" fill="#c4c4c4" stroke="#2e2e2e" stroke-width="1.4" opacity="0.96"/>
                                 <!-- septum groove -->
-                                <path d="M 2 -50 C -8 -20 -6 22 14 62" stroke="#969696" stroke-width="3" fill="none" opacity="0.8"/>
+                                <path d="M 2 -50 C -8 -20 -6 22 14 62" stroke="#4a4a4a" stroke-width="2.5" fill="none" opacity="0.85"/>
                                 <!-- coronary veins -->
-                                <path d="M -28 -28 C -20 -12 -18 8 -20 24 M 26 -26 C 22 -6 22 16 16 36" stroke="#8f8f8f" stroke-width="1.5" fill="none" opacity="0.7"/>
-                                <!-- halftone dots overlay -->
-                                <path d="M 8 -56 C -12 -68 -38 -60 -46 -38 C -55 -14 -48 12 -34 30 C -21 47 -2 62 18 70 C 27 73 35 67 37 57 C 45 28 50 -8 40 -34 C 34 -50 24 -60 8 -56 Z" fill="url(#dots3)"/>
+                                <path d="M -28 -28 C -20 -12 -18 8 -20 24 M 26 -26 C 22 -6 22 16 16 36" stroke="#5a5a5a" stroke-width="1.5" fill="none" opacity="0.8"/>
+                                <!-- engraving overlay -->
+                                <path d="M 8 -56 C -12 -68 -38 -60 -46 -38 C -55 -14 -48 12 -34 30 C -21 47 -2 62 18 70 C 27 73 35 67 37 57 C 45 28 50 -8 40 -34 C 34 -50 24 -60 8 -56 Z" fill="url(#hlines3)"/>
                             </g>
                             <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="134" y="192" font-size="52">H</text><text x="272" y="186" font-size="52" filter="url(#glow3)">E</text><text x="124" y="270" font-size="52">A</text><text x="278" y="274" font-size="52">R</text><text x="200" y="354" font-size="52">T</text></g>
                             <text x="200" y="414" font-family="Georgia, serif" font-style="italic" font-weight="400" font-size="14" letter-spacing="4" fill="#26c6da" text-anchor="middle" opacity="0.92">OPEN YOUR EYES</text>
                         </g>
 
-                        <!-- BACK VIEW (small, bottom-right like the mockup) -->
-                        <g transform="translate(242,258) scale(0.40)" filter="url(#hshadow3)">
-                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
-                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
-                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="1.6" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="1.8" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="1.5" opacity="0.5"/><circle cx="300" cy="330" r="1.5" opacity="0.5"/><circle cx="140" cy="240" r="1.5" opacity="0.5"/><circle cx="270" cy="300" r="1.4" opacity="0.6"/><circle cx="200" cy="180" r="1.4" opacity="0.5"/></g>
-                            <text x="200" y="252" font-family="'Great Vibes', 'Caveat', cursive" font-size="72" fill="#fff" text-anchor="middle" transform="rotate(-3 200 252)">open your</text>
-                            <text x="200" y="326" font-family="'Great Vibes', 'Caveat', cursive" font-size="72" fill="#fff" text-anchor="middle" transform="rotate(-3 200 316)">eyes</text>
-                        </g>
+                        
                     </svg>
                 </div>
                 <div class="product-info">
@@ -797,18 +842,21 @@
     </aside>
     <!-- ADD-TO-CART EYE ANIMATION -->
     <div class="blink-overlay" id="blinkOverlay">
-        <svg class="blink-eye" viewBox="0 0 200 120">
-            <g class="big-eye">
-                <path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="3"/>
-                <circle cx="100" cy="60" r="24" fill="#26c6da"/>
-                <circle cx="100" cy="60" r="10" fill="#000"/>
-                <circle cx="107" cy="53" r="5" fill="#fff"/>
-            </g>
-        </svg>
+        <div class="blink-eye-wrap">
+            <svg class="blink-eye" viewBox="0 0 200 120">
+                <g class="big-eye">
+                    <path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="3.5"/>
+                    <circle cx="100" cy="60" r="26" fill="#26c6da"/>
+                    <circle cx="100" cy="60" r="10.5" fill="#000"/>
+                    <circle cx="107" cy="53" r="5" fill="#fff"/>
+                </g>
+            </svg>
+            <svg class="blink-tear-big" viewBox="0 0 24 32"><path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/></svg>
+        </div>
         <svg class="mares-write" viewBox="0 0 420 150">
-            <text x="210" y="105" text-anchor="middle" font-family="'Caveat', cursive" font-weight="700" font-size="104" class="write-text">Mares</text>
+            <defs><clipPath id="writeClip"><rect class="write-reveal" x="0" y="0" width="0" height="150"/></clipPath></defs>
+            <text x="210" y="105" text-anchor="middle" font-family="'Caveat', cursive" font-weight="700" font-size="104" class="write-text" clip-path="url(#writeClip)">Mares</text>
         </svg>
-        <svg class="blink-tear-big" viewBox="0 0 24 32"><path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/></svg>
     </div>
 
     <div class="toast" id="toast">Added to cart ✓</div>
@@ -911,75 +959,107 @@
             }
         };
 
-        // --- Ambient background music (generated with Web Audio, no files needed) ---
-        let audioCtx = null, musicChain = null, musicTimers = [], padVoices = [], musicOn = false, chordIdx = 0;
-        const CHORDS = [
-            [110.00, 164.81, 220.00, 329.63], // A minor
-            [87.31, 130.81, 174.61, 261.63],  // F major
-            [98.00, 146.83, 196.00, 293.66],  // G major
-            [82.41, 123.47, 164.81, 246.94]   // E minor
+        // --- Background music: chill synthwave groove (generated with Web Audio, no files) ---
+        let audioCtx = null, musicOn = false, mChain = null, mTimer = null, mNextT = 0, mBar = 0, noiseBuf = null;
+        const BPM = 84, STEP = 60 / BPM / 4, BAR = STEP * 16;
+        // Am -> F -> C -> G
+        const PROG = [
+            { root: 55.00, chord: [220.00, 261.63, 329.63, 440.00] },
+            { root: 43.65, chord: [174.61, 220.00, 261.63, 349.23] },
+            { root: 65.41, chord: [196.00, 261.63, 329.63, 392.00] },
+            { root: 49.00, chord: [196.00, 246.94, 293.66, 392.00] }
         ];
 
         function buildAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const master = audioCtx.createGain(); master.gain.value = 0;
-            const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 900; filter.Q.value = 0.7;
-            const delay = audioCtx.createDelay(1.5); delay.delayTime.value = 0.45;
-            const fb = audioCtx.createGain(); fb.gain.value = 0.35;
-            delay.connect(fb); fb.connect(delay);
-            filter.connect(master); filter.connect(delay); delay.connect(master);
+            const bus = audioCtx.createGain(); bus.gain.value = 1;
+            const delay = audioCtx.createDelay(1.5); delay.delayTime.value = STEP * 3;
+            const fb = audioCtx.createGain(); fb.gain.value = 0.3;
+            delay.connect(fb); fb.connect(delay); delay.connect(master);
+            bus.connect(master);
             master.connect(audioCtx.destination);
-            // slow LFO breathing on the filter
-            const lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.05;
-            const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 260;
-            lfo.connect(lfoGain); lfoGain.connect(filter.frequency); lfo.start();
-            musicChain = { master, filter, delay };
+            noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+            const d = noiseBuf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+            mChain = { master, bus, delay };
         }
 
-        function playChord(freqs) {
-            const t = audioCtx.currentTime;
-            padVoices.forEach(v => {
-                v.gain.gain.cancelScheduledValues(t);
-                v.gain.gain.setValueAtTime(v.gain.gain.value, t);
-                v.gain.gain.linearRampToValueAtTime(0, t + 4);
-                v.oscs.forEach(o => o.stop(t + 4.3));
-            });
-            padVoices = [];
+        function kick(t) {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(140, t);
+            o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+            g.gain.setValueAtTime(0.5, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+            o.connect(g); g.connect(mChain.bus); o.start(t); o.stop(t + 0.3);
+        }
+        function hat(t, open) {
+            const src = audioCtx.createBufferSource(); src.buffer = noiseBuf;
+            const f = audioCtx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 7500;
+            const g = audioCtx.createGain();
+            g.gain.setValueAtTime(open ? 0.08 : 0.05, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + (open ? 0.24 : 0.05));
+            src.connect(f); f.connect(g); g.connect(mChain.bus);
+            src.start(t); src.stop(t + 0.3);
+        }
+        function snare(t) {
+            const src = audioCtx.createBufferSource(); src.buffer = noiseBuf;
+            const f = audioCtx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1900; f.Q.value = 0.8;
+            const g = audioCtx.createGain();
+            g.gain.setValueAtTime(0.15, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+            src.connect(f); f.connect(g); g.connect(mChain.bus);
+            src.start(t); src.stop(t + 0.25);
+        }
+        function bassNote(t, f, d) {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain(), lp = audioCtx.createBiquadFilter();
+            o.type = 'sawtooth'; o.frequency.value = f;
+            lp.type = 'lowpass'; lp.frequency.value = 320;
+            g.gain.setValueAtTime(0.001, t);
+            g.gain.linearRampToValueAtTime(0.19, t + 0.02);
+            g.gain.setValueAtTime(0.19, t + d * 0.7);
+            g.gain.exponentialRampToValueAtTime(0.001, t + d);
+            o.connect(lp); lp.connect(g); g.connect(mChain.bus);
+            o.start(t); o.stop(t + d + 0.05);
+        }
+        function lead(t, f) {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type = 'triangle'; o.frequency.value = f;
+            g.gain.setValueAtTime(0.001, t);
+            g.gain.linearRampToValueAtTime(0.1, t + 0.015);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+            o.connect(g); g.connect(mChain.bus); g.connect(mChain.delay);
+            o.start(t); o.stop(t + 0.6);
+        }
+        function padChord(t, freqs, d) {
             freqs.forEach(f => {
-                const g = audioCtx.createGain(); g.gain.value = 0;
-                g.connect(musicChain.filter);
-                const oscs = [-5, 4].map(det => {
-                    const o = audioCtx.createOscillator();
-                    o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
-                    o.connect(g); o.start(); return o;
-                });
-                g.gain.linearRampToValueAtTime(0.04, t + 3.5);
-                padVoices.push({ gain: g, oscs: oscs });
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(), lp = audioCtx.createBiquadFilter();
+                o.type = 'sawtooth'; o.frequency.value = f / 2; o.detune.value = (Math.random() * 8) - 4;
+                lp.type = 'lowpass'; lp.frequency.value = 750;
+                g.gain.setValueAtTime(0.001, t);
+                g.gain.linearRampToValueAtTime(0.02, t + d * 0.4);
+                g.gain.linearRampToValueAtTime(0.001, t + d);
+                o.connect(lp); lp.connect(g); g.connect(mChain.bus);
+                o.start(t); o.stop(t + d + 0.1);
             });
-            // soft sub-bass swell under the chord
-            const sub = audioCtx.createGain(); sub.gain.value = 0;
-            const so = audioCtx.createOscillator(); so.type = 'sine'; so.frequency.value = freqs[0] / 2;
-            so.connect(sub); sub.connect(musicChain.master);
-            so.start();
-            sub.gain.linearRampToValueAtTime(0.11, t + 2.5);
-            sub.gain.setTargetAtTime(0, t + 6, 1.4);
-            so.stop(t + 12);
         }
 
-        function pluck() {
-            if (!musicOn || !audioCtx) return;
-            if (Math.random() < 0.5) {
-                const chord = CHORDS[chordIdx];
-                const f = chord[1 + Math.floor(Math.random() * (chord.length - 1))] * (Math.random() < 0.5 ? 2 : 4);
-                const t = audioCtx.currentTime;
-                const g = audioCtx.createGain(); g.gain.value = 0;
-                g.connect(musicChain.filter); g.connect(musicChain.delay);
-                const o = audioCtx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
-                o.connect(g); o.start();
-                g.gain.linearRampToValueAtTime(0.085, t + 0.02);
-                g.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
-                o.stop(t + 1.9);
-            }
+        function scheduleBar() {
+            if (!musicOn) return;
+            const now = audioCtx.currentTime;
+            if (mNextT < now + 0.05) mNextT = now + 0.05;
+            const t0 = mNextT;
+            const prog = PROG[mBar % PROG.length];
+            padChord(t0, prog.chord, BAR);
+            kick(t0); kick(t0 + 8 * STEP); kick(t0 + 14 * STEP);
+            snare(t0 + 4 * STEP); snare(t0 + 12 * STEP);
+            for (let st = 0; st < 16; st += 2) hat(t0 + st * STEP, st === 14);
+            [0, 3, 6, 8, 11].forEach((st, i) => bassNote(t0 + st * STEP, i === 4 ? prog.root * 1.5 : prog.root, 2.5 * STEP));
+            const arp = [0, 1, 2, 3, 2, 1, 3, 2];
+            arp.forEach((ci, i) => { if (Math.random() < 0.8) lead(t0 + (i * 2 + 1) * STEP, prog.chord[ci]); });
+            mNextT = t0 + BAR;
+            mBar++;
         }
 
         function startMusic() {
@@ -987,25 +1067,22 @@
             audioCtx.resume();
             musicOn = true;
             const t = audioCtx.currentTime;
-            musicChain.master.gain.cancelScheduledValues(t);
-            musicChain.master.gain.setValueAtTime(musicChain.master.gain.value, t);
-            musicChain.master.gain.linearRampToValueAtTime(0.16, t + 3);
-            playChord(CHORDS[chordIdx]);
-            musicTimers.push(setInterval(() => {
-                chordIdx = (chordIdx + 1) % CHORDS.length;
-                playChord(CHORDS[chordIdx]);
-            }, 8000));
-            musicTimers.push(setInterval(pluck, 1050));
+            mChain.master.gain.cancelScheduledValues(t);
+            mChain.master.gain.setValueAtTime(mChain.master.gain.value, t);
+            mChain.master.gain.linearRampToValueAtTime(0.55, t + 2);
+            mNextT = 0;
+            scheduleBar();
+            mTimer = setInterval(scheduleBar, BAR * 1000 * 0.9);
         }
 
         function stopMusic() {
             musicOn = false;
-            musicTimers.forEach(clearInterval); musicTimers = [];
+            if (mTimer) { clearInterval(mTimer); mTimer = null; }
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
-            musicChain.master.gain.cancelScheduledValues(t);
-            musicChain.master.gain.setValueAtTime(musicChain.master.gain.value, t);
-            musicChain.master.gain.linearRampToValueAtTime(0, t + 1.2);
+            mChain.master.gain.cancelScheduledValues(t);
+            mChain.master.gain.setValueAtTime(mChain.master.gain.value, t);
+            mChain.master.gain.linearRampToValueAtTime(0, t + 1.2);
             setTimeout(() => { if (!musicOn && audioCtx) audioCtx.suspend(); }, 1400);
         }
 
@@ -1029,6 +1106,37 @@
             document.removeEventListener('pointerdown', autoStart);
         });
 
+        // --- Eye cursor: follows the mouse, blinks and cries on click ---
+        (function () {
+            if (!window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
+            const cur = document.createElement('div');
+            cur.className = 'eye-cursor';
+            cur.innerHTML = '<svg viewBox="0 0 200 120"><g class="cur-eye">'
+                + '<path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="7"/>'
+                + '<circle cx="100" cy="60" r="26" fill="#26c6da"/>'
+                + '<circle cx="100" cy="60" r="10.5" fill="#000"/>'
+                + '<circle cx="107" cy="53" r="5" fill="#fff"/>'
+                + '</g></svg>';
+            document.body.appendChild(cur);
+            document.addEventListener('mousemove', e => {
+                cur.style.display = 'block';
+                cur.style.left = e.clientX + 'px';
+                cur.style.top = e.clientY + 'px';
+            });
+            document.addEventListener('mouseleave', () => { cur.style.display = 'none'; });
+            document.addEventListener('mousedown', e => {
+                cur.classList.remove('blink'); void cur.offsetWidth; cur.classList.add('blink');
+                const t = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                t.setAttribute('viewBox', '0 0 24 32');
+                t.setAttribute('class', 'cursor-tear');
+                t.innerHTML = '<path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/>';
+                t.style.left = e.clientX + 'px';
+                t.style.top = (e.clientY + 9) + 'px';
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 1100);
+            });
+        })();
+
         // --- Products & Cart ---
         const PRODUCTS = {
             'tee-1': { name: 'Blind Statue Hoodie', price: 85 },
@@ -1051,10 +1159,15 @@
         function addToCartFromModal() {
             if (!currentProductKey) return;
             const size = document.querySelector('#sizeRow .size-pill.sel').innerText;
+            const wasEmpty = cart.length === 0;
             const found = cart.find(i => i.key === currentProductKey && i.size === size);
             if (found) found.qty += 1; else cart.push({ key: currentProductKey, size: size, qty: 1 });
             saveCart(); renderCart(); closeModal();
-            playBlinkAnimation(() => { toggleCart(true); showToast(); });
+            if (wasEmpty) {
+                playBlinkAnimation(() => { toggleCart(true); showToast(); });
+            } else {
+                toggleCart(true); showToast();
+            }
         }
 
         // --- Add-to-cart eye blink animation (click to skip) ---
@@ -1070,8 +1183,8 @@
             };
             ov.classList.add('show');
             ov.onclick = finish;
-            blinkTimers.push(setTimeout(() => ov.classList.add('phase-write'), 1750));
-            blinkTimers.push(setTimeout(() => ov.classList.add('phase-tear'), 3450));
+            blinkTimers.push(setTimeout(() => ov.classList.add('phase-write'), 1650));
+            blinkTimers.push(setTimeout(() => ov.classList.add('phase-tear'), 3300));
             blinkTimers.push(setTimeout(finish, 5000));
         }
 
@@ -1121,12 +1234,15 @@
 
         function checkout() {
             if (!cart.length) return;
+            const note = document.getElementById('cartNote');
+            note.innerHTML = 'D\u011bkujeme! \ud83d\udc99 V\u00e1\u017e\u00edme si va\u0161\u00ed pomoci \u2014 5 % z n\u00e1kupu jde na\u0161\u00ed planet\u011b. \ud83c\udf0d';
+            note.style.display = 'block';
             const ready = SHOPIFY.domain && cart.every(i => SHOPIFY.products[i.key] && SHOPIFY.products[i.key].variantId);
             if (ready) {
                 const items = cart.map(i => SHOPIFY.products[i.key].variantId + ':' + i.qty).join(',');
-                window.open('https://' + SHOPIFY.domain + '/cart/' + items, '_blank');
+                setTimeout(() => window.open('https://' + SHOPIFY.domain + '/cart/' + items, '_blank'), 900);
             } else {
-                document.getElementById('cartNote').style.display = 'block';
+                note.innerHTML += '<br>Online pokladna se pr\u00e1v\u011b p\u0159ipojuje \u2014 objedn\u00e1vky se brzy otev\u0159ou.';
             }
         }
         renderCart();
