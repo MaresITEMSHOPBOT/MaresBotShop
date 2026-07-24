@@ -1505,66 +1505,96 @@
         // Czech koruna formatting used across the shop
         function money(n) { return '\u20ac' + Number(n).toFixed(2); }
 
-        // --- Background music: dreamy celestial ambient (generated with Web Audio, no files) ---
+        // --- Background music: warm dusk — Rhodes-style keys, soft sub, airy pad ---
         let audioCtx = null, musicOn = false, mChain = null, mTimer = null, mNextT = 0, mBar = 0, noiseBuf = null;
-        const BPM = 50, STEP = 60 / BPM / 4, BAR = STEP * 16;
-        // Em9 -> Cmaj7 -> G(add9) -> D6  — floating, wistful, in E minor
+        const BPM = 62, STEP = 60 / BPM / 4, BAR = STEP * 16;
+        // Dm9 -> Bbmaj7 -> F(add9) -> Cmaj7 — warm, hopeful, in D minor
         const PROG = [
-            { root: 41.20, chord: [164.81, 246.94, 329.63, 493.88], bells: [659.25, 987.77, 1318.51] },
-            { root: 32.70, chord: [130.81, 196.00, 329.63, 493.88], bells: [523.25, 783.99, 1046.50] },
-            { root: 49.00, chord: [196.00, 293.66, 392.00, 587.33], bells: [587.33, 880.00, 1174.66] },
-            { root: 36.71, chord: [146.83, 220.00, 293.66, 440.00], bells: [587.33, 880.00, 1108.73] }
+            { root: 36.71, chord: [146.83, 220.00, 261.63, 329.63], arp: [293.66, 349.23, 440.00, 587.33] },
+            { root: 58.27, chord: [116.54, 146.83, 174.61, 220.00], arp: [233.08, 293.66, 349.23, 440.00] },
+            { root: 43.65, chord: [174.61, 220.00, 261.63, 392.00], arp: [349.23, 440.00, 523.25, 698.46] },
+            { root: 32.70, chord: [130.81, 164.81, 196.00, 246.94], arp: [261.63, 329.63, 392.00, 523.25] }
         ];
 
         function buildAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const master = audioCtx.createGain(); master.gain.value = 0;
             const bus = audioCtx.createGain(); bus.gain.value = 1;
-            // long shimmering echo for the bells
-            const delay = audioCtx.createDelay(2.0); delay.delayTime.value = STEP * 6;
-            const fb = audioCtx.createGain(); fb.gain.value = 0.42;
-            const damp = audioCtx.createBiquadFilter(); damp.type = 'lowpass'; damp.frequency.value = 2600;
+            // soft room echo — shorter and darker than a shimmer, keeps the keys intimate
+            const delay = audioCtx.createDelay(2.0); delay.delayTime.value = STEP * 3;
+            const fb = audioCtx.createGain(); fb.gain.value = 0.3;
+            const damp = audioCtx.createBiquadFilter(); damp.type = 'lowpass'; damp.frequency.value = 1800;
             delay.connect(damp); damp.connect(fb); fb.connect(delay); delay.connect(master);
             bus.connect(master);
             master.connect(audioCtx.destination);
+            // gentle noise bed for air
+            const len = Math.floor(audioCtx.sampleRate * 2);
+            noiseBuf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+            const nd = noiseBuf.getChannelData(0);
+            for (let i = 0; i < len; i++) nd[i] = (Math.random() * 2 - 1) * 0.5;
             mChain = { master, bus, delay };
         }
 
-        // deep, slow heartbeat-like sub pulse
-        function subPulse(t, f) {
-            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        // round, felt-covered sub bass
+        function warmBass(t, f) {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain(), lp = audioCtx.createBiquadFilter();
             o.type = 'sine'; o.frequency.value = f;
-            g.gain.setValueAtTime(0.001, t);
-            g.gain.linearRampToValueAtTime(0.14, t + 0.6);
-            g.gain.exponentialRampToValueAtTime(0.001, t + BAR * 0.9);
-            o.connect(g); g.connect(mChain.bus);
+            lp.type = 'lowpass'; lp.frequency.value = 220;
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.linearRampToValueAtTime(0.16, t + 0.35);
+            g.gain.linearRampToValueAtTime(0.10, t + BAR * 0.55);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + BAR * 0.98);
+            o.connect(lp); lp.connect(g); g.connect(mChain.bus);
             o.start(t); o.stop(t + BAR);
         }
-        // glassy music-box bell: fundamental + a fast-decaying octave harmonic
-        function bell(t, f) {
+
+        // Rhodes-style electric piano: FM sine pair, soft mallet attack
+        function rhodes(t, f, vel) {
+            const v = vel === undefined ? 1 : vel;
+            const car = audioCtx.createOscillator(); car.type = 'sine'; car.frequency.value = f;
+            const mod = audioCtx.createOscillator(); mod.type = 'sine'; mod.frequency.value = f * 2;
+            const modGain = audioCtx.createGain();
+            modGain.gain.setValueAtTime(f * 1.6, t);
+            modGain.gain.exponentialRampToValueAtTime(f * 0.05, t + 0.55);
+            mod.connect(modGain); modGain.connect(car.frequency);
             const g = audioCtx.createGain();
             g.gain.setValueAtTime(0.0001, t);
-            g.gain.linearRampToValueAtTime(0.09, t + 0.01);
-            g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
-            g.connect(mChain.bus); g.connect(mChain.delay);
-            const o1 = audioCtx.createOscillator(); o1.type = 'sine'; o1.frequency.value = f; o1.connect(g);
-            const h = audioCtx.createGain(); h.gain.setValueAtTime(0.04, t); h.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
-            const o2 = audioCtx.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 2.01; o2.connect(h); h.connect(mChain.bus);
-            o1.start(t); o1.stop(t + 2.7); o2.start(t); o2.stop(t + 0.6);
+            g.gain.linearRampToValueAtTime(0.085 * v, t + 0.012);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+            const lp = audioCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200;
+            car.connect(lp); lp.connect(g); g.connect(mChain.bus); g.connect(mChain.delay);
+            car.start(t); car.stop(t + 2.3); mod.start(t); mod.stop(t + 2.3);
         }
-        // warm breathing pad
-        function padChord(t, freqs, d) {
+
+        // breathing pad with a slowly opening filter
+        function airPad(t, freqs, d) {
             freqs.forEach(f => {
                 const o = audioCtx.createOscillator(), g = audioCtx.createGain(), lp = audioCtx.createBiquadFilter();
-                o.type = 'triangle'; o.frequency.value = f; o.detune.value = (Math.random() * 6) - 3;
-                lp.type = 'lowpass'; lp.frequency.value = 900;
-                g.gain.setValueAtTime(0.001, t);
-                g.gain.linearRampToValueAtTime(0.04, t + d * 0.35);
-                g.gain.linearRampToValueAtTime(0.028, t + d * 0.7);
-                g.gain.linearRampToValueAtTime(0.001, t + d);
+                o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = (Math.random() * 8) - 4;
+                lp.type = 'lowpass'; lp.Q.value = 0.7;
+                lp.frequency.setValueAtTime(320, t);
+                lp.frequency.linearRampToValueAtTime(1050, t + d * 0.5);
+                lp.frequency.linearRampToValueAtTime(400, t + d);
+                g.gain.setValueAtTime(0.0006, t);
+                g.gain.linearRampToValueAtTime(0.022, t + d * 0.4);
+                g.gain.linearRampToValueAtTime(0.014, t + d * 0.75);
+                g.gain.linearRampToValueAtTime(0.0006, t + d);
                 o.connect(lp); lp.connect(g); g.connect(mChain.bus);
                 o.start(t); o.stop(t + d + 0.2);
             });
+        }
+
+        // faint air/tape hiss swell — glues everything together
+        function airSwell(t, d) {
+            if (!noiseBuf) return;
+            const s = audioCtx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+            const bp = audioCtx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 0.6;
+            const g = audioCtx.createGain();
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.linearRampToValueAtTime(0.012, t + d * 0.45);
+            g.gain.linearRampToValueAtTime(0.0001, t + d);
+            s.connect(bp); bp.connect(g); g.connect(mChain.bus);
+            s.start(t); s.stop(t + d + 0.1);
         }
 
         function scheduleBar() {
@@ -1573,14 +1603,16 @@
             if (mNextT < now + 0.05) mNextT = now + 0.05;
             const t0 = mNextT;
             const prog = PROG[mBar % PROG.length];
-            padChord(t0, prog.chord, BAR);
-            subPulse(t0, prog.root);
-            // sprinkle bell notes on an off-beat pattern for a music-box feel
-            const pattern = [0, 3, 6, 7, 10, 13];
-            pattern.forEach(stepIdx => {
-                if (Math.random() < 0.62) {
-                    const note = prog.bells[Math.floor(Math.random() * prog.bells.length)];
-                    bell(t0 + stepIdx * STEP, note * (Math.random() < 0.25 ? 2 : 1));
+            airPad(t0, prog.chord, BAR);
+            warmBass(t0, prog.root);
+            airSwell(t0, BAR);
+            // soft chord voicing on the downbeat, then a lazy arpeggio
+            prog.chord.slice(0, 3).forEach((f, i) => rhodes(t0 + i * 0.045, f, 0.7));
+            const pattern = [4, 7, 10, 12, 15];
+            pattern.forEach((stepIdx, i) => {
+                if (Math.random() < 0.7) {
+                    const note = prog.arp[(i + mBar) % prog.arp.length];
+                    rhodes(t0 + stepIdx * STEP, note * (Math.random() < 0.18 ? 2 : 1), 0.85);
                 }
             });
             mNextT = t0 + BAR;

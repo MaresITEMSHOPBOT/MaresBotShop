@@ -619,10 +619,18 @@
         <div class="cart-items" id="cartItems"></div>
         <div class="cart-foot">
             <div class="cart-total-row"><span>Total</span><span id="cartTotal">€0.00</span></div>
-            <button class="btn" onclick="checkout()">Checkout</button>
+            {%- form 'cart', cart, id: 'maresCartForm' -%}
+                {%- if additional_checkout_buttons -%}
+                <div class="express-pay" id="expressPay">
+                    <div class="express-label"><span>Pay right here</span></div>
+                    {{ content_for_additional_checkout_buttons }}
+                </div>
+                {%- endif -%}
+                <button type="submit" name="checkout" class="btn" id="cartCheckoutBtn">Checkout</button>
+            {%- endform -%}
             <div class="secure-note">&#128274; Secure checkout &middot; powered by Shopify</div>
             <div class="pay-badges"><span>Visa</span><span>Mastercard</span><span>Maestro</span><span>Apple&nbsp;Pay</span><span>Google&nbsp;Pay</span><span>PayPal</span></div>
-            <div class="cart-note" id="cartNote">You'll finish payment on our secure Shopify checkout at mareswear.com.</div>
+            <div class="cart-note" id="cartNote">Apple&nbsp;Pay, Google&nbsp;Pay and Shop&nbsp;Pay finish right on this page.</div>
         </div>
     </aside>
     <!-- ADD-TO-CART EYE ANIMATION -->
