@@ -425,6 +425,10 @@
         }
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('discountOverlay').addEventListener('click', function (e) { if (e.target === this) closeDiscount(); });
+            var hl = document.getElementById('heroHoodieL'), hr = document.getElementById('heroHoodieR');
+            var t3 = document.getElementById('tee-3'), t1 = document.getElementById('tee-1');
+            if (hl && t3) hl.innerHTML = t3.innerHTML;
+            if (hr && t1) hr.innerHTML = t1.innerHTML;
         });
 
         // --- Eye cursor: follows the mouse, blinks and cries on click ---

@@ -100,7 +100,31 @@
             -webkit-text-stroke: 1px rgba(255, 255, 255, 0.18);
             filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 26px rgba(38, 198, 218, 0.35));
         }
-        .hero p.motto { font-size: 1.4rem; font-weight: 300; max-width: 700px; color: #ccc; margin-bottom: 3rem; }
+        .hero p.motto { font-size: 1.4rem; font-weight: 300; max-width: 700px; color: #ccc; margin-bottom: 1rem; }
+        .hero p.hero-sub {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 4px; color: var(--accent-cyan);
+            margin-bottom: 2.6rem; font-weight: 700; position: relative; z-index: 2;
+        }
+
+        /* Floating hoodies flanking the planet */
+        .hero-hoodie {
+            position: absolute; top: 33%; width: 232px; text-decoration: none; z-index: 1;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            transition: transform .35s ease;
+        }
+        .hero-hoodie-left  { left: calc(50% - 460px); transform: rotate(-7deg); animation: float 7.5s ease-in-out infinite; }
+        .hero-hoodie-right { left: calc(50% + 228px); transform: rotate(7deg);  animation: float 8.5s ease-in-out .8s infinite; }
+        .hero-hoodie-left:hover  { transform: rotate(-4deg) scale(1.05); }
+        .hero-hoodie-right:hover { transform: rotate(4deg) scale(1.05); }
+        .hero-hoodie-art { width: 100%; filter: drop-shadow(0 18px 30px rgba(0,0,0,0.65)) drop-shadow(0 0 26px rgba(38,198,218,0.12)); }
+        .hero-hoodie-art svg { width: 100%; height: auto; display: block; }
+        .hero-hoodie-tag {
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 2.5px; color: #9adfe8;
+            background: rgba(38,198,218,0.08); border: 1px solid rgba(38,198,218,0.35);
+            padding: 5px 12px; border-radius: 14px; white-space: nowrap;
+        }
+        @media (max-width: 1180px) { .hero-hoodie { width: 178px; } .hero-hoodie-left { left: calc(50% - 372px); } .hero-hoodie-right { left: calc(50% + 194px); } }
+        @media (max-width: 860px) { .hero-hoodie { display: none; } }
 
         /* Hero CTA buttons */
         .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 3rem; }
@@ -716,6 +740,7 @@
     <header class="hero">
         <h1 class="reveal">Open Your Eyes</h1>
         <p class="motto reveal">What we wear expresses not only who we are, but how we treat our planet.</p>
+        <p class="hero-sub reveal">Heavyweight organic hoodies &middot; limited Drop 1</p>
 
         <div class="hero-cta reveal">
             <a class="cta cta-primary" href="#collection">&#128717; Shop</a>
@@ -737,6 +762,16 @@
             </div>
             <div class="sun-hint">&#9758; drag me</div>
         </div>
+
+        <!-- FLOATING HOODIES — make it obvious we sell hoodies -->
+        <a class="hero-hoodie hero-hoodie-left reveal" href="#collection" aria-label="Planetary Heart hoodie">
+            <div class="hero-hoodie-art" id="heroHoodieL"></div>
+            <span class="hero-hoodie-tag">Planetary Heart · €89</span>
+        </a>
+        <a class="hero-hoodie hero-hoodie-right reveal" href="#collection" aria-label="Blind Statue hoodie">
+            <div class="hero-hoodie-art" id="heroHoodieR"></div>
+            <span class="hero-hoodie-tag">Blind Statue · €85</span>
+        </a>
 
         <!-- PLANET EARTH WITH EYE & BIG TEAR -->
         <div class="planet-wrap reveal">
@@ -1769,6 +1804,11 @@
         }
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('discountOverlay').addEventListener('click', function (e) { if (e.target === this) closeDiscount(); });
+            // Hero hoodies: clone the product mockups so the hero shows what we sell
+            const hl = document.getElementById('heroHoodieL'), hr = document.getElementById('heroHoodieR');
+            const t3 = document.getElementById('tee-3'), t1 = document.getElementById('tee-1');
+            if (hl && t3) hl.innerHTML = t3.innerHTML;
+            if (hr && t1) hr.innerHTML = t1.innerHTML;
         });
 
         // --- Eye cursor: follows the mouse, blinks and cries on click ---
