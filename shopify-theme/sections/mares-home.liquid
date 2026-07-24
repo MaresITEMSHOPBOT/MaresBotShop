@@ -554,14 +554,31 @@
         <svg class="secret-tear" viewBox="0 0 24 32"><path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/></svg>
     </div>
 
+    <!-- TRUST BAR -->
+    <div class="trust-bar">
+        <div><span class="ti">&#128274;</span> Secure payments</div>
+        <div><span class="ti">&#127758;</span> Worldwide shipping</div>
+        <div><span class="ti">&#9851;</span> Printed on demand &middot; zero waste</div>
+        <div><span class="ti">&#127757;</span> 5% goes to the planet</div>
+        <div><span class="ti">&#128666;</span> 14-day returns</div>
+    </div>
+
     <footer>
         <div class="logo">Mares</div>
-        <p>&copy; 2026 MARES. Strictly No Plastics. &nbsp;<a href="#" onclick="openAdmin();return false;" style="color:#555;text-decoration:underline;font-size:0.8rem;">Admin</a></p>
+        <p>&copy; 2026 MARES. Strictly No Plastics.</p>
+        <div class="legal-links">
+            <a href="/policies/terms-of-service">Terms of Service</a>
+            <a href="/policies/privacy-policy">Privacy Policy</a>
+            <a href="/policies/refund-policy">Returns &amp; Refunds</a>
+            <a href="/policies/shipping-policy">Shipping</a>
+            <a href="mailto:info@mareswear.com">Contact</a>
+        </div>
         <div class="footer-actions">
             <button class="foot-btn" id="hashBtn" onclick="copyHashtag()">#openyoureyes &#10697;</button>
             <a class="foot-btn" id="igLink" target="_blank" rel="noopener">&#9673; Follow on Instagram</a>
             <a class="foot-btn" id="fbLink" target="_blank" rel="noopener">&#402; Follow on Facebook</a>
         </div>
+        <p style="margin-top:1.4rem;font-size:0.68rem;"><a href="#" onclick="openAdmin();return false;" style="color:#444;text-decoration:underline;">Admin</a></p>
     </footer>
 
     <!-- DISCOUNT EYE -->
@@ -592,7 +609,9 @@
         <div class="cart-foot">
             <div class="cart-total-row"><span>Total</span><span id="cartTotal">€0.00</span></div>
             <button class="btn" onclick="checkout()">Checkout</button>
-            <div class="cart-note" id="cartNote">Online checkout is being connected to Shopify — ordering opens very soon. Your cart is saved in this browser.</div>
+            <div class="secure-note">&#128274; Secure checkout &middot; powered by Shopify</div>
+            <div class="pay-badges"><span>Visa</span><span>Mastercard</span><span>Maestro</span><span>Apple&nbsp;Pay</span><span>Google&nbsp;Pay</span><span>PayPal</span></div>
+            <div class="cart-note" id="cartNote">You'll finish payment on our secure Shopify checkout at mareswear.com.</div>
         </div>
     </aside>
     <!-- ADD-TO-CART EYE ANIMATION -->

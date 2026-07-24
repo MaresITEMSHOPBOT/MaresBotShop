@@ -644,7 +644,18 @@
 
         .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
+        /* trust signals */
+        .secure-note { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 0.72rem; color: var(--text-muted); margin-top: 12px; letter-spacing: 0.5px; }
+        .pay-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+        .pay-badges span { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.5px; color: #cdd6d2; background: #0c1a16; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 7px; text-transform: uppercase; }
+        /* trust bar above footer */
+        .trust-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6rem 2.6rem; padding: 2.2rem 5%; border-top: 1px solid var(--border-color); background: rgba(4,16,14,0.5); }
+        .trust-bar div { display: flex; align-items: center; gap: 9px; font-size: 0.78rem; color: #b9c4c0; letter-spacing: 0.5px; }
+        .trust-bar .ti { color: var(--accent-cyan); font-size: 1.1rem; }
         footer { text-align: center; padding: 3rem; border-top: 1px solid var(--border-color); color: #555; position: relative;}
+        .legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; margin: 1.4rem 0 0.4rem; }
+        .legal-links a { color: var(--text-muted); text-decoration: none; font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; }
+        .legal-links a:hover { color: var(--accent-cyan); }
         .footer-actions { display: flex; gap: 14px; justify-content: center; margin-top: 1.4rem; flex-wrap: wrap; }
         .foot-btn {
             padding: 12px 22px; border: 1px solid var(--accent-cyan); border-radius: 30px;

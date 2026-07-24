@@ -579,7 +579,7 @@
             const ready = SHOPIFY.domain && cart.every(i => variantFor(i.key, i.size));
             if (ready) {
                 const items = cart.map(i => variantFor(i.key, i.size) + ':' + i.qty).join(',');
-                setTimeout(() => window.open('https://' + SHOPIFY.domain + '/cart/' + items, '_blank'), 900);
+                setTimeout(() => { window.location.href = 'https://' + SHOPIFY.domain + '/cart/' + items; }, 700);
             } else {
                 note.innerHTML += '<br>Online checkout is being connected \u2014 ordering opens soon.';
             }

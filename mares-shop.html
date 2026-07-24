@@ -651,7 +651,18 @@
 
         .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
+        /* trust signals */
+        .secure-note { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 0.72rem; color: var(--text-muted); margin-top: 12px; letter-spacing: 0.5px; }
+        .pay-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+        .pay-badges span { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.5px; color: #cdd6d2; background: #0c1a16; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 7px; text-transform: uppercase; }
+        /* trust bar above footer */
+        .trust-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6rem 2.6rem; padding: 2.2rem 5%; border-top: 1px solid var(--border-color); background: rgba(4,16,14,0.5); }
+        .trust-bar div { display: flex; align-items: center; gap: 9px; font-size: 0.78rem; color: #b9c4c0; letter-spacing: 0.5px; }
+        .trust-bar .ti { color: var(--accent-cyan); font-size: 1.1rem; }
         footer { text-align: center; padding: 3rem; border-top: 1px solid var(--border-color); color: #555; position: relative;}
+        .legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; margin: 1.4rem 0 0.4rem; }
+        .legal-links a { color: var(--text-muted); text-decoration: none; font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; }
+        .legal-links a:hover { color: var(--accent-cyan); }
         .footer-actions { display: flex; gap: 14px; justify-content: center; margin-top: 1.4rem; flex-wrap: wrap; }
         .foot-btn {
             padding: 12px 22px; border: 1px solid var(--accent-cyan); border-radius: 30px;
@@ -1221,14 +1232,31 @@
         <svg class="secret-tear" viewBox="0 0 24 32"><path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/></svg>
     </div>
 
+    <!-- TRUST BAR -->
+    <div class="trust-bar">
+        <div><span class="ti">&#128274;</span> Secure payments</div>
+        <div><span class="ti">&#127758;</span> Worldwide shipping</div>
+        <div><span class="ti">&#9851;</span> Printed on demand &middot; zero waste</div>
+        <div><span class="ti">&#127757;</span> 5% goes to the planet</div>
+        <div><span class="ti">&#128666;</span> 14-day returns</div>
+    </div>
+
     <footer>
         <div class="logo">Mares</div>
-        <p>&copy; 2026 MARES. Strictly No Plastics. &nbsp;<a href="#" onclick="openAdmin();return false;" style="color:#555;text-decoration:underline;font-size:0.8rem;">Admin</a></p>
+        <p>&copy; 2026 MARES. Strictly No Plastics.</p>
+        <div class="legal-links">
+            <a href="/policies/terms-of-service">Terms of Service</a>
+            <a href="/policies/privacy-policy">Privacy Policy</a>
+            <a href="/policies/refund-policy">Returns &amp; Refunds</a>
+            <a href="/policies/shipping-policy">Shipping</a>
+            <a href="mailto:info@mareswear.com">Contact</a>
+        </div>
         <div class="footer-actions">
             <button class="foot-btn" id="hashBtn" onclick="copyHashtag()">#openyoureyes &#10697;</button>
             <a class="foot-btn" id="igLink" target="_blank" rel="noopener">&#9673; Follow on Instagram</a>
             <a class="foot-btn" id="fbLink" target="_blank" rel="noopener">&#402; Follow on Facebook</a>
         </div>
+        <p style="margin-top:1.4rem;font-size:0.68rem;"><a href="#" onclick="openAdmin();return false;" style="color:#444;text-decoration:underline;">Admin</a></p>
     </footer>
 
     <!-- DISCOUNT EYE -->
@@ -1259,7 +1287,9 @@
         <div class="cart-foot">
             <div class="cart-total-row"><span>Total</span><span id="cartTotal">€0.00</span></div>
             <button class="btn" onclick="checkout()">Checkout</button>
-            <div class="cart-note" id="cartNote">Online checkout is being connected to Shopify — ordering opens very soon. Your cart is saved in this browser.</div>
+            <div class="secure-note">&#128274; Secure checkout &middot; powered by Shopify</div>
+            <div class="pay-badges"><span>Visa</span><span>Mastercard</span><span>Maestro</span><span>Apple&nbsp;Pay</span><span>Google&nbsp;Pay</span><span>PayPal</span></div>
+            <div class="cart-note" id="cartNote">You'll finish payment on our secure Shopify checkout at mareswear.com.</div>
         </div>
     </aside>
     <!-- ADD-TO-CART EYE ANIMATION -->
@@ -1893,7 +1923,7 @@
             const ready = SHOPIFY.domain && cart.every(i => variantFor(i.key, i.size));
             if (ready) {
                 const items = cart.map(i => variantFor(i.key, i.size) + ':' + i.qty).join(',');
-                setTimeout(() => window.open('https://' + SHOPIFY.domain + '/cart/' + items, '_blank'), 900);
+                setTimeout(() => { window.location.href = 'https://' + SHOPIFY.domain + '/cart/' + items; }, 700);
             } else {
                 note.innerHTML += '<br>Online checkout is being connected \u2014 ordering opens soon.';
             }
