@@ -1,0 +1,655 @@
+<!-- LOADING SCREEN -->
+    <div id="loader">
+        <div class="loader-logo">Mares</div>
+        <div class="loader-line"></div>
+    </div>
+
+    <div class="ambient-bg"></div>
+
+    <!-- PROMO BAR -->
+    <div class="promo-bar" onclick="openDiscount()">
+        <svg viewBox="0 0 200 120"><g><path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#000" stroke="#012" stroke-width="7"/><circle cx="100" cy="60" r="26" fill="#012"/><circle cx="100" cy="60" r="10.5" fill="#26c6da"/><circle cx="107" cy="53" r="5" fill="#fff"/></g></svg>
+        <span>Click me &mdash; I&rsquo;ll wink you 10&nbsp;% off</span>
+    </div>
+
+    <nav>
+        <a href="#" class="logo">Mares</a>
+        <div class="nav-links">
+            <a href="#about">The Code</a>
+            <a href="#collection">Season 1</a>
+            <a href="#bazaar">Bazaar</a>
+            <a class="music-btn" id="musicBtn" onclick="toggleMusic()">&#9835; Sound Off</a>
+            <a class="cart-btn" onclick="toggleCart(true)">Cart<span class="cart-count" id="cartCount">0</span></a>
+        </div>
+    </nav>
+
+    <!-- SECRET EYE 1 -->
+    <div class="secret-eye egg-1">
+        <svg viewBox="0 0 200 200" width="100%" height="100%">
+            <g class="eye-blink">
+                <path d="M 40 100 Q 100 60 160 100 Q 100 140 40 100 Z" fill="#020202" stroke="#26c6da" stroke-width="6"/>
+                <circle cx="100" cy="100" r="20" fill="#26c6da"/>
+                <circle cx="100" cy="100" r="8" fill="#000"/>
+            </g>
+        </svg>
+        <svg class="secret-tear" viewBox="0 0 24 32"><path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/></svg>
+    </div>
+
+    <header class="hero">
+        <h1 class="reveal">Open Your Eyes</h1>
+        <p class="motto reveal">What we wear expresses not only who we are, but how we treat our planet.</p>
+
+        <div class="hero-cta reveal">
+            <a class="cta cta-primary" href="#collection">&#128717; Shop</a>
+            <a class="cta cta-ghost" href="#bazaar">&#9851; Bazaar</a>
+        </div>
+
+        <!-- Draggable turquoise sun that lights the page & blinks -->
+        <div class="sun" id="sun" title="Grab &amp; drag me">
+            <div class="sun-rays"></div>
+            <div class="sun-core">
+                <svg class="sun-eye" viewBox="0 0 200 120">
+                    <g class="eye-blink">
+                        <path d="M 20 60 Q 100 12 180 60 Q 100 108 20 60 Z" fill="#012" stroke="#eafcff" stroke-width="5"/>
+                        <circle cx="100" cy="60" r="22" fill="#012"/>
+                        <circle cx="100" cy="60" r="9" fill="#eafcff"/>
+                        <circle cx="106" cy="54" r="3.5" fill="#fff"/>
+                    </g>
+                </svg>
+            </div>
+            <div class="sun-hint">&#9758; drag me</div>
+        </div>
+
+        <!-- PLANET EARTH WITH EYE & BIG TEAR -->
+        <div class="planet-wrap reveal">
+            <svg class="planet-svg" viewBox="0 0 280 280">
+                <defs>
+                    <radialGradient id="oceanGrad" cx="38%" cy="32%" r="80%">
+                        <stop offset="0%" stop-color="#0b607a"/>
+                        <stop offset="55%" stop-color="#053f47"/>
+                        <stop offset="100%" stop-color="#011b1e"/>
+                    </radialGradient>
+                    <radialGradient id="atmoGrad" cx="50%" cy="50%" r="50%">
+                        <stop offset="78%" stop-color="rgba(38,198,218,0)"/>
+                        <stop offset="93%" stop-color="rgba(38,198,218,0.28)"/>
+                        <stop offset="100%" stop-color="rgba(38,198,218,0)"/>
+                    </radialGradient>
+                    <clipPath id="planetClip"><circle cx="140" cy="128" r="88"/></clipPath>
+                </defs>
+
+                <!-- Stars around the planet -->
+                <g fill="#fff">
+                    <circle cx="20" cy="44" r="1.5" opacity="0.8"/>
+                    <circle cx="256" cy="32" r="1.2" opacity="0.6"/>
+                    <circle cx="264" cy="160" r="1.6" opacity="0.9"/>
+                    <circle cx="32" cy="216" r="1.1" opacity="0.5"/>
+                    <circle cx="220" cy="246" r="1.3" opacity="0.7"/>
+                    <circle cx="66" cy="14" r="1" opacity="0.6"/>
+                    <circle cx="140" cy="270" r="1.2" opacity="0.5"/>
+                    <circle cx="12" cy="130" r="1.2" opacity="0.6"/>
+                </g>
+
+                <!-- Atmosphere glow -->
+                <circle cx="140" cy="128" r="108" fill="url(#atmoGrad)"/>
+
+                <!-- Planet base: ocean -->
+                <circle cx="140" cy="128" r="88" fill="url(#oceanGrad)" stroke="#26c6da" stroke-width="1.5"/>
+
+                <!-- Continents (green landmass = Earth) -->
+                <g clip-path="url(#planetClip)" fill="#0f8054" opacity="0.9">
+                    <path d="M 70 56 C 90 46 108 54 112 68 C 116 82 106 90 100 104 C 94 118 96 136 88 152 C 80 166 66 170 60 158 C 52 144 54 126 58 108 C 61 90 58 66 70 56 Z"/>
+                    <path d="M 150 48 C 174 40 200 48 210 66 C 219 80 212 94 200 100 C 190 104 186 114 188 128 C 190 142 182 156 170 158 C 158 160 152 148 154 136 C 156 120 148 112 144 100 C 138 82 138 58 150 48 Z"/>
+                    <path d="M 160 182 C 174 176 190 180 194 190 C 198 200 188 208 176 208 C 164 208 152 190 160 182 Z"/>
+                    <circle cx="114" cy="186" r="8"/>
+                    <circle cx="212" cy="150" r="5"/>
+                </g>
+
+                <!-- Clouds -->
+                <g clip-path="url(#planetClip)" fill="#ffffff" opacity="0.1">
+                    <ellipse cx="98" cy="76" rx="36" ry="8" transform="rotate(-12 98 76)"/>
+                    <ellipse cx="190" cy="126" rx="32" ry="7" transform="rotate(-8 190 126)"/>
+                    <ellipse cx="118" cy="190" rx="38" ry="8" transform="rotate(-14 118 190)"/>
+                </g>
+
+                <!-- Meridians -->
+                <ellipse cx="140" cy="128" rx="36" ry="88" fill="none" stroke="#26c6da" stroke-width="0.5" opacity="0.35"/>
+                <ellipse cx="140" cy="128" rx="70" ry="88" fill="none" stroke="#26c6da" stroke-width="0.4" opacity="0.2"/>
+                <line x1="52" y1="128" x2="228" y2="128" stroke="#26c6da" stroke-width="0.5" opacity="0.35"/>
+
+                <!-- Center Eye (Blinking) -->
+                <g class="eye-blink">
+                    <path d="M 84 128 Q 140 90 196 128 Q 140 166 84 128 Z" fill="#020202" stroke="#26c6da" stroke-width="2.5"/>
+                    <circle cx="140" cy="128" r="18" fill="#26c6da"/>
+                    <circle cx="140" cy="128" r="7.5" fill="#000"/>
+                    <circle cx="145" cy="123" r="3.5" fill="#fff"/>
+                </g>
+            </svg>
+
+            <!-- Orbiting moon -->
+            <div class="moon-orbit"><span class="moon"></span></div>
+
+            <!-- BIG Tear Drop -->
+            <svg class="tear-drop" viewBox="0 0 24 32"><path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/></svg>
+        </div>
+
+        <div class="timer-section reveal">
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; color: #888;">Season closes in</div>
+            <div class="countdown" id="countdown">00:00:00:00</div>
+            <!-- Loading Dots under the timer -->
+            <div class="active-loader">
+                <span></span><span></span><span></span>
+            </div>
+            <!-- handwritten signature writes itself under the timer -->
+            <svg class="hero-sign" viewBox="0 0 420 150" aria-hidden="true">
+                <defs><clipPath id="heroSignClip"><rect class="hero-sign-reveal" x="0" y="0" width="0" height="150"/></clipPath></defs>
+                <text x="210" y="105" text-anchor="middle" font-family="'Caveat', cursive" font-weight="700" font-size="104" class="hero-sign-text" clip-path="url(#heroSignClip)">Mares</text>
+            </svg>
+        </div>
+    </header>
+
+    <!-- PLANE ANIMATION SECTION -->
+    <section id="about" class="section">
+        <h2 class="section-title reveal">The Journey of MARES</h2>
+        <div class="journey-vert" id="journeyVert">
+            <div class="j-rail" id="jRail">
+                <div class="j-rail-line"></div>
+                <div class="j-rail-fill" id="jRailFill"></div>
+            <div class="j-eye" id="jEye" aria-hidden="true">
+                <svg viewBox="0 0 200 120">
+                    <g class="eye-blink">
+                        <path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="6"/>
+                        <g id="jEyePupil">
+                            <circle cx="100" cy="60" r="26" fill="#26c6da"/>
+                            <circle cx="100" cy="60" r="10.5" fill="#000"/>
+                            <circle cx="107" cy="53" r="5" fill="#fff"/>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+            </div>
+
+            <div class="j-stops">
+            <div class="v-stop" id="vs-0">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 24 40 C 10 34 8 18 24 8 C 40 18 38 34 24 40 Z M 24 38 L 24 14" fill="none"/></svg></div>
+                <h3>M</h3><p>Materials</p><span>Recycled &amp; Organic</span>
+            </div>
+            <div class="v-stop" id="vs-1">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 12 24 C 12 18 20 18 24 24 C 28 30 36 30 36 24 C 36 18 28 18 24 24 C 20 30 12 30 12 24 Z" fill="none"/></svg></div>
+                <h3>A</h3><p>Adaptability</p><span>Timeless Design</span>
+            </div>
+            <div class="v-stop" id="vs-2">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 33 15 A 12 12 0 0 0 15 15 M 15 15 L 13 9 M 15 15 L 21 13 M 15 33 A 12 12 0 0 0 33 33 M 33 33 L 35 39 M 33 33 L 27 35" fill="none"/></svg></div>
+                <h3>R</h3><p>Recycling</p><span>Pre-owned Bazaar</span>
+            </div>
+            <div class="v-stop" id="vs-3">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="none"/><ellipse cx="24" cy="24" rx="6" ry="14" fill="none"/><path d="M 10 24 L 38 24" /><circle cx="24" cy="24" r="3" fill="#26c6da" stroke="none"/></svg></div>
+                <h3>E</h3><p>Environment</p><span>5% to the Planet</span>
+            </div>
+            <div class="v-stop" id="vs-4">
+                <div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 24 40 L 24 20 M 24 20 C 24 12 30 8 38 8 C 38 16 32 20 24 20 M 24 26 C 24 20 18 16 10 16 C 10 24 16 26 24 26" fill="none"/></svg></div>
+                <h3>S</h3><p>Sustainability</p><span>Zero Waste Print</span>
+            </div>
+
+            <!-- Final message: stays on screen at the end of the journey -->
+            <div class="journey-summary" id="journeySummary">
+                <div class="word">M · A · R · E · S</div>
+                <div class="meaning">Materials · Adaptability · Recycling · Environment · Sustainability</div>
+                <div class="summary-sign">Mares</div>
+            </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- SECRET EYE 2 -->
+        <div class="secret-eye egg-3">
+            <svg viewBox="0 0 200 200" width="100%" height="100%">
+                <g class="eye-blink">
+                    <path d="M 40 100 Q 100 60 160 100 Q 100 140 40 100 Z" fill="#020202" stroke="#26c6da" stroke-width="6"/>
+                    <circle cx="100" cy="100" r="20" fill="#26c6da"/>
+                    <circle cx="100" cy="100" r="8" fill="#000"/>
+                </g>
+            </svg>
+            <svg class="secret-tear" viewBox="0 0 24 32"><path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/></svg>
+        </div>
+    </section>
+
+    <!-- HOODIE COLLECTION — layered word designs: everyone reads something different -->
+    <section id="collection" class="section" style="background: rgba(0,0,0,0.6);">
+        <h2 class="section-title reveal">Drop 1: #OpenYourEyes</h2>
+        <div class="collection-grid">
+
+            <!-- Product 1: Blind Statue — LIE / DIE / LIVE / DIVE -->
+            <div class="product-card reveal" onclick="openModal('Blind Statue Hoodie', 'LIE. DIE. LIVE. DIVE. One print, four words — everyone sees something different. Halftone Venus statue, MARES star-field back with the Open Your Eyes script. Heavyweight organic hoodie.', '\u20ac85.00', document.getElementById('tee-1').innerHTML, 'tee-1')">
+                <div class="studio-shot shade-1" id="tee-1">
+                    <svg class="svg-hoodie-base" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="hgrad1" cx="50%" cy="25%" r="85%">
+                                <stop offset="0%" stop-color="#181818"/>
+                                <stop offset="100%" stop-color="#020202"/>
+                            </radialGradient>
+                            <filter id="hshadow1"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-opacity="0.85"/></filter>
+                            <filter id="glow1" x="-60%" y="-60%" width="220%" height="220%">
+                                <feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-color="#ffffff" flood-opacity="0.95"/>
+                            </filter>
+                            <pattern id="dots1" width="5" height="5" patternUnits="userSpaceOnUse">
+                                <circle cx="1.2" cy="1.2" r="0.7" fill="#000" opacity="0.28"/>
+                            </pattern>
+                            <pattern id="hlines1" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-4)">
+                                <path d="M0 1.5 H3" stroke="#000" stroke-width="0.85" opacity="0.3"/>
+                            </pattern>
+                            <linearGradient id="glassGrad1" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#dffbff" stop-opacity="0.95"/>
+                                <stop offset="45%" stop-color="#26c6da" stop-opacity="0.9"/>
+                                <stop offset="75%" stop-color="#0d7c8c" stop-opacity="0.85"/>
+                                <stop offset="100%" stop-color="#2fd8ec" stop-opacity="0.95"/>
+                            </linearGradient>
+                            <filter id="grain1" x="-20%" y="-20%" width="140%" height="140%">
+                                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+                                <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0" result="g"/>
+                                <feComposite in="g" in2="SourceAlpha" operator="in" result="gc"/>
+                                <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="gc"/></feMerge>
+                            </filter>
+                            <radialGradient id="faceShade1" cx="38%" cy="32%" r="78%">
+                                <stop offset="0%" stop-color="#f5f5f5"/>
+                                <stop offset="55%" stop-color="#dadada"/>
+                                <stop offset="85%" stop-color="#ababab"/>
+                                <stop offset="100%" stop-color="#8d8d8d"/>
+                            </radialGradient>
+                            <radialGradient id="curlShade1" cx="35%" cy="30%" r="80%">
+                                <stop offset="0%" stop-color="#eeeeee"/>
+                                <stop offset="65%" stop-color="#bdbdbd"/>
+                                <stop offset="100%" stop-color="#8f8f8f"/>
+                            </radialGradient>
+                            <linearGradient id="neckShade1" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stop-color="#e4e4e4"/>
+                                <stop offset="60%" stop-color="#c4c4c4"/>
+                                <stop offset="100%" stop-color="#9a9a9a"/>
+                            </linearGradient>
+                            <filter id="soft1" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.4"/></filter>
+                            <filter id="soft1b" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.1"/></filter>
+                            <radialGradient id="hairGrad1" cx="45%" cy="25%" r="80%">
+                                <stop offset="0%" stop-color="#dcdcdc"/>
+                                <stop offset="60%" stop-color="#b3b3b3"/>
+                                <stop offset="100%" stop-color="#878787"/>
+                            </radialGradient>
+                        </defs>
+
+                        <!-- BACK VIEW (behind, bottom-right like the mockup) -->
+                        <g transform="translate(206,240) scale(0.5)" filter="url(#hshadow1)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
+                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="2.5" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="2.6" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="2.3" opacity="0.5"/><circle cx="300" cy="330" r="2.3" opacity="0.5"/><circle cx="140" cy="240" r="2.3" opacity="0.5"/><circle cx="270" cy="300" r="2.2" opacity="0.6"/><circle cx="200" cy="180" r="2.2" opacity="0.5"/></g>
+                            <text x="238" y="252" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 252)">open your</text>
+                            <text x="238" y="326" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 316)">eyes</text>
+                        </g>
+
+                        <!-- FRONT VIEW (boxy cut like the mockup) -->
+                        <g transform="translate(-30,0)" filter="url(#hshadow1)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="url(#hgrad1)" stroke="#333" stroke-width="1.5"/>
+                            <path d="M 160 40 C 175 72 225 72 240 40 C 224 58 176 58 160 40 Z" fill="#060606" stroke="#282828" stroke-width="1.5"/>
+                            <g fill="#fff"><circle cx="120" cy="120" r="1.9" opacity="0.8"/><circle cx="160" cy="105" r="1.4" opacity="0.6"/><circle cx="250" cy="112" r="2.0" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.9" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="1.4" opacity="0.5"/><circle cx="265" cy="205" r="1.7" opacity="0.7"/><circle cx="300" cy="245" r="1.9" opacity="0.8"/><circle cx="75" cy="220" r="1.4" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.9" opacity="0.8"/><circle cx="160" cy="330" r="1.4" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.9" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="1.2" opacity="0.5"/><circle cx="175" cy="405" r="1.7" opacity="0.7"/><circle cx="240" cy="420" r="2.0" opacity="0.8"/><circle cx="290" cy="390" r="1.4" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="1.4" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="1.4" opacity="0.6"/><circle cx="98" cy="270" r="1.4" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="1.2" opacity="0.5"/><circle cx="70" cy="180" r="1.4" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="1.2" opacity="0.4"/><circle cx="255" cy="160" r="1.4" opacity="0.5"/><circle cx="85" cy="120" r="1.2" opacity="0.5"/><circle cx="230" cy="90" r="1.4" opacity="0.6"/><circle cx="170" cy="95" r="1.2" opacity="0.5"/><circle cx="310" cy="120" r="1.4" opacity="0.6"/><circle cx="75" cy="320" r="1.4" opacity="0.5"/><circle cx="90" cy="410" r="1.2" opacity="0.5"/><circle cx="215" cy="370" r="1.4" opacity="0.6"/><circle cx="150" cy="375" r="1.2" opacity="0.5"/><circle cx="265" cy="255" r="1.2" opacity="0.5"/><circle cx="180" cy="265" r="1.4" opacity="0.5"/><circle cx="120" cy="255" r="1.1" opacity="0.4"/><circle cx="300" cy="425" r="1.4" opacity="0.6"/><circle cx="225" cy="200" r="1.1" opacity="0.4"/><circle cx="160" cy="215" r="1.1" opacity="0.4"/></g>
+                            <text x="200" y="94" font-family="'Caveat', cursive" font-weight="700" font-size="34" fill="#ffffff" text-anchor="middle" opacity="0.96" transform="rotate(-3 200 88)">Mares</text>
+
+                            <!-- Real print artwork: Venus (from the brand print files) -->
+                        <image x="112" y="142" width="176" height="206" preserveAspectRatio="xMidYMid slice" style="mix-blend-mode: screen;" href="{{ 'venus.jpg' | asset_url }}"/>
+                            <g font-family="Inter, sans-serif" font-weight="900" fill="#fff" text-anchor="middle"><text x="129" y="192" font-size="42" filter="url(#glow1)">LI</text><text x="272" y="204" font-size="42" filter="url(#glow1)">E</text><text x="126" y="298" font-size="42" filter="url(#glow1)">DI</text><text x="272" y="334" font-size="42" filter="url(#glow1)">VE</text></g>
+                            <text x="200" y="418" font-family="'Great Vibes', cursive" font-size="28" letter-spacing="1" fill="url(#glassGrad1)" stroke="rgba(255,255,255,0.5)" stroke-width="0.6" text-anchor="middle" style="filter: drop-shadow(0 0 6px rgba(38,198,218,0.8)) drop-shadow(0 2px 3px rgba(0,0,0,0.6));">open your eyes</text>
+                        </g>
+
+                        
+                    </svg>
+                </div>
+                <div class="product-info">
+                    <h3>Blind Statue · Lie Die Live Dive</h3>
+                    <p>€85.00</p>
+                    <button class="card-buy" onclick="quickBuy('tee-1', event)">Buy Now</button>
+                </div>
+            </div>
+
+            <!-- Product 2: Duality — HAVE / LOVE / HATE -->
+            <div class="product-card reveal" onclick="openModal('Duality Hoodie', 'HAVE. LOVE. HATE. What you read first is up to you — everyone sees something different. Halftone eye collage, MARES star-field back with the Open Your Eyes script. Heavyweight organic hoodie.', '\u20ac75.00', document.getElementById('tee-2').innerHTML, 'tee-2')">
+                <div class="studio-shot shade-2" id="tee-2">
+                    <svg class="svg-hoodie-base" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="hgrad2" cx="50%" cy="25%" r="85%">
+                                <stop offset="0%" stop-color="#181818"/>
+                                <stop offset="100%" stop-color="#020202"/>
+                            </radialGradient>
+                            <filter id="hshadow2"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-opacity="0.85"/></filter>
+                            <filter id="glow2" x="-60%" y="-60%" width="220%" height="220%">
+                                <feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-color="#ffffff" flood-opacity="0.95"/>
+                            </filter>
+                            <pattern id="dots2" width="5" height="5" patternUnits="userSpaceOnUse">
+                                <circle cx="1.2" cy="1.2" r="0.7" fill="#000" opacity="0.28"/>
+                            </pattern>
+                            <pattern id="hlines2" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-3)">
+                                <path d="M0 1.5 H3" stroke="#000" stroke-width="0.85" opacity="0.28"/>
+                            </pattern>
+                            <linearGradient id="glassGrad2" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#dffbff" stop-opacity="0.95"/>
+                                <stop offset="45%" stop-color="#26c6da" stop-opacity="0.9"/>
+                                <stop offset="75%" stop-color="#0d7c8c" stop-opacity="0.85"/>
+                                <stop offset="100%" stop-color="#2fd8ec" stop-opacity="0.95"/>
+                            </linearGradient>
+                            <filter id="grain2" x="-20%" y="-20%" width="140%" height="140%">
+                                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+                                <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.4 0" result="g"/>
+                                <feComposite in="g" in2="SourceAlpha" operator="in" result="gc"/>
+                                <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="gc"/></feMerge>
+                            </filter>
+                            <radialGradient id="irisShade2" cx="42%" cy="40%" r="60%">
+                                <stop offset="0%" stop-color="#9a9a9a"/>
+                                <stop offset="60%" stop-color="#5e5e5e"/>
+                                <stop offset="100%" stop-color="#333333"/>
+                            </radialGradient>
+                            <linearGradient id="stripShade2" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#c6c6c6"/>
+                                <stop offset="55%" stop-color="#a8a8a8"/>
+                                <stop offset="100%" stop-color="#8a8a8a"/>
+                            </linearGradient>
+                        </defs>
+
+                        <!-- BACK VIEW (behind, bottom-right like the mockup) -->
+                        <g transform="translate(206,240) scale(0.5)" filter="url(#hshadow2)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
+                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="2.5" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="2.6" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="2.3" opacity="0.5"/><circle cx="300" cy="330" r="2.3" opacity="0.5"/><circle cx="140" cy="240" r="2.3" opacity="0.5"/><circle cx="270" cy="300" r="2.2" opacity="0.6"/><circle cx="200" cy="180" r="2.2" opacity="0.5"/></g>
+                            <text x="238" y="252" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 252)">open your</text>
+                            <text x="238" y="326" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 316)">eyes</text>
+                        </g>
+
+                        <!-- FRONT VIEW (boxy cut like the mockup) -->
+                        <g transform="translate(-30,0)" filter="url(#hshadow2)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="url(#hgrad2)" stroke="#333" stroke-width="1.5"/>
+                            <path d="M 160 40 C 175 72 225 72 240 40 C 224 58 176 58 160 40 Z" fill="#060606" stroke="#282828" stroke-width="1.5"/>
+                            <g fill="#fff"><circle cx="120" cy="120" r="1.9" opacity="0.8"/><circle cx="160" cy="105" r="1.4" opacity="0.6"/><circle cx="250" cy="112" r="2.0" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.9" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="1.4" opacity="0.5"/><circle cx="265" cy="205" r="1.7" opacity="0.7"/><circle cx="300" cy="245" r="1.9" opacity="0.8"/><circle cx="75" cy="220" r="1.4" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.9" opacity="0.8"/><circle cx="160" cy="330" r="1.4" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.9" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="1.2" opacity="0.5"/><circle cx="175" cy="405" r="1.7" opacity="0.7"/><circle cx="240" cy="420" r="2.0" opacity="0.8"/><circle cx="290" cy="390" r="1.4" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="1.4" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="1.4" opacity="0.6"/><circle cx="98" cy="270" r="1.4" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="1.2" opacity="0.5"/><circle cx="70" cy="180" r="1.4" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="1.2" opacity="0.4"/><circle cx="255" cy="160" r="1.4" opacity="0.5"/><circle cx="85" cy="120" r="1.2" opacity="0.5"/><circle cx="230" cy="90" r="1.4" opacity="0.6"/><circle cx="170" cy="95" r="1.2" opacity="0.5"/><circle cx="310" cy="120" r="1.4" opacity="0.6"/><circle cx="75" cy="320" r="1.4" opacity="0.5"/><circle cx="90" cy="410" r="1.2" opacity="0.5"/><circle cx="215" cy="370" r="1.4" opacity="0.6"/><circle cx="150" cy="375" r="1.2" opacity="0.5"/><circle cx="265" cy="255" r="1.2" opacity="0.5"/><circle cx="180" cy="265" r="1.4" opacity="0.5"/><circle cx="120" cy="255" r="1.1" opacity="0.4"/><circle cx="300" cy="425" r="1.4" opacity="0.6"/><circle cx="225" cy="200" r="1.1" opacity="0.4"/><circle cx="160" cy="215" r="1.1" opacity="0.4"/></g>
+                            <text x="200" y="94" font-family="'Caveat', cursive" font-weight="700" font-size="34" fill="#ffffff" text-anchor="middle" opacity="0.96" transform="rotate(-3 200 88)">Mares</text>
+
+                            <!-- Real print artwork: love/hate eye strip (from the brand print files) -->
+                            <image x="112" y="150" width="176" height="194" preserveAspectRatio="xMidYMid meet" href="{{ 'eyes.png' | asset_url }}"/>
+                                                        <text x="200" y="418" font-family="'Great Vibes', cursive" font-size="28" letter-spacing="1" fill="url(#glassGrad2)" stroke="rgba(255,255,255,0.5)" stroke-width="0.6" text-anchor="middle" style="filter: drop-shadow(0 0 6px rgba(38,198,218,0.8)) drop-shadow(0 2px 3px rgba(0,0,0,0.6));">open your eyes</text>
+                        </g>
+
+                        
+                    </svg>
+                </div>
+                <div class="product-info">
+                    <h3>Duality · Have Love Have Hate</h3>
+                    <p>€75.00</p>
+                    <button class="card-buy" onclick="quickBuy('tee-2', event)">Buy Now</button>
+                </div>
+            </div>
+
+            <!-- Product 3: Planetary Heart — HEART / EARTH / ART / TEAR -->
+            <div class="product-card reveal" onclick="openModal('Planetary Heart Hoodie', 'HEART. EARTH. ART. TEAR. Five letters hiding four truths — everyone sees something different. Anatomical heart print, MARES star-field back with the Open Your Eyes script. Heavyweight organic hoodie.', '\u20ac89.00', document.getElementById('tee-3').innerHTML, 'tee-3')">
+                <div class="studio-shot shade-3" id="tee-3">
+                    <svg class="svg-hoodie-base" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="hgrad3" cx="50%" cy="25%" r="85%">
+                                <stop offset="0%" stop-color="#181818"/>
+                                <stop offset="100%" stop-color="#020202"/>
+                            </radialGradient>
+                            <filter id="hshadow3"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-opacity="0.85"/></filter>
+                            <filter id="glow3" x="-60%" y="-60%" width="220%" height="220%">
+                                <feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-color="#ffffff" flood-opacity="0.95"/>
+                            </filter>
+                            <pattern id="dots3" width="5" height="5" patternUnits="userSpaceOnUse">
+                                <circle cx="1.2" cy="1.2" r="0.7" fill="#000" opacity="0.28"/>
+                            </pattern>
+                            <pattern id="hlines3" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-2)">
+                                <path d="M0 1.5 H3" stroke="#000" stroke-width="0.85" opacity="0.3"/>
+                            </pattern>
+                            <linearGradient id="glassGrad3" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#dffbff" stop-opacity="0.95"/>
+                                <stop offset="45%" stop-color="#26c6da" stop-opacity="0.9"/>
+                                <stop offset="75%" stop-color="#0d7c8c" stop-opacity="0.85"/>
+                                <stop offset="100%" stop-color="#2fd8ec" stop-opacity="0.95"/>
+                            </linearGradient>
+                            <filter id="grain3" x="-20%" y="-20%" width="140%" height="140%">
+                                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+                                <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.45 0" result="g"/>
+                                <feComposite in="g" in2="SourceAlpha" operator="in" result="gc"/>
+                                <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="gc"/></feMerge>
+                            </filter>
+                            <radialGradient id="heartShade3" cx="40%" cy="34%" r="75%">
+                                <stop offset="0%" stop-color="#ebebeb"/>
+                                <stop offset="55%" stop-color="#c0c0c0"/>
+                                <stop offset="85%" stop-color="#949494"/>
+                                <stop offset="100%" stop-color="#787878"/>
+                            </radialGradient>
+                        </defs>
+
+                        <!-- BACK VIEW (behind, bottom-right like the mockup) -->
+                        <g transform="translate(206,240) scale(0.5)" filter="url(#hshadow3)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="#0d0d0d" stroke="#3a3a3a" stroke-width="2.5"/>
+                            <path d="M 148 42 C 158 98 242 98 252 42 C 228 64 172 64 148 42 Z" fill="#121212" stroke="#303030" stroke-width="2"/>
+                            <g fill="#fff"><circle cx="130" cy="150" r="2" opacity="0.8"/><circle cx="260" cy="130" r="2.5" opacity="0.6"/><circle cx="290" cy="220" r="2" opacity="0.7"/><circle cx="120" cy="320" r="2.6" opacity="0.6"/><circle cx="250" cy="400" r="2" opacity="0.7"/><circle cx="180" cy="430" r="2.3" opacity="0.5"/><circle cx="300" cy="330" r="2.3" opacity="0.5"/><circle cx="140" cy="240" r="2.3" opacity="0.5"/><circle cx="270" cy="300" r="2.2" opacity="0.6"/><circle cx="200" cy="180" r="2.2" opacity="0.5"/></g>
+                            <text x="238" y="252" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 252)">open your</text>
+                            <text x="238" y="326" font-family="'Great Vibes', 'Caveat', cursive" font-size="66" fill="#fff" text-anchor="middle" transform="rotate(-3 238 316)">eyes</text>
+                        </g>
+
+                        <!-- FRONT VIEW (boxy cut like the mockup) -->
+                        <g transform="translate(-30,0)" filter="url(#hshadow3)">
+                            <path d="M 108 40 L 160 40 L 170 14 L 230 14 L 240 40 L 292 40 L 342 94 L 334 258 L 306 266 L 306 458 L 94 458 L 94 266 L 66 258 L 58 94 Z" fill="url(#hgrad3)" stroke="#333" stroke-width="1.5"/>
+                            <path d="M 160 40 C 175 72 225 72 240 40 C 224 58 176 58 160 40 Z" fill="#060606" stroke="#282828" stroke-width="1.5"/>
+                            <g fill="#fff"><circle cx="120" cy="120" r="1.9" opacity="0.8"/><circle cx="160" cy="105" r="1.4" opacity="0.6"/><circle cx="250" cy="112" r="2.0" opacity="0.9"/><circle cx="290" cy="130" r="1" opacity="0.6"/><circle cx="85" cy="150" r="1" opacity="0.7"/><circle cx="320" cy="160" r="1.9" opacity="0.8"/><circle cx="105" cy="200" r="1" opacity="0.7"/><circle cx="140" cy="235" r="1.4" opacity="0.5"/><circle cx="265" cy="205" r="1.7" opacity="0.7"/><circle cx="300" cy="245" r="1.9" opacity="0.8"/><circle cx="75" cy="220" r="1.4" opacity="0.6"/><circle cx="335" cy="210" r="1" opacity="0.6"/><circle cx="120" cy="300" r="1.9" opacity="0.8"/><circle cx="160" cy="330" r="1.4" opacity="0.5"/><circle cx="240" cy="310" r="1" opacity="0.6"/><circle cx="285" cy="330" r="1.9" opacity="0.8"/><circle cx="110" cy="370" r="1" opacity="0.6"/><circle cx="200" cy="300" r="1.2" opacity="0.5"/><circle cx="175" cy="405" r="1.7" opacity="0.7"/><circle cx="240" cy="420" r="2.0" opacity="0.8"/><circle cx="290" cy="390" r="1.4" opacity="0.5"/><circle cx="130" cy="430" r="1" opacity="0.6"/><circle cx="105" cy="330" r="1.4" opacity="0.5"/><circle cx="300" cy="300" r="1" opacity="0.6"/><circle cx="210" cy="435" r="1.4" opacity="0.6"/><circle cx="98" cy="270" r="1.4" opacity="0.5"/><circle cx="305" cy="275" r="1" opacity="0.6"/><circle cx="200" cy="125" r="1.2" opacity="0.5"/><circle cx="70" cy="180" r="1.4" opacity="0.6"/><circle cx="330" cy="140" r="1" opacity="0.7"/><circle cx="155" cy="155" r="1.2" opacity="0.4"/><circle cx="255" cy="160" r="1.4" opacity="0.5"/><circle cx="85" cy="120" r="1.2" opacity="0.5"/><circle cx="230" cy="90" r="1.4" opacity="0.6"/><circle cx="170" cy="95" r="1.2" opacity="0.5"/><circle cx="310" cy="120" r="1.4" opacity="0.6"/><circle cx="75" cy="320" r="1.4" opacity="0.5"/><circle cx="90" cy="410" r="1.2" opacity="0.5"/><circle cx="215" cy="370" r="1.4" opacity="0.6"/><circle cx="150" cy="375" r="1.2" opacity="0.5"/><circle cx="265" cy="255" r="1.2" opacity="0.5"/><circle cx="180" cy="265" r="1.4" opacity="0.5"/><circle cx="120" cy="255" r="1.1" opacity="0.4"/><circle cx="300" cy="425" r="1.4" opacity="0.6"/><circle cx="225" cy="200" r="1.1" opacity="0.4"/><circle cx="160" cy="215" r="1.1" opacity="0.4"/></g>
+                            <text x="200" y="94" font-family="'Caveat', cursive" font-weight="700" font-size="34" fill="#ffffff" text-anchor="middle" opacity="0.96" transform="rotate(-3 200 88)">Mares</text>
+
+                            <!-- Real print artwork: anatomical heart (from the brand print files) -->
+                            <image x="106" y="140" width="188" height="199" preserveAspectRatio="xMidYMid meet" href="{{ 'heart.png' | asset_url }}"/>
+                                                        <text x="200" y="418" font-family="'Great Vibes', cursive" font-size="28" letter-spacing="1" fill="url(#glassGrad3)" stroke="rgba(255,255,255,0.5)" stroke-width="0.6" text-anchor="middle" style="filter: drop-shadow(0 0 6px rgba(38,198,218,0.8)) drop-shadow(0 2px 3px rgba(0,0,0,0.6));">open your eyes</text>
+                        </g>
+
+                        
+                    </svg>
+                </div>
+                <div class="product-info">
+                    <h3>Planetary Heart · Heart Earth Art Tear</h3>
+                    <p>€89.00</p>
+                    <button class="card-buy" onclick="quickBuy('tee-3', event)">Buy Now</button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- BAZAAR: pre-owned, curated by MARES -->
+    <section id="bazaar" class="section">
+        <h2 class="section-title reveal">The Bazaar &middot; Pre-owned</h2>
+        <p class="bazaar-intro reveal">NejudrThe most sustainable piece is the one that already exists. Give your MARES a second life — we\u2019ll help you sell it on. R for <strong style="color:#fff;">Recycling</strong>.</p>
+
+        <div class="bazaar-steps reveal">
+            <div class="bstep"><div class="bnum">1</div><h4>Message us</h4><p>Send us your piece via the form below — model, size, condition and a photo.</p></div>
+            <div class="bstep"><div class="bnum">2</div><h4>We list it</h4><p>We check it, photograph it and add it to the bazaar.</p></div>
+            <div class="bstep"><div class="bnum">3</div><h4>Sold</h4><p>When it sells, we send you the money. A share always goes to the planet.</p></div>
+        </div>
+
+        <div class="bazaar-grid reveal" id="bazaarGrid"></div>
+
+        <div class="sell-cta reveal">
+            <button class="sell-btn" onclick="openSell()">&#9835; Sell your piece</button>
+        </div>
+    </section>
+
+    <!-- ADMIN MODAL -->
+    <div class="sell-overlay" id="adminOverlay">
+        <div class="sell-modal">
+            <span class="sell-close" onclick="closeAdmin()">&times;</span>
+            <div id="adminGate">
+                <h2>Bazaar admin</h2>
+                <p class="sub">Enter the password to add pieces to the bazaar.</p>
+                <form onsubmit="return adminLogin(event)">
+                    <label>Password</label>
+                    <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password">
+                    <button class="sell-submit" type="submit">Log in</button>
+                </form>
+            </div>
+            <div id="adminPanel" style="display:none;">
+                <h2>Add a piece to the bazaar</h2>
+                <p class="sub">The piece shows in the bazaar in this browser right away. To publish it to everyone use <b>Export</b> below.</p>
+                <form onsubmit="return adminAdd(event)">
+                    <label>Design (thumbnail)</label>
+                    <select id="aDesign"><option value="tee-1">Venus (Blind Statue)</option><option value="tee-2">Eye (Duality)</option><option value="tee-3">Heart (Planetary Heart)</option></select>
+                    <label>Model / name</label>
+                    <input id="aModel" type="text" value="Blind Statue Hoodie" required>
+                    <div class="sell-row">
+                        <div><label>Size</label><select id="aSize"><option>S</option><option>M</option><option>L</option><option>XL</option></select></div>
+                        <div><label>Condition</label><select id="aCond"><option>Like new</option><option>Very good</option><option>Good</option><option>Worn, with marks</option></select></div>
+                    </div>
+                    <div class="sell-row">
+                        <div><label>Price (€)</label><input id="aPrice" type="number" min="1" placeholder="45" required></div>
+                        <div><label>Original price (€)</label><input id="aOrig" type="number" min="1" placeholder="85"></div>
+                    </div>
+                    <label>Note</label>
+                    <textarea id="aNote" placeholder="Condition, times worn\u2026"></textarea>
+                    <button class="sell-submit" type="submit">Add to bazaar</button>
+                </form>
+                <h3 class="admin-h3">Your added pieces</h3>
+                <div id="adminList"></div>
+                <button type="button" class="admin-export-btn" onclick="adminExport()">\u29c9 Export all pieces (JSON)</button>
+                <textarea id="adminExport" style="display:none;margin-top:10px;" readonly rows="6"></textarea>
+                <p class="muted-sm" style="margin-top:8px;">Tip: to publish permanently to <b>all visitors</b>, send me this JSON \u2014 I\u2019ll bake it into the site. (Or we connect it to Shopify.)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SELL FORM MODAL -->
+    <div class="sell-overlay" id="sellOverlay">
+        <div class="sell-modal">
+            <span class="sell-close" onclick="closeSell()">&times;</span>
+            <h2>Sell your piece</h2>
+            <p class="sub">Fill in your offer — on submit a pre-filled email to us opens. Attach the photo to the email.</p>
+            <form onsubmit="return submitSell(event)">
+                <label>Model</label>
+                <select id="sfModel">
+                    <option>Blind Statue Hoodie</option>
+                    <option>Duality Hoodie</option>
+                    <option>Planetary Heart Hoodie</option>
+                    <option>Other MARES piece</option>
+                </select>
+                <div class="sell-row">
+                    <div><label>Size</label><select id="sfSize"><option>S</option><option>M</option><option>L</option><option>XL</option></select></div>
+                    <div><label>Condition</label><select id="sfCond"><option>Like new</option><option>Very good</option><option>Good</option><option>Worn, with marks</option></select></div>
+                </div>
+                <div class="sell-row">
+                    <div><label>Your price (€)</label><input id="sfPrice" type="number" min="1" placeholder="e.g. 45"></div>
+                    <div><label>Your email</label><input id="sfEmail" type="email" placeholder="you@email.com" required></div>
+                </div>
+                <label>Description / note</label>
+                <textarea id="sfNote" placeholder="How often worn, any flaws, reason for selling\u2026"></textarea>
+                <button class="sell-submit" type="submit">Send offer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SECRET EYE 3 -->
+    <div class="secret-eye egg-2">
+        <svg viewBox="0 0 200 200" width="100%" height="100%">
+            <g class="eye-blink">
+                <path d="M 40 100 Q 100 60 160 100 Q 100 140 40 100 Z" fill="#020202" stroke="#26c6da" stroke-width="6"/>
+                <circle cx="100" cy="100" r="20" fill="#26c6da"/>
+                <circle cx="100" cy="100" r="8" fill="#000"/>
+            </g>
+        </svg>
+        <svg class="secret-tear" viewBox="0 0 24 32"><path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/></svg>
+    </div>
+
+    <footer>
+        <div class="logo">Mares</div>
+        <p>&copy; 2026 MARES. Strictly No Plastics. &nbsp;<a href="#" onclick="openAdmin();return false;" style="color:#555;text-decoration:underline;font-size:0.8rem;">Admin</a></p>
+        <div class="footer-actions">
+            <button class="foot-btn" id="hashBtn" onclick="copyHashtag()">#openyoureyes &#10697;</button>
+            <a class="foot-btn" id="igLink" target="_blank" rel="noopener">&#9673; Follow on Instagram</a>
+            <a class="foot-btn" id="fbLink" target="_blank" rel="noopener">&#402; Follow on Facebook</a>
+        </div>
+    </footer>
+
+    <!-- DISCOUNT EYE -->
+    <div class="discount-fab" id="discountFab" onclick="openDiscount()" title="A little secret for you">
+        <svg viewBox="0 0 200 120"><g><path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#000" stroke="#012" stroke-width="7"/><circle cx="100" cy="60" r="26" fill="#012"/><circle cx="100" cy="60" r="10.5" fill="#26c6da"/><circle cx="107" cy="53" r="5" fill="#fff"/></g></svg>
+        <span>Get &minus;10 %</span>
+    </div>
+    <div class="discount-overlay" id="discountOverlay">
+        <div class="discount-box">
+            <span class="disc-close" onclick="closeDiscount()">&times;</span>
+            <svg class="disc-eye" viewBox="0 0 200 120"><g class="disc-eye-g"><path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="3.5"/><circle cx="100" cy="60" r="26" fill="#26c6da"/><circle cx="100" cy="60" r="10.5" fill="#000"/><circle cx="107" cy="53" r="5" fill="#fff"/></g></svg>
+            <div class="disc-title">Psst&hellip; open your eyes.</div>
+            <div class="disc-sub">Here is <b style="color:#fff;">10&nbsp;% off</b> your first order:</div>
+            <div class="disc-code" id="discCode" onclick="copyDiscount()">OPENEYES10</div>
+            <div class="disc-copied" id="discCopied">Copied &#10003;</div>
+            <div class="disc-note">Tap the code to copy it, then use it at checkout.</div>
+        </div>
+    </div>
+
+    <!-- CART DRAWER -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
+    <aside class="cart-drawer" id="cartDrawer">
+        <div class="cart-head">
+            <h3>Your Cart</h3>
+            <span class="cart-close" onclick="toggleCart(false)">&times;</span>
+        </div>
+        <div class="cart-items" id="cartItems"></div>
+        <div class="cart-foot">
+            <div class="cart-total-row"><span>Total</span><span id="cartTotal">€0.00</span></div>
+            <button class="btn" onclick="checkout()">Checkout</button>
+            <div class="cart-note" id="cartNote">Online checkout is being connected to Shopify — ordering opens very soon. Your cart is saved in this browser.</div>
+        </div>
+    </aside>
+    <!-- ADD-TO-CART EYE ANIMATION -->
+    <div class="blink-overlay" id="blinkOverlay">
+        <div class="blink-eye-wrap">
+            <svg class="blink-eye" viewBox="0 0 200 120">
+                <g class="big-eye">
+                    <path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="3.5"/>
+                    <circle cx="100" cy="60" r="26" fill="#26c6da"/>
+                    <circle cx="100" cy="60" r="10.5" fill="#000"/>
+                    <circle cx="107" cy="53" r="5" fill="#fff"/>
+                </g>
+            </svg>
+            <svg class="blink-tear-big" viewBox="0 0 24 32"><path d="M12 30 C 7.5 30 4 26.4 4 22 C 4 16.5 10 6.5 12 2 C 14 6.5 20 16.5 20 22 C 20 26.4 16.5 30 12 30 Z"/></svg>
+        </div>
+        <svg class="mares-write" viewBox="0 0 420 150">
+            <defs><clipPath id="writeClip"><rect class="write-reveal" x="0" y="0" width="0" height="150"/></clipPath></defs>
+            <text x="210" y="105" text-anchor="middle" font-family="'Caveat', cursive" font-weight="700" font-size="104" class="write-text" clip-path="url(#writeClip)">Mares</text>
+        </svg>
+    </div>
+
+    <div class="toast" id="toast">Added to cart ✓</div>
+
+    <!-- MODAL OVERLAY -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <!-- Image side -->
+            <div class="modal-image" id="modalImage">
+                <!-- SVG injected via JS -->
+            </div>
+            <!-- Info side -->
+            <div class="modal-info">
+                <h2 id="modalTitle">Product Title</h2>
+                <div class="price" id="modalPrice">€0.00</div>
+                <p id="modalDesc">Product description goes here.</p>
+                <div style="background: rgba(38, 198, 218, 0.1); border-left: 3px solid var(--accent-cyan); padding: 15px; margin-bottom: 2rem;">
+                    <p style="margin:0; font-size: 0.85rem; color: #fff;">🌍 <strong>Protectors of the Earth</strong><br>By purchasing this, <strong>5%</strong> is donated to environmental projects. Produced strictly on demand = <strong>Zero Waste</strong>.</p>
+                </div>
+                <div class="size-label">Size</div>
+                <div class="size-row" id="sizeRow">
+                    <div class="size-pill" onclick="selSize(this)">S</div>
+                    <div class="size-pill sel" onclick="selSize(this)">M</div>
+                    <div class="size-pill" onclick="selSize(this)">L</div>
+                    <div class="size-pill" onclick="selSize(this)">XL</div>
+                </div>
+                <button class="btn" id="modalBuyNow" onclick="buyNowFromModal()">Buy Now</button>
+                <button class="btn btn-outline" id="modalBuyBtn" onclick="addToCartFromModal()" style="margin-top:10px;">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+<script src="{{ 'mares.js' | asset_url }}"></script>
+
+{% schema %}
+{
+  "name": "MARES Home",
+  "settings": []
+}
+{% endschema %}
