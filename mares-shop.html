@@ -56,8 +56,9 @@
 
         /* --- BACKGROUND --- */
         .ambient-bg {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: radial-gradient(circle at 50% 0%, var(--bg-green) 0%, var(--bg-deep) 80%); z-index: -2;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2;
+            background: radial-gradient(circle at var(--sun-x, 50%) var(--sun-y, 4%), var(--bg-green) 0%, var(--bg-deep) 78%);
+            transition: background 0.12s linear;
         }
 
         /* --- NAVIGATION --- */
@@ -100,6 +101,60 @@
             filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 26px rgba(38, 198, 218, 0.35));
         }
         .hero p.motto { font-size: 1.4rem; font-weight: 300; max-width: 700px; color: #ccc; margin-bottom: 3rem; }
+
+        /* Hero CTA buttons */
+        .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 3rem; }
+        .cta {
+            display: inline-flex; align-items: center; gap: 9px; padding: 15px 34px; border-radius: 32px;
+            font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.82rem; cursor: pointer;
+            text-decoration: none; transition: transform .2s, box-shadow .25s, background .25s, color .25s; border: 1px solid var(--accent-cyan);
+        }
+        .cta-primary { background: var(--accent-cyan); color: #001; box-shadow: 0 0 22px var(--accent-glow); }
+        .cta-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 30px var(--accent-glow); }
+        .cta-ghost { background: transparent; color: var(--accent-cyan); }
+        .cta-ghost:hover { background: var(--accent-cyan); color: #001; transform: translateY(-3px); }
+
+        /* Draggable turquoise sun with a blinking eye */
+        .sun {
+            position: absolute; top: 300px; right: 9%; width: 118px; height: 118px; z-index: 6;
+            cursor: grab; touch-action: none; user-select: none;
+            filter: drop-shadow(0 0 30px var(--accent-glow));
+        }
+        .sun.dragging { cursor: grabbing; }
+        .sun-rays {
+            position: absolute; inset: -22px; border-radius: 50%;
+            background: conic-gradient(from 0deg,
+                rgba(38,198,218,0.55) 0deg, rgba(38,198,218,0) 8deg,
+                rgba(38,198,218,0.55) 30deg, rgba(38,198,218,0) 38deg,
+                rgba(38,198,218,0.55) 60deg, rgba(38,198,218,0) 68deg,
+                rgba(38,198,218,0.55) 90deg, rgba(38,198,218,0) 98deg,
+                rgba(38,198,218,0.55) 120deg, rgba(38,198,218,0) 128deg,
+                rgba(38,198,218,0.55) 150deg, rgba(38,198,218,0) 158deg,
+                rgba(38,198,218,0.55) 180deg, rgba(38,198,218,0) 188deg,
+                rgba(38,198,218,0.55) 210deg, rgba(38,198,218,0) 218deg,
+                rgba(38,198,218,0.55) 240deg, rgba(38,198,218,0) 248deg,
+                rgba(38,198,218,0.55) 270deg, rgba(38,198,218,0) 278deg,
+                rgba(38,198,218,0.55) 300deg, rgba(38,198,218,0) 308deg,
+                rgba(38,198,218,0.55) 330deg, rgba(38,198,218,0) 338deg,
+                rgba(38,198,218,0.55) 360deg);
+            -webkit-mask: radial-gradient(circle, transparent 46%, #000 47%, #000 62%, transparent 66%);
+            mask: radial-gradient(circle, transparent 46%, #000 47%, #000 62%, transparent 66%);
+            animation: sunspin 26s linear infinite;
+        }
+        @keyframes sunspin { to { transform: rotate(360deg); } }
+        .sun-core {
+            position: absolute; inset: 12px; border-radius: 50%;
+            background: radial-gradient(circle at 38% 34%, #eafcff 0%, #7fe6f2 30%, #26c6da 60%, #0e8496 100%);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 18px rgba(255,255,255,0.35), 0 0 26px var(--accent-glow);
+        }
+        .sun-eye { width: 62%; height: 40%; }
+        .sun-hint {
+            position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%);
+            font-size: 0.62rem; letter-spacing: 2px; text-transform: uppercase; color: var(--accent-cyan);
+            white-space: nowrap; opacity: 0.85; pointer-events: none; transition: opacity .4s;
+        }
+        .sun.moved .sun-hint { opacity: 0; }
 
         /* Planet Earth with eye */
         .planet-wrap {
@@ -505,6 +560,10 @@
             .nav-links a { margin-left: 0.85rem; font-size: 0.64rem; letter-spacing: 1px; }
             .hero { padding: 8.5rem 16px 3rem 16px; }
             .hero h1 { font-size: 2.35rem; letter-spacing: 5px; }
+            .hero-cta { gap: 10px; margin-bottom: 2.4rem; }
+            .cta { padding: 13px 26px; font-size: 0.74rem; }
+            .sun { width: 70px; height: 70px; top: 210px; right: 6%; }
+            .sun-hint { display: none; }
             .hero p.motto { font-size: 1.02rem; }
             .planet-wrap { width: 205px; height: 205px; margin-bottom: 2.4rem; }
             .planet-svg { width: 100%; height: 100%; }
@@ -646,6 +705,27 @@
     <header class="hero">
         <h1 class="reveal">Open Your Eyes</h1>
         <p class="motto reveal">What we wear expresses not only who we are, but how we treat our planet.</p>
+
+        <div class="hero-cta reveal">
+            <a class="cta cta-primary" href="#collection">&#128717; Koupit</a>
+            <a class="cta cta-ghost" href="#bazaar">&#9851; Bazaar</a>
+        </div>
+
+        <!-- Draggable turquoise sun that lights the page & blinks -->
+        <div class="sun" id="sun" title="Chytni a táhni mnou">
+            <div class="sun-rays"></div>
+            <div class="sun-core">
+                <svg class="sun-eye" viewBox="0 0 200 120">
+                    <g class="eye-blink">
+                        <path d="M 20 60 Q 100 12 180 60 Q 100 108 20 60 Z" fill="#012" stroke="#eafcff" stroke-width="5"/>
+                        <circle cx="100" cy="60" r="22" fill="#012"/>
+                        <circle cx="100" cy="60" r="9" fill="#eafcff"/>
+                        <circle cx="106" cy="54" r="3.5" fill="#fff"/>
+                    </g>
+                </svg>
+            </div>
+            <div class="sun-hint">&#9758; táhni mnou</div>
+        </div>
 
         <!-- PLANET EARTH WITH EYE & BIG TEAR -->
         <div class="planet-wrap reveal">
@@ -1447,6 +1527,52 @@
             if (!musicOn && localStorage.getItem('mares_music') !== 'off') { startMusic(); setMusicBtn(); }
             document.removeEventListener('pointerdown', autoStart);
         });
+
+        // --- Draggable sun that moves the page light ---
+        (function () {
+            const sun = document.getElementById('sun');
+            if (!sun) return;
+            const root = document.documentElement;
+            function setLightFromSun() {
+                const r = sun.getBoundingClientRect();
+                const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+                root.style.setProperty('--sun-x', (cx / window.innerWidth * 100).toFixed(1) + '%');
+                root.style.setProperty('--sun-y', (cy / window.innerHeight * 100).toFixed(1) + '%');
+            }
+            // initial light aligned to the sun's default spot
+            requestAnimationFrame(setLightFromSun);
+            let dragging = false, offX = 0, offY = 0;
+            function down(e) {
+                dragging = true; sun.classList.add('dragging', 'moved');
+                const p = e.touches ? e.touches[0] : e;
+                const r = sun.getBoundingClientRect();
+                offX = p.clientX - r.left; offY = p.clientY - r.top;
+                sun.style.right = 'auto';
+                e.preventDefault();
+            }
+            function move(e) {
+                if (!dragging) return;
+                const p = e.touches ? e.touches[0] : e;
+                const hero = sun.parentElement.getBoundingClientRect();
+                let x = p.clientX - offX - hero.left;
+                let y = p.clientY - offY - hero.top;
+                // keep it inside the hero
+                x = Math.max(-10, Math.min(x, hero.width - sun.offsetWidth + 10));
+                y = Math.max(150, Math.min(y, hero.height - sun.offsetHeight));
+                sun.style.left = x + 'px';
+                sun.style.top = y + 'px';
+                setLightFromSun();
+            }
+            function up() { dragging = false; sun.classList.remove('dragging'); }
+            sun.addEventListener('mousedown', down);
+            window.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', up);
+            sun.addEventListener('touchstart', down, { passive: false });
+            window.addEventListener('touchmove', move, { passive: false });
+            window.addEventListener('touchend', up);
+            window.addEventListener('resize', setLightFromSun);
+            window.addEventListener('scroll', setLightFromSun, { passive: true });
+        })();
 
         // --- BAZAAR (pre-owned) ---
         // E-mail, kam chodí nabídky a poptávky (uprav na svůj):
