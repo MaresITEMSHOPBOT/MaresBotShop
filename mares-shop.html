@@ -173,13 +173,22 @@
         .section { padding: 8rem 5%; border-top: 1px solid var(--border-color); position: relative; }
         .section-title { font-size: 3rem; font-weight: 900; text-transform: uppercase; text-align: center; margin-bottom: 4rem; letter-spacing: 5px; }
 
-        .journey-vert { position: relative; max-width: 900px; margin: 0 auto; padding: 2rem 0 1rem 0; }
-        .journey-vroute { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 0; }
+        .journey-vert { position: relative; max-width: 720px; margin: 0 auto; padding: 2rem 0 1rem 0; display: flex; gap: 28px; }
+        .j-rail { position: relative; width: 70px; flex: 0 0 70px; }
+        .j-rail-line {
+            position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%);
+            background: linear-gradient(180deg, rgba(38,198,218,0.05), rgba(38,198,218,0.35) 10%, rgba(38,198,218,0.35) 90%, rgba(38,198,218,0.05));
+        }
+        .j-rail-fill {
+            position: absolute; left: 50%; top: 0; width: 2px; height: 0; transform: translateX(-50%);
+            background: var(--accent-cyan); box-shadow: 0 0 12px var(--accent-cyan); border-radius: 2px;
+        }
+        .j-stops { flex: 1; min-width: 0; }
         .j-eye {
-            position: absolute; width: 56px; height: 37px; z-index: 3; pointer-events: none;
+            position: absolute; left: 50%; top: 0; width: 54px; height: 36px; z-index: 3; pointer-events: none;
             transform: translate(-50%, -50%);
             filter: drop-shadow(0 0 12px var(--accent-cyan));
-            transition: top .09s linear, left .09s linear;
+            transition: top .1s linear;
         }
         .j-eye svg { width: 100%; height: 100%; overflow: visible; }
         .j-eye #jEyePupil { transition: transform .25s ease; }
@@ -189,21 +198,30 @@
             transform: translateY(0) scale(1.03);
         }
         .v-stop {
-            position: relative; z-index: 2; text-align: center; margin: 3.2rem auto; max-width: 420px;
-            padding: 1.8rem 2rem 1.6rem 2rem; border-radius: 18px;
+            position: relative; z-index: 2; margin: 0 0 2.8rem 0; text-align: left;
+            display: grid; grid-template-columns: 64px 1fr; column-gap: 20px; align-items: center;
+            padding: 1.5rem 1.8rem; border-radius: 18px;
             background: rgba(3, 22, 18, 0.6); border: 1px solid rgba(38, 198, 218, 0.22);
             backdrop-filter: blur(6px);
-            opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s ease, box-shadow .6s ease;
+            opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s ease, box-shadow .6s ease, border-color .6s ease;
         }
+        .v-stop::before {
+            content: ''; position: absolute; left: -63px; top: 50%; transform: translate(-50%, -50%);
+            width: 12px; height: 12px; border-radius: 50%;
+            border: 2px solid var(--accent-cyan); background: #04140f;
+            box-shadow: 0 0 10px rgba(38, 198, 218, 0.4); transition: background .4s, box-shadow .4s;
+        }
+        .v-stop.looking::before { background: var(--accent-cyan); box-shadow: 0 0 18px var(--accent-cyan); }
         .v-stop.lit { opacity: 1; transform: none; box-shadow: 0 0 30px rgba(38, 198, 218, 0.18); }
         .v-stop h3 {
-            font-size: 3.2rem; color: var(--accent-cyan); font-weight: 900; line-height: 1;
-            margin: 8px 0 4px 0; text-shadow: 0 0 20px var(--accent-glow);
+            grid-column: 2; font-size: 2.1rem; color: var(--accent-cyan); font-weight: 900; line-height: 1;
+            margin: 0 0 4px 0; text-shadow: 0 0 20px var(--accent-glow);
         }
+        .v-stop p, .v-stop span { grid-column: 2; }
         .v-stop p { font-size: 1.15rem; font-weight: 900; text-transform: uppercase; letter-spacing: 4px; color: var(--accent-cyan); text-shadow: 0 0 14px var(--accent-glow); }
         .v-stop span { font-size: .85rem; color: #b9c4c0; display: block; margin-top: 5px; }
         .stop-art {
-            width: 62px; height: 62px; margin: 0 auto 12px auto; border-radius: 50%;
+            grid-row: 1 / span 3; width: 62px; height: 62px; margin: 0; border-radius: 50%;
             border: 2px solid var(--accent-cyan); background: rgba(38, 198, 218, 0.08);
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 0 18px rgba(38, 198, 218, 0.35), inset 0 0 12px rgba(38, 198, 218, 0.15);
@@ -497,8 +515,13 @@
             .section-title { font-size: 1.65rem; letter-spacing: 3px; margin-bottom: 2.2rem; }
             .studio-shot { height: 350px; }
             .product-info { padding: 1.4rem; }
-            .v-stop { margin: 2rem auto; max-width: 310px; padding: 1.4rem 1.1rem 1.2rem 1.1rem; }
-            .v-stop h3 { font-size: 2.6rem; }
+            .journey-vert { gap: 14px; }
+            .j-rail { width: 40px; flex: 0 0 40px; }
+            .j-eye { width: 40px; height: 27px; }
+            .v-stop { margin: 0 0 1.8rem 0; padding: 1.1rem 1rem; column-gap: 12px; grid-template-columns: 48px 1fr; }
+            .v-stop::before { left: -34px; width: 9px; height: 9px; }
+            .v-stop h3 { font-size: 1.5rem; }
+            .stop-art { width: 48px; height: 48px; }
             .v-stop p { font-size: 0.95rem; letter-spacing: 3px; }
             .journey-summary .word { font-size: 1.1rem; letter-spacing: 6px; }
             .journey-summary .meaning { font-size: 0.6rem; letter-spacing: 1.2px; }
@@ -663,9 +686,9 @@
     <section id="about" class="section">
         <h2 class="section-title reveal">The Journey of MARES</h2>
         <div class="journey-vert" id="journeyVert">
-            <svg class="journey-vroute" viewBox="0 0 400 2400" preserveAspectRatio="none" aria-hidden="true">
-                <path id="vRoutePath" d="M 200 0 C 330 180 70 360 200 540 C 330 720 70 900 200 1080 C 330 1260 70 1440 200 1620 C 330 1800 70 1980 200 2160 L 200 2400" fill="none" stroke="rgba(38,198,218,0.22)" stroke-width="3" stroke-dasharray="14 14"/>
-            </svg>
+            <div class="j-rail" id="jRail">
+                <div class="j-rail-line"></div>
+                <div class="j-rail-fill" id="jRailFill"></div>
             <div class="j-eye" id="jEye" aria-hidden="true">
                 <svg viewBox="0 0 200 120">
                     <g class="eye-blink">
@@ -678,6 +701,9 @@
                     </g>
                 </svg>
             </div>
+            </div>
+
+            <div class="j-stops">
             <div class="v-stop" id="vs-0">
                 <div class="stop-art"><svg viewBox="0 0 48 48"><path d="M 24 40 C 10 34 8 18 24 8 C 40 18 38 34 24 40 Z M 24 38 L 24 14" fill="none"/></svg></div>
                 <h3>M</h3><p>Materials</p><span>Recycled &amp; Organic</span>
@@ -704,6 +730,7 @@
                 <div class="word">M · A · R · E · S</div>
                 <div class="meaning">Materials · Adaptability · Recycling · Environment · Sustainability</div>
                 <div class="summary-sign">Mares</div>
+            </div>
             </div>
         </div>
         </div>
@@ -1087,31 +1114,29 @@
                 `${formatTime(Math.floor((distance % (1000 * 60)) / 1000))}`;
         }, 1000);
 
-        // --- Journey of MARES: a watching eye travels the route as you scroll ---
+        // --- Journey of MARES: the eye rides the glowing rail as you scroll ---
         (function () {
             const vert = document.getElementById('journeyVert');
+            const rail = document.getElementById('jRail');
+            const fill = document.getElementById('jRailFill');
             const eye = document.getElementById('jEye');
             const pupil = document.getElementById('jEyePupil');
-            const route = document.getElementById('vRoutePath');
             const about = document.getElementById('about');
             const stops = ['vs-0', 'vs-1', 'vs-2', 'vs-3', 'vs-4'];
-            if (!vert || !eye || !route) return;
-            const routeLen = route.getTotalLength();
+            if (!vert || !eye || !rail) return;
             function onScroll() {
                 const r = vert.getBoundingClientRect();
                 const vh = window.innerHeight;
                 const progress = Math.min(1, Math.max(0, (vh * 0.62 - r.top) / r.height));
-                // position the eye along the winding route (route space is 400x2400, stretched to the container)
-                const pt = route.getPointAtLength(progress * routeLen);
-                eye.style.left = (pt.x / 400 * r.width) + 'px';
-                eye.style.top = (pt.y / 2400 * r.height) + 'px';
+                const y = progress * rail.clientHeight;
+                eye.style.top = y + 'px';
+                fill.style.height = y + 'px';
                 about.setAttribute('data-stage', String(Math.min(5, Math.max(0, Math.ceil(progress * 5)))));
-                // reveal stops + find the one being read (closest to viewport centre)
                 let best = null, bestDist = Infinity;
                 stops.forEach(id => {
                     const el = document.getElementById(id);
                     const b = el.getBoundingClientRect();
-                    if (b.top < vh * 0.82) el.classList.add('lit');
+                    if (b.top < vh * 0.85) el.classList.add('lit');
                     const d = Math.abs((b.top + b.height / 2) - vh * 0.5);
                     if (d < bestDist) { bestDist = d; best = el; }
                 });
@@ -1119,7 +1144,6 @@
                     const el = document.getElementById(id);
                     el.classList.toggle('looking', el === best && el.classList.contains('lit'));
                 });
-                // the pupil looks toward the card being read
                 if (best && best.classList.contains('lit')) {
                     const eb = eye.getBoundingClientRect();
                     const bb = best.getBoundingClientRect();
