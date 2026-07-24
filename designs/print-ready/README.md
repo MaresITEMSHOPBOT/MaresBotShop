@@ -19,6 +19,26 @@ whole area (Fill) → for sleeves/hood/pocket choose the star tile with
 **Pattern → Repeat**. Background is pure black `#000000` everywhere, so
 all panels match seamlessly at the seams.
 
+## ALL-OVER PRINT HOODIE panel set (opaque) ⭐
+For Printful's all-over-print hoodie — one file per print area:
+
+| File | Print area | Size |
+|---|---|---|
+| HOODIE_front_blind_statue.png | FRONT (pick one of the 3) | 5400×6480 |
+| HOODIE_front_duality.png | FRONT | 5400×6480 |
+| HOODIE_front_planetary_heart.png | FRONT | 5400×6480 |
+| AOP_back_open_your_eyes.png | BACK | 5400×6480 |
+| HOODIE_sleeve.png | LEFT + RIGHT SLEEVE (same file both) | 2400×6480 |
+| HOODIE_hood.png | HOOD (glowing eye + tear) | 4800×2900 |
+| HOODIE_pocket.png | POCKET / POUCH ("open your eyes") | 4800×2000 |
+
+The hoodie fronts have NO bottom text — the "open your eyes" script
+lives on the pocket file instead, so the pocket doesn't cover it.
+All backgrounds are pure black #000000 → seamless at every seam.
+In each area use **Fill** to cover the whole panel. If the hoodie has
+extra areas (cuffs, waistband), fill them with AOP_pattern_stars.png
+via **Pattern → Repeat**.
+
 ## Chest-print designs (transparent PNG) — for normal tees/hoodies
 | File | Placement | Size |
 |---|---|---|
