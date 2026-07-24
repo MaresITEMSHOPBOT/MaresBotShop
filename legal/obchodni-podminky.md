@@ -12,7 +12,7 @@ mezi prodávajícím a kupujícím při prodeji zboží přes internetový obcho
 adrese `[https://vase-domena.cz]`.
 
 **Prodávající:**
-- Jméno / název: `[Jméno a příjmení / název firmy]`
+- Jméno / název: `Adam Mareš`
 - IČO: `[IČO]`, DIČ: `[DIČ, pokud jsi plátce DPH]`
 - Sídlo / místo podnikání: `[adresa]`
 - E-mail: `[kontaktní e-mail]`, tel.: `[telefon]`

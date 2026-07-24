@@ -5,7 +5,7 @@
 
 ## 1. Správce osobních údajů
 
-- Jméno / název: `[Jméno a příjmení / firma]`
+- Jméno / název: `Adam Mareš`
 - IČO: `[IČO]`, sídlo: `[adresa]`
 - E-mail: `[e-mail]`, tel.: `[telefon]`
 
