@@ -1188,7 +1188,7 @@
     <!-- BAZAAR: pre-owned, curated by MARES -->
     <section id="bazaar" class="section">
         <h2 class="section-title reveal">The Bazaar &middot; Pre-owned</h2>
-        <p class="bazaar-intro reveal">NejudrThe most sustainable piece is the one that already exists. Give your MARES a second life — we\u2019ll help you sell it on. R for <strong style="color:#fff;">Recycling</strong>.</p>
+        <p class="bazaar-intro reveal">The most sustainable piece is the one that already exists. Give your MARES a second life &mdash; we&rsquo;ll help you sell it on. <strong style="color:#fff;">R for Recycling.</strong></p>
 
         <div class="bazaar-steps reveal">
             <div class="bstep"><div class="bnum">1</div><h4>Message us</h4><p>Send us your piece via the form below — model, size, condition and a photo.</p></div>
@@ -1218,7 +1218,7 @@
             </div>
             <div id="adminPanel" style="display:none;">
                 <h2>Add a piece to the bazaar</h2>
-                <p class="sub">The piece shows in the bazaar in this browser right away. To publish it to everyone use <b>Export</b> below.</p>
+                <p class="sub">This panel is a local preview &mdash; pieces added here stay in this browser only. To publish a piece for real customers, add it in Shopify admin and tag it <b>bazaar</b>.</p>
                 <form onsubmit="return adminAdd(event)">
                     <label>Design (thumbnail)</label>
                     <select id="aDesign"><option value="tee-1">Venus (Blind Statue)</option><option value="tee-2">Eye (Duality)</option><option value="tee-3">Heart (Planetary Heart)</option></select>
@@ -1715,13 +1715,9 @@
         // Catalog of pre-owned pieces — YOU ADD ITEMS HERE.
         // design: 'tee-1' = Venus, 'tee-2' = Eye, 'tee-3' = Heart (thumbnail).
         // sold: true = sold (shown struck through). origPrice is optional.
-        const BAZAR_ITEMS = [
-            { design: 'tee-1', model: 'Blind Statue Hoodie', size: 'L', condition: 'Like new', price: 55, origPrice: 85, note: 'Worn twice, no flaws.', sold: false },
-            { design: 'tee-2', model: 'Duality Hoodie', size: 'S', condition: 'Very good', price: 45, origPrice: 75, note: 'A favourite, clearing my closet.', sold: false },
-            { design: 'tee-3', model: 'Planetary Heart Hoodie', size: 'M', condition: 'Very good', price: 49, origPrice: 89, note: 'Print slightly faded, otherwise great.', sold: false },
-            { design: 'tee-1', model: 'Blind Statue Hoodie', size: 'XL', condition: 'Good', price: 42, origPrice: 85, note: 'Worn for a season, still great.', sold: false },
-            { design: 'tee-2', model: 'Duality Hoodie', size: 'M', condition: 'Like new', price: 52, origPrice: 75, note: 'Sold — thanks for giving pieces a second life!', sold: true }
-        ];
+        // Real pieces live in the Shopify "Bazaar" collection (tag: bazaar).
+        // This preview file has no catalogue of its own — nothing invented here.
+        const BAZAR_ITEMS = [];
 
         // Items added by the admin (stored in this browser)
         function getAdminItems() {

@@ -467,7 +467,7 @@
     <!-- BAZAAR: pre-owned, curated by MARES -->
     <section id="bazaar" class="section">
         <h2 class="section-title reveal">The Bazaar &middot; Pre-owned</h2>
-        <p class="bazaar-intro reveal">NejudrThe most sustainable piece is the one that already exists. Give your MARES a second life — we\u2019ll help you sell it on. R for <strong style="color:#fff;">Recycling</strong>.</p>
+        <p class="bazaar-intro reveal">The most sustainable piece is the one that already exists. Give your MARES a second life &mdash; we&rsquo;ll help you sell it on. <strong style="color:#fff;">R for Recycling.</strong></p>
 
         <div class="bazaar-steps reveal">
             <div class="bstep"><div class="bnum">1</div><h4>Message us</h4><p>Send us your piece via the form below — model, size, condition and a photo.</p></div>
@@ -475,54 +475,63 @@
             <div class="bstep"><div class="bnum">3</div><h4>Sold</h4><p>When it sells, we send you the money. A share always goes to the planet.</p></div>
         </div>
 
-        <div class="bazaar-grid reveal" id="bazaarGrid"></div>
+        <div class="bazaar-grid reveal" id="bazaarGrid">
+            {%- assign bz = collections.bazaar.products -%}
+            {%- if bz.size > 0 -%}
+                {%- for p in bz -%}
+                    {%- assign v = p.selected_or_first_available_variant -%}
+                    {%- assign cond = '' -%}
+                    {%- assign psize = '' -%}
+                    {%- for t in p.tags -%}
+                        {%- if t contains 'cond:' -%}{%- assign cond = t | remove: 'cond:' -%}{%- endif -%}
+                        {%- if t contains 'size:' -%}{%- assign psize = t | remove: 'size:' -%}{%- endif -%}
+                    {%- endfor -%}
+                    {%- if psize == blank and v.title != 'Default Title' -%}{%- assign psize = v.title -%}{%- endif -%}
+                    <div class="bazaar-card">
+                        <div class="bazaar-thumb bz-photo">
+                            {%- if p.available -%}
+                                {%- if cond != blank -%}<span class="bazaar-badge">{{ cond }}</span>{%- endif -%}
+                            {%- else -%}
+                                <span class="bazaar-badge sold">Sold</span>
+                            {%- endif -%}
+                            {%- if p.featured_image -%}
+                                <img src="{{ p.featured_image | image_url: width: 700 }}" alt="{{ p.title | escape }}" loading="lazy">
+                            {%- endif -%}
+                        </div>
+                        <div class="bazaar-info">
+                            <h3>{{ p.title }}</h3>
+                            <div class="meta">
+                                {%- if psize != blank -%}Size {{ psize }}{%- endif -%}
+                                {%- if psize != blank and cond != blank -%} &middot; {% endif -%}
+                                {%- if cond != blank -%}{{ cond }}{%- endif -%}
+                            </div>
+                            <div class="note">{{ p.description | strip_html | truncate: 90 }}</div>
+                            <div class="brow">
+                                <div class="price">
+                                    {%- if v.compare_at_price > v.price -%}<s>{{ v.compare_at_price | money }}</s> {% endif -%}
+                                    {{ v.price | money }}
+                                </div>
+                                {%- if p.available -%}
+                                    {%- form 'product', p -%}
+                                        <input type="hidden" name="id" value="{{ v.id }}">
+                                        <button type="submit" class="bazaar-buy">Claim it</button>
+                                    {%- endform -%}
+                                {%- else -%}
+                                    <span class="price" style="color:#888;">Sold</span>
+                                {%- endif -%}
+                            </div>
+                        </div>
+                    </div>
+                {%- endfor -%}
+            {%- else -%}
+                <div class="bazaar-empty">No pre-owned pieces right now &mdash; check back soon, or offer yours below. &#128071;</div>
+            {%- endif -%}
+        </div>
 
         <div class="sell-cta reveal">
             <button class="sell-btn" onclick="openSell()">&#9835; Sell your piece</button>
         </div>
     </section>
-
-    <!-- ADMIN MODAL -->
-    <div class="sell-overlay" id="adminOverlay">
-        <div class="sell-modal">
-            <span class="sell-close" onclick="closeAdmin()">&times;</span>
-            <div id="adminGate">
-                <h2>Bazaar admin</h2>
-                <p class="sub">Enter the password to add pieces to the bazaar.</p>
-                <form onsubmit="return adminLogin(event)">
-                    <label>Password</label>
-                    <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password">
-                    <button class="sell-submit" type="submit">Log in</button>
-                </form>
-            </div>
-            <div id="adminPanel" style="display:none;">
-                <h2>Add a piece to the bazaar</h2>
-                <p class="sub">The piece shows in the bazaar in this browser right away. To publish it to everyone use <b>Export</b> below.</p>
-                <form onsubmit="return adminAdd(event)">
-                    <label>Design (thumbnail)</label>
-                    <select id="aDesign"><option value="tee-1">Venus (Blind Statue)</option><option value="tee-2">Eye (Duality)</option><option value="tee-3">Heart (Planetary Heart)</option></select>
-                    <label>Model / name</label>
-                    <input id="aModel" type="text" value="Blind Statue Hoodie" required>
-                    <div class="sell-row">
-                        <div><label>Size</label><select id="aSize"><option>S</option><option>M</option><option>L</option><option>XL</option></select></div>
-                        <div><label>Condition</label><select id="aCond"><option>Like new</option><option>Very good</option><option>Good</option><option>Worn, with marks</option></select></div>
-                    </div>
-                    <div class="sell-row">
-                        <div><label>Price (€)</label><input id="aPrice" type="number" min="1" placeholder="45" required></div>
-                        <div><label>Original price (€)</label><input id="aOrig" type="number" min="1" placeholder="85"></div>
-                    </div>
-                    <label>Note</label>
-                    <textarea id="aNote" placeholder="Condition, times worn\u2026"></textarea>
-                    <button class="sell-submit" type="submit">Add to bazaar</button>
-                </form>
-                <h3 class="admin-h3">Your added pieces</h3>
-                <div id="adminList"></div>
-                <button type="button" class="admin-export-btn" onclick="adminExport()">\u29c9 Export all pieces (JSON)</button>
-                <textarea id="adminExport" style="display:none;margin-top:10px;" readonly rows="6"></textarea>
-                <p class="muted-sm" style="margin-top:8px;">Tip: to publish permanently to <b>all visitors</b>, send me this JSON \u2014 I\u2019ll bake it into the site. (Or we connect it to Shopify.)</p>
-            </div>
-        </div>
-    </div>
 
     <!-- SELL FORM MODAL -->
     <div class="sell-overlay" id="sellOverlay">
@@ -589,7 +598,6 @@
             <a class="foot-btn" id="igLink" target="_blank" rel="noopener">&#9673; Follow on Instagram</a>
             <a class="foot-btn" id="fbLink" target="_blank" rel="noopener">&#402; Follow on Facebook</a>
         </div>
-        <p style="margin-top:1.4rem;font-size:0.68rem;"><a href="#" onclick="openAdmin();return false;" style="color:#444;text-decoration:underline;">Admin</a></p>
     </footer>
 
     <!-- DISCOUNT EYE -->
