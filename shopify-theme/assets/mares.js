@@ -504,13 +504,18 @@
         function buyNowFromModal() {
             if (!currentProductKey) return;
             const size = document.querySelector('#sizeRow .size-pill.sel').innerText;
+            const wasEmpty = cart.length === 0;
             addItem(currentProductKey, size);
-            closeModal(); toggleCart(true); checkout();
+            closeModal();
+            if (wasEmpty) playBlinkAnimation(() => { toggleCart(true); showToast(); });
+            else { toggleCart(true); showToast(); }
         }
         function quickBuy(key, ev) {
             if (ev) ev.stopPropagation();
+            const wasEmpty = cart.length === 0;
             addItem(key, 'M');
-            toggleCart(true); checkout();
+            if (wasEmpty) playBlinkAnimation(() => { toggleCart(true); showToast(); });
+            else { toggleCart(true); showToast(); }
         }
 
         // --- Add-to-cart eye blink animation (click to skip) ---
