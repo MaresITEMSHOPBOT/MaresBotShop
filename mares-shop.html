@@ -539,6 +539,49 @@
             .timer-section { transform: scale(0.95); }
         }
 
+        /* --- BAZAAR (pre-owned) --- */
+        .bazaar-intro { max-width: 720px; margin: 0 auto 3rem auto; text-align: center; color: var(--text-muted); font-size: 1rem; }
+        .bazaar-steps { display: flex; gap: 1.4rem; justify-content: center; flex-wrap: wrap; max-width: 900px; margin: 0 auto 3.5rem auto; }
+        .bstep { flex: 1; min-width: 200px; background: rgba(6,26,21,0.6); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.4rem; text-align: center; }
+        .bstep .bnum { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--accent-cyan); color: #022; font-weight: 900; margin-bottom: 0.7rem; }
+        .bstep h4 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.3rem; }
+        .bstep p { font-size: 0.82rem; color: var(--text-muted); }
+        .bazaar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.6rem; max-width: 1200px; margin: 0 auto; }
+        .bazaar-card { background: rgba(10,10,10,0.5); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; transition: all 0.3s; }
+        .bazaar-card:hover { transform: translateY(-6px); border-color: var(--accent-cyan); box-shadow: 0 14px 30px rgba(0,0,0,0.5), 0 0 22px var(--accent-glow); }
+        .bazaar-thumb { height: 260px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .bazaar-thumb.g1 { background: radial-gradient(circle at 50% 30%, #14684a 0%, #062b1f 78%); }
+        .bazaar-thumb.g2 { background: radial-gradient(circle at 50% 30%, #0f6b62 0%, #05261f 78%); }
+        .bazaar-thumb.g3 { background: radial-gradient(circle at 50% 30%, #12744f 0%, #05261c 78%); }
+        .bazaar-thumb svg { width: 82%; height: 82%; }
+        .bazaar-badge { position: absolute; top: 12px; left: 12px; background: rgba(2,2,2,0.75); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 0.66rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .bazaar-info { padding: 1.2rem 1.3rem 1.4rem; }
+        .bazaar-info h3 { font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.35rem; }
+        .bazaar-info .meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .bazaar-info .note { font-size: 0.8rem; color: #c8d2ce; margin-bottom: 0.9rem; min-height: 1.1rem; }
+        .bazaar-info .brow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .bazaar-info .price { color: var(--accent-cyan); font-weight: 800; font-size: 1.1rem; }
+        .bazaar-info .price s { color: var(--text-muted); font-weight: 400; font-size: 0.8rem; margin-right: 6px; }
+        .bazaar-buy { background: var(--accent-cyan); color: #000; border: none; border-radius: 6px; padding: 8px 16px; font-weight: 800; font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; text-decoration: none; }
+        .bazaar-buy:hover { filter: brightness(1.12); }
+        .bazaar-empty { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem; }
+        .sell-cta { text-align: center; margin-top: 3.5rem; }
+        .sell-btn { display: inline-flex; align-items: center; gap: 10px; padding: 15px 34px; background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 30px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.85rem; cursor: pointer; transition: all 0.25s; }
+        .sell-btn:hover { background: var(--accent-cyan); color: #000; box-shadow: 0 0 22px var(--accent-glow); }
+        /* sell form modal */
+        .sell-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 3200; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .sell-overlay.active { display: flex; }
+        .sell-modal { background: #0a0a0a; border: 1px solid var(--accent-cyan); border-radius: 10px; width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; padding: 2.2rem; position: relative; }
+        .sell-modal h2 { font-size: 1.5rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem; }
+        .sell-modal p.sub { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.4rem; }
+        .sell-modal label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-cyan); margin: 0.9rem 0 0.3rem; }
+        .sell-modal input, .sell-modal select, .sell-modal textarea { width: 100%; background: #02100c; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; color: #fff; font-family: inherit; font-size: 0.9rem; }
+        .sell-modal textarea { resize: vertical; min-height: 64px; }
+        .sell-row { display: flex; gap: 12px; } .sell-row > div { flex: 1; }
+        .sell-close { position: absolute; top: 14px; right: 18px; font-size: 2rem; color: #fff; cursor: pointer; line-height: 1; }
+        .sell-submit { width: 100%; margin-top: 1.5rem; padding: 14px; background: var(--accent-cyan); color: #000; border: none; border-radius: 6px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+        @media (max-width: 700px) { .sell-row { flex-direction: column; gap: 0; } .bazaar-steps { flex-direction: column; } }
+
         .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
         footer { text-align: center; padding: 3rem; border-top: 1px solid var(--border-color); color: #555; position: relative;}
@@ -574,6 +617,7 @@
         <div class="nav-links">
             <a href="#about">The Code</a>
             <a href="#collection">Season 1</a>
+            <a href="#bazaar">Bazaar</a>
             <a class="music-btn" id="musicBtn" onclick="toggleMusic()">&#9835; Sound Off</a>
             <a class="cart-btn" onclick="toggleCart(true)">Cart<span class="cart-count" id="cartCount">0</span></a>
         </div>
@@ -988,6 +1032,53 @@
         </div>
     </section>
 
+    <!-- BAZAAR: pre-owned, curated by MARES -->
+    <section id="bazaar" class="section">
+        <h2 class="section-title reveal">The Bazaar &middot; Pre-owned</h2>
+        <p class="bazaar-intro reveal">Nejudržitelnější kus je ten, který už existuje. Dej svému MARESu druhý život — my ti pomůžeme ho prodat dál. R jako <strong style="color:#fff;">Recycling</strong>.</p>
+
+        <div class="bazaar-steps reveal">
+            <div class="bstep"><div class="bnum">1</div><h4>Napiš nám</h4><p>Pošli nám svůj kus přes formulář níže — model, velikost, stav a fotku.</p></div>
+            <div class="bstep"><div class="bnum">2</div><h4>Zařadíme ho</h4><p>Kus zkontrolujeme, nafotíme a přidáme sem do bazaru.</p></div>
+            <div class="bstep"><div class="bnum">3</div><h4>Prodáno</h4><p>Když se prodá, pošleme ti peníze. Část jde vždy planetě.</p></div>
+        </div>
+
+        <div class="bazaar-grid reveal" id="bazaarGrid"></div>
+
+        <div class="sell-cta reveal">
+            <button class="sell-btn" onclick="openSell()">&#9835; Prodej svůj kus</button>
+        </div>
+    </section>
+
+    <!-- SELL FORM MODAL -->
+    <div class="sell-overlay" id="sellOverlay">
+        <div class="sell-modal">
+            <span class="sell-close" onclick="closeSell()">&times;</span>
+            <h2>Prodej svůj kus</h2>
+            <p class="sub">Vyplň nabídku — po odeslání se ti otevře předvyplněný e-mail nám. Fotku přiložíš do e-mailu.</p>
+            <form onsubmit="return submitSell(event)">
+                <label>Model</label>
+                <select id="sfModel">
+                    <option>Blind Statue Hoodie</option>
+                    <option>Duality Hoodie</option>
+                    <option>Planetary Heart Hoodie</option>
+                    <option>Jiný MARES kus</option>
+                </select>
+                <div class="sell-row">
+                    <div><label>Velikost</label><select id="sfSize"><option>S</option><option>M</option><option>L</option><option>XL</option></select></div>
+                    <div><label>Stav</label><select id="sfCond"><option>Jako nové</option><option>Velmi dobrý</option><option>Dobrý</option><option>Nesené, se stopami</option></select></div>
+                </div>
+                <div class="sell-row">
+                    <div><label>Tvá cena (€)</label><input id="sfPrice" type="number" min="1" placeholder="např. 45"></div>
+                    <div><label>Tvůj e-mail</label><input id="sfEmail" type="email" placeholder="ty@email.cz" required></div>
+                </div>
+                <label>Popis / poznámka</label>
+                <textarea id="sfNote" placeholder="Jak často nosené, případné vady, důvod prodeje…"></textarea>
+                <button class="sell-submit" type="submit">Odeslat nabídku</button>
+            </form>
+        </div>
+    </div>
+
     <!-- SECRET EYE 3 -->
     <div class="secret-eye egg-2">
         <svg viewBox="0 0 200 200" width="100%" height="100%">
@@ -1306,6 +1397,65 @@
             if (!musicOn && localStorage.getItem('mares_music') !== 'off') { startMusic(); setMusicBtn(); }
             document.removeEventListener('pointerdown', autoStart);
         });
+
+        // --- BAZAAR (pre-owned) ---
+        // E-mail, kam chodí nabídky a poptávky (uprav na svůj):
+        const BAZAR_EMAIL = 'hello@mareswear.com';
+        // Katalog použitých kusů — SEM PŘIDÁVÁŠ POLOŽKY TY.
+        // design: 'tee-1' = Venus, 'tee-2' = Eye, 'tee-3' = Heart (mini náhled).
+        // sold: true = prodáno (zobrazí se přeškrtnuté). origPrice je volitelné.
+        const BAZAR_ITEMS = [
+            { design: 'tee-1', model: 'Blind Statue Hoodie', size: 'L', condition: 'Jako nové', price: 55, origPrice: 85, note: 'Nošené 2×, bez vad.', sold: false },
+            { design: 'tee-3', model: 'Planetary Heart Hoodie', size: 'M', condition: 'Velmi dobrý', price: 49, origPrice: 89, note: 'Lehce sepraný potisk, jinak super.', sold: false }
+        ];
+
+        function renderBazaar() {
+            const grid = document.getElementById('bazaarGrid');
+            if (!grid) return;
+            if (!BAZAR_ITEMS.length) {
+                grid.innerHTML = '<div class="bazaar-empty">Zatím tu nic není — buď první, kdo nabídne svůj kus. 👇</div>';
+                return;
+            }
+            const gmap = { 'tee-1': 'g1', 'tee-2': 'g2', 'tee-3': 'g3' };
+            grid.innerHTML = BAZAR_ITEMS.map(function (it) {
+                const svg = document.getElementById(it.design) ? document.getElementById(it.design).innerHTML : '';
+                const badge = it.sold ? '<span class="bazaar-badge" style="border-color:#888;color:#aaa;">Prodáno</span>'
+                                      : '<span class="bazaar-badge">' + it.condition + '</span>';
+                const orig = it.origPrice ? '<s>€' + it.origPrice + '</s>' : '';
+                const action = it.sold
+                    ? '<span class="price">Prodáno</span>'
+                    : '<a class="bazaar-buy" href="mailto:' + BAZAR_EMAIL + '?subject=' + encodeURIComponent('Zájem o bazar: ' + it.model + ' (' + it.size + ')') + '&body=' + encodeURIComponent('Mám zájem o použitý kus: ' + it.model + ', velikost ' + it.size + ', cena €' + it.price + '.') + '">Mám zájem</a>';
+                return '<div class="bazaar-card">'
+                    + '<div class="bazaar-thumb ' + (gmap[it.design] || 'g1') + '">' + badge + svg + '</div>'
+                    + '<div class="bazaar-info"><h3>' + it.model + '</h3>'
+                    + '<div class="meta">Velikost ' + it.size + ' · ' + it.condition + '</div>'
+                    + '<div class="note">' + (it.note || '') + '</div>'
+                    + '<div class="brow"><div class="price">' + orig + '€' + it.price + '</div>' + action + '</div>'
+                    + '</div></div>';
+            }).join('');
+        }
+        renderBazaar();
+
+        function openSell() { document.getElementById('sellOverlay').classList.add('active'); document.body.style.overflow = 'hidden'; }
+        function closeSell() { document.getElementById('sellOverlay').classList.remove('active'); document.body.style.overflow = 'auto'; }
+        document.getElementById('sellOverlay').addEventListener('click', function (e) { if (e.target === this) closeSell(); });
+        function submitSell(e) {
+            e.preventDefault();
+            const model = document.getElementById('sfModel').value;
+            const size = document.getElementById('sfSize').value;
+            const cond = document.getElementById('sfCond').value;
+            const price = document.getElementById('sfPrice').value || '(neuvedeno)';
+            const email = document.getElementById('sfEmail').value;
+            const note = document.getElementById('sfNote').value || '(bez poznámky)';
+            const subject = 'Nabídka do bazaru: ' + model + ' (' + size + ')';
+            const body = 'Chci prodat svůj kus přes MARES bazar:\n\n'
+                + 'Model: ' + model + '\nVelikost: ' + size + '\nStav: ' + cond + '\n'
+                + 'Má cena: €' + price + '\nKontakt: ' + email + '\nPoznámka: ' + note + '\n\n'
+                + 'Fotku/fotky přikládám k tomuto e-mailu.';
+            window.location.href = 'mailto:' + BAZAR_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+            closeSell();
+            return false;
+        }
 
         // --- Social links & hashtag ---
         const SOCIAL = {
