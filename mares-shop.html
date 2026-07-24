@@ -471,6 +471,25 @@
         }
 
         /* --- ADD-TO-CART BLINK ANIMATION --- */
+        /* Checkout transition overlay */
+        .checkout-transition {
+            position: fixed; inset: 0; z-index: 10000; background: radial-gradient(circle at 50% 38%, #0c1a1d 0%, #030607 70%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+            opacity: 0; pointer-events: none; transition: opacity .45s ease;
+        }
+        .checkout-transition.show { opacity: 1; pointer-events: all; }
+        .ct-eye { width: 150px; }
+        .checkout-transition.show .ct-eye-g { animation: ctBlink 1.1s ease .15s; transform-origin: 50% 50%; }
+        @keyframes ctBlink { 0%,100% { transform: scaleY(1); } 18% { transform: scaleY(0.06); } 36% { transform: scaleY(1); } }
+        .ct-sign { font-family: 'Caveat', cursive; font-weight: 700; font-size: 3.4rem; color: #fff; line-height: 1; }
+        .ct-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 5px; color: var(--accent-cyan); font-weight: 800; }
+        .ct-sub { color: #9fb9bd; font-size: 0.95rem; max-width: 320px; text-align: center; }
+        .ct-sub strong { color: #eafcff; }
+        .ct-bar { width: 240px; height: 3px; border-radius: 3px; background: rgba(38,198,218,0.18); overflow: hidden; margin-top: 10px; }
+        .ct-bar span { display: block; height: 100%; width: 40%; border-radius: 3px; background: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(38,198,218,0.8); animation: ctSlide 1.1s ease-in-out infinite; }
+        @keyframes ctSlide { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+
         .blink-overlay {
             position: fixed; inset: 0; background: rgba(1,3,3,0.97); z-index: 5000;
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
@@ -1346,6 +1365,22 @@
         </svg>
     </div>
 
+    <!-- CHECKOUT TRANSITION — payment opens inside the brand, no hard jump -->
+    <div class="checkout-transition" id="checkoutTransition" aria-hidden="true">
+        <svg class="ct-eye" viewBox="0 0 200 120">
+            <g class="ct-eye-g">
+                <path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="3.5"/>
+                <circle cx="100" cy="60" r="26" fill="#26c6da"/>
+                <circle cx="100" cy="60" r="10.5" fill="#000"/>
+                <circle cx="107" cy="53" r="5" fill="#fff"/>
+            </g>
+        </svg>
+        <div class="ct-sign">Mares</div>
+        <div class="ct-title">Secure checkout</div>
+        <div class="ct-sub">&#128274; Opening your payment on <strong>mareswear.com</strong> &mdash; same store, same design.</div>
+        <div class="ct-bar"><span></span></div>
+    </div>
+
     <div class="toast" id="toast">Added to cart ✓</div>
 
     <!-- MODAL OVERLAY -->
@@ -1963,7 +1998,13 @@
             const ready = SHOPIFY.domain && cart.every(i => variantFor(i.key, i.size));
             if (ready) {
                 const items = cart.map(i => variantFor(i.key, i.size) + ':' + i.qty).join(',');
-                setTimeout(() => { window.location.href = 'https://' + SHOPIFY.domain + '/cart/' + items; }, 700);
+                // Branded transition: the payment page opens under our own design,
+                // so checkout feels like part of the site instead of a jump away.
+                setTimeout(() => {
+                    toggleCart(false);
+                    document.getElementById('checkoutTransition').classList.add('show');
+                    setTimeout(() => { window.location.href = 'https://' + SHOPIFY.domain + '/cart/' + items; }, 1600);
+                }, 400);
             } else {
                 note.innerHTML += '<br>Online checkout is being connected \u2014 ordering opens soon.';
             }
