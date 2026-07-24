@@ -1,0 +1,13 @@
+Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Option1 Name,Option1 Value,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Qty,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Requires Shipping,Variant Taxable,Status
+blind-statue-hoodie,Blind Statue Hoodie,"<p>LIE. DIE. LIVE. DIVE. — jeden potisk, čtyři slova, každý v tom vidí něco jiného. Halftone socha Venuše, hvězdné pole, na zádech psané <em>open your eyes</em>. Těžká organická mikina, tisk na objednávku (zero waste). 5 % z ceny jde na ochranu planety.</p>",MARES,Hoodie,"openyoureyes,season-1,venus,organic,unisex",TRUE,Size,S,MARES-BS-S,600,shopify,25,deny,manual,85.00,TRUE,TRUE,active
+blind-statue-hoodie,,,,,,,Size,M,MARES-BS-M,600,shopify,25,deny,manual,85.00,TRUE,TRUE,active
+blind-statue-hoodie,,,,,,,Size,L,MARES-BS-L,600,shopify,25,deny,manual,85.00,TRUE,TRUE,active
+blind-statue-hoodie,,,,,,,Size,XL,MARES-BS-XL,600,shopify,25,deny,manual,85.00,TRUE,TRUE,active
+duality-hoodie,Duality Hoodie,"<p>HAVE. LOVE. HATE. — co přečteš první, je na tobě. Halftone koláž s okem, hvězdné pole, na zádech psané <em>open your eyes</em>. Těžká organická mikina, tisk na objednávku (zero waste). 5 % z ceny jde na ochranu planety.</p>",MARES,Hoodie,"openyoureyes,season-1,eye,organic,unisex",TRUE,Size,S,MARES-DU-S,600,shopify,25,deny,manual,75.00,TRUE,TRUE,active
+duality-hoodie,,,,,,,Size,M,MARES-DU-M,600,shopify,25,deny,manual,75.00,TRUE,TRUE,active
+duality-hoodie,,,,,,,Size,L,MARES-DU-L,600,shopify,25,deny,manual,75.00,TRUE,TRUE,active
+duality-hoodie,,,,,,,Size,XL,MARES-DU-XL,600,shopify,25,deny,manual,75.00,TRUE,TRUE,active
+planetary-heart-hoodie,Planetary Heart Hoodie,"<p>HEART. EARTH. ART. TEAR. — pět písmen, čtyři pravdy. Anatomické srdce, hvězdné pole, na zádech psané <em>open your eyes</em>. Těžká organická mikina, tisk na objednávku (zero waste). 5 % z ceny jde na ochranu planety.</p>",MARES,Hoodie,"openyoureyes,season-1,heart,organic,unisex",TRUE,Size,S,MARES-PH-S,600,shopify,25,deny,manual,89.00,TRUE,TRUE,active
+planetary-heart-hoodie,,,,,,,Size,M,MARES-PH-M,600,shopify,25,deny,manual,89.00,TRUE,TRUE,active
+planetary-heart-hoodie,,,,,,,Size,L,MARES-PH-L,600,shopify,25,deny,manual,89.00,TRUE,TRUE,active
+planetary-heart-hoodie,,,,,,,Size,XL,MARES-PH-XL,600,shopify,25,deny,manual,89.00,TRUE,TRUE,active
