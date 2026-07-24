@@ -580,6 +580,14 @@
         .sell-row { display: flex; gap: 12px; } .sell-row > div { flex: 1; }
         .sell-close { position: absolute; top: 14px; right: 18px; font-size: 2rem; color: #fff; cursor: pointer; line-height: 1; }
         .sell-submit { width: 100%; margin-top: 1.5rem; padding: 14px; background: var(--accent-cyan); color: #000; border: none; border-radius: 6px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+        .sell-overlay.shake, .sell-modal .shake, #adminGate.shake { animation: shakeX .4s; }
+        @keyframes shakeX { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
+        .admin-h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-cyan); margin: 1.6rem 0 0.6rem; }
+        .admin-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+        .admin-row button { background: transparent; border: 1px solid var(--border-color); color: #ccc; border-radius: 5px; padding: 4px 10px; font-size: 0.72rem; cursor: pointer; margin-left: 6px; }
+        .admin-row button:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .admin-export-btn { margin-top: 1.4rem; width: 100%; background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); border-radius: 6px; padding: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 0.75rem; cursor: pointer; }
+        .muted-sm { color: var(--text-muted); font-size: 0.78rem; }
         @media (max-width: 700px) { .sell-row { flex-direction: column; gap: 0; } .bazaar-steps { flex-direction: column; } }
 
         .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
@@ -1050,6 +1058,48 @@
         </div>
     </section>
 
+    <!-- ADMIN (SPRÁVCE) MODAL -->
+    <div class="sell-overlay" id="adminOverlay">
+        <div class="sell-modal">
+            <span class="sell-close" onclick="closeAdmin()">&times;</span>
+            <div id="adminGate">
+                <h2>Správce bazaru</h2>
+                <p class="sub">Zadej heslo pro přidávání kusů do bazaru.</p>
+                <form onsubmit="return adminLogin(event)">
+                    <label>Heslo</label>
+                    <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password">
+                    <button class="sell-submit" type="submit">Přihlásit</button>
+                </form>
+            </div>
+            <div id="adminPanel" style="display:none;">
+                <h2>Přidat kus do bazaru</h2>
+                <p class="sub">Kus se hned zobrazí v bazaru v tomto prohlížeči. Pro zveřejnění všem použij <b>Export</b> níže.</p>
+                <form onsubmit="return adminAdd(event)">
+                    <label>Design (náhled)</label>
+                    <select id="aDesign"><option value="tee-1">Venuše (Blind Statue)</option><option value="tee-2">Oko (Duality)</option><option value="tee-3">Srdce (Planetary Heart)</option></select>
+                    <label>Model / název</label>
+                    <input id="aModel" type="text" value="Blind Statue Hoodie" required>
+                    <div class="sell-row">
+                        <div><label>Velikost</label><select id="aSize"><option>S</option><option>M</option><option>L</option><option>XL</option></select></div>
+                        <div><label>Stav</label><select id="aCond"><option>Jako nové</option><option>Velmi dobrý</option><option>Dobrý</option><option>Nesené, se stopami</option></select></div>
+                    </div>
+                    <div class="sell-row">
+                        <div><label>Cena (€)</label><input id="aPrice" type="number" min="1" placeholder="45" required></div>
+                        <div><label>Původní cena (€)</label><input id="aOrig" type="number" min="1" placeholder="85"></div>
+                    </div>
+                    <label>Poznámka</label>
+                    <textarea id="aNote" placeholder="Stav, počet nošení…"></textarea>
+                    <button class="sell-submit" type="submit">Přidat do bazaru</button>
+                </form>
+                <h3 class="admin-h3">Tvoje přidané kusy</h3>
+                <div id="adminList"></div>
+                <button type="button" class="admin-export-btn" onclick="adminExport()">⧉ Export všech kusů (JSON)</button>
+                <textarea id="adminExport" style="display:none;margin-top:10px;" readonly rows="6"></textarea>
+                <p class="muted-sm" style="margin-top:8px;">Tip: pro trvalé zveřejnění <b>všem návštěvníkům</b> mi tento JSON pošli — vložím ho napevno do webu. (Nebo to napojíme na Shopify.)</p>
+            </div>
+        </div>
+    </div>
+
     <!-- SELL FORM MODAL -->
     <div class="sell-overlay" id="sellOverlay">
         <div class="sell-modal">
@@ -1093,7 +1143,7 @@
 
     <footer>
         <div class="logo">Mares</div>
-        <p>&copy; 2026 MARES. Strictly No Plastics.</p>
+        <p>&copy; 2026 MARES. Strictly No Plastics. &nbsp;<a href="#" onclick="openAdmin();return false;" style="color:#555;text-decoration:underline;font-size:0.8rem;">Správce</a></p>
         <div class="footer-actions">
             <button class="foot-btn" id="hashBtn" onclick="copyHashtag()">#openyoureyes &#10697;</button>
             <a class="foot-btn" id="igLink" target="_blank" rel="noopener">&#9673; Follow on Instagram</a>
@@ -1406,18 +1456,29 @@
         // sold: true = prodáno (zobrazí se přeškrtnuté). origPrice je volitelné.
         const BAZAR_ITEMS = [
             { design: 'tee-1', model: 'Blind Statue Hoodie', size: 'L', condition: 'Jako nové', price: 55, origPrice: 85, note: 'Nošené 2×, bez vad.', sold: false },
-            { design: 'tee-3', model: 'Planetary Heart Hoodie', size: 'M', condition: 'Velmi dobrý', price: 49, origPrice: 89, note: 'Lehce sepraný potisk, jinak super.', sold: false }
+            { design: 'tee-2', model: 'Duality Hoodie', size: 'S', condition: 'Velmi dobrý', price: 45, origPrice: 75, note: 'Oblíbený kus, uvolňuji šatník.', sold: false },
+            { design: 'tee-3', model: 'Planetary Heart Hoodie', size: 'M', condition: 'Velmi dobrý', price: 49, origPrice: 89, note: 'Lehce sepraný potisk, jinak super.', sold: false },
+            { design: 'tee-1', model: 'Blind Statue Hoodie', size: 'XL', condition: 'Dobrý', price: 42, origPrice: 85, note: 'Nošené přes sezónu, pořád parádní.', sold: false },
+            { design: 'tee-2', model: 'Duality Hoodie', size: 'M', condition: 'Jako nové', price: 52, origPrice: 75, note: 'Prodáno — díky, že dáváš kusům druhý život!', sold: true }
         ];
+
+        // Položky přidané správcem (uložené v tomto prohlížeči)
+        function getAdminItems() {
+            try { return JSON.parse(localStorage.getItem('mares_bazar_admin') || '[]'); } catch (e) { return []; }
+        }
+        function saveAdminItems(arr) { localStorage.setItem('mares_bazar_admin', JSON.stringify(arr)); }
+        function allBazaarItems() { return BAZAR_ITEMS.concat(getAdminItems()); }
 
         function renderBazaar() {
             const grid = document.getElementById('bazaarGrid');
             if (!grid) return;
-            if (!BAZAR_ITEMS.length) {
+            const items = allBazaarItems();
+            if (!items.length) {
                 grid.innerHTML = '<div class="bazaar-empty">Zatím tu nic není — buď první, kdo nabídne svůj kus. 👇</div>';
                 return;
             }
             const gmap = { 'tee-1': 'g1', 'tee-2': 'g2', 'tee-3': 'g3' };
-            grid.innerHTML = BAZAR_ITEMS.map(function (it) {
+            grid.innerHTML = items.map(function (it) {
                 const svg = document.getElementById(it.design) ? document.getElementById(it.design).innerHTML : '';
                 const badge = it.sold ? '<span class="bazaar-badge" style="border-color:#888;color:#aaa;">Prodáno</span>'
                                       : '<span class="bazaar-badge">' + it.condition + '</span>';
@@ -1435,6 +1496,67 @@
             }).join('');
         }
         renderBazaar();
+
+        // --- SPRÁVCE bazaru (jednoduchý panel, data v tomto prohlížeči) ---
+        // Změň si heslo. Pozor: jde o lehkou ochranu na statickém webu, ne o skutečné
+        // zabezpečení (kód je veřejný). Pro plný účet použij později Shopify.
+        const ADMIN_PASS = 'mares2026';
+
+        function openAdmin() {
+            const ov = document.getElementById('adminOverlay');
+            ov.classList.add('active'); document.body.style.overflow = 'hidden';
+            document.getElementById('adminGate').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminPass').value = '';
+            setTimeout(function () { document.getElementById('adminPass').focus(); }, 50);
+        }
+        function closeAdmin() { document.getElementById('adminOverlay').classList.remove('active'); document.body.style.overflow = 'auto'; }
+        function adminLogin(e) {
+            if (e) e.preventDefault();
+            if (document.getElementById('adminPass').value === ADMIN_PASS) {
+                document.getElementById('adminGate').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                renderAdminList();
+            } else {
+                document.getElementById('adminGate').classList.add('shake');
+                setTimeout(function () { document.getElementById('adminGate').classList.remove('shake'); }, 500);
+            }
+            return false;
+        }
+        function adminAdd(e) {
+            e.preventDefault();
+            const item = {
+                design: document.getElementById('aDesign').value,
+                model: document.getElementById('aModel').value,
+                size: document.getElementById('aSize').value,
+                condition: document.getElementById('aCond').value,
+                price: Number(document.getElementById('aPrice').value) || 0,
+                origPrice: Number(document.getElementById('aOrig').value) || 0,
+                note: document.getElementById('aNote').value,
+                sold: false
+            };
+            const arr = getAdminItems(); arr.push(item); saveAdminItems(arr);
+            document.getElementById('aPrice').value = ''; document.getElementById('aOrig').value = ''; document.getElementById('aNote').value = '';
+            renderBazaar(); renderAdminList();
+            return false;
+        }
+        function adminRemove(i) { const arr = getAdminItems(); arr.splice(i, 1); saveAdminItems(arr); renderBazaar(); renderAdminList(); }
+        function adminToggleSold(i) { const arr = getAdminItems(); arr[i].sold = !arr[i].sold; saveAdminItems(arr); renderBazaar(); renderAdminList(); }
+        function renderAdminList() {
+            const arr = getAdminItems();
+            const wrap = document.getElementById('adminList');
+            if (!arr.length) { wrap.innerHTML = '<p class="muted-sm">Zatím jsi nepřidal žádný kus. (Příklady výše jsou napevno v kódu.)</p>'; return; }
+            wrap.innerHTML = arr.map(function (it, i) {
+                return '<div class="admin-row"><span>' + it.model + ' · ' + it.size + ' · €' + it.price + (it.sold ? ' <b style="color:#888;">(prodáno)</b>' : '') + '</span>'
+                    + '<span><button type="button" onclick="adminToggleSold(' + i + ')">' + (it.sold ? 'Vrátit' : 'Prodáno') + '</button>'
+                    + '<button type="button" onclick="adminRemove(' + i + ')">Smazat</button></span></div>';
+            }).join('');
+        }
+        function adminExport() {
+            const data = JSON.stringify(allBazaarItems(), null, 2);
+            const ta = document.getElementById('adminExport'); ta.style.display = 'block'; ta.value = data;
+            if (navigator.clipboard) navigator.clipboard.writeText(data).catch(function () {});
+        }
 
         function openSell() { document.getElementById('sellOverlay').classList.add('active'); document.body.style.overflow = 'hidden'; }
         function closeSell() { document.getElementById('sellOverlay').classList.remove('active'); document.body.style.overflow = 'auto'; }
