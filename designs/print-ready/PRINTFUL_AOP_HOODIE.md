@@ -38,6 +38,18 @@ the hood, one mirrored on the right. The inside lining stays stars.
 The label panel is a small crescent, so it carries just the **Mares**
 signature, centred where the woven label sits.
 
+## The kangaroo pocket eats the lower front
+
+The pocket is sewn over the front panel from about **48% of the canvas
+height** downwards, so anything below that line is hidden once the hoodie
+is assembled. The first version put the statue across that line and only
+its head and shoulders stayed visible.
+
+Every front now keeps the signature, the artwork and the letters inside
+the band between the safe-area top (11.5%) and the pocket line (48%), so
+the whole motif reads on the finished garment. Below the pocket line the
+file is stars only — that area still needs printing, it just isn't seen.
+
 ## Why the fronts have no bottom text
 
 The bottom ~20% of the front canvas is the hem band, folded under at the
