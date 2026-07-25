@@ -10,13 +10,13 @@ designs.
 
 | Printful tab | File | Size (px) |
 |---|---|---|
-| **Front** | `FIT_front_blind_statue.png` *or* `FIT_front_duality.png` *or* `FIT_front_planetary_heart.png` | 5400 × 6200 |
-| **Back** | `FIT_back_open_your_eyes.png` | 5400 × 6200 |
+| **Front** | `FIT_front_blind_statue.png` *or* `FIT_front_duality.png` *or* `FIT_front_planetary_heart.png` | 5800 × 5590 |
+| **Back** | `FIT_back_open_your_eyes.png` | 5800 × 5590 |
 | **Left sleeve** | `FIT_sleeve.png` | 5000 × 6200 |
 | **Right sleeve** | `FIT_sleeve.png` (same file) | 5000 × 6200 |
 | **Pocket** | `FIT_pocket.png` | 5400 × 2260 |
 | **Hood** | `FIT_hood.png` | 5200 × 5200 |
-| **Label panel** | `FIT_label_panel.png` | 5000 × 5000 |
+| **Label panel** | `FIT_label_panel.png` | 5000 × 4890 |
 | **Inside label** | `FIT_inside_label.png` | 4200 × 1200 |
 
 ## In the editor, for every tab
@@ -28,13 +28,22 @@ designs.
 3. Leave it centred. Don't shrink it to fit inside the dashed line; the
    dashed line is where *content* must stay, and it already does.
 
-## Why hood and label panel are stars only
+## Hood and label panel
 
-Both areas are split into several pieces by seams — the hood is four
-panels, the label panel is a crescent. Any motif placed there would be
-cut in half or land in a fold. A field of stars reads correctly no matter
-how the pieces are assembled, and keeps the cosmic background continuous
-across the whole garment.
+The hood is four separate panels (inside lining on top, outside on the
+bottom). A single big motif would be sliced by the crown seam, so each
+**outside** panel carries its own crying eye — one on the left side of
+the hood, one mirrored on the right. The inside lining stays stars.
+
+The label panel is a small crescent, so it carries just the **Mares**
+signature, centred where the woven label sits.
+
+## Why the fronts have no bottom text
+
+The bottom ~20% of the front canvas is the hem band, folded under at the
+"Folding line". Text placed there printed a second "open your eyes" on
+the hem, right below the one on the pocket. The script now lives only on
+the pocket; the hem is stars.
 
 ## Notes
 
