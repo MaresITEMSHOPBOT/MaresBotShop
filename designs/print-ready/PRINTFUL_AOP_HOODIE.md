@@ -55,9 +55,12 @@ On the earlier pocket version the pocket covered everything below 48% and
 the artwork was half hidden. If you ever switch back to a pocket hoodie,
 say so and I'll re-drop the artwork into the 11.5%–48% band.
 
-The four letters sit ~90–120 px clear of the artwork's edges. The artwork
-is an opaque rectangle, so letters tucked under it disappear — they have
-to sit beside it, not behind it.
+The statue artwork has its black backdrop **keyed out to transparency**,
+so the four letters sit ~45 px off the statue's actual outline rather
+than off the edge of an opaque rectangle. That is what lets LI·E / DI·VE
+hug the figure and read as one composition. Letter positions are derived
+from the silhouette width measured at each letter's own height, so they
+follow the body rather than sitting in straight columns.
 
 ## Notes
 
