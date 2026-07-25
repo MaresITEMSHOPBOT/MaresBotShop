@@ -472,6 +472,74 @@
 
         /* --- ADD-TO-CART BLINK ANIMATION --- */
         /* Checkout transition overlay */
+        /* On-page MARES checkout sheet */
+        .brand-checkout {
+            position: fixed; inset: 0; z-index: 9800; display: flex; align-items: center; justify-content: center;
+            padding: 24px 16px; opacity: 0; pointer-events: none; transition: opacity .35s ease;
+            background: radial-gradient(circle at 50% 20%, rgba(10,26,30,0.97) 0%, rgba(3,6,7,0.985) 70%);
+            backdrop-filter: blur(6px); overflow-y: auto;
+        }
+        .brand-checkout.show { opacity: 1; pointer-events: all; }
+        .bc-sheet {
+            width: 100%; max-width: 470px; margin: auto; position: relative;
+            background: linear-gradient(180deg, rgba(14,24,27,0.96) 0%, rgba(5,9,10,0.98) 100%);
+            border: 1px solid rgba(38,198,218,0.28); border-radius: 22px; padding: 30px 26px 26px;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.7), 0 0 40px rgba(38,198,218,0.12);
+            transform: translateY(14px); transition: transform .4s cubic-bezier(.2,.8,.2,1);
+        }
+        .brand-checkout.show .bc-sheet { transform: translateY(0); }
+        .bc-close {
+            position: absolute; top: 14px; right: 18px; background: none; border: none; color: #6f8a8e;
+            font-size: 1.7rem; line-height: 1; cursor: pointer; padding: 4px;
+        }
+        .bc-close:hover { color: var(--accent-cyan); }
+        .bc-head { text-align: center; margin-bottom: 20px; }
+        .bc-eye { width: 74px; display: block; margin: 0 auto 4px; }
+        .bc-sign { font-family: 'Caveat', cursive; font-weight: 700; font-size: 2.4rem; color: #fff; line-height: 1; }
+        .bc-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 5px; color: var(--accent-cyan); font-weight: 800; margin-top: 6px; }
+        .bc-sub { font-size: 0.74rem; color: #7f9a9e; margin-top: 7px; }
+        .bc-items { border-top: 1px solid rgba(255,255,255,0.07); }
+        .bc-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .bc-thumb { width: 52px; height: 62px; flex: 0 0 52px; border-radius: 8px; overflow: hidden; background: #0b1416; }
+        .bc-thumb svg { width: 100%; height: 100%; }
+        .bc-name { flex: 1; min-width: 0; }
+        .bc-name h4 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 2px; }
+        .bc-name span { font-size: 0.72rem; color: #7f9a9e; }
+        .bc-line { font-weight: 800; font-size: 0.9rem; color: #eafcff; white-space: nowrap; }
+        .bc-disc { display: flex; gap: 8px; margin: 16px 0 6px; }
+        .bc-disc input {
+            flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(38,198,218,0.25); color: #eafcff;
+            border-radius: 10px; padding: 11px 13px; font-size: 0.82rem; letter-spacing: 1px; font-family: inherit;
+        }
+        .bc-disc input::placeholder { color: #5e777b; letter-spacing: 1px; }
+        .bc-disc button {
+            background: rgba(38,198,218,0.12); border: 1px solid rgba(38,198,218,0.45); color: var(--accent-cyan);
+            border-radius: 10px; padding: 11px 16px; font-weight: 800; font-size: 0.7rem; letter-spacing: 1.5px;
+            text-transform: uppercase; cursor: pointer;
+        }
+        .bc-disc button:hover { background: rgba(38,198,218,0.22); }
+        .bc-code-note { font-size: 0.72rem; color: var(--accent-cyan); min-height: 1.1rem; margin-bottom: 8px; }
+        .bc-total-row {
+            display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0 18px;
+            font-size: 0.76rem; text-transform: uppercase; letter-spacing: 2.5px; color: #9fb9bd;
+        }
+        .bc-total-row span:last-child { font-size: 1.5rem; font-weight: 900; letter-spacing: 0; color: #fff; }
+        .bc-express { margin-bottom: 14px; }
+        .bc-express form { margin: 0; }
+        .bc-card-btn {
+            width: 100%; background: var(--accent-cyan); color: #00171a; border: none; border-radius: 30px;
+            padding: 16px; font-weight: 900; font-size: 0.8rem; letter-spacing: 2.5px; text-transform: uppercase;
+            cursor: pointer; font-family: inherit; transition: filter .2s, transform .2s;
+        }
+        .bc-card-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .bc-foot { text-align: center; font-size: 0.72rem; color: #7f9a9e; margin-top: 14px; }
+        .bc-badges { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+        .bc-badges span {
+            font-size: 0.56rem; letter-spacing: 1px; text-transform: uppercase; color: #8fa8ac;
+            border: 1px solid rgba(255,255,255,0.13); border-radius: 5px; padding: 4px 7px;
+        }
+        @media (max-width: 520px) { .bc-sheet { padding: 26px 18px 22px; border-radius: 18px; } .bc-sign { font-size: 2rem; } }
+
         .checkout-transition {
             position: fixed; inset: 0; z-index: 10000; background: radial-gradient(circle at 50% 38%, #0c1a1d 0%, #030607 70%);
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
@@ -1365,6 +1433,37 @@
         </svg>
     </div>
 
+
+    <!-- ON-PAGE MARES CHECKOUT -->
+    <div class="brand-checkout" id="brandCheckout" aria-hidden="true">
+        <div class="bc-sheet">
+            <button class="bc-close" onclick="closeBrandCheckout()" aria-label="Close">&times;</button>
+            <div class="bc-head">
+                <svg class="bc-eye" viewBox="0 0 200 120">
+                <g>
+                    <path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="3.5"/>
+                    <circle cx="100" cy="60" r="26" fill="#26c6da"/>
+                    <circle cx="100" cy="60" r="10.5" fill="#000"/>
+                    <circle cx="107" cy="53" r="5" fill="#fff"/>
+                </g>
+            </svg>
+                <div class="bc-sign">Mares</div>
+                <div class="bc-title">Checkout</div>
+                <div class="bc-sub">&#128274; Secure &middot; you stay on mareswear.com</div>
+            </div>
+            <div class="bc-items" id="bcItems"></div>
+            <div class="bc-disc">
+                <input id="bcCode" placeholder="Discount code" autocomplete="off" spellcheck="false">
+                <button type="button" onclick="applyBcCode()">Apply</button>
+            </div>
+            <div class="bc-code-note" id="bcCodeNote"></div>
+            <div class="bc-total-row"><span>Total</span><span id="bcTotal">&euro;0.00</span></div>
+            <button class="bc-card-btn" onclick="payByCard()">Pay by card</button>
+            <div class="bc-badges"><span>Visa</span><span>Mastercard</span><span>Maestro</span><span>Apple&nbsp;Pay</span><span>Google&nbsp;Pay</span><span>PayPal</span></div>
+            <div class="bc-foot">5% of your order goes to the planet. &#127757;</div>
+        </div>
+    </div>
+
     <!-- CHECKOUT TRANSITION — payment opens inside the brand, no hard jump -->
     <div class="checkout-transition" id="checkoutTransition" aria-hidden="true">
         <svg class="ct-eye" viewBox="0 0 200 120">
@@ -2024,6 +2123,46 @@
             document.getElementById('cartTotal').innerText = fmt(cart.reduce((a, i) => a + PRODUCTS[i.key].price * i.qty, 0));
         }
 
+        // --- On-page MARES checkout sheet ---
+        function renderBrandCheckout() {
+            const wrap = document.getElementById('bcItems');
+            if (!wrap) return;
+            wrap.innerHTML = cart.map(function (i) {
+                const p = PRODUCTS[i.key];
+                const art = document.getElementById(i.key) ? document.getElementById(i.key).innerHTML : '';
+                return '<div class="bc-row">'
+                    + '<div class="bc-thumb">' + art + '</div>'
+                    + '<div class="bc-name"><h4>' + p.name + '</h4><span>Size ' + i.size + ' &middot; qty ' + i.qty + '</span></div>'
+                    + '<div class="bc-line">' + fmt(p.price * i.qty) + '</div>'
+                    + '</div>';
+            }).join('');
+            document.getElementById('bcTotal').innerText = fmt(cart.reduce(function (a, i) { return a + PRODUCTS[i.key].price * i.qty; }, 0));
+        }
+        function closeBrandCheckout() {
+            document.getElementById('brandCheckout').classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+        function applyBcCode() {
+            const el = document.getElementById('bcCode');
+            const note = document.getElementById('bcCodeNote');
+            const code = (el.value || '').trim().toUpperCase();
+            if (!code) { note.innerText = 'Enter a code first.'; return; }
+            APPLY_DISCOUNT(code);
+            note.innerText = 'Code ' + code + ' will be applied at payment \u2713';
+        }
+        // Static preview: the code is passed along to Shopify with the cart link
+        let BC_CODE = '';
+        function APPLY_DISCOUNT(code) { BC_CODE = code; }
+
+        function payByCard() {
+            closeBrandCheckout();
+            document.getElementById('checkoutTransition').classList.add('show');
+            const items = cart.map(function (i) { return variantFor(i.key, i.size) + ':' + i.qty; }).join(',');
+            let url = 'https://' + SHOPIFY.domain + '/cart/' + items;
+            if (BC_CODE) url += '?discount=' + encodeURIComponent(BC_CODE);
+            setTimeout(function () { window.location.href = url; }, 1400);
+        }
+
         function checkout() {
             if (!cart.length) return;
             const note = document.getElementById('cartNote');
@@ -2031,14 +2170,11 @@
             note.style.display = 'block';
             const ready = SHOPIFY.domain && cart.every(i => variantFor(i.key, i.size));
             if (ready) {
-                const items = cart.map(i => variantFor(i.key, i.size) + ':' + i.qty).join(',');
-                // Branded transition: the payment page opens under our own design,
-                // so checkout feels like part of the site instead of a jump away.
-                setTimeout(() => {
-                    toggleCart(false);
-                    document.getElementById('checkoutTransition').classList.add('show');
-                    setTimeout(() => { window.location.href = 'https://' + SHOPIFY.domain + '/cart/' + items; }, 1600);
-                }, 400);
+                // The checkout sheet opens on this page, in our own design.
+                toggleCart(false);
+                renderBrandCheckout();
+                document.getElementById('brandCheckout').classList.add('show');
+                document.body.style.overflow = 'hidden';
             } else {
                 note.innerHTML += '<br>Online checkout is being connected \u2014 ordering opens soon.';
             }

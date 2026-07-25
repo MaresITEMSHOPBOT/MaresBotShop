@@ -627,18 +627,10 @@
         <div class="cart-items" id="cartItems"></div>
         <div class="cart-foot">
             <div class="cart-total-row"><span>Total</span><span id="cartTotal">€0.00</span></div>
-            {%- form 'cart', cart, id: 'maresCartForm' -%}
-                {%- if additional_checkout_buttons -%}
-                <div class="express-pay" id="expressPay">
-                    <div class="express-label"><span>Pay right here</span></div>
-                    {{ content_for_additional_checkout_buttons }}
-                </div>
-                {%- endif -%}
-                <button type="submit" name="checkout" class="btn" id="cartCheckoutBtn">Checkout</button>
-            {%- endform -%}
+            <button class="btn" id="cartCheckoutBtn" onclick="checkout()">Checkout</button>
             <div class="secure-note">&#128274; Secure checkout &middot; powered by Shopify</div>
             <div class="pay-badges"><span>Visa</span><span>Mastercard</span><span>Maestro</span><span>Apple&nbsp;Pay</span><span>Google&nbsp;Pay</span><span>PayPal</span></div>
-            <div class="cart-note" id="cartNote">Apple&nbsp;Pay, Google&nbsp;Pay and Shop&nbsp;Pay finish right on this page.</div>
+            <div class="cart-note" id="cartNote">Checkout opens right here on this page.</div>
         </div>
     </aside>
     <!-- ADD-TO-CART EYE ANIMATION -->
@@ -658,6 +650,45 @@
             <defs><clipPath id="writeClip"><rect class="write-reveal" x="0" y="0" width="0" height="150"/></clipPath></defs>
             <text x="210" y="105" text-anchor="middle" font-family="'Caveat', cursive" font-weight="700" font-size="104" class="write-text" clip-path="url(#writeClip)">Mares</text>
         </svg>
+    </div>
+
+
+    <!-- ON-PAGE MARES CHECKOUT -->
+    <div class="brand-checkout" id="brandCheckout" aria-hidden="true">
+        <div class="bc-sheet">
+            <button class="bc-close" onclick="closeBrandCheckout()" aria-label="Close">&times;</button>
+            <div class="bc-head">
+                <svg class="bc-eye" viewBox="0 0 200 120">
+                <g>
+                    <path d="M 20 60 Q 100 8 180 60 Q 100 112 20 60 Z" fill="#020202" stroke="#26c6da" stroke-width="3.5"/>
+                    <circle cx="100" cy="60" r="26" fill="#26c6da"/>
+                    <circle cx="100" cy="60" r="10.5" fill="#000"/>
+                    <circle cx="107" cy="53" r="5" fill="#fff"/>
+                </g>
+            </svg>
+                <div class="bc-sign">Mares</div>
+                <div class="bc-title">Checkout</div>
+                <div class="bc-sub">&#128274; Secure &middot; you stay on mareswear.com</div>
+            </div>
+            <div class="bc-items" id="bcItems"></div>
+            <div class="bc-disc">
+                <input id="bcCode" placeholder="Discount code" autocomplete="off" spellcheck="false">
+                <button type="button" onclick="applyBcCode()">Apply</button>
+            </div>
+            <div class="bc-code-note" id="bcCodeNote"></div>
+            <div class="bc-total-row"><span>Total</span><span id="bcTotal">&euro;0.00</span></div>
+            {%- if additional_checkout_buttons -%}
+            <div class="bc-express">
+                <div class="express-label"><span>Pay right here</span></div>
+                {%- form 'cart', cart -%}
+                    {{ content_for_additional_checkout_buttons }}
+                {%- endform -%}
+            </div>
+            {%- endif -%}
+            <button class="bc-card-btn" onclick="payByCard()">Pay by card</button>
+            <div class="bc-badges"><span>Visa</span><span>Mastercard</span><span>Maestro</span><span>Apple&nbsp;Pay</span><span>Google&nbsp;Pay</span><span>PayPal</span></div>
+            <div class="bc-foot">5% of your order goes to the planet. &#127757;</div>
+        </div>
     </div>
 
     <div class="checkout-transition" id="checkoutTransition" aria-hidden="true">

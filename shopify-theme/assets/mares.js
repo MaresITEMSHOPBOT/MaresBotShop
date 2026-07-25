@@ -302,6 +302,28 @@
         // rendered server-side by Liquid — nothing fake, nothing browser-only.
         function renderBazaar() { /* rendered by Liquid */ }
 
+        // --- "Sell your piece" modal ---
+        function openSell() { document.getElementById('sellOverlay').classList.add('active'); document.body.style.overflow = 'hidden'; }
+        function closeSell() { document.getElementById('sellOverlay').classList.remove('active'); document.body.style.overflow = 'auto'; }
+        document.getElementById('sellOverlay').addEventListener('click', function (e) { if (e.target === this) closeSell(); });
+        function submitSell(e) {
+            e.preventDefault();
+            const model = document.getElementById('sfModel').value;
+            const size = document.getElementById('sfSize').value;
+            const cond = document.getElementById('sfCond').value;
+            const price = document.getElementById('sfPrice').value || '(not stated)';
+            const email = document.getElementById('sfEmail').value;
+            const note = document.getElementById('sfNote').value || '(no note)';
+            const subject = 'Bazaar offer: ' + model + ' (' + size + ')';
+            const body = 'I\u2019d like to sell my piece via the MARES bazaar:\n\n'
+                + 'Model: ' + model + '\nSize: ' + size + '\nCondition: ' + cond + '\n'
+                + 'My price: ' + price + '\nContact: ' + email + '\nNote: ' + note + '\n\n'
+                + 'I am attaching the photo(s) to this email.';
+            window.location.href = 'mailto:' + BAZAR_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+            closeSell();
+            return false;
+        }
+
         // --- Social links & hashtag ---
         const SOCIAL = {
             instagram: 'https://www.instagram.com/',  // fill in your @profile URL
@@ -511,6 +533,44 @@
                 .catch(() => {});
         }
 
+        // --- On-page MARES checkout sheet ---
+        function renderBrandCheckout() {
+            const wrap = document.getElementById('bcItems');
+            if (!wrap) return;
+            wrap.innerHTML = cart.map(function (i) {
+                const p = PRODUCTS[i.key];
+                const art = document.getElementById(i.key) ? document.getElementById(i.key).innerHTML : '';
+                return '<div class="bc-row">'
+                    + '<div class="bc-thumb">' + art + '</div>'
+                    + '<div class="bc-name"><h4>' + p.name + '</h4><span>Size ' + i.size + ' &middot; qty ' + i.qty + '</span></div>'
+                    + '<div class="bc-line">' + fmt(p.price * i.qty) + '</div>'
+                    + '</div>';
+            }).join('');
+            document.getElementById('bcTotal').innerText = fmt(cart.reduce(function (a, i) { return a + PRODUCTS[i.key].price * i.qty; }, 0));
+        }
+        function closeBrandCheckout() {
+            document.getElementById('brandCheckout').classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+        function applyBcCode() {
+            const el = document.getElementById('bcCode');
+            const note = document.getElementById('bcCodeNote');
+            const code = (el.value || '').trim().toUpperCase();
+            if (!code) { note.innerText = 'Enter a code first.'; return; }
+            APPLY_DISCOUNT(code);
+            note.innerText = 'Code ' + code + ' will be applied at payment \u2713';
+        }
+        // Shopify keeps the code in a cart cookie, so express buttons honour it too
+        function APPLY_DISCOUNT(code) { fetch('/discount/' + encodeURIComponent(code)).catch(function () {}); }
+
+        function payByCard() {
+            closeBrandCheckout();
+            document.getElementById('checkoutTransition').classList.add('show');
+            syncShopifyCart().then(function () {
+                setTimeout(function () { window.location.href = '/checkout'; }, 900);
+            });
+        }
+
         function checkout() {
             if (!cart.length) return;
             const note = document.getElementById('cartNote');
@@ -518,13 +578,11 @@
             note.style.display = 'block';
             const ready = SHOPIFY.domain && cart.every(i => variantFor(i.key, i.size));
             if (ready) {
-                setTimeout(() => {
-                    toggleCart(false);
-                    document.getElementById('checkoutTransition').classList.add('show');
-                    syncShopifyCart().then(() => {
-                        setTimeout(() => { window.location.href = '/checkout'; }, 900);
-                    });
-                }, 400);
+                syncShopifyCart();
+                toggleCart(false);
+                renderBrandCheckout();
+                document.getElementById('brandCheckout').classList.add('show');
+                document.body.style.overflow = 'hidden';
             } else {
                 note.innerHTML += '<br>Online checkout is being connected \u2014 ordering opens soon.';
             }
