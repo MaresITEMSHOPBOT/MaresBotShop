@@ -38,24 +38,26 @@ the hood, one mirrored on the right. The inside lining stays stars.
 The label panel is a small crescent, so it carries just the **Mares**
 signature, centred where the woven label sits.
 
-## The kangaroo pocket eats the lower front
+## Built for the pocket-free hoodie
 
-The pocket is sewn over the front panel from about **48% of the canvas
-height** downwards, so anything below that line is hidden once the hoodie
-is assembled. The first version put the statue across that line and only
-its head and shoulders stayed visible.
+The current fronts assume a hoodie **without a kangaroo pocket**, so the
+whole panel is usable. Layout, as a fraction of canvas height:
 
-Every front now keeps the signature, the artwork and the letters inside
-the band between the safe-area top (11.5%) and the pocket line (48%), so
-the whole motif reads on the finished garment. Below the pocket line the
-file is stars only — that area still needs printing, it just isn't seen.
+| Element | Position |
+|---|---|
+| collar reaches down to | 20% — nothing above this or it lands in the neck |
+| signature `Mares` | 24% |
+| artwork | 32.5% – 63% |
+| `open your eyes` | 66% |
+| safe area ends | 76% |
 
-## Why the fronts have no bottom text
+On the earlier pocket version the pocket covered everything below 48% and
+the artwork was half hidden. If you ever switch back to a pocket hoodie,
+say so and I'll re-drop the artwork into the 11.5%–48% band.
 
-The bottom ~20% of the front canvas is the hem band, folded under at the
-"Folding line". Text placed there printed a second "open your eyes" on
-the hem, right below the one on the pocket. The script now lives only on
-the pocket; the hem is stars.
+The four letters sit ~90–120 px clear of the artwork's edges. The artwork
+is an opaque rectangle, so letters tucked under it disappear — they have
+to sit beside it, not behind it.
 
 ## Notes
 
