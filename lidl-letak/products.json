@@ -1,24 +1,5 @@
 [
  {
-  "name": "PIKOK Výběrová šunka",
-  "detail": "100 g",
-  "price": "13.90",
-  "old": "22.90",
-  "badge": "-39%",
-  "page": 0,
-  "img": "tiles/x_00_PIKOKVýběrovášun.webp",
-  "src": 1,
-  "rect": [
-   0,
-   500,
-   252,
-   720
-  ],
-  "cat": "maso",
-  "typ": "staly",
-  "valid": "30. 7. – 2. 8."
- },
- {
   "name": "Kuře",
   "detail": "cena za 1 kg, max. 5 balení na nákup",
   "price": "59.90",
@@ -51,25 +32,6 @@
    176,
    591,
    486
-  ],
-  "cat": "maso",
-  "typ": "staly",
-  "valid": "30. 7. – 2. 8."
- },
- {
-  "name": "GRILL & FUN Špekáčky s goudou/chilli",
-  "detail": "",
-  "price": "129.90",
-  "old": null,
-  "badge": "Ušetřete 21 %",
-  "page": 1,
-  "img": "tiles/x_01_GRILLFUNŠpekáčky.webp",
-  "src": 12,
-  "rect": [
-   248,
-   656,
-   591,
-   962
   ],
   "cat": "maso",
   "typ": "staly",
@@ -266,25 +228,6 @@
   "valid": "30. 7. – 2. 8."
  },
  {
-  "name": "GRILL&FUN Grilovací tyčinky",
-  "detail": "340 g, různé druhy, 1 kg = 132,06 Kč",
-  "price": "44.90",
-  "old": "59.90",
-  "badge": "-25%",
-  "page": 20,
-  "img": "tiles/p20_01.webp",
-  "src": 77,
-  "rect": [
-   0,
-   240,
-   202,
-   551
-  ],
-  "cat": "maso",
-  "typ": "staly",
-  "valid": "30. 7. – 2. 8."
- },
- {
   "name": "GRILL&FUN Marinovaný kuřecí prsní plátek s rozmarýnem",
   "detail": "cena za 1 kg, chlazený, vakuově baleno",
   "price": "179.90",
@@ -323,44 +266,6 @@
   "valid": "30. 7. – 2. 8."
  },
  {
-  "name": "PIKOK Herkules/Lovecký salám",
-  "detail": "100 g, krájený",
-  "price": "19.90",
-  "old": "29.90",
-  "badge": "-33%",
-  "page": 23,
-  "img": "tiles/p23_01.webp",
-  "src": 93,
-  "rect": [
-   0,
-   128,
-   204,
-   563
-  ],
-  "cat": "maso",
-  "typ": "staly",
-  "valid": "30. 7. – 2. 8."
- },
- {
-  "name": "PIKOK Paštika",
-  "detail": "150 g, různé druhy, 100 g = 11,93 Kč",
-  "price": "17.90",
-  "old": "23.90",
-  "badge": "-25%",
-  "page": 23,
-  "img": "tiles/p23_05.webp",
-  "src": 97,
-  "rect": [
-   136,
-   289,
-   385,
-   550
-  ],
-  "cat": "maso",
-  "typ": "staly",
-  "valid": "30. 7. – 2. 8."
- },
- {
   "name": "ERIDANOUS Masové kuličky",
   "detail": "280 g, různé druhy, 1 kg = 285,36 Kč",
   "price": "79.90",
@@ -378,25 +283,6 @@
   "cat": "maso",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
- },
- {
-  "name": "GRILL&FUN Norimberské klobásky original",
-  "detail": "300 g, s chráněným zeměpisným označením, 1 kg = 199,67 Kč",
-  "price": "59.90",
-  "old": "89.90",
-  "badge": "-33%",
-  "page": 48,
-  "img": "tiles/p48_01.webp",
-  "src": 285,
-  "rect": [
-   0,
-   358,
-   272,
-   717
-  ],
-  "cat": "maso",
-  "typ": "staly",
-  "valid": "31. 7. – 2. 8."
  },
  {
   "name": "Vepřová plec",
@@ -665,6 +551,44 @@
   "valid": "30. 7. – 2. 8."
  },
  {
+  "name": "PIKOK Výběrová šunka",
+  "detail": "100 g",
+  "price": "13.90",
+  "old": "22.90",
+  "badge": "-39%",
+  "page": 0,
+  "img": "tiles/x_00_PIKOKVýběrovášun.webp",
+  "src": 1,
+  "rect": [
+   0,
+   500,
+   252,
+   720
+  ],
+  "cat": "chlazene",
+  "typ": "staly",
+  "valid": "30. 7. – 2. 8."
+ },
+ {
+  "name": "GRILL & FUN Špekáčky s goudou/chilli",
+  "detail": "",
+  "price": "129.90",
+  "old": null,
+  "badge": "Ušetřete 21 %",
+  "page": 1,
+  "img": "tiles/x_01_GRILLFUNŠpekáčky.webp",
+  "src": 12,
+  "rect": [
+   248,
+   656,
+   591,
+   962
+  ],
+  "cat": "chlazene",
+  "typ": "staly",
+  "valid": "30. 7. – 2. 8."
+ },
+ {
   "name": "ERIDANOUS Sýr Halloumi",
   "detail": "225 g, klasik, CHOP, vhodný ke grilování",
   "price": "54.90",
@@ -703,6 +627,25 @@
   "valid": "nová běžná cena"
  },
  {
+  "name": "GRILL&FUN Grilovací tyčinky",
+  "detail": "340 g, různé druhy, 1 kg = 132,06 Kč",
+  "price": "44.90",
+  "old": "59.90",
+  "badge": "-25%",
+  "page": 20,
+  "img": "tiles/p20_01.webp",
+  "src": 77,
+  "rect": [
+   0,
+   240,
+   202,
+   551
+  ],
+  "cat": "chlazene",
+  "typ": "staly",
+  "valid": "30. 7. – 2. 8."
+ },
+ {
   "name": "GRILL & FUN Máslo s bylinkami",
   "detail": "100 g, různé druhy",
   "price": "23.90",
@@ -716,6 +659,25 @@
    486,
    202,
    796
+  ],
+  "cat": "chlazene",
+  "typ": "staly",
+  "valid": "30. 7. – 2. 8."
+ },
+ {
+  "name": "PIKOK Herkules/Lovecký salám",
+  "detail": "100 g, krájený",
+  "price": "19.90",
+  "old": "29.90",
+  "badge": "-33%",
+  "page": 23,
+  "img": "tiles/p23_01.webp",
+  "src": 93,
+  "rect": [
+   0,
+   128,
+   204,
+   563
   ],
   "cat": "chlazene",
   "typ": "staly",
@@ -773,6 +735,25 @@
    128,
    465,
    341
+  ],
+  "cat": "chlazene",
+  "typ": "staly",
+  "valid": "30. 7. – 2. 8."
+ },
+ {
+  "name": "PIKOK Paštika",
+  "detail": "150 g, různé druhy, 100 g = 11,93 Kč",
+  "price": "17.90",
+  "old": "23.90",
+  "badge": "-25%",
+  "page": 23,
+  "img": "tiles/p23_05.webp",
+  "src": 97,
+  "rect": [
+   136,
+   289,
+   385,
+   550
   ],
   "cat": "chlazene",
   "typ": "staly",
@@ -1267,6 +1248,25 @@
    10,
    266,
    423
+  ],
+  "cat": "chlazene",
+  "typ": "staly",
+  "valid": "31. 7. – 2. 8."
+ },
+ {
+  "name": "GRILL&FUN Norimberské klobásky original",
+  "detail": "300 g, s chráněným zeměpisným označením, 1 kg = 199,67 Kč",
+  "price": "59.90",
+  "old": "89.90",
+  "badge": "-33%",
+  "page": 48,
+  "img": "tiles/p48_01.webp",
+  "src": 285,
+  "rect": [
+   0,
+   358,
+   272,
+   717
   ],
   "cat": "chlazene",
   "typ": "staly",

@@ -5,7 +5,7 @@ import json, base64, os
 P = json.load(open('products.json'))
 
 CATS = [
-    ('maso',      'Maso, uzeniny a ryby', 350, 45),
+    ('maso',      'Maso a ryby',          350, 45),
     ('ovoce',     'Ovoce a zelenina',     105, 40),
     ('vejce',     'Vejce',                 46, 62),
     ('chlazene',  'Chlazené',             195, 45),

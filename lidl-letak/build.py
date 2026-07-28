@@ -161,7 +161,7 @@ FIX.update({
     53:  dict(name='Hortenzie latnatá', detail='⌀ 19 cm, ↑ 55 cm'),
     55:  dict(name='Rudbekie', detail='⌀ 17 cm'),
     60:  dict(cat='pecivo'), 62: dict(cat='pecivo'),
-    77:  dict(cat='maso'),
+    77:  dict(cat='chlazene'),
     79:  dict(cat='suche'),
     103: dict(cat='suche'), 104: dict(cat='suche'), 108: dict(cat='suche'),
     109: dict(cat='suche'), 113: dict(cat='suche'), 116: dict(cat='suche'),
@@ -266,6 +266,8 @@ PAGE_CAT = {0: 'chlazene', 1: 'maso', 2: 'chlazene', 3: 'chlazene', 4: 'suche', 
 
 KW = [
     ('vejce', r'vejce'),
+    ('chlazene', r'šunk|salám|špekáč|klobás|párk|paštik|grilovací tyčink|'
+                 r'herkules|lovecký'),
     ('maso', r'kuře|kuřec|vepřov|hovězí|krůt|špekáč|klobás|salám|šunka|paštik|slanin|'
              r'tatarák|guláš|maso|treska|losos|pstruh|tilápie|krevet|šproty|kalmár|'
              r'rybí prsty|masové kuličky|burger|nugety'),

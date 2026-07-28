@@ -2,7 +2,8 @@
 
 `letak.html` je samostatná stránka (obrázky i písma jsou vložené uvnitř, funguje offline).
 Leták 30. 7. – 2. 8. 2026, region CZ 31/2026, 245 položek ve 14 kategoriích:
-maso a ryby, ovoce a zelenina, vejce, chlazené, mražené, pečivo, suché a trvanlivé,
+maso a ryby, ovoce a zelenina, vejce, chlazené (včetně uzenin – šunky,
+salámy, špekáčky, klobásky, paštiky), mražené, pečivo, suché a trvanlivé,
 nápoje, drogerie, oblečení, zahrada a dílna, sport, dětský svět, domácnost.
 
 Nad kategoriemi je druhé dělení: **stálý sortiment** (153 položek – běžná regálovka
