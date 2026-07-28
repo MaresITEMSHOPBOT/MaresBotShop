@@ -57,7 +57,8 @@ items = json.load(open('items.json'))
 if not any(r['name'].startswith('COCA-COLA') for r in P):
     P.append(dict(name='COCA-COLA / COCA-COLA Zero', detail='4 x 1,75 l, 1 l = 14,27 Kč',
                   price='99.90', old=None, badge='Ušetřete 28 %', cat='napoje', page=1,
-                  img='tiles/x_cola.webp', src=-1, valid='30. 7. – 2. 8.', typ='staly'))
+                  img='tiles/x_cola.webp', src=-1, valid='30. 7. – 2. 8.', typ='staly',
+                  rect=None))
 
 # u cedulek „Ušetřete“ doplnit procenta z původního textu
 raw_by_src = {n: it['raw'] for n, it in enumerate(items)}
@@ -77,10 +78,11 @@ for r in P:
         pix = doc[r['page']].get_pixmap(dpi=DPI)
         cache[r['page']] = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
     crop = cache[r['page']].crop(tuple(int(v * SCALE) for v in box))
-    crop.thumbnail((300, 330), Image.LANCZOS)
+    crop.thumbnail((260, 290), Image.LANCZOS)
     fn = 'tiles/x_%02d_%s.webp' % (r['page'], re.sub(r'\W+', '', r['name'])[:16])
-    crop.save(fn, 'WEBP', quality=64, method=6)
+    crop.save(fn, 'WEBP', quality=56, method=6)
     r['img'] = fn
+    r['rect'] = [int(v) for v in box]
     n += 1
 
 order = {c: i for i, c in enumerate(

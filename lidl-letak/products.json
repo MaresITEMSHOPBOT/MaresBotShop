@@ -8,6 +8,12 @@
   "page": 0,
   "img": "tiles/x_00_PIKOKVýběrovášun.webp",
   "src": 1,
+  "rect": [
+   0,
+   500,
+   252,
+   720
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -21,6 +27,12 @@
   "page": 0,
   "img": "tiles/x_00_Kuře.webp",
   "src": 6,
+  "rect": [
+   248,
+   540,
+   591,
+   736
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -34,6 +46,12 @@
   "page": 1,
   "img": "tiles/x_01_Vepřovápanenskás.webp",
   "src": 11,
+  "rect": [
+   248,
+   176,
+   591,
+   486
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -47,6 +65,12 @@
   "page": 1,
   "img": "tiles/x_01_GRILLFUNŠpekáčky.webp",
   "src": 12,
+  "rect": [
+   248,
+   656,
+   591,
+   962
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -60,6 +84,12 @@
   "page": 18,
   "img": "tiles/p18_00.webp",
   "src": 65,
+  "rect": [
+   0,
+   10,
+   272,
+   311
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -73,6 +103,12 @@
   "page": 18,
   "img": "tiles/p18_01.webp",
   "src": 66,
+  "rect": [
+   0,
+   246,
+   275,
+   551
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -86,6 +122,12 @@
   "page": 18,
   "img": "tiles/p18_02.webp",
   "src": 67,
+  "rect": [
+   0,
+   494,
+   459,
+   1000
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -99,6 +141,12 @@
   "page": 18,
   "img": "tiles/p18_03.webp",
   "src": 68,
+  "rect": [
+   174,
+   10,
+   555,
+   272
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -112,6 +160,12 @@
   "page": 18,
   "img": "tiles/p18_04.webp",
   "src": 69,
+  "rect": [
+   175,
+   246,
+   553,
+   551
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -125,6 +179,12 @@
   "page": 19,
   "img": "tiles/p19_01.webp",
   "src": 71,
+  "rect": [
+   0,
+   467,
+   164,
+   790
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -138,6 +198,12 @@
   "page": 19,
   "img": "tiles/p19_02.webp",
   "src": 72,
+  "rect": [
+   0,
+   725,
+   164,
+   1000
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -151,6 +217,12 @@
   "page": 19,
   "img": "tiles/p19_03.webp",
   "src": 73,
+  "rect": [
+   173,
+   482,
+   577,
+   756
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -164,6 +236,12 @@
   "page": 19,
   "img": "tiles/p19_04.webp",
   "src": 74,
+  "rect": [
+   164,
+   725,
+   578,
+   1000
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -177,6 +255,12 @@
   "page": 19,
   "img": "tiles/p19_05.webp",
   "src": 75,
+  "rect": [
+   306,
+   10,
+   590,
+   535
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -190,6 +274,12 @@
   "page": 20,
   "img": "tiles/p20_01.webp",
   "src": 77,
+  "rect": [
+   0,
+   240,
+   202,
+   551
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -203,6 +293,12 @@
   "page": 20,
   "img": "tiles/p20_04.webp",
   "src": 80,
+  "rect": [
+   148,
+   240,
+   382,
+   551
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -216,6 +312,12 @@
   "page": 20,
   "img": "tiles/p20_07.webp",
   "src": 83,
+  "rect": [
+   372,
+   11,
+   590,
+   546
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -229,6 +331,12 @@
   "page": 23,
   "img": "tiles/p23_01.webp",
   "src": 93,
+  "rect": [
+   0,
+   128,
+   204,
+   563
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -242,6 +350,12 @@
   "page": 23,
   "img": "tiles/p23_05.webp",
   "src": 97,
+  "rect": [
+   136,
+   289,
+   385,
+   550
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -255,6 +369,12 @@
   "page": 29,
   "img": "tiles/p29_07.webp",
   "src": 160,
+  "rect": [
+   343,
+   652,
+   590,
+   1000
+  ],
   "cat": "maso",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -268,6 +388,12 @@
   "page": 48,
   "img": "tiles/p48_01.webp",
   "src": 285,
+  "rect": [
+   0,
+   358,
+   272,
+   717
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "31. 7. – 2. 8."
@@ -281,6 +407,12 @@
   "page": 48,
   "img": "tiles/x_48_Vepřováplec.webp",
   "src": 289,
+  "rect": [
+   276,
+   336,
+   591,
+   636
+  ],
   "cat": "maso",
   "typ": "staly",
   "valid": "29. 7. – 2. 8."
@@ -294,6 +426,12 @@
   "page": 0,
   "img": "tiles/x_00_Bramboryrané.webp",
   "src": 4,
+  "rect": [
+   252,
+   128,
+   591,
+   332
+  ],
   "cat": "ovoce",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -307,6 +445,12 @@
   "page": 0,
   "img": "tiles/x_00_Vodnímeloun.webp",
   "src": 5,
+  "rect": [
+   276,
+   332,
+   591,
+   540
+  ],
   "cat": "ovoce",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -320,6 +464,12 @@
   "page": 13,
   "img": "tiles/p13_01.webp",
   "src": 41,
+  "rect": [
+   0,
+   548,
+   291,
+   1000
+  ],
   "cat": "ovoce",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -333,6 +483,12 @@
   "page": 14,
   "img": "tiles/p14_01.webp",
   "src": 46,
+  "rect": [
+   0,
+   417,
+   273,
+   797
+  ],
   "cat": "ovoce",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -346,6 +502,12 @@
   "page": 14,
   "img": "tiles/p14_02.webp",
   "src": 47,
+  "rect": [
+   0,
+   732,
+   273,
+   1000
+  ],
   "cat": "ovoce",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -359,6 +521,12 @@
   "page": 14,
   "img": "tiles/p14_03.webp",
   "src": 48,
+  "rect": [
+   276,
+   10,
+   590,
+   530
+  ],
   "cat": "ovoce",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -372,6 +540,12 @@
   "page": 14,
   "img": "tiles/p14_04.webp",
   "src": 49,
+  "rect": [
+   276,
+   465,
+   590,
+   797
+  ],
   "cat": "ovoce",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -385,6 +559,12 @@
   "page": 48,
   "img": "tiles/x_48_Třešně.webp",
   "src": 287,
+  "rect": [
+   276,
+   36,
+   591,
+   170
+  ],
   "cat": "ovoce",
   "typ": "staly",
   "valid": "31. 7. – 2. 8."
@@ -398,6 +578,12 @@
   "page": 48,
   "cat": "ovoce",
   "img": "tiles/x_48_Broskveploché.webp",
+  "rect": [
+   276,
+   166,
+   591,
+   336
+  ],
   "src": -1,
   "typ": "staly",
   "valid": "31. 7. – 2. 8."
@@ -411,6 +597,12 @@
   "page": 3,
   "img": "tiles/p03_01.webp",
   "src": 18,
+  "rect": [
+   0,
+   271,
+   289,
+   615
+  ],
   "cat": "vejce",
   "typ": "staly",
   "valid": "nová běžná cena"
@@ -424,6 +616,12 @@
   "page": 3,
   "img": "tiles/p03_03.webp",
   "src": 20,
+  "rect": [
+   268,
+   271,
+   590,
+   882
+  ],
   "cat": "vejce",
   "typ": "staly",
   "valid": "nová běžná cena"
@@ -437,6 +635,12 @@
   "page": 4,
   "img": "tiles/p04_01.webp",
   "src": 22,
+  "rect": [
+   0,
+   156,
+   300,
+   497
+  ],
   "cat": "vejce",
   "typ": "staly",
   "valid": "nová běžná cena"
@@ -450,6 +654,12 @@
   "page": 0,
   "img": "tiles/x_00_PILOSEidam.webp",
   "src": 0,
+  "rect": [
+   0,
+   248,
+   252,
+   500
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -463,6 +673,12 @@
   "page": 2,
   "img": "tiles/p02_02.webp",
   "src": 15,
+  "rect": [
+   163,
+   143,
+   590,
+   490
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -476,6 +692,12 @@
   "page": 4,
   "img": "tiles/p04_04.webp",
   "src": 25,
+  "rect": [
+   275,
+   156,
+   590,
+   509
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "nová běžná cena"
@@ -489,6 +711,12 @@
   "page": 20,
   "img": "tiles/p20_02.webp",
   "src": 78,
+  "rect": [
+   0,
+   486,
+   202,
+   796
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -502,6 +730,12 @@
   "page": 23,
   "img": "tiles/p23_02.webp",
   "src": 94,
+  "rect": [
+   0,
+   517,
+   204,
+   764
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -515,6 +749,12 @@
   "page": 23,
   "img": "tiles/p23_03.webp",
   "src": 95,
+  "rect": [
+   0,
+   741,
+   204,
+   1000
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -528,6 +768,12 @@
   "page": 23,
   "img": "tiles/p23_04.webp",
   "src": 96,
+  "rect": [
+   73,
+   128,
+   465,
+   341
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -541,6 +787,12 @@
   "page": 23,
   "img": "tiles/p23_06.webp",
   "src": 98,
+  "rect": [
+   136,
+   518,
+   385,
+   1000
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -554,6 +806,12 @@
   "page": 23,
   "img": "tiles/p23_07.webp",
   "src": 99,
+  "rect": [
+   385,
+   56,
+   590,
+   548
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -567,6 +825,12 @@
   "page": 23,
   "img": "tiles/p23_08.webp",
   "src": 100,
+  "rect": [
+   319,
+   518,
+   590,
+   779
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -580,6 +844,12 @@
   "page": 23,
   "img": "tiles/p23_09.webp",
   "src": 101,
+  "rect": [
+   319,
+   741,
+   590,
+   1000
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -593,6 +863,12 @@
   "page": 29,
   "img": "tiles/p29_01.webp",
   "src": 154,
+  "rect": [
+   0,
+   336,
+   199,
+   717
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -606,6 +882,12 @@
   "page": 29,
   "img": "tiles/p29_02.webp",
   "src": 155,
+  "rect": [
+   0,
+   652,
+   199,
+   1000
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -619,6 +901,12 @@
   "page": 29,
   "img": "tiles/p29_03.webp",
   "src": 156,
+  "rect": [
+   162,
+   336,
+   388,
+   717
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -632,6 +920,12 @@
   "page": 29,
   "img": "tiles/p29_04.webp",
   "src": 157,
+  "rect": [
+   168,
+   652,
+   388,
+   1000
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -645,6 +939,12 @@
   "page": 29,
   "img": "tiles/p29_05.webp",
   "src": 158,
+  "rect": [
+   336,
+   10,
+   590,
+   423
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -658,6 +958,12 @@
   "page": 29,
   "img": "tiles/p29_06.webp",
   "src": 159,
+  "rect": [
+   367,
+   358,
+   590,
+   717
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -671,6 +977,12 @@
   "page": 30,
   "img": "tiles/p30_04.webp",
   "src": 165,
+  "rect": [
+   153,
+   358,
+   383,
+   717
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -684,6 +996,12 @@
   "page": 31,
   "img": "tiles/p31_01.webp",
   "src": 170,
+  "rect": [
+   0,
+   107,
+   140,
+   423
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -697,6 +1015,12 @@
   "page": 31,
   "img": "tiles/p31_04.webp",
   "src": 173,
+  "rect": [
+   137,
+   107,
+   380,
+   423
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -710,6 +1034,12 @@
   "page": 32,
   "img": "tiles/p32_00.webp",
   "src": 179,
+  "rect": [
+   0,
+   10,
+   202,
+   423
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -723,6 +1053,12 @@
   "page": 32,
   "img": "tiles/p32_03.webp",
   "src": 182,
+  "rect": [
+   145,
+   10,
+   383,
+   423
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -736,6 +1072,12 @@
   "page": 32,
   "img": "tiles/p32_06.webp",
   "src": 185,
+  "rect": [
+   355,
+   10,
+   590,
+   423
+  ],
   "cat": "chlazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -749,6 +1091,12 @@
   "page": 33,
   "img": "tiles/p33_00.webp",
   "src": 188,
+  "rect": [
+   0,
+   10,
+   204,
+   342
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -762,6 +1110,12 @@
   "page": 34,
   "img": "tiles/p34_01.webp",
   "src": 199,
+  "rect": [
+   0,
+   295,
+   208,
+   524
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -775,6 +1129,12 @@
   "page": 34,
   "img": "tiles/p34_05.webp",
   "src": 203,
+  "rect": [
+   186,
+   13,
+   389,
+   555
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -788,6 +1148,12 @@
   "page": 45,
   "img": "tiles/p45_02.webp",
   "src": 266,
+  "rect": [
+   156,
+   500,
+   407,
+   792
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -801,6 +1167,12 @@
   "page": 45,
   "img": "tiles/p45_03.webp",
   "src": 267,
+  "rect": [
+   86,
+   738,
+   407,
+   1000
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -814,6 +1186,12 @@
   "page": 45,
   "img": "tiles/p45_08.webp",
   "src": 272,
+  "rect": [
+   340,
+   738,
+   590,
+   1000
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -827,6 +1205,12 @@
   "page": 46,
   "img": "tiles/p46_02.webp",
   "src": 275,
+  "rect": [
+   0,
+   314,
+   415,
+   575
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -840,6 +1224,12 @@
   "page": 46,
   "img": "tiles/p46_04.webp",
   "src": 277,
+  "rect": [
+   145,
+   10,
+   461,
+   280
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -853,6 +1243,12 @@
   "page": 46,
   "img": "tiles/p46_05.webp",
   "src": 278,
+  "rect": [
+   83,
+   324,
+   415,
+   574
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -866,6 +1262,12 @@
   "page": 48,
   "img": "tiles/p48_00.webp",
   "src": 284,
+  "rect": [
+   0,
+   10,
+   266,
+   423
+  ],
   "cat": "chlazene",
   "typ": "staly",
   "valid": "31. 7. – 2. 8."
@@ -879,6 +1281,12 @@
   "page": 0,
   "img": "tiles/x_00_PRIMAMrožjahody.webp",
   "src": 3,
+  "rect": [
+   196,
+   700,
+   392,
+   962
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -892,6 +1300,12 @@
   "page": 21,
   "img": "tiles/p21_00.webp",
   "src": 86,
+  "rect": [
+   0,
+   492,
+   213,
+   718
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -905,6 +1319,12 @@
   "page": 21,
   "img": "tiles/p21_01.webp",
   "src": 87,
+  "rect": [
+   0,
+   653,
+   213,
+   1000
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -918,6 +1338,12 @@
   "page": 21,
   "img": "tiles/p21_03.webp",
   "src": 89,
+  "rect": [
+   187,
+   492,
+   394,
+   718
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -931,6 +1357,12 @@
   "page": 21,
   "img": "tiles/p21_04.webp",
   "src": 90,
+  "rect": [
+   175,
+   653,
+   488,
+   1000
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -944,6 +1376,12 @@
   "page": 21,
   "img": "tiles/p21_05.webp",
   "src": 91,
+  "rect": [
+   382,
+   189,
+   590,
+   718
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -957,6 +1395,12 @@
   "page": 24,
   "img": "tiles/p24_00.webp",
   "src": 102,
+  "rect": [
+   0,
+   10,
+   590,
+   340
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -970,6 +1414,12 @@
   "page": 24,
   "img": "tiles/p24_03.webp",
   "src": 105,
+  "rect": [
+   77,
+   10,
+   389,
+   294
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -983,6 +1433,12 @@
   "page": 27,
   "img": "tiles/p27_09.webp",
   "src": 143,
+  "rect": [
+   325,
+   517,
+   590,
+   791
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -996,6 +1452,12 @@
   "page": 31,
   "img": "tiles/p31_02.webp",
   "src": 171,
+  "rect": [
+   0,
+   358,
+   199,
+   717
+  ],
   "cat": "mrazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1009,6 +1471,12 @@
   "page": 31,
   "img": "tiles/p31_03.webp",
   "src": 172,
+  "rect": [
+   0,
+   652,
+   199,
+   1000
+  ],
   "cat": "mrazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1022,6 +1490,12 @@
   "page": 32,
   "img": "tiles/p32_01.webp",
   "src": 180,
+  "rect": [
+   0,
+   358,
+   202,
+   717
+  ],
   "cat": "mrazene",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1035,6 +1509,12 @@
   "page": 33,
   "img": "tiles/p33_04.webp",
   "src": 192,
+  "rect": [
+   169,
+   10,
+   385,
+   360
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1048,6 +1528,12 @@
   "page": 45,
   "img": "tiles/p45_01.webp",
   "src": 265,
+  "rect": [
+   0,
+   500,
+   217,
+   803
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1061,6 +1547,12 @@
   "page": 45,
   "img": "tiles/p45_05.webp",
   "src": 269,
+  "rect": [
+   276,
+   10,
+   590,
+   336
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1074,6 +1566,12 @@
   "page": 45,
   "img": "tiles/p45_06.webp",
   "src": 270,
+  "rect": [
+   296,
+   271,
+   590,
+   561
+  ],
   "cat": "mrazene",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1087,6 +1585,12 @@
   "page": 17,
   "img": "tiles/p17_01.webp",
   "src": 59,
+  "rect": [
+   0,
+   173,
+   263,
+   494
+  ],
   "cat": "pecivo",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1100,6 +1604,12 @@
   "page": 17,
   "img": "tiles/p17_02.webp",
   "src": 60,
+  "rect": [
+   0,
+   429,
+   265,
+   764
+  ],
   "cat": "pecivo",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1113,6 +1623,12 @@
   "page": 17,
   "img": "tiles/p17_03.webp",
   "src": 61,
+  "rect": [
+   0,
+   730,
+   265,
+   1000
+  ],
   "cat": "pecivo",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1126,6 +1642,12 @@
   "page": 17,
   "img": "tiles/p17_04.webp",
   "src": 62,
+  "rect": [
+   175,
+   212,
+   553,
+   764
+  ],
   "cat": "pecivo",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1139,6 +1661,12 @@
   "page": 17,
   "img": "tiles/p17_05.webp",
   "src": 63,
+  "rect": [
+   175,
+   730,
+   547,
+   1000
+  ],
   "cat": "pecivo",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1152,6 +1680,12 @@
   "page": 17,
   "img": "tiles/p17_06.webp",
   "src": 64,
+  "rect": [
+   263,
+   10,
+   590,
+   552
+  ],
   "cat": "pecivo",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1165,6 +1699,12 @@
   "page": 24,
   "img": "tiles/p24_05.webp",
   "src": 107,
+  "rect": [
+   180,
+   518,
+   389,
+   806
+  ],
   "cat": "pecivo",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1178,6 +1718,12 @@
   "page": 25,
   "img": "tiles/p25_03.webp",
   "src": 115,
+  "rect": [
+   0,
+   518,
+   205,
+   742
+  ],
   "cat": "pecivo",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1191,6 +1737,12 @@
   "page": 0,
   "img": "tiles/x_00_BELBAKECukrkryst.webp",
   "src": 7,
+  "rect": [
+   384,
+   700,
+   591,
+   962
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1204,6 +1756,12 @@
   "page": 2,
   "img": "tiles/p02_03.webp",
   "src": 16,
+  "rect": [
+   164,
+   425,
+   590,
+   1000
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1217,6 +1775,12 @@
   "page": 20,
   "img": "tiles/p20_03.webp",
   "src": 79,
+  "rect": [
+   0,
+   738,
+   202,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1230,6 +1794,12 @@
   "page": 20,
   "img": "tiles/p20_05.webp",
   "src": 81,
+  "rect": [
+   189,
+   486,
+   383,
+   803
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1243,6 +1813,12 @@
   "page": 20,
   "img": "tiles/p20_06.webp",
   "src": 82,
+  "rect": [
+   143,
+   738,
+   383,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1256,6 +1832,12 @@
   "page": 20,
   "img": "tiles/p20_08.webp",
   "src": 84,
+  "rect": [
+   318,
+   486,
+   590,
+   762
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1269,6 +1851,12 @@
   "page": 20,
   "img": "tiles/p20_09.webp",
   "src": 85,
+  "rect": [
+   327,
+   739,
+   590,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1282,6 +1870,12 @@
   "page": 24,
   "img": "tiles/p24_01.webp",
   "src": 103,
+  "rect": [
+   0,
+   295,
+   208,
+   583
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1295,6 +1889,12 @@
   "page": 24,
   "img": "tiles/p24_02.webp",
   "src": 104,
+  "rect": [
+   0,
+   518,
+   208,
+   806
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1308,6 +1908,12 @@
   "page": 24,
   "img": "tiles/p24_04.webp",
   "src": 106,
+  "rect": [
+   141,
+   295,
+   389,
+   563
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1321,6 +1927,12 @@
   "page": 24,
   "img": "tiles/p24_06.webp",
   "src": 108,
+  "rect": [
+   320,
+   10,
+   590,
+   294
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1334,6 +1946,12 @@
   "page": 24,
   "img": "tiles/p24_07.webp",
   "src": 109,
+  "rect": [
+   326,
+   295,
+   590,
+   578
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1347,6 +1965,12 @@
   "page": 24,
   "img": "tiles/p24_08.webp",
   "src": 110,
+  "rect": [
+   326,
+   518,
+   590,
+   805
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1360,6 +1984,12 @@
   "page": 24,
   "img": "tiles/p24_09.webp",
   "src": 111,
+  "rect": [
+   258,
+   741,
+   590,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1373,6 +2003,12 @@
   "page": 25,
   "img": "tiles/p25_01.webp",
   "src": 113,
+  "rect": [
+   0,
+   128,
+   304,
+   345
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1386,6 +2022,12 @@
   "page": 25,
   "img": "tiles/p25_02.webp",
   "src": 114,
+  "rect": [
+   0,
+   295,
+   204,
+   583
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1399,6 +2041,12 @@
   "page": 25,
   "img": "tiles/p25_04.webp",
   "src": 116,
+  "rect": [
+   0,
+   740,
+   204,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1412,6 +2060,12 @@
   "page": 25,
   "img": "tiles/p25_05.webp",
   "src": 117,
+  "rect": [
+   175,
+   128,
+   385,
+   520
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1425,6 +2079,12 @@
   "page": 25,
   "img": "tiles/p25_06.webp",
   "src": 118,
+  "rect": [
+   192,
+   518,
+   351,
+   779
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1438,6 +2098,12 @@
   "page": 25,
   "img": "tiles/p25_07.webp",
   "src": 119,
+  "rect": [
+   136,
+   741,
+   385,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1451,6 +2117,12 @@
   "page": 25,
   "img": "tiles/p25_08.webp",
   "src": 120,
+  "rect": [
+   385,
+   43,
+   590,
+   520
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1464,6 +2136,12 @@
   "page": 25,
   "img": "tiles/p25_09.webp",
   "src": 121,
+  "rect": [
+   322,
+   518,
+   590,
+   764
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1477,6 +2155,12 @@
   "page": 25,
   "img": "tiles/p25_10.webp",
   "src": 122,
+  "rect": [
+   323,
+   741,
+   590,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1490,6 +2174,12 @@
   "page": 27,
   "img": "tiles/p27_01.webp",
   "src": 135,
+  "rect": [
+   0,
+   127,
+   146,
+   538
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1503,6 +2193,12 @@
   "page": 27,
   "img": "tiles/p27_02.webp",
   "src": 136,
+  "rect": [
+   0,
+   517,
+   204,
+   763
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1516,6 +2212,12 @@
   "page": 27,
   "img": "tiles/p27_03.webp",
   "src": 137,
+  "rect": [
+   0,
+   740,
+   204,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1529,6 +2231,12 @@
   "page": 27,
   "img": "tiles/p27_04.webp",
   "src": 138,
+  "rect": [
+   15,
+   121,
+   446,
+   308
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1542,6 +2250,12 @@
   "page": 27,
   "img": "tiles/p27_05.webp",
   "src": 139,
+  "rect": [
+   125,
+   294,
+   385,
+   517
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1555,6 +2269,12 @@
   "page": 27,
   "img": "tiles/p27_06.webp",
   "src": 140,
+  "rect": [
+   136,
+   452,
+   385,
+   769
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1568,6 +2288,12 @@
   "page": 27,
   "img": "tiles/p27_08.webp",
   "src": 142,
+  "rect": [
+   385,
+   10,
+   590,
+   575
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1581,6 +2307,12 @@
   "page": 30,
   "img": "tiles/p30_00.webp",
   "src": 161,
+  "rect": [
+   0,
+   10,
+   272,
+   423
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1594,6 +2326,12 @@
   "page": 30,
   "img": "tiles/p30_01.webp",
   "src": 162,
+  "rect": [
+   0,
+   358,
+   202,
+   717
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1607,6 +2345,12 @@
   "page": 30,
   "img": "tiles/p30_02.webp",
   "src": 163,
+  "rect": [
+   0,
+   652,
+   202,
+   1000
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1620,6 +2364,12 @@
   "page": 30,
   "img": "tiles/p30_03.webp",
   "src": 164,
+  "rect": [
+   0,
+   10,
+   454,
+   423
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1633,6 +2383,12 @@
   "page": 30,
   "img": "tiles/p30_05.webp",
   "src": 166,
+  "rect": [
+   169,
+   652,
+   383,
+   1000
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1646,6 +2402,12 @@
   "page": 30,
   "img": "tiles/p30_06.webp",
   "src": 167,
+  "rect": [
+   325,
+   189,
+   590,
+   717
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1659,6 +2421,12 @@
   "page": 30,
   "img": "tiles/p30_07.webp",
   "src": 168,
+  "rect": [
+   354,
+   652,
+   590,
+   1000
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1672,6 +2440,12 @@
   "page": 31,
   "img": "tiles/p31_05.webp",
   "src": 174,
+  "rect": [
+   140,
+   358,
+   380,
+   717
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1685,6 +2459,12 @@
   "page": 31,
   "img": "tiles/p31_06.webp",
   "src": 175,
+  "rect": [
+   163,
+   652,
+   380,
+   1000
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1698,6 +2478,12 @@
   "page": 31,
   "img": "tiles/p31_07.webp",
   "src": 176,
+  "rect": [
+   343,
+   10,
+   590,
+   423
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1711,6 +2497,12 @@
   "page": 31,
   "img": "tiles/p31_08.webp",
   "src": 177,
+  "rect": [
+   357,
+   358,
+   590,
+   717
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1724,6 +2516,12 @@
   "page": 32,
   "img": "tiles/p32_02.webp",
   "src": 181,
+  "rect": [
+   0,
+   652,
+   202,
+   1000
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1737,6 +2535,12 @@
   "page": 32,
   "img": "tiles/p32_04.webp",
   "src": 183,
+  "rect": [
+   192,
+   358,
+   383,
+   717
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1750,6 +2554,12 @@
   "page": 32,
   "img": "tiles/p32_05.webp",
   "src": 184,
+  "rect": [
+   190,
+   652,
+   383,
+   1000
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1763,6 +2573,12 @@
   "page": 32,
   "img": "tiles/p32_07.webp",
   "src": 186,
+  "rect": [
+   353,
+   358,
+   590,
+   717
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1776,6 +2592,12 @@
   "page": 32,
   "img": "tiles/p32_08.webp",
   "src": 187,
+  "rect": [
+   326,
+   652,
+   590,
+   1000
+  ],
   "cat": "suche",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -1789,6 +2611,12 @@
   "page": 33,
   "img": "tiles/p33_01.webp",
   "src": 189,
+  "rect": [
+   0,
+   295,
+   139,
+   569
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1802,6 +2630,12 @@
   "page": 33,
   "img": "tiles/p33_03.webp",
   "src": 191,
+  "rect": [
+   0,
+   741,
+   293,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1815,6 +2649,12 @@
   "page": 33,
   "img": "tiles/p33_05.webp",
   "src": 193,
+  "rect": [
+   137,
+   295,
+   385,
+   806
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1828,6 +2668,12 @@
   "page": 33,
   "img": "tiles/p33_06.webp",
   "src": 194,
+  "rect": [
+   327,
+   10,
+   590,
+   295
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1841,6 +2687,12 @@
   "page": 33,
   "img": "tiles/p33_08.webp",
   "src": 196,
+  "rect": [
+   371,
+   380,
+   590,
+   580
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1854,6 +2706,12 @@
   "page": 34,
   "img": "tiles/p34_02.webp",
   "src": 200,
+  "rect": [
+   0,
+   518,
+   208,
+   774
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1867,6 +2725,12 @@
   "page": 34,
   "img": "tiles/p34_06.webp",
   "src": 204,
+  "rect": [
+   143,
+   518,
+   389,
+   730
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1880,6 +2744,12 @@
   "page": 34,
   "img": "tiles/p34_08.webp",
   "src": 206,
+  "rect": [
+   330,
+   43,
+   590,
+   583
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1893,6 +2763,12 @@
   "page": 45,
   "img": "tiles/p45_07.webp",
   "src": 271,
+  "rect": [
+   342,
+   509,
+   590,
+   803
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1906,6 +2782,12 @@
   "page": 46,
   "img": "tiles/p46_01.webp",
   "src": 274,
+  "rect": [
+   0,
+   116,
+   215,
+   316
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1919,6 +2801,12 @@
   "page": 48,
   "img": "tiles/p48_02.webp",
   "src": 286,
+  "rect": [
+   0,
+   652,
+   291,
+   1000
+  ],
   "cat": "suche",
   "typ": "staly",
   "valid": "31. 7. – 2. 8."
@@ -1934,7 +2822,13 @@
   "img": "tiles/x_01_COCACOLACOCACOLA.webp",
   "src": -1,
   "valid": "30. 7. – 2. 8.",
-  "typ": "staly"
+  "typ": "staly",
+  "rect": [
+   0,
+   376,
+   250,
+   722
+  ]
  },
  {
   "name": "Jupí Sirup",
@@ -1945,6 +2839,12 @@
   "page": 4,
   "img": "tiles/p04_02.webp",
   "src": 23,
+  "rect": [
+   0,
+   446,
+   288,
+   681
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "nová běžná cena"
@@ -1958,6 +2858,12 @@
   "page": 4,
   "img": "tiles/p04_05.webp",
   "src": 26,
+  "rect": [
+   169,
+   446,
+   554,
+   711
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "nová běžná cena"
@@ -1971,6 +2877,12 @@
   "page": 4,
   "img": "tiles/p04_06.webp",
   "src": 27,
+  "rect": [
+   169,
+   646,
+   590,
+   950
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "nová běžná cena"
@@ -1984,6 +2896,12 @@
   "page": 26,
   "img": "tiles/p26_00.webp",
   "src": 123,
+  "rect": [
+   0,
+   10,
+   208,
+   314
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -1997,6 +2915,12 @@
   "page": 26,
   "img": "tiles/p26_01.webp",
   "src": 124,
+  "rect": [
+   0,
+   296,
+   208,
+   774
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2010,6 +2934,12 @@
   "page": 26,
   "img": "tiles/p26_02.webp",
   "src": 125,
+  "rect": [
+   0,
+   741,
+   208,
+   1000
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2023,6 +2953,12 @@
   "page": 26,
   "img": "tiles/p26_03.webp",
   "src": 126,
+  "rect": [
+   139,
+   10,
+   389,
+   241
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2036,6 +2972,12 @@
   "page": 26,
   "img": "tiles/p26_04.webp",
   "src": 127,
+  "rect": [
+   139,
+   176,
+   389,
+   558
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2049,6 +2991,12 @@
   "page": 26,
   "img": "tiles/p26_05.webp",
   "src": 128,
+  "rect": [
+   132,
+   518,
+   402,
+   794
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2062,6 +3010,12 @@
   "page": 26,
   "img": "tiles/p26_06.webp",
   "src": 129,
+  "rect": [
+   119,
+   741,
+   400,
+   1000
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2075,6 +3029,12 @@
   "page": 26,
   "img": "tiles/p26_07.webp",
   "src": 130,
+  "rect": [
+   267,
+   10,
+   590,
+   293
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2088,6 +3048,12 @@
   "page": 26,
   "img": "tiles/p26_08.webp",
   "src": 131,
+  "rect": [
+   332,
+   230,
+   590,
+   459
+  ],
   "cat": "napoje",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2101,6 +3067,12 @@
   "page": 26,
   "img": "tiles/p26_10.webp",
   "src": 133,
+  "rect": [
+   329,
+   718,
+   590,
+   1000
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2114,6 +3086,12 @@
   "page": 27,
   "img": "tiles/p27_07.webp",
   "src": 141,
+  "rect": [
+   137,
+   739,
+   390,
+   1000
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2127,6 +3105,12 @@
   "page": 27,
   "img": "tiles/p27_10.webp",
   "src": 144,
+  "rect": [
+   315,
+   740,
+   590,
+   1000
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2140,6 +3124,12 @@
   "page": 31,
   "img": "tiles/p31_09.webp",
   "src": 178,
+  "rect": [
+   359,
+   652,
+   590,
+   1000
+  ],
   "cat": "napoje",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2153,6 +3143,12 @@
   "page": 33,
   "img": "tiles/p33_02.webp",
   "src": 190,
+  "rect": [
+   0,
+   518,
+   141,
+   791
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2166,6 +3162,12 @@
   "page": 33,
   "img": "tiles/p33_09.webp",
   "src": 197,
+  "rect": [
+   371,
+   518,
+   590,
+   958
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2179,6 +3181,12 @@
   "page": 34,
   "img": "tiles/p34_04.webp",
   "src": 202,
+  "rect": [
+   0,
+   814,
+   208,
+   1000
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2192,6 +3200,12 @@
   "page": 34,
   "img": "tiles/p34_09.webp",
   "src": 207,
+  "rect": [
+   284,
+   518,
+   590,
+   742
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2205,6 +3219,12 @@
   "page": 48,
   "img": "tiles/p48_04.webp",
   "src": 288,
+  "rect": [
+   251,
+   453,
+   407,
+   1000
+  ],
   "cat": "napoje",
   "typ": "staly",
   "valid": "31. 7. – 2. 8."
@@ -2218,6 +3238,12 @@
   "page": 1,
   "img": "tiles/p01_00.webp",
   "src": 9,
+  "rect": [
+   0,
+   672,
+   338,
+   1000
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2231,6 +3257,12 @@
   "page": 4,
   "img": "tiles/p04_03.webp",
   "src": 24,
+  "rect": [
+   0,
+   645,
+   277,
+   927
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "nová běžná cena"
@@ -2244,6 +3276,12 @@
   "page": 28,
   "img": "tiles/p28_00.webp",
   "src": 145,
+  "rect": [
+   0,
+   10,
+   207,
+   341
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2257,6 +3295,12 @@
   "page": 28,
   "img": "tiles/p28_01.webp",
   "src": 146,
+  "rect": [
+   0,
+   294,
+   266,
+   521
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2270,6 +3314,12 @@
   "page": 28,
   "img": "tiles/p28_02.webp",
   "src": 147,
+  "rect": [
+   0,
+   517,
+   207,
+   791
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2283,6 +3333,12 @@
   "page": 28,
   "img": "tiles/p28_03.webp",
   "src": 148,
+  "rect": [
+   0,
+   740,
+   262,
+   1000
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2296,6 +3352,12 @@
   "page": 28,
   "img": "tiles/p28_04.webp",
   "src": 149,
+  "rect": [
+   128,
+   10,
+   387,
+   359
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2309,6 +3371,12 @@
   "page": 28,
   "img": "tiles/p28_05.webp",
   "src": 150,
+  "rect": [
+   137,
+   294,
+   454,
+   805
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2322,6 +3390,12 @@
   "page": 28,
   "img": "tiles/p28_06.webp",
   "src": 151,
+  "rect": [
+   325,
+   10,
+   590,
+   359
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2335,6 +3409,12 @@
   "page": 28,
   "img": "tiles/p28_07.webp",
   "src": 152,
+  "rect": [
+   325,
+   493,
+   590,
+   1000
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2348,6 +3428,12 @@
   "page": 34,
   "img": "tiles/p34_07.webp",
   "src": 205,
+  "rect": [
+   147,
+   728,
+   590,
+   1000
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2361,6 +3447,12 @@
   "page": 34,
   "img": "tiles/p34_10.webp",
   "src": 208,
+  "rect": [
+   258,
+   728,
+   590,
+   1000
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2374,6 +3466,12 @@
   "page": 46,
   "img": "tiles/p46_03.webp",
   "src": 276,
+  "rect": [
+   0,
+   532,
+   215,
+   803
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2387,6 +3485,12 @@
   "page": 46,
   "img": "tiles/p46_06.webp",
   "src": 279,
+  "rect": [
+   159,
+   532,
+   494,
+   803
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2400,6 +3504,12 @@
   "page": 46,
   "img": "tiles/p46_08.webp",
   "src": 280,
+  "rect": [
+   393,
+   10,
+   590,
+   574
+  ],
   "cat": "drogerie",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2413,6 +3523,12 @@
   "page": 35,
   "img": "tiles/p35_05.webp",
   "src": 214,
+  "rect": [
+   250,
+   298,
+   590,
+   718
+  ],
   "cat": "obleceni",
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · Lidl outlet Ostrava"
@@ -2426,6 +3542,12 @@
   "page": 36,
   "cat": "obleceni",
   "img": "tiles/x_36_PARKSIDETriko3ku.webp",
+  "rect": [
+   288,
+   688,
+   591,
+   962
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2439,6 +3561,12 @@
   "page": 40,
   "cat": "obleceni",
   "img": "tiles/x_40_CRIVITSportovnío.webp",
+  "rect": [
+   236,
+   776,
+   591,
+   1012
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2452,6 +3580,12 @@
   "page": 42,
   "img": "tiles/p42_02.webp",
   "src": 246,
+  "rect": [
+   90,
+   289,
+   445,
+   721
+  ],
   "cat": "obleceni",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2465,6 +3599,12 @@
   "page": 44,
   "img": "tiles/p44_00.webp",
   "src": 257,
+  "rect": [
+   0,
+   154,
+   290,
+   705
+  ],
   "cat": "obleceni",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2478,6 +3618,12 @@
   "page": 44,
   "img": "tiles/p44_01.webp",
   "src": 258,
+  "rect": [
+   0,
+   640,
+   287,
+   926
+  ],
   "cat": "obleceni",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2491,6 +3637,12 @@
   "page": 44,
   "img": "tiles/p44_05.webp",
   "src": 262,
+  "rect": [
+   173,
+   442,
+   590,
+   727
+  ],
   "cat": "obleceni",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2504,6 +3656,12 @@
   "page": 44,
   "img": "tiles/p44_06.webp",
   "src": 263,
+  "rect": [
+   161,
+   700,
+   556,
+   926
+  ],
   "cat": "obleceni",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2517,6 +3675,12 @@
   "page": 15,
   "img": "tiles/p15_01.webp",
   "src": 51,
+  "rect": [
+   0,
+   302,
+   226,
+   700
+  ],
   "cat": "zahrada",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2530,6 +3694,12 @@
   "page": 15,
   "img": "tiles/p15_02.webp",
   "src": 52,
+  "rect": [
+   0,
+   635,
+   241,
+   1000
+  ],
   "cat": "zahrada",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2543,6 +3713,12 @@
   "page": 15,
   "img": "tiles/p15_03.webp",
   "src": 53,
+  "rect": [
+   170,
+   302,
+   402,
+   700
+  ],
   "cat": "zahrada",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2556,6 +3732,12 @@
   "page": 15,
   "img": "tiles/p15_05.webp",
   "src": 55,
+  "rect": [
+   371,
+   302,
+   590,
+   700
+  ],
   "cat": "zahrada",
   "typ": "staly",
   "valid": "30. 7. – 2. 8."
@@ -2569,6 +3751,12 @@
   "page": 36,
   "img": "tiles/p36_00.webp",
   "src": 215,
+  "rect": [
+   0,
+   10,
+   322,
+   521
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2582,6 +3770,12 @@
   "page": 36,
   "img": "tiles/p36_02.webp",
   "src": 217,
+  "rect": [
+   185,
+   247,
+   452,
+   743
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2595,6 +3789,12 @@
   "page": 36,
   "img": "tiles/p36_03.webp",
   "src": 218,
+  "rect": [
+   44,
+   678,
+   481,
+   928
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2608,6 +3808,12 @@
   "page": 36,
   "cat": "zahrada",
   "img": "tiles/x_36_PARKSIDEÚhlovábr.webp",
+  "rect": [
+   288,
+   456,
+   591,
+   700
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2621,6 +3827,12 @@
   "page": 37,
   "img": "tiles/p37_00.webp",
   "src": 221,
+  "rect": [
+   0,
+   219,
+   308,
+   763
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2634,6 +3846,12 @@
   "page": 37,
   "img": "tiles/p37_02.webp",
   "src": 223,
+  "rect": [
+   0,
+   849,
+   466,
+   1000
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2647,6 +3865,12 @@
   "page": 37,
   "cat": "zahrada",
   "img": "tiles/x_37_PARKSIDEInspekčn.webp",
+  "rect": [
+   140,
+   146,
+   591,
+   406
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2660,6 +3884,12 @@
   "page": 38,
   "img": "tiles/p38_00.webp",
   "src": 225,
+  "rect": [
+   0,
+   10,
+   322,
+   309
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2673,6 +3903,12 @@
   "page": 38,
   "img": "tiles/p38_01.webp",
   "src": 226,
+  "rect": [
+   0,
+   257,
+   330,
+   600
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2686,6 +3922,12 @@
   "page": 38,
   "img": "tiles/p38_02.webp",
   "src": 227,
+  "rect": [
+   0,
+   535,
+   303,
+   1000
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2699,6 +3941,12 @@
   "page": 50,
   "img": "tiles/x_50_PARKSIDEElektric.webp",
   "src": 292,
+  "rect": [
+   0,
+   376,
+   300,
+   676
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -2712,6 +3960,12 @@
   "page": 50,
   "cat": "zahrada",
   "img": "tiles/x_50_GRILLMEISTERPlyn.webp",
+  "rect": [
+   296,
+   116,
+   591,
+   426
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -2725,6 +3979,12 @@
   "page": 50,
   "cat": "zahrada",
   "img": "tiles/x_50_PARKSIDEAkuteles.webp",
+  "rect": [
+   0,
+   676,
+   320,
+   962
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -2738,6 +3998,12 @@
   "page": 52,
   "img": "tiles/x_52_PARKSIDETermokam.webp",
   "src": 302,
+  "rect": [
+   0,
+   76,
+   300,
+   396
+  ],
   "cat": "zahrada",
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -2751,6 +4017,12 @@
   "page": 39,
   "cat": "sport",
   "img": "tiles/x_39_CRIVITCyklistick.webp",
+  "rect": [
+   0,
+   736,
+   486,
+   1012
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2764,6 +4036,12 @@
   "page": 39,
   "cat": "sport",
   "img": "tiles/x_39_CRIVITNožnípumpa.webp",
+  "rect": [
+   0,
+   150,
+   310,
+   566
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2777,6 +4055,12 @@
   "page": 39,
   "cat": "sport",
   "img": "tiles/x_39_CRIVITMomentovýk.webp",
+  "rect": [
+   288,
+   16,
+   591,
+   336
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2790,6 +4074,12 @@
   "page": 39,
   "cat": "sport",
   "img": "tiles/x_39_CRIVITSadanářadí.webp",
+  "rect": [
+   186,
+   396,
+   591,
+   706
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2803,6 +4093,12 @@
   "page": 40,
   "img": "tiles/x_40_CRIVITSadaosvětl.webp",
   "src": 235,
+  "rect": [
+   300,
+   356,
+   591,
+   706
+  ],
   "cat": "sport",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2816,6 +4112,12 @@
   "page": 40,
   "img": "tiles/x_40_CRIVITZámeknajíz.webp",
   "src": 238,
+  "rect": [
+   0,
+   36,
+   591,
+   342
+  ],
   "cat": "sport",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2829,6 +4131,12 @@
   "page": 40,
   "cat": "sport",
   "img": "tiles/x_40_CRIVITSortimentp.webp",
+  "rect": [
+   0,
+   356,
+   300,
+   706
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2842,6 +4150,12 @@
   "page": 50,
   "cat": "sport",
   "img": "tiles/x_50_CRIVITXF2Dvoukom.webp",
+  "rect": [
+   0,
+   106,
+   370,
+   456
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -2855,6 +4169,12 @@
   "page": 50,
   "cat": "sport",
   "img": "tiles/x_50_CRIVITSkládacíel.webp",
+  "rect": [
+   286,
+   376,
+   591,
+   656
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -2868,6 +4188,12 @@
   "page": 51,
   "img": "tiles/p51_01.webp",
   "src": 301,
+  "rect": [
+   41,
+   166,
+   456,
+   725
+  ],
   "cat": "sport",
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -2881,6 +4207,12 @@
   "page": 52,
   "img": "tiles/x_52_CRIVITMontážníst.webp",
   "src": 303,
+  "rect": [
+   0,
+   396,
+   300,
+   706
+  ],
   "cat": "sport",
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -2894,6 +4226,12 @@
   "page": 41,
   "img": "tiles/p41_00.webp",
   "src": 239,
+  "rect": [
+   0,
+   519,
+   445,
+   1000
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2907,6 +4245,12 @@
   "page": 41,
   "img": "tiles/x_41_LUPILUFigurkaTla.webp",
   "src": 243,
+  "rect": [
+   276,
+   436,
+   591,
+   706
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2920,6 +4264,12 @@
   "page": 41,
   "cat": "deti",
   "img": "tiles/x_41_LUPILUDětskýbato.webp",
+  "rect": [
+   296,
+   776,
+   591,
+   1012
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2933,6 +4283,12 @@
   "page": 42,
   "img": "tiles/p42_00.webp",
   "src": 244,
+  "rect": [
+   0,
+   440,
+   221,
+   1000
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2946,6 +4302,12 @@
   "page": 42,
   "img": "tiles/p42_03.webp",
   "src": 247,
+  "rect": [
+   358,
+   513,
+   590,
+   1000
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2959,6 +4321,12 @@
   "page": 42,
   "img": "tiles/p42_05.webp",
   "src": 249,
+  "rect": [
+   358,
+   136,
+   590,
+   578
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2972,6 +4340,12 @@
   "page": 42,
   "cat": "deti",
   "img": "tiles/x_42_SPINMASTERZáklad.webp",
+  "rect": [
+   196,
+   86,
+   591,
+   336
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2985,6 +4359,12 @@
   "page": 43,
   "img": "tiles/p43_01.webp",
   "src": 251,
+  "rect": [
+   0,
+   754,
+   294,
+   1000
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -2998,6 +4378,12 @@
   "page": 43,
   "img": "tiles/p43_03.webp",
   "src": 253,
+  "rect": [
+   93,
+   145,
+   504,
+   395
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -3011,6 +4397,12 @@
   "page": 43,
   "img": "tiles/p43_04.webp",
   "src": 254,
+  "rect": [
+   94,
+   330,
+   422,
+   597
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -3024,6 +4416,12 @@
   "page": 43,
   "img": "tiles/p43_05.webp",
   "src": 255,
+  "rect": [
+   179,
+   754,
+   590,
+   1000
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -3037,6 +4435,12 @@
   "page": 43,
   "cat": "deti",
   "img": "tiles/x_43_LUPILUPlyšováhra.webp",
+  "rect": [
+   196,
+   36,
+   591,
+   236
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -3050,6 +4454,12 @@
   "page": 44,
   "img": "tiles/p44_03.webp",
   "src": 260,
+  "rect": [
+   173,
+   10,
+   590,
+   280
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -3063,6 +4473,12 @@
   "page": 44,
   "img": "tiles/p44_04.webp",
   "src": 261,
+  "rect": [
+   173,
+   260,
+   584,
+   507
+  ],
   "cat": "deti",
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -3076,6 +4492,12 @@
   "img": "tiles/x_52_LUPILUSadadřevěn.webp",
   "old": null,
   "badge": null,
+  "rect": [
+   286,
+   416,
+   591,
+   626
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -3089,6 +4511,7 @@
   "img": "tiles/p52_02.webp",
   "old": null,
   "badge": null,
+  "rect": null,
   "src": -1,
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -3102,6 +4525,7 @@
   "img": "tiles/p52_05.webp",
   "old": null,
   "badge": null,
+  "rect": null,
   "src": -1,
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -3115,6 +4539,12 @@
   "page": 35,
   "img": "tiles/p35_01.webp",
   "src": 210,
+  "rect": [
+   0,
+   294,
+   275,
+   569
+  ],
   "cat": "domacnost",
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · Lidl outlet Ostrava"
@@ -3128,6 +4558,12 @@
   "cat": "domacnost",
   "img": "tiles/x_43_Dětskéložnípovle.webp",
   "old": null,
+  "rect": [
+   320,
+   496,
+   591,
+   716
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -3141,6 +4577,12 @@
   "img": "tiles/x_43_Protiskluzovápod.webp",
   "old": null,
   "badge": null,
+  "rect": [
+   0,
+   586,
+   300,
+   746
+  ],
   "src": -1,
   "typ": "inout",
   "valid": "30. 7. – 2. 8."
@@ -3154,6 +4596,12 @@
   "page": 47,
   "img": "tiles/p47_00.webp",
   "src": 281,
+  "rect": [
+   0,
+   82,
+   336,
+   666
+  ],
   "cat": "domacnost",
   "typ": "inout",
   "valid": "31. 7. – 2. 8."
@@ -3167,6 +4615,12 @@
   "page": 50,
   "img": "tiles/x_50_LIVARNONafukovac.webp",
   "src": 299,
+  "rect": [
+   286,
+   656,
+   591,
+   962
+  ],
   "cat": "domacnost",
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"
@@ -3180,6 +4634,7 @@
   "img": "tiles/p52_04.webp",
   "old": null,
   "badge": null,
+  "rect": null,
   "src": -1,
   "typ": "inout",
   "valid": "27. 7. – 2. 8. · pouze na lidl.cz"

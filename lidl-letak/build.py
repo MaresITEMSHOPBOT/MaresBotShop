@@ -338,7 +338,7 @@ for n, it in enumerate(items):
         continue
     name, detail = split_name(it['lines'])
     rec = dict(name=name, detail=detail, price=it['price'], old=it['old'],
-               badge=it['disc'], page=it['page'], img=it['img'], src=n)
+               badge=it['disc'], page=it['page'], img=it['img'], src=n, rect=it['rect'])
     rec.update(FIX.get(n, {}))
     rec['detail'] = re.sub(r'\s+', ' ', re.sub(r'(,\s*){2,}', ', ', rec['detail'])).strip(' ,')
     rec['name'] = re.sub(r'\s*/\s*', '/', rec['name']).strip(' ,')
@@ -350,6 +350,7 @@ for n, it in enumerate(items):
 
 for e in EXTRA:
     e.setdefault('old', None); e.setdefault('badge', None); e.setdefault('detail', '')
+    e.setdefault('rect', None)
     e['src'] = -1
     out.append(e)
 

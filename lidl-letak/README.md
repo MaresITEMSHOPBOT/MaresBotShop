@@ -10,6 +10,11 @@ tenhle týden zlevněná) a **in & out** (92 položek – nepotravinářské akc
 Crivit, Lupilu, Livarno a řecký týden Eridanous, tedy zboží na akční ploše,
 které po vyprodání končí). Řídí se podle strany letáku, viz `INOUT_PAGES` v `build.py`.
 
+Každá dlaždice je rozklikávací – otevře se stránka letáku s vyznačeným zbožím
+(klik do stránky přiblíží), vedle ní všechny údaje, přepínač „hotovo“
+a šipky na sousední položky. Stránky se do stránky vkládají v `render.py`,
+rámeček se počítá z `rect` v `products.json`.
+
 ## Jak se to vyrábí z nového PDF
 
 ```bash

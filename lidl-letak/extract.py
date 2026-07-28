@@ -192,9 +192,9 @@ def main():
                 continue
             box = tuple(int(v * SCALE) for v in (L, T, R, B))
             crop = img.crop(box)
-            crop.thumbnail((300, 330), Image.LANCZOS)
+            crop.thumbnail((260, 290), Image.LANCZOS)
             fn = f'tiles/p{pno:02d}_{gi:02d}.webp'
-            crop.save(fn, 'WEBP', quality=64, method=6)
+            crop.save(fn, 'WEBP', quality=56, method=6)
             keep, price, old, disc = parse(g['text'])
             items.append(dict(page=pno, idx=gi, img=fn, raw=g['text'],
                               lines=keep, price=price, old=old, disc=disc,

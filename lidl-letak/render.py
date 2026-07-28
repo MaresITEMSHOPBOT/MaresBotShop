@@ -41,8 +41,26 @@ for file, family, weight in [
 data = []
 for r in P:
     data.append(dict(n=r['name'], d=r['detail'], p=r['price'], o=r['old'] or '',
-                     b=r['badge'] or '', c=r['cat'], s=r['page'] + 1, v=r['valid'], t=r['typ'],
+                     b=r['badge'] or '', c=r['cat'], s=r['page'] + 1, v=r['valid'], t=r['typ'], r=r['rect'],
                      i=b64(r['img'], 'image/webp')))
+
+# obrázky celých stran letáku pro detailní okno
+import fitz, io
+from PIL import Image
+doc = fitz.open('/root/.claude/uploads/4fe782ac-129e-54b7-ab51-ca86305193f0/'
+                '587d2eec-AkcniletakODCTVRTKA30728202600_compressed.pdf')
+pages = {}
+for pn in sorted({r['page'] for r in P}):
+    pg = doc[pn]
+    pix = pg.get_pixmap(dpi=110)
+    im = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
+    im.thumbnail((600, 3000), Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, 'WEBP', quality=44, method=6)
+    pages[pn] = dict(i='data:image/webp;base64,' + base64.b64encode(buf.getvalue()).decode(),
+                     w=round(pg.rect.width), h=round(pg.rect.height))
+print('stran do detailu:', len(pages),
+      round(sum(len(v['i']) for v in pages.values()) / 1e6, 2), 'MB')
 
 cat_css = '\n'.join(
     '.c-%s{--h:%d;--s:%d%%}' % (cid, h, s) for cid, _, h, s in CATS)
@@ -180,6 +198,55 @@ article.done{opacity:.44}
 .check:checked{background:var(--brand);border-color:var(--brand)}
 .check:checked::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;
   border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+article{cursor:pointer;transition:border-color .12s,transform .12s}
+article:hover{border-color:var(--brand)}
+article:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+/* ---- detail ---- */
+.modal[hidden]{display:none}
+.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:clamp(8px,2vw,28px)}
+.backdrop{position:absolute;inset:0;background:rgba(6,10,18,.72);backdrop-filter:blur(2px)}
+.dialog{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  width:min(1040px,100%);max-height:min(92vh,900px);overflow:hidden;display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);box-shadow:0 30px 80px -30px rgba(0,0,0,.7)}
+.m-page{background:var(--tile);overflow:auto;max-height:min(92vh,900px);border-right:1px solid var(--line)}
+.m-inner{position:relative;width:100%;cursor:zoom-in}
+.m-inner.zoom{width:215%;cursor:zoom-out}
+.m-inner img{width:100%;display:block}
+.hl{position:absolute;outline:3px solid var(--flag);border-radius:3px;pointer-events:none;
+  box-shadow:0 0 0 9999px rgba(8,12,20,.5)}
+.m-info{padding:20px 22px 18px;overflow:auto;display:flex;flex-direction:column;gap:9px}
+.m-eyebrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11px;
+  font-family:'PlexMono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.m-eyebrow .cat{color:hsl(var(--h) var(--s) var(--cat-l));font-weight:500}
+.m-eyebrow .io{background:var(--io);color:var(--surface);padding:2px 6px;border-radius:3px}
+.m-info h2{margin:0;font-size:clamp(19px,2.6vw,25px);font-weight:800;letter-spacing:-.02em;
+  line-height:1.15;text-wrap:balance}
+.m-det{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.m-price{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-top:4px}
+.m-price .price{font-size:44px}
+.m-price .old{font-size:16px;padding-bottom:5px}
+.m-meta{margin:6px 0 0;display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:13px;
+  border-top:1px solid var(--line);padding-top:11px}
+.m-meta dt{color:var(--muted)}
+.m-meta dd{margin:0;font-family:'PlexMono',monospace;font-size:12.5px}
+.m-done{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;
+  border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:4px}
+.m-nav{display:flex;gap:8px;margin-top:auto;padding-top:12px}
+.m-nav button{flex:1;font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.m-nav button:hover:not(:disabled){border-color:var(--brand);color:var(--brand)}
+.m-nav button:disabled{opacity:.4;cursor:default}
+.m-hint{font-size:11.5px;color:var(--muted);font-family:'PlexMono',monospace}
+.close{position:absolute;top:8px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:20px;
+  line-height:1;cursor:pointer}
+.close:hover{border-color:var(--brand);color:var(--brand)}
+@media (max-width:760px){
+  .dialog{grid-template-columns:1fr;max-height:94vh;overflow:auto}
+  .m-page{max-height:46vh;border-right:0;border-bottom:1px solid var(--line)}
+  .m-price .price{font-size:36px}
+}
 .empty{color:var(--muted);padding:40px 0;text-align:center}
 footer{border-top:1px solid var(--line);padding:18px 0 40px;color:var(--muted);font-size:12.5px}
 footer p{margin:.35em 0;max-width:66ch}
@@ -200,7 +267,7 @@ footer p{margin:.35em 0;max-width:66ch}
 """
 
 JS = """
-const DATA = __DATA__, CATS = __CATS__;
+const DATA = __DATA__, CATS = __CATS__, PAGES = __PAGES__;
 const grid = document.getElementById('sections');
 const q = document.getElementById('q'), sort = document.getElementById('sort');
 const hide = document.getElementById('hide'), tally = document.getElementById('tally');
@@ -238,6 +305,15 @@ function card(p){
       '<span class="' + (p.v.indexOf('30. 7.') === 0 ? '' : 'warn') + '">' + esc(p.v) + '</span>' +
       '<input class="check" type="checkbox" title="Hotovo – naskladněno" ' +
         (done[key(p)] ? 'checked' : '') + '></div>';
+  el.tabIndex = 0;
+  el.setAttribute('role', 'button');
+  el.addEventListener('click', e => {
+    if (e.target.closest('.check')) return;
+    openDetail(p);
+  });
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(p); }
+  });
   el.querySelector('.check').addEventListener('change', e => {
     if (e.target.checked) done[key(p)] = 1; else delete done[key(p)];
     localStorage.setItem('lidl3107done', JSON.stringify(done));
@@ -263,8 +339,11 @@ function pick(p){
 
 function word(n){ return n === 1 ? 'položka' : (n < 5 ? 'položky' : 'položek'); }
 
+let visible = [];
+
 function render(){
   grid.textContent = '';
+  visible = [];
   let shown = 0;
   BLOCKS.forEach(([bid, blabel, bnote]) => {
     if (typ !== 'all' && typ !== bid) return;
@@ -286,7 +365,7 @@ function render(){
       sec.innerHTML = '<div class="sec-head"><h3>' + c.label + '</h3>' +
         '<span class="n">' + list.length + ' ' + word(list.length) + '</span></div><div class="grid"></div>';
       const g = sec.querySelector('.grid');
-      list.forEach(p => g.appendChild(card(p)));
+      list.forEach(p => { visible.push(p); g.appendChild(card(p)); });
       block.appendChild(sec);
     });
     grid.appendChild(block);
@@ -304,6 +383,96 @@ function counts(){
     ch.hidden = n === 0;
   });
 }
+
+/* ---- detail produktu ---- */
+const modal = document.getElementById('modal');
+const mInner = document.getElementById('m-inner');
+let current = null, lastFocus = null;
+
+function money(p){
+  return String(p.p).endsWith('.-')
+    ? String(p.p).replace('.-', '') + '<span class="kc">,–</span>'
+    : String(p.p).replace('.', '<span class="kc">,') + '</span>';
+}
+
+function openDetail(p){
+  current = p;
+  lastFocus = document.activeElement;
+  const pg = PAGES[p.s - 1];
+  const cat = CATS.find(c => c.id === p.c);
+  document.getElementById('m-img').src = pg.i;
+  const hl = document.getElementById('m-hl');
+  if (p.r) {
+    hl.hidden = false;
+    hl.style.left = (p.r[0] / pg.w * 100) + '%';
+    hl.style.top = (p.r[1] / pg.h * 100) + '%';
+    hl.style.width = ((p.r[2] - p.r[0]) / pg.w * 100) + '%';
+    hl.style.height = ((p.r[3] - p.r[1]) / pg.h * 100) + '%';
+  } else hl.hidden = true;
+  mInner.classList.remove('zoom');
+  const eb = document.getElementById('m-eyebrow');
+  eb.className = 'm-eyebrow c-' + p.c;
+  eb.innerHTML = '<span class="cat">' + cat.label + '</span>' +
+    (p.t === 'inout' ? '<span class="io">IN &amp; OUT</span>' : '');
+  document.getElementById('m-name').textContent = p.n;
+  const det = document.getElementById('m-det');
+  det.textContent = p.d; det.hidden = !p.d;
+  const bd = document.getElementById('m-badge');
+  bd.innerHTML = p.b
+    ? '<span class="badge' + (/Super|Cenov|Ušetř/.test(p.b) ? ' plain' : '') + '">' + esc(p.b) + '</span>'
+    : '';
+  document.getElementById('m-price').innerHTML = money(p);
+  const old = document.getElementById('m-old');
+  old.textContent = p.o ? String(p.o).replace('.-', ',–').replace('.', ',') : '';
+  document.getElementById('m-strana').textContent = p.s;
+  document.getElementById('m-valid').textContent = p.v;
+  document.getElementById('m-typ').textContent =
+    p.t === 'inout' ? 'in & out – akční plocha' : 'stálý sortiment';
+  const chk = document.getElementById('m-check');
+  chk.checked = !!done[key(p)];
+  const i = visible.indexOf(p);
+  document.getElementById('m-prev').disabled = i <= 0;
+  document.getElementById('m-next').disabled = i < 0 || i >= visible.length - 1;
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  document.querySelector('.close').focus();
+  const mp = document.querySelector('.m-page');
+  requestAnimationFrame(() => {
+    mp.scrollTop = p.r
+      ? Math.max(0, (p.r[1] / pg.h) * mInner.offsetHeight - mp.clientHeight / 3)
+      : 0;
+  });
+}
+
+function closeDetail(){
+  modal.hidden = true;
+  document.body.style.overflow = '';
+  if (lastFocus) lastFocus.focus();
+}
+
+function step(d){
+  const i = visible.indexOf(current);
+  if (i > -1 && visible[i + d]) openDetail(visible[i + d]);
+}
+
+modal.addEventListener('click', e => { if (e.target.closest('[data-close]')) closeDetail(); });
+mInner.addEventListener('click', () => mInner.classList.toggle('zoom'));
+document.getElementById('m-prev').addEventListener('click', () => step(-1));
+document.getElementById('m-next').addEventListener('click', () => step(1));
+document.getElementById('m-check').addEventListener('change', e => {
+  if (e.target.checked) done[key(current)] = 1; else delete done[key(current)];
+  localStorage.setItem('lidl3107done', JSON.stringify(done));
+  updateTally();
+  const p = current;
+  render();
+  current = visible.find(x => key(x) === key(p)) || p;
+});
+document.addEventListener('keydown', e => {
+  if (modal.hidden) return;
+  if (e.key === 'Escape') closeDetail();
+  if (e.key === 'ArrowLeft') step(-1);
+  if (e.key === 'ArrowRight') step(1);
+});
 
 document.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
   active = ch.dataset.cat;
@@ -378,6 +547,32 @@ __CATCSS__
 
 <main class="wrap" id="sections"></main>
 
+<div class="modal" id="modal" hidden>
+  <div class="backdrop" data-close></div>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="m-name">
+    <button class="close" data-close aria-label="Zavřít detail">&times;</button>
+    <div class="m-page"><div class="m-inner" id="m-inner"><img id="m-img" alt=""><div class="hl" id="m-hl"></div></div></div>
+    <div class="m-info">
+      <div class="m-eyebrow" id="m-eyebrow"></div>
+      <h2 id="m-name"></h2>
+      <p class="m-det" id="m-det"></p>
+      <div id="m-badge"></div>
+      <div class="m-price"><span class="price" id="m-price"></span><span class="old" id="m-old"></span></div>
+      <dl class="m-meta">
+        <dt>Strana letáku</dt><dd id="m-strana"></dd>
+        <dt>Platí</dt><dd id="m-valid"></dd>
+        <dt>Sortiment</dt><dd id="m-typ"></dd>
+      </dl>
+      <label class="m-done"><input type="checkbox" class="check" id="m-check"> Hotovo – naskladněno</label>
+      <p class="m-hint">Klikni do stránky pro přiblížení. Šipkami ← → přeskočíš na sousední zboží, Esc zavírá.</p>
+      <div class="m-nav">
+        <button id="m-prev">← Předchozí</button>
+        <button id="m-next">Další →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="wrap">
     <p><strong>Jak to číst:</strong> velká červená je akční cena, přeškrtnutá je cena před slevou.
@@ -396,7 +591,10 @@ __JS__
 """
 
 cat_meta = json.dumps([dict(id=c[0], label=c[1]) for c in CATS], ensure_ascii=False)
-js = JS.replace('__DATA__', json.dumps(data, ensure_ascii=False)).replace('__CATS__', cat_meta)
+js = (JS.replace('__DATA__', json.dumps(data, ensure_ascii=False))
+        .replace('__CATS__', cat_meta)
+        .replace('__PAGES__', json.dumps([pages.get(i, dict(i='', w=591, h=1020))
+                                          for i in range(max(pages) + 1)], ensure_ascii=False)))
 html = (html.replace('__FONTS__', '\n'.join(font_faces))
             .replace('__CSS__', CSS)
             .replace('__CATCSS__', cat_css)
