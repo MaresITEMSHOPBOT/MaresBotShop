@@ -1,9 +1,14 @@
 # Akční leták Lidl – po kategoriích
 
 `letak.html` je samostatná stránka (obrázky i písma jsou vložené uvnitř, funguje offline).
-Leták 30. 7. – 2. 8. 2026, region CZ 31/2026, 245 položek ve 13 kategoriích:
-maso a ryby, ovoce a zelenina, chlazené, mražené, pečivo, suché a trvanlivé,
+Leták 30. 7. – 2. 8. 2026, region CZ 31/2026, 245 položek ve 14 kategoriích:
+maso a ryby, ovoce a zelenina, vejce, chlazené, mražené, pečivo, suché a trvanlivé,
 nápoje, drogerie, oblečení, zahrada a dílna, sport, dětský svět, domácnost.
+
+Nad kategoriemi je druhé dělení: **stálý sortiment** (153 položek – běžná regálovka
+tenhle týden zlevněná) a **in & out** (92 položek – nepotravinářské akce Parkside,
+Crivit, Lupilu, Livarno a řecký týden Eridanous, tedy zboží na akční ploše,
+které po vyprodání končí). Řídí se podle strany letáku, viz `INOUT_PAGES` v `build.py`.
 
 ## Jak se to vyrábí z nového PDF
 

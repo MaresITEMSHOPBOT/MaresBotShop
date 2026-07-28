@@ -57,7 +57,7 @@ items = json.load(open('items.json'))
 if not any(r['name'].startswith('COCA-COLA') for r in P):
     P.append(dict(name='COCA-COLA / COCA-COLA Zero', detail='4 x 1,75 l, 1 l = 14,27 Kč',
                   price='99.90', old=None, badge='Ušetřete 28 %', cat='napoje', page=1,
-                  img='tiles/x_cola.webp', src=-1, valid='30. 7. – 2. 8.'))
+                  img='tiles/x_cola.webp', src=-1, valid='30. 7. – 2. 8.', typ='staly'))
 
 # u cedulek „Ušetřete“ doplnit procenta z původního textu
 raw_by_src = {n: it['raw'] for n, it in enumerate(items)}
@@ -84,8 +84,8 @@ for r in P:
     n += 1
 
 order = {c: i for i, c in enumerate(
-    ['maso', 'ovoce', 'chlazene', 'mrazene', 'pecivo', 'suche', 'napoje', 'drogerie',
-     'obleceni', 'zahrada', 'sport', 'deti', 'domacnost'])}
+    ['maso', 'ovoce', 'vejce', 'chlazene', 'mrazene', 'pecivo', 'suche', 'napoje',
+     'drogerie', 'obleceni', 'zahrada', 'sport', 'deti', 'domacnost'])}
 P.sort(key=lambda r: (order.get(r['cat'], 99), r['page']))
 json.dump(P, open('products.json', 'w'), ensure_ascii=False, indent=1)
 print('přeříznuto', n, 'dlaždic; položek celkem', len(P))

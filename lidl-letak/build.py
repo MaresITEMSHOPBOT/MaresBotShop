@@ -252,7 +252,7 @@ EXTRA = [
 ]
 
 # --- kategorie ---
-CATS = ['maso', 'ovoce', 'chlazene', 'mrazene', 'pecivo', 'suche', 'napoje',
+CATS = ['maso', 'ovoce', 'vejce', 'chlazene', 'mrazene', 'pecivo', 'suche', 'napoje',
         'drogerie', 'obleceni', 'zahrada', 'sport', 'deti', 'domacnost']
 
 PAGE_CAT = {0: 'chlazene', 1: 'maso', 2: 'chlazene', 3: 'chlazene', 4: 'suche', 9: 'maso',
@@ -265,6 +265,7 @@ PAGE_CAT = {0: 'chlazene', 1: 'maso', 2: 'chlazene', 3: 'chlazene', 4: 'suche', 
             47: 'domacnost', 48: 'suche', 50: 'zahrada', 51: 'sport', 52: 'domacnost'}
 
 KW = [
+    ('vejce', r'vejce'),
     ('maso', r'kuře|kuřec|vepřov|hovězí|krůt|špekáč|klobás|salám|šunka|paštik|slanin|'
              r'tatarák|guláš|maso|treska|losos|pstruh|tilápie|krevet|šproty|kalmár|'
              r'rybí prsty|masové kuličky|burger|nugety'),
@@ -351,6 +352,15 @@ for e in EXTRA:
     e.setdefault('old', None); e.setdefault('badge', None); e.setdefault('detail', '')
     e['src'] = -1
     out.append(e)
+
+INOUT_PAGES = {2, 29, 30, 31, 32,          # řecký týden
+               35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 50, 51, 52}  # nepotravinářské akce
+for r in out:
+    r['typ'] = 'inout' if r['page'] in INOUT_PAGES else 'staly'
+    if r['page'] == 15:                     # květiny má Lidl každý den
+        r['typ'] = 'staly'
+    if 'Pivní půllitr' in r['name']:        # sklenice k pivní akci
+        r['typ'] = 'inout'
 
 VALID = {3: 'nová běžná cena', 4: 'nová běžná cena',
          35: '27. 7. – 2. 8. · Lidl outlet Ostrava', 47: '31. 7. – 2. 8.',

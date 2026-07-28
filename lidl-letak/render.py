@@ -7,9 +7,10 @@ P = json.load(open('products.json'))
 CATS = [
     ('maso',      'Maso, uzeniny a ryby', 350, 45),
     ('ovoce',     'Ovoce a zelenina',     105, 40),
+    ('vejce',     'Vejce',                 46, 62),
     ('chlazene',  'Chlazené',             195, 45),
     ('mrazene',   'Mražené',              225, 45),
-    ('pecivo',    'Pečivo',                35, 50),
+    ('pecivo',    'Pečivo',                18, 48),
     ('suche',     'Suché a trvanlivé',     28, 32),
     ('napoje',    'Nápoje a alkohol',     168, 40),
     ('drogerie',  'Drogerie a mazlíčci',  285, 35),
@@ -40,7 +41,7 @@ for file, family, weight in [
 data = []
 for r in P:
     data.append(dict(n=r['name'], d=r['detail'], p=r['price'], o=r['old'] or '',
-                     b=r['badge'] or '', c=r['cat'], s=r['page'] + 1, v=r['valid'],
+                     b=r['badge'] or '', c=r['cat'], s=r['page'] + 1, v=r['valid'], t=r['typ'],
                      i=b64(r['img'], 'image/webp')))
 
 cat_css = '\n'.join(
@@ -51,7 +52,7 @@ CSS = """
   --ground:#FAF8F3; --surface:#FFFFFF; --tile:#F2EFE8;
   --ink:#141C2B; --muted:#6A7488; --line:#E4DFD4;
   --brand:#0B4EA2; --price:#CE1126; --flag:#FFCC00; --flag-ink:#241B00;
-  --cat-l:38%; --cat-bg-l:94%; --header-bg:#0B4EA2; --header-ink:#FFFFFF;
+  --cat-l:38%; --cat-bg-l:94%; --header-bg:#0B4EA2; --header-ink:#FFFFFF; --io:#9C5A16;
   --shadow:0 1px 2px rgba(20,28,43,.06),0 8px 24px -18px rgba(20,28,43,.4);
 }
 @media (prefers-color-scheme:dark){
@@ -59,7 +60,7 @@ CSS = """
     --ground:#0E1420; --surface:#161E2D; --tile:#1E2739;
     --ink:#ECF0F7; --muted:#95A1B7; --line:#27314673;
     --brand:#7FB0F5; --price:#FF7A7A; --flag:#FFD84D; --flag-ink:#241B00;
-    --cat-l:70%; --cat-bg-l:18%; --header-bg:#122E52; --header-ink:#EAF1FC;
+    --cat-l:70%; --cat-bg-l:18%; --header-bg:#122E52; --header-ink:#EAF1FC; --io:#E0A45E;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -20px #000;
   }
 }
@@ -67,14 +68,14 @@ CSS = """
   --ground:#0E1420; --surface:#161E2D; --tile:#1E2739;
   --ink:#ECF0F7; --muted:#95A1B7; --line:#27314673;
   --brand:#7FB0F5; --price:#FF7A7A; --flag:#FFD84D; --flag-ink:#241B00;
-  --cat-l:70%; --cat-bg-l:18%; --header-bg:#122E52; --header-ink:#EAF1FC;
+  --cat-l:70%; --cat-bg-l:18%; --header-bg:#122E52; --header-ink:#EAF1FC; --io:#E0A45E;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -20px #000;
 }
 :root[data-theme="light"]{
   --ground:#FAF8F3; --surface:#FFFFFF; --tile:#F2EFE8;
   --ink:#141C2B; --muted:#6A7488; --line:#E4DFD4;
   --brand:#0B4EA2; --price:#CE1126; --flag:#FFCC00; --flag-ink:#241B00;
-  --cat-l:38%; --cat-bg-l:94%; --header-bg:#0B4EA2; --header-ink:#FFFFFF;
+  --cat-l:38%; --cat-bg-l:94%; --header-bg:#0B4EA2; --header-ink:#FFFFFF; --io:#9C5A16;
   --shadow:0 1px 2px rgba(20,28,43,.06),0 8px 24px -18px rgba(20,28,43,.4);
 }
 *{box-sizing:border-box}
@@ -119,14 +120,33 @@ select{font:inherit;color:inherit;background:var(--surface);border:1px solid var
   border-color:hsl(var(--h) var(--s) var(--cat-l));color:hsl(var(--h) var(--s) var(--cat-l))}
 .chip[aria-pressed=true] .n{color:inherit;opacity:.75}
 .chip.all{--h:215;--s:0%}
+.chip[hidden]{display:none}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
 
 /* ---- sekce ---- */
 main{padding:22px 0 60px}
+.seg{display:inline-flex;gap:2px;background:var(--surface);border:1px solid var(--line);
+  border-radius:8px;padding:2px;flex:0 0 auto}
+.seg button{font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:none;border:0;
+  padding:5px 12px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed=true]{background:var(--brand);color:#fff}
+.block{margin-bottom:40px}
+.block-head{border-top:3px solid var(--brand);padding-top:11px;margin-bottom:20px;
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.block.inout .block-head{border-top-color:var(--io)}
+.block-head h2{margin:0;font-size:clamp(19px,3vw,26px);font-weight:800;letter-spacing:-.022em}
+.block.inout .block-head h2{color:var(--io)}
+.block.staly .block-head h2{color:var(--brand)}
+.block-head .n{font-family:'PlexMono',monospace;font-size:12px;color:var(--muted);
+  letter-spacing:.06em;text-transform:uppercase}
+.block-head .note{flex:1 1 240px;font-size:13px;color:var(--muted);line-height:1.4;max-width:56ch}
+.tag-io{position:absolute;top:7px;right:7px;background:var(--io);color:var(--surface);
+  font-family:'PlexMono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;
+  padding:3px 6px;border-radius:3px;z-index:1}
 section{margin-bottom:34px;scroll-margin-top:118px}
 .sec-head{display:flex;align-items:baseline;gap:12px;padding:0 0 10px;
   border-bottom:2px solid hsl(var(--h) var(--s) var(--cat-l));margin-bottom:16px}
-.sec-head h2{margin:0;font-size:clamp(17px,2.4vw,22px);font-weight:800;letter-spacing:-.015em;
+.sec-head h3{margin:0;font-size:clamp(17px,2.4vw,22px);font-weight:800;letter-spacing:-.015em;
   color:hsl(var(--h) var(--s) var(--cat-l))}
 .sec-head .n{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 
@@ -184,7 +204,11 @@ const DATA = __DATA__, CATS = __CATS__;
 const grid = document.getElementById('sections');
 const q = document.getElementById('q'), sort = document.getElementById('sort');
 const hide = document.getElementById('hide'), tally = document.getElementById('tally');
-let active = 'all';
+let active = 'all', typ = 'all';
+const BLOCKS = [
+  ['staly', 'Stálý sortiment', 'Běžná regálovka, kterou vedeme pořád – tenhle týden jen za akční cenu.'],
+  ['inout', 'In &amp; Out', 'Zboží, které přijede na akční plochu a po vyprodání končí: nepotravinářské akce a řecký týden.']
+];
 let done = {};
 try { done = JSON.parse(localStorage.getItem('lidl3107done') || '{}'); } catch (e) {}
 
@@ -200,6 +224,7 @@ function card(p){
     ? String(p.p).replace('.-','') + '<span class="kc">,–</span>'
     : String(p.p).replace('.', '<span class="kc">,') + '</span>';
   el.innerHTML =
+    (p.t === 'inout' ? '<span class="tag-io">IN &amp; OUT</span>' : '') +
     '<div class="thumb"><img loading="lazy" alt="" src="' + p.i + '"></div>' +
     '<div class="body">' +
       '<div class="name">' + esc(p.n) + '</div>' +
@@ -228,28 +253,56 @@ function updateTally(){
   tally.textContent = n ? n + ' / ' + DATA.length + ' hotovo' : DATA.length + ' položek';
 }
 
-function render(){
+function pick(p){
   const term = q.value.trim().toLowerCase();
+  return (active === 'all' || active === p.c)
+    && (typ === 'all' || typ === p.t)
+    && (!term || (p.n + ' ' + p.d).toLowerCase().includes(term))
+    && (!hide.checked || !done[key(p)]);
+}
+
+function word(n){ return n === 1 ? 'položka' : (n < 5 ? 'položky' : 'položek'); }
+
+function render(){
   grid.textContent = '';
   let shown = 0;
-  CATS.forEach(c => {
-    let list = DATA.filter(p => p.c === c.id
-      && (active === 'all' || active === c.id)
-      && (!term || (p.n + ' ' + p.d).toLowerCase().includes(term))
-      && (!hide.checked || !done[key(p)]));
-    if (sort.value === 'price') list = list.slice().sort((a, b) => num(a) - num(b));
-    if (sort.value === 'priced') list = list.slice().sort((a, b) => num(b) - num(a));
-    if (!list.length) return;
-    shown += list.length;
-    const sec = document.createElement('section');
-    sec.className = 'c-' + c.id; sec.id = 'sec-' + c.id;
-    sec.innerHTML = '<div class="sec-head"><h2>' + c.label + '</h2>' +
-      '<span class="n">' + list.length + ' položek</span></div><div class="grid"></div>';
-    const g = sec.querySelector('.grid');
-    list.forEach(p => g.appendChild(card(p)));
-    grid.appendChild(sec);
+  BLOCKS.forEach(([bid, blabel, bnote]) => {
+    if (typ !== 'all' && typ !== bid) return;
+    const inBlock = DATA.filter(p => p.t === bid && pick(p));
+    if (!inBlock.length) return;
+    shown += inBlock.length;
+    const block = document.createElement('div');
+    block.className = 'block ' + bid;
+    block.innerHTML = '<div class="block-head"><h2>' + blabel + '</h2>' +
+      '<span class="n">' + inBlock.length + ' ' + word(inBlock.length) + '</span>' +
+      '<span class="note">' + bnote + '</span></div>';
+    CATS.forEach(c => {
+      let list = inBlock.filter(p => p.c === c.id);
+      if (sort.value === 'price') list = list.slice().sort((a, b) => num(a) - num(b));
+      if (sort.value === 'priced') list = list.slice().sort((a, b) => num(b) - num(a));
+      if (!list.length) return;
+      const sec = document.createElement('section');
+      sec.className = 'c-' + c.id; sec.id = 'sec-' + bid + '-' + c.id;
+      sec.innerHTML = '<div class="sec-head"><h3>' + c.label + '</h3>' +
+        '<span class="n">' + list.length + ' ' + word(list.length) + '</span></div><div class="grid"></div>';
+      const g = sec.querySelector('.grid');
+      list.forEach(p => g.appendChild(card(p)));
+      block.appendChild(sec);
+    });
+    grid.appendChild(block);
   });
-  if (!shown) grid.innerHTML = '<p class="empty">Nic nenalezeno – zkuste jiné slovo.</p>';
+  if (!shown) grid.innerHTML = '<p class="empty">Nic nenalezeno – zkuste jiné slovo nebo jiný filtr.</p>';
+  counts();
+}
+
+function counts(){
+  const base = DATA.filter(p => typ === 'all' || typ === p.t);
+  document.querySelectorAll('.chip').forEach(ch => {
+    const c = ch.dataset.cat;
+    const n = c === 'all' ? base.length : base.filter(p => p.c === c).length;
+    ch.querySelector('.n').textContent = n;
+    ch.hidden = n === 0;
+  });
 }
 
 document.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
@@ -257,9 +310,14 @@ document.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', ()
   document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === ch));
   render();
   if (active !== 'all') {
-    const t = document.getElementById('sec-' + active);
-    if (t) window.scrollTo({ top: t.offsetTop - 110, behavior: 'smooth' });
+    const t = document.querySelector('[id^="sec-"][id$="-' + active + '"]');
+    if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 118, behavior: 'smooth' });
   }
+}));
+document.querySelectorAll('.seg button').forEach(bt => bt.addEventListener('click', () => {
+  typ = bt.dataset.typ;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', x === bt));
+  render();
 }));
 q.addEventListener('input', render);
 sort.addEventListener('change', render);
@@ -304,6 +362,11 @@ __CATCSS__
         <option value="price">Od nejlevnějšího</option>
         <option value="priced">Od nejdražšího</option>
       </select>
+      <div class="seg" role="group" aria-label="Typ sortimentu">
+        <button data-typ="all" aria-pressed="true">Vše</button>
+        <button data-typ="staly" aria-pressed="false">Stálý sortiment</button>
+        <button data-typ="inout" aria-pressed="false">In &amp; Out</button>
+      </div>
       <label class="tgl"><input type="checkbox" id="hide" class="check"> Skrýt hotové</label>
       <span class="count mono" id="tally"></span>
     </div>
