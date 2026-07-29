@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Digitální akční leták s vyhledáváním – ceny, slevy a stránka letáku pro každý produkt.">
+<title>Digitální leták – vyhledávání v akcích</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230050aa'/%3E%3Ctext x='16' y='23' font-size='20' font-family='sans-serif' font-weight='bold' fill='%23ffe600' text-anchor='middle'%3E%25%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="brand">
+      <span class="brand-mark">%</span>
+      <div>
+        <h1 id="meta-title">Digitální leták</h1>
+        <p id="meta-sub" class="muted"></p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab is-active" data-view="search" role="tab">🔍 Hledat</button>
+      <button class="tab" data-view="browse" role="tab">📖 Listovat</button>
+      <button class="tab" data-view="list" role="tab">🛒 Seznam <span id="list-count" class="pill">0</span></button>
+    </nav>
+  </div>
+
+  <div class="searchbar" id="searchbar">
+    <span class="search-icon">🔍</span>
+    <input id="q" type="text" autocomplete="off" placeholder="Napiš co hledáš – např. „máslo“, „pivo“, „kuřecí“…"
+           aria-label="Hledat v letáku">
+    <button id="q-clear" class="icon-btn" title="Vymazat (Esc)" hidden>✕</button>
+  </div>
+</header>
+
+<main>
+  <!-- ============ VYHLEDÁVÁNÍ ============ -->
+  <section id="view-search" class="view">
+    <div class="filters">
+      <div class="chips" id="cats"></div>
+      <div class="filter-row">
+        <label class="field">
+          <span>Řadit</span>
+          <select id="sort">
+            <option value="page">podle stránky letáku</option>
+            <option value="cheap">od nejlevnějšího</option>
+            <option value="expensive">od nejdražšího</option>
+            <option value="discount">největší sleva</option>
+            <option value="save">nejvíc ušetříš (Kč)</option>
+            <option value="name">podle názvu</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="only-sale"> jen zlevněné</label>
+        <label class="check"><input type="checkbox" id="only-plus"> jen Lidl Plus</label>
+        <label class="field">
+          <span>Cena do <b id="max-price-label">–</b></span>
+          <input type="range" id="max-price" min="0" max="100" value="100">
+        </label>
+      </div>
+    </div>
+
+    <p class="results-line"><span id="count"></span><span id="stats" class="muted"></span></p>
+    <div id="grid" class="grid"></div>
+    <p id="empty" class="empty" hidden>Nic takového v letáku není. Zkus jiné slovo – třeba jen část názvu.</p>
+  </section>
+
+  <!-- ============ LISTOVÁNÍ ============ -->
+  <section id="view-browse" class="view" hidden>
+    <p class="results-line muted" id="browse-info"></p>
+    <div id="pages" class="pagegrid"></div>
+  </section>
+
+  <!-- ============ NÁKUPNÍ SEZNAM ============ -->
+  <section id="view-list" class="view" hidden>
+    <div id="list-wrap"></div>
+  </section>
+</main>
+
+<footer>
+  <p id="meta-note" class="muted"></p>
+  <p class="muted">Data jsou automaticky vyčtená z PDF letáku – ceny ověř vždy v obchodě.</p>
+</footer>
+
+<!-- ============ DETAIL / STRÁNKA LETÁKU ============ -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-bar">
+    <button id="m-close" class="icon-btn" title="Zavřít (Esc)">✕</button>
+    <div id="m-title" class="modal-title"></div>
+    <div class="modal-nav">
+      <button id="m-prev" class="icon-btn" title="Předchozí strana (←)">‹</button>
+      <span id="m-page" class="pill"></span>
+      <button id="m-next" class="icon-btn" title="Další strana (→)">›</button>
+      <button id="m-zoom" class="icon-btn" title="Zvětšit / zmenšit stranu">⊞</button>
+    </div>
+  </div>
+  <div class="modal-body">
+    <div class="modal-page">
+      <div class="pagewrap" id="pagewrap">
+        <img id="m-img" alt="Stránka letáku">
+        <div id="m-mark" class="mark" hidden></div>
+      </div>
+    </div>
+    <aside class="modal-side">
+      <div id="m-detail"></div>
+      <h3 class="side-h">Na této straně</h3>
+      <div id="m-others" class="side-list"></div>
+    </aside>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
