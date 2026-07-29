@@ -1,7 +1,11 @@
 # Digitální leták s vyhledáváním
 
-Statická webová aplikace nad akčním letákem (PDF). Otevři `letak/index.html` –
-nic se neinstaluje, běží to offline i z disku.
+Statická webová aplikace nad akčním letákem (PDF). Nic se neinstaluje,
+běží offline i z disku. Dvě podoby, obě dělají totéž:
+
+- **`../letak.html`** – jeden soubor (8,3 MB) se vším uvnitř včetně stránek
+  letáku. Stačí ho otevřít v prohlížeči nebo poslat dál.
+- **`letak/index.html`** – rozdělená verze (menší soubory, obrázky zvlášť).
 
 ## Co to umí
 
@@ -41,6 +45,7 @@ pip install pdfplumber pypdfium2 pillow
 cd letak/tools
 LETAK_PDF=/cesta/k/letaku.pdf python3 render_pages.py         # obrázky stran
 LETAK_PDF=/cesta/k/letaku.pdf python3 build_letak_data.py     # ../data.js
+python3 build_standalone.py                                   # ../../letak.html
 ```
 
 Platnost letáku a region se nastavují v `META` na začátku

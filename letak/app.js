@@ -26,7 +26,11 @@
     return (v % 1 === 0 ? String(v) : v.toFixed(2).replace('.', ','));
   }
 
+  /* Ve verzi s jedním souborem (letak.html) jsou obrázky vložené přímo
+     v HTML, jinak se načítají ze složek pages/ a thumbs/. */
   function pageFile(n, thumb) {
+    var imgs = window.LETAK_IMG;
+    if (imgs) return imgs[thumb ? 't' : 'p'][n];
     var s = n < 10 ? '0' + n : '' + n;
     return (thumb ? 'thumbs/' : 'pages/') + s + '.webp';
   }
