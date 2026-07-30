@@ -19,3 +19,15 @@ html = html.replace('<title>', '<!-- Sestaveno skriptem hra/build.js – needitu
 const out = path.join(root, '..', 'hra.html');
 fs.writeFileSync(out, html);
 console.log(`hotovo: ${out} (${(html.length / 1024).toFixed(1)} kB)`);
+
+/* node hra/build.js <cesta> uloží i variantu bez <html>/<head>/<body> (pro vkládání do stránky) */
+const embedTarget = process.argv[2];
+if (embedTarget) {
+    const embed = html
+        .replace(/^[\s\S]*?<head>/, '')
+        .replace(/<\/head>\s*<body>/, '')
+        .replace(/<\/body>\s*<\/html>\s*$/, '')
+        .replace(/<meta[^>]*>\s*/g, '');
+    fs.writeFileSync(embedTarget, embed.trim() + '\n');
+    console.log(`hotovo: ${embedTarget} (${(embed.length / 1024).toFixed(1)} kB)`);
+}

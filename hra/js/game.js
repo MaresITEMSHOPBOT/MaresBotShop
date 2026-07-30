@@ -13,6 +13,12 @@ let lastPointer = { x: 0, y: 0 };
 let logIndex = 0;
 let hotkeys = [];
 
+/* localStorage nemusí být k dispozici (soubor v izolovaném rámci) – nesmí shodit start hry */
+const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { } }
+};
+
 /* ---------------- start ---------------- */
 
 function newWorld(seed) {
@@ -42,7 +48,7 @@ function boot() {
     bindCanvas();
     newWorld(parseInt($('seed').value, 10) || 1);
     selectPower('bless');
-    if (!localStorage.getItem('bs-help-seen')) $('help').hidden = false;
+    if (!store.get('bs-help-seen')) $('help').hidden = false;
     requestAnimationFrame(loop);
 }
 
@@ -137,7 +143,7 @@ function bindControls() {
     $('btn-help').addEventListener('click', () => { $('help').hidden = false; });
     $('help-close').addEventListener('click', () => {
         $('help').hidden = true;
-        localStorage.setItem('bs-help-seen', '1');
+        store.set('bs-help-seen', '1');
     });
 
     window.addEventListener('resize', () => renderer.resize());
