@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MaresFy — vizualizér, DJ pult &amp; Spotify</title>
+<meta name="description" content="Vizualizér hudby, DJ pult a přehrávač tvého Spotify. Běží v prohlížeči.">
+<meta name="theme-color" content="#07080c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= TOP BAR ================= -->
+  <header class="card topbar">
+    <div class="logo"><span class="dot"></span><span>Mares<span class="accent">Fy</span></span></div>
+
+    <button class="play-main" id="masterPlay">▶ SYNTH</button>
+
+    <div class="field mini">
+      <label>Hlasitost <span class="val" id="volVal">80</span></label>
+      <input type="range" id="masterVol" min="0" max="100" value="80" aria-label="Hlasitost syntezátoru">
+    </div>
+    <div class="field mini">
+      <label>BPM <span class="val" id="bpmVal">124</span></label>
+      <input type="range" id="bpm" min="60" max="180" value="124" aria-label="Tempo">
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="chip-row" role="group" aria-label="Režim vizualizéru">
+      <button class="chip" data-viz="bars">📊 Bary</button>
+      <button class="chip" data-viz="wave">〰️ Vlna</button>
+      <button class="chip" data-viz="radial">🎯 Radiál</button>
+      <button class="chip" data-viz="particles">✨ Částice</button>
+      <button class="chip" data-viz="tunnel">🌀 Tunel</button>
+    </div>
+    <button class="chip" id="installBtn" hidden>⬇️ Instalovat</button>
+    <button class="chip" id="fsBtn">⛶ Fullscreen</button>
+  </header>
+
+  <!-- ================= HLAVNÍ PLOCHA ================= -->
+  <section class="stage">
+
+    <!-- ---------- SPOTIFY SLOUPEC ---------- -->
+    <div class="card sp-col" id="spCol">
+      <div class="sp-head">
+        <h2>Spotify</h2>
+        <span class="badge" id="spStatus">nepřipojeno</span>
+      </div>
+
+      <!-- nastavení / přihlášení -->
+      <div class="sp-setup" id="spSetup">
+        <p class="hint" id="spIntro">Připoj svůj účet a pouštěj vlastní playlisty přímo tady. Přehrávání v prohlížeči vyžaduje <b>Spotify Premium</b>; s free účtem uvidíš, co zrovna hraje jinde.</p>
+        <div class="field">
+          <label for="spClientId">Client ID tvé Spotify aplikace</label>
+          <input type="text" id="spClientId" placeholder="např. 4f8c1e2b9a..." autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label>Redirect URI — vlož do Spotify dashboardu</label>
+          <div class="copy-row">
+            <code id="spRedirect">—</code>
+            <button class="chip" id="spCopy">Kopírovat</button>
+          </div>
+        </div>
+        <button class="btn-primary" id="spLogin">Přihlásit se ke Spotify</button>
+        <details class="how">
+          <summary>Jak získat Client ID (1 minuta)</summary>
+          <ol>
+            <li>Otevři <b>developer.spotify.com/dashboard</b> a přihlas se.</li>
+            <li>Klikni <b>Create app</b>, vyplň libovolný název a popis.</li>
+            <li>Do <b>Redirect URIs</b> vlož adresu nahoře a dej <b>Add</b>.</li>
+            <li>V <b>APIs used</b> zaškrtni <b>Web Playback SDK</b>, ulož.</li>
+            <li>V nastavení appky zkopíruj <b>Client ID</b> sem nahoru.</li>
+          </ol>
+        </details>
+      </div>
+
+      <!-- přehrávač -->
+      <div class="sp-player" id="spPlayer" hidden>
+        <div class="np">
+          <img id="npArt" alt="" width="112" height="112">
+          <div class="np-meta">
+            <div class="np-title" id="npTitle">—</div>
+            <div class="np-artist" id="npArtist">—</div>
+            <div class="np-album" id="npAlbum"></div>
+          </div>
+        </div>
+
+        <div class="seekbar" id="seekbar" role="slider" aria-label="Pozice ve skladbě" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="seek-fill" id="seekFill"></div>
+        </div>
+        <div class="times"><span id="npPos">0:00</span><span id="npDur">0:00</span></div>
+
+        <div class="transport">
+          <button id="spShuffle" title="Náhodně">🔀</button>
+          <button id="spPrev" title="Předchozí">⏮</button>
+          <button class="tp-play" id="spPlay" title="Přehrát / pauza">▶</button>
+          <button id="spNext" title="Další">⏭</button>
+          <button id="spRepeat" title="Opakovat">🔁</button>
+        </div>
+
+        <div class="field">
+          <label>Hlasitost Spotify <span class="val" id="spVolVal">80</span></label>
+          <input type="range" id="spVol" min="0" max="100" value="80">
+        </div>
+
+        <div class="chip-row">
+          <button class="chip" id="spTap" title="Klepej do rytmu pro sync vizualizéru">👆 Tap BPM <span id="tapBpm"></span></button>
+          <button class="chip" id="spArtColors" title="Vzít barvy z obalu alba">🎨 Barvy z obalu</button>
+          <button class="chip" id="spDevice" title="Přehrát v tomto prohlížeči">📱 Zařízení</button>
+        </div>
+
+        <!-- knihovna -->
+        <div class="lib">
+          <div class="lib-tabs">
+            <button class="on" data-lib="playlists">Playlisty</button>
+            <button data-lib="liked">Oblíbené</button>
+            <button data-lib="search">Hledat</button>
+          </div>
+          <div class="lib-search" id="libSearchBox" hidden>
+            <input type="search" id="libSearch" placeholder="Hledat skladbu, umělce…" autocomplete="off">
+          </div>
+          <div class="lib-list" id="libList"></div>
+        </div>
+        <button class="chip logout" id="spLogout">Odhlásit</button>
+      </div>
+    </div>
+
+    <!-- ---------- VIZUALIZÉR ---------- -->
+    <div class="card visual">
+      <canvas id="viz" aria-label="Vizualizace hudby"></canvas>
+      <div class="banner-wrap" id="bannerWrap"><div class="banner" id="banner" data-text="MARESFY">MARESFY</div></div>
+      <div class="src-badge" id="srcBadge">zdroj: syntezátor</div>
+      <div class="meters">
+        <div class="meter" id="mBass"><div class="lab"><span>Basy</span><span class="v">0</span></div><div class="bar"><div class="fill"></div></div></div>
+        <div class="meter" id="mMid"><div class="lab"><span>Středy</span><span class="v">0</span></div><div class="bar"><div class="fill"></div></div></div>
+        <div class="meter" id="mHigh"><div class="lab"><span>Výšky</span><span class="v">0</span></div><div class="bar"><div class="fill"></div></div></div>
+        <div class="meter"><div class="lab"><span>Graf energie</span><span class="v" id="peakLab">peak 0</span></div><canvas id="history"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ---------- OVLÁDACÍ PANEL ---------- -->
+    <div class="card panel-box">
+      <div class="tabs" role="tablist">
+        <button data-tab="colors" class="on">🎨 Barvy</button>
+        <button data-tab="text">✍️ Text</button>
+        <button data-tab="tone">🎛️ Tóny</button>
+        <button data-tab="fx">⚡ Efekty</button>
+      </div>
+
+      <div class="tab-body on" id="tab-colors">
+        <div class="field"><label>Paleta</label><div class="grid3" id="palettes"></div></div>
+        <div class="hr"></div>
+        <div class="grid2">
+          <div class="field"><label>Barva 1</label><input type="color" id="col1" value="#1db954"></div>
+          <div class="field"><label>Barva 2</label><input type="color" id="col2" value="#ff2d95"></div>
+          <div class="field"><label>Barva 3</label><input type="color" id="col3" value="#00e5ff"></div>
+          <div class="field"><label>Pozadí</label><input type="color" id="colBg" value="#07080c"></div>
+        </div>
+        <div class="field"><label>Záře (glow) <span class="val" id="glowVal">14</span></label><input type="range" id="glow" min="0" max="50" value="14"></div>
+        <label class="check"><input type="checkbox" id="autoHue"> 🌈 Automatické přebarvování</label>
+        <label class="check"><input type="checkbox" id="beatFlash" checked> 💥 Záblesk do rytmu</label>
+        <label class="check"><input type="checkbox" id="trails" checked> 👻 Stopy ve vizualizéru</label>
+        <label class="check"><input type="checkbox" id="autoArt" checked> 💿 Barvy podle obalu alba</label>
+        <div class="hr"></div>
+        <button id="randomColors">🎲 Náhodné barvy (R)</button>
+      </div>
+
+      <div class="tab-body" id="tab-text">
+        <div class="field"><label for="txtInput">Nápis</label><input type="text" id="txtInput" value="MARESFY" maxlength="60"></div>
+        <label class="check"><input type="checkbox" id="txtFromTrack" checked> 🎵 Psát název hrající skladby</label>
+        <div class="field"><label>Efekty (lze kombinovat)</label>
+          <div class="chip-row" id="fxChips">
+            <button class="chip" data-fx="blink">💡 Blikat</button>
+            <button class="chip" data-fx="run">🏃 Běhat</button>
+            <button class="chip" data-fx="rainbow">🌈 Duha</button>
+            <button class="chip" data-fx="wave">🌊 Vlnit</button>
+            <button class="chip" data-fx="pulse">💓 Pulz</button>
+            <button class="chip" data-fx="shake">📳 Třást</button>
+            <button class="chip" data-fx="glitch">📺 Glitch</button>
+            <button class="chip" data-fx="neon">🔆 Neon</button>
+            <button class="chip" data-fx="d3">🧱 3D</button>
+          </div>
+        </div>
+        <div class="field"><label>Rychlost efektu <span class="val" id="fxSpeedVal">1.0×</span></label><input type="range" id="fxSpeed" min="1" max="40" value="10"></div>
+        <div class="field"><label>Rychlost běhu <span class="val" id="runSpeedVal">8s</span></label><input type="range" id="runSpeed" min="1" max="30" value="8"></div>
+        <div class="field"><label>Velikost <span class="val" id="sizeVal">100%</span></label><input type="range" id="txtSize" min="30" max="260" value="100"></div>
+        <div class="field"><label>Rozestup písmen <span class="val" id="spaceVal">2px</span></label><input type="range" id="txtSpace" min="-5" max="30" value="2"></div>
+        <div class="field"><label for="txtFont">Font</label>
+          <select id="txtFont">
+            <option value="'Segoe UI',sans-serif">Sans (výchozí)</option>
+            <option value="Impact,'Arial Black',sans-serif">Impact / Black</option>
+            <option value="Georgia,serif">Serif</option>
+            <option value="'Courier New',monospace">Monospace</option>
+            <option value="cursive">Cursive</option>
+            <option value="fantasy">Fantasy</option>
+          </select>
+        </div>
+        <label class="check"><input type="checkbox" id="txtReact" checked> 🔊 Reagovat na hudbu (skáče do basů)</label>
+      </div>
+
+      <div class="tab-body" id="tab-tone">
+        <div class="grid2">
+          <div class="field"><label for="root">Tónina</label>
+            <select id="root"><option value="0">C</option><option value="1">C#</option><option value="2">D</option><option value="3">D#</option><option value="4">E</option><option value="5">F</option><option value="6">F#</option><option value="7">G</option><option value="8">G#</option><option value="9" selected>A</option><option value="10">A#</option><option value="11">H</option></select>
+          </div>
+          <div class="field"><label for="scale">Stupnice</label>
+            <select id="scale">
+              <option value="minor" selected>Moll (temná)</option>
+              <option value="major">Dur (veselá)</option>
+              <option value="dorian">Dorská</option>
+              <option value="phrygian">Frygická (exotická)</option>
+              <option value="pentaMinor">Pentatonika moll</option>
+              <option value="blues">Blues</option>
+              <option value="japanese">Japonská</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Průběh vlny (barva tónu)</label>
+          <div class="chip-row" id="waveChips">
+            <button class="chip on" data-wave="sawtooth">Saw</button>
+            <button class="chip" data-wave="square">Square</button>
+            <button class="chip" data-wave="sine">Sine</button>
+            <button class="chip" data-wave="triangle">Triangle</button>
+          </div>
+        </div>
+        <div class="field"><label>Oktáva <span class="val" id="octVal">0</span></label><input type="range" id="oct" min="-2" max="2" value="0"></div>
+        <div class="field"><label>Rozladění / detune <span class="val" id="detVal">12 ct</span></label><input type="range" id="detune" min="0" max="60" value="12"></div>
+        <div class="field"><label>Náběh (attack) <span class="val" id="atkVal">10 ms</span></label><input type="range" id="atk" min="1" max="400" value="10"></div>
+        <div class="field"><label>Dozvuk (release) <span class="val" id="relVal">300 ms</span></label><input type="range" id="rel" min="30" max="1500" value="300"></div>
+        <div class="field"><label>Hlasitost bicích <span class="val" id="drumVal">85</span></label><input type="range" id="drumVol" min="0" max="100" value="85"></div>
+        <p class="hint">Hrát můžeš i na klaviatuře dole — myší nebo klávesami <b>z s x d c v g b h n j m</b>.</p>
+      </div>
+
+      <div class="tab-body" id="tab-fx">
+        <div class="field"><label>Echo / delay <span class="val" id="dlyVal">18%</span></label><input type="range" id="delaySend" min="0" max="100" value="18"></div>
+        <div class="field"><label>Zpětná vazba echa <span class="val" id="fbVal">35%</span></label><input type="range" id="feedback" min="0" max="88" value="35"></div>
+        <div class="field"><label>Čas echa <span class="val" id="dtVal">1/8</span></label><input type="range" id="delayTime" min="0" max="3" value="1"></div>
+        <div class="hr"></div>
+        <div class="field"><label>Dozvuk / reverb <span class="val" id="revVal">22%</span></label><input type="range" id="revSend" min="0" max="100" value="22"></div>
+        <div class="field"><label>Master filtr <span class="val" id="mFiltVal">vypnuto</span></label><input type="range" id="masterFilt" min="-100" max="100" value="0"></div>
+        <div class="hr"></div>
+        <div class="field"><label>Citlivost vizualizéru <span class="val" id="sensVal">1.0×</span></label><input type="range" id="sens" min="3" max="30" value="10"></div>
+        <div class="field"><label>Vyhlazení <span class="val" id="smoothVal">0.75</span></label><input type="range" id="smooth" min="0" max="95" value="75"></div>
+        <div class="hr"></div>
+        <div class="field"><label>Zdroj obrazu</label>
+          <div class="chip-row">
+            <button class="chip" id="captureBtn" title="Sdílej kartu se Spotify a vizualizér poběží na skutečný zvuk">🖥️ Zvuk z karty</button>
+            <button class="chip" id="micBtn">🎤 Mikrofon</button>
+            <button class="chip" id="panicBtn">🛑 Ticho (Esc)</button>
+          </div>
+        </div>
+        <p class="hint"><b>Zkratky:</b> mezerník = Spotify play/pauza · S = synth · 1–5 = vizualizér · Q/W = deck A/B · R = barvy · F = fullscreen · Esc = ticho</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DJ PULT ================= -->
+  <section class="dj">
+    <div class="card deck a" data-deck="a">
+      <div class="deck-head">
+        <div class="deck-tag">A</div>
+        <div>
+          <div class="deck-title" data-role="title">Neon Drive</div>
+          <div class="deck-sub"><span data-role="bpm">124</span> BPM · <span data-role="key">Am</span></div>
+        </div>
+        <div class="badge" data-role="state">STOP</div>
+      </div>
+      <div class="platter-row">
+        <div class="platter" data-role="platter"><div class="label">💿</div></div>
+        <div class="deck-controls">
+          <button class="big" data-role="play">▶ PLAY</button>
+          <div class="field"><label>Skladba</label><select data-role="track"></select></div>
+          <div class="field"><label>Tempo <span class="val" data-role="tempoVal">100%</span></label><input type="range" data-role="tempo" min="70" max="130" value="100"></div>
+          <div class="filerow"><span>🎵 Vlastní soubor</span><input type="file" data-role="file" accept="audio/*" hidden><button class="chip" data-role="loadFile">Nahrát</button></div>
+        </div>
+      </div>
+      <div class="knobs">
+        <div class="knob"><div class="dial" data-knob="low" data-min="-24" data-max="12" data-val="0"><i></i></div><span>Basy</span></div>
+        <div class="knob"><div class="dial" data-knob="mid" data-min="-24" data-max="12" data-val="0"><i></i></div><span>Středy</span></div>
+        <div class="knob"><div class="dial" data-knob="high" data-min="-24" data-max="12" data-val="0"><i></i></div><span>Výšky</span></div>
+        <div class="knob"><div class="dial" data-knob="filter" data-min="-100" data-max="100" data-val="0"><i></i></div><span>Filtr</span></div>
+      </div>
+      <div class="field"><label>Hlasitost <span class="val" data-role="volVal">85</span></label><input type="range" data-role="vol" min="0" max="100" value="85"></div>
+    </div>
+
+    <div class="card mixer">
+      <div class="bpm-box"><div class="num" id="bpmBig">124</div><div class="deck-sub">BPM · <span id="beatPos">1</span>/4</div></div>
+      <div class="vu" id="vu"></div>
+      <div class="xf field">
+        <label>Crossfader <span class="val" id="xfVal">střed</span></label>
+        <input type="range" id="xfader" min="0" max="100" value="50">
+        <div class="xf-ends"><span>deck A</span><span>deck B</span></div>
+      </div>
+      <div class="xf field">
+        <label>Spotify ↔ Synth <span class="val" id="mixVal">50/50</span></label>
+        <input type="range" id="spMix" min="0" max="100" value="50">
+        <div class="xf-ends"><span>Spotify</span><span>Synth</span></div>
+      </div>
+      <div class="chip-row center">
+        <button class="chip" id="syncBtn">🔗 SYNC</button>
+        <button class="chip" id="dropBtn">🚀 DROP</button>
+      </div>
+      <div class="field"><label>Filtr sweep <span class="val" id="sweepVal">0</span></label><input type="range" id="sweep" min="-100" max="100" value="0"></div>
+      <p class="hint center">Přetáhni talíř myší = scratch</p>
+    </div>
+
+    <div class="card deck b" data-deck="b">
+      <div class="deck-head">
+        <div class="deck-tag">B</div>
+        <div>
+          <div class="deck-title" data-role="title">Deep Space</div>
+          <div class="deck-sub"><span data-role="bpm">124</span> BPM · <span data-role="key">Am</span></div>
+        </div>
+        <div class="badge" data-role="state">STOP</div>
+      </div>
+      <div class="platter-row">
+        <div class="platter" data-role="platter"><div class="label">💿</div></div>
+        <div class="deck-controls">
+          <button class="big" data-role="play">▶ PLAY</button>
+          <div class="field"><label>Skladba</label><select data-role="track"></select></div>
+          <div class="field"><label>Tempo <span class="val" data-role="tempoVal">100%</span></label><input type="range" data-role="tempo" min="70" max="130" value="100"></div>
+          <div class="filerow"><span>🎵 Vlastní soubor</span><input type="file" data-role="file" accept="audio/*" hidden><button class="chip" data-role="loadFile">Nahrát</button></div>
+        </div>
+      </div>
+      <div class="knobs">
+        <div class="knob"><div class="dial" data-knob="low" data-min="-24" data-max="12" data-val="0"><i></i></div><span>Basy</span></div>
+        <div class="knob"><div class="dial" data-knob="mid" data-min="-24" data-max="12" data-val="0"><i></i></div><span>Středy</span></div>
+        <div class="knob"><div class="dial" data-knob="high" data-min="-24" data-max="12" data-val="0"><i></i></div><span>Výšky</span></div>
+        <div class="knob"><div class="dial" data-knob="filter" data-min="-100" data-max="100" data-val="0"><i></i></div><span>Filtr</span></div>
+      </div>
+      <div class="field"><label>Hlasitost <span class="val" data-role="volVal">85</span></label><input type="range" data-role="vol" min="0" max="100" value="85"></div>
+    </div>
+  </section>
+
+  <!-- ================= SEKVENCER ================= -->
+  <section class="lab-bottom">
+    <div class="card sec">
+      <h3>🥁 Beat sekvencer <span class="badge">klikni do mřížky</span></h3>
+      <div id="seq"></div>
+      <div class="chip-row">
+        <button class="chip on" id="drumsOn">Bicí zapnuté</button>
+        <button class="chip" id="clearSeq">Vymazat</button>
+        <button class="chip" id="randSeq">🎲 Náhodný beat</button>
+        <button class="chip" data-preset="house">House</button>
+        <button class="chip" data-preset="techno">Techno</button>
+        <button class="chip" data-preset="dnb">D&amp;B</button>
+      </div>
+    </div>
+    <div class="card sec">
+      <h3>🎹 Pady &amp; klaviatura</h3>
+      <div class="pads" id="pads"></div>
+      <div class="keys" id="keys"></div>
+    </div>
+  </section>
+
+  <footer>
+    🎧 MaresFy — běží v prohlížeči, tvoje data zůstávají u tebe. Přihlášení jde přímo na Spotify.
+    <a href="../index.html">← studijní příručka</a>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="engine.js"></script>
+<script src="spotify.js"></script>
+</body>
+</html>
