@@ -1,19 +1,22 @@
 'use strict';
-/* Propojení simulace s uživatelským rozhraním. */
+/* Propojení světa s rozhraním. Simulace běží v pevném tempu 8 tiků za vteřinu,
+   snímky se mezi tiky dopočítávají – proto je obraz klidný. */
 
-const WORLD_W = 320, WORLD_H = 200;
+const WORLD_W = 144, WORLD_H = 90;
+const TICK_MS = 125;
 const $ = id => document.getElementById(id);
 
-let world, sim, renderer;
-let speed = 1;
-let power = 'bless';
-let brushR = 8;
+const JOBS = { child: 'dítě', worker: 'dělník', soldier: 'voják', wanderer: 'tulák', wild: 'divoké' };
+const STATES = { idle: 'rozmýšlí se', gather: 'sbírá jídlo', return: 'nese jídlo domů', build: 'staví' };
+const GROUP_TITLE = { hand: 'Ruka', land: 'Krajina', life: 'Život', bless: 'Zázraky', doom: 'Zkáza' };
+
+let world, life, renderer;
+let speed = 1, tool = 'hand', brushR = 4;
 let held = false, panning = false, spaceDown = false;
 let lastPointer = { x: 0, y: 0 };
-let logIndex = 0;
+let logIndex = 0, lastApply = 0;
 let hotkeys = [];
 
-/* localStorage nemusí být k dispozici (soubor v izolovaném rámci) – nesmí shodit start hry */
 const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch { } }
@@ -21,145 +24,156 @@ const store = {
 
 /* ---------------- start ---------------- */
 
-function newWorld(seed) {
+function newWorld(seed, withLife = true) {
     world = new World(WORLD_W, WORLD_H, seed >>> 0);
-    sim = new Sim(world, seed >>> 0);
-    world.rain = parseInt($('rain').value, 10) / 100;
-    world.climate = parseFloat($('climate').value);
-    sim.mutationRate = parseInt($('mut').value, 10) / 100;
-    sim.seedLife(180);
+    life = new Life(world, seed >>> 0);
     const zoom = renderer ? renderer.cam.zoom : 0;
-    renderer = new Renderer($('world'), $('minimap'), world, sim);
-    renderer.cam.zoom = zoom ? Math.max(zoom, renderer.minZoom) : renderer.minZoom;
+    renderer = new Renderer($('world'), $('minimap'), world, life);
+    renderer.cam.zoom = zoom || Math.max(renderer.minZoom, 7);
     renderer.clampCam();
-    renderer.overlay = document.querySelector('.overlay-bar button.active')?.dataset.ov || 'normal';
+    renderer.brush.r = brushR;
     logIndex = 0;
     $('log').innerHTML = '';
-    renderer.select(null);
-    $('inspector').hidden = true;
-    sim.log('🌍 Zrodil se nový svět. Semínko: ' + (seed >>> 0), 'good');
+    $('card').hidden = true;
+    life.log('🌍 Zrodil se nový svět', 'good');
+    if (withLife) {
+        const races = ['human', 'orc', 'elf'];
+        for (const r of races) {
+            const spot = life.homeSpot(r);
+            if (spot) life.seedTribe(spot.x, spot.y, r, 6);
+        }
+        for (let k = 0; k < 26; k++) {
+            const s = life.homeSpot('human');
+            if (s) life.spawnAnimal(s.x, s.y, k % 9 === 0 ? 'wolf' : 'sheep');
+        }
+        life.updateTerritory();
+        renderer.terrDirty = true;
+    }
+    selectTool(tool);
 }
 
 function boot() {
-    buildPowers();
-    buildOverlays();
-    buildTabs();
-    bindControls();
+    buildTools();
+    buildModes();
+    bindUI();
     bindCanvas();
-    newWorld(parseInt($('seed').value, 10) || 1);
-    selectPower('bless');
-    if (!store.get('bs-help-seen')) $('help').hidden = false;
+    newWorld(parseInt($('seed').value, 10) || 12345);
+    if (!store.get('bs2-help')) $('help').hidden = false;
     requestAnimationFrame(loop);
 }
 
-/* ---------------- panely ---------------- */
+/* ---------------- nástroje ---------------- */
 
-function buildPowers() {
-    const groups = { create: $('powers-create'), terra: $('powers-terra'), doom: $('powers-doom') };
+function buildTools() {
+    const box = $('tools');
+    box.innerHTML = '';
     hotkeys = [];
-    for (const p of POWERS) {
-        const el = document.createElement('button');
-        el.className = 'power';
-        el.dataset.id = p.id;
+    let group = null;
+    for (const t of TOOLS) {
+        if (t.group !== group) {
+            group = t.group;
+            const h = document.createElement('div');
+            h.className = 'tool-group';
+            h.innerHTML = `<span>${GROUP_TITLE[group]}</span>`;
+            box.appendChild(h);
+            const grid = document.createElement('div');
+            grid.className = 'tool-grid';
+            grid.id = 'grid-' + group;
+            box.appendChild(grid);
+        }
         const key = hotkeys.length < 10 ? (hotkeys.length + 1) % 10 : '';
-        if (key !== '') hotkeys.push(p.id);
-        el.innerHTML = `${p.emoji}${p.cost ? `<b>${p.cost}</b>` : ''}${key !== '' ? `<u>${key}</u>` : ''}`;
-        el.title = `${p.name}${p.cost ? ' – ' + p.cost + ' víry' : ''}`;
-        el.addEventListener('click', () => selectPower(p.id));
-        el.addEventListener('mouseenter', () => showDesc(p));
-        groups[p.group].appendChild(el);
-    }
-    $('powers-create').parentElement.addEventListener('mouseleave', () => showDesc(POWER_MAP[power]));
-}
-
-function showDesc(p) {
-    $('power-desc').innerHTML = `<b>${p.emoji} ${p.name}${p.cost ? ` · ${p.cost} víry` : ''}</b>${p.desc}${p.hold ? '<br><i style="color:#7cc4ff">Můžeš držet a táhnout.</i>' : ''}`;
-}
-
-function selectPower(id) {
-    power = id;
-    document.querySelectorAll('.power').forEach(el => el.classList.toggle('active', el.dataset.id === id));
-    showDesc(POWER_MAP[id]);
-    const p = POWER_MAP[id];
-    renderer.brush.color = p.group === 'doom' ? '#ff9a9a' : p.group === 'terra' ? '#b0e0a0' : '#ffe6a0';
-}
-
-function buildOverlays() {
-    const bar = $('overlay-bar');
-    for (const o of OVERLAYS) {
+        if (key !== '') hotkeys.push(t.id);
         const b = document.createElement('button');
-        b.textContent = `${o.icon} ${o.name}`;
-        b.dataset.ov = o.id;
-        if (o.id === 'normal') b.classList.add('active');
+        b.className = 'tool';
+        b.dataset.id = t.id;
+        b.innerHTML = `<i>${t.emoji}</i><span>${t.name}</span>` +
+            (t.cost ? `<b>${t.cost}</b>` : '') + (key !== '' ? `<u>${key}</u>` : '');
+        b.addEventListener('click', () => selectTool(t.id));
+        $('grid-' + t.group).appendChild(b);
+    }
+}
+
+function selectTool(id) {
+    tool = id;
+    const t = TOOL_MAP[id];
+    document.querySelectorAll('.tool').forEach(e => e.classList.toggle('active', e.dataset.id === id));
+    $('tool-desc').innerHTML = `<b>${t.emoji} ${t.name}${t.cost ? ` · ${t.cost} víry` : ''}</b>${t.desc}` +
+        (t.hold ? '<i>Můžeš držet a táhnout.</i>' : '');
+    renderer.brush.color = t.group === 'doom' ? '#ff9a9a' : t.group === 'land' ? '#a8e0ff'
+        : t.group === 'life' ? '#b6f5a0' : '#ffe6a0';
+    renderer.brush.show = t.id !== 'hand';
+    $('world').style.cursor = t.id === 'hand' ? 'default' : 'crosshair';
+}
+
+function buildModes() {
+    const bar = $('modes');
+    for (const m of MAP_MODES) {
+        const b = document.createElement('button');
+        b.textContent = `${m.icon} ${m.name}`;
+        if (m.id === 'normal') b.classList.add('active');
         b.addEventListener('click', () => {
-            renderer.overlay = o.id;
+            renderer.mode = m.id;
             bar.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
         });
         bar.appendChild(b);
     }
 }
 
-function buildTabs() {
-    $('tabs').addEventListener('click', e => {
-        const b = e.target.closest('button');
-        if (!b) return;
-        $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
-        for (const t of ['world', 'species', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
-    });
-}
+/* ---------------- ovládací prvky ---------------- */
 
-function bindControls() {
+function bindUI() {
     $('brush').addEventListener('input', e => {
         brushR = parseInt(e.target.value, 10);
         $('brush-val').textContent = brushR;
         renderer.brush.r = brushR;
     });
-    $('climate').addEventListener('input', e => {
-        world.climate = parseFloat(e.target.value);
-        $('climate-val').textContent = (world.climate > 0 ? '+' : '') + world.climate + ' °C';
-    });
-    $('rain').addEventListener('input', e => {
-        world.rain = parseInt(e.target.value, 10) / 100;
-        $('rain-val').textContent = e.target.value + ' %';
-    });
-    $('mut').addEventListener('input', e => {
-        sim.mutationRate = parseInt(e.target.value, 10) / 100;
-        $('mut-val').textContent = e.target.value + ' %';
-    });
     $('speeds').addEventListener('click', e => {
         const b = e.target.closest('button[data-speed]');
-        if (!b) return;
-        speed = parseInt(b.dataset.speed, 10);
-        $('speeds').querySelectorAll('button[data-speed]').forEach(x => x.classList.toggle('active', x === b));
+        if (b) setSpeed(parseInt(b.dataset.speed, 10));
+    });
+    $('climate').addEventListener('change', e => {
+        world.climate = parseFloat(e.target.value);
+        $('climate-val').textContent = (world.climate > 0 ? '+' : '') + world.climate + ' °C';
+        world.reclassifyAll();
+    });
+    $('climate').addEventListener('input', e => {
+        $('climate-val').textContent = (parseFloat(e.target.value) > 0 ? '+' : '') + e.target.value + ' °C';
     });
     $('btn-new').addEventListener('click', () => {
-        newWorld(parseInt($('seed').value, 10) || Date.now() & 0xffff);
-        toast('🌍 Nový svět je na světě');
+        newWorld(parseInt($('seed').value, 10) || (Date.now() & 0xffff));
+        toast('🌍 Nový svět je hotový');
     });
-    $('btn-life').addEventListener('click', () => {
-        sim.seedLife(180);
-        toast('🐣 Zasel jsi nový život');
+    $('btn-random').addEventListener('click', () => {
+        const s = (Math.random() * 99999) | 0;
+        $('seed').value = s;
+        newWorld(s);
+        toast('🎲 Náhodný svět');
+    });
+    $('btn-empty').addEventListener('click', () => {
+        newWorld(parseInt($('seed').value, 10) || 1, false);
+        toast('🗺️ Prázdný svět – národy si zasaď sám');
     });
     $('btn-help').addEventListener('click', () => { $('help').hidden = false; });
-    $('help-close').addEventListener('click', () => {
-        $('help').hidden = true;
-        store.set('bs-help-seen', '1');
+    $('help-close').addEventListener('click', () => { $('help').hidden = true; store.set('bs2-help', '1'); });
+    $('tabs').addEventListener('click', e => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+        for (const t of ['realms', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
     });
 
     window.addEventListener('resize', () => renderer.resize());
     window.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT') return;
-        if (e.code === 'Space') { e.preventDefault(); spaceDown = true; togglePause(); }
+        if (e.code === 'Space') { e.preventDefault(); spaceDown = true; setSpeed(speed === 0 ? 1 : 0); }
         if (e.key === 'h' || e.key === 'H') $('help').hidden = !$('help').hidden;
-        if (e.key === 'Tab') { e.preventDefault(); cycleOverlay(); }
         const n = parseInt(e.key, 10);
         if (!isNaN(n) && e.key.length === 1) {
-            const idx = n === 0 ? 9 : n - 1;
-            if (hotkeys[idx]) selectPower(hotkeys[idx]);
+            const id = hotkeys[n === 0 ? 9 : n - 1];
+            if (id) selectTool(id);
         }
     });
     window.addEventListener('keyup', e => { if (e.code === 'Space') spaceDown = false; });
-
     $('minimap').addEventListener('click', e => {
         const r = e.target.getBoundingClientRect();
         renderer.cam.x = (e.clientX - r.left) / r.width * world.w;
@@ -168,77 +182,61 @@ function bindControls() {
     });
 }
 
-function togglePause() {
-    speed = speed === 0 ? 1 : 0;
+function setSpeed(s) {
+    speed = s;
     $('speeds').querySelectorAll('button[data-speed]').forEach(x =>
-        x.classList.toggle('active', parseInt(x.dataset.speed, 10) === speed));
+        x.classList.toggle('active', parseInt(x.dataset.speed, 10) === s));
 }
 
-function cycleOverlay() {
-    const bar = $('overlay-bar');
-    const btns = [...bar.querySelectorAll('button')];
-    const i = btns.findIndex(b => b.classList.contains('active'));
-    btns[(i + 1) % btns.length].click();
-}
-
-/* ---------------- ovládání myší ---------------- */
+/* ---------------- myš ---------------- */
 
 function bindCanvas() {
     const cv = $('world');
     cv.addEventListener('contextmenu', e => e.preventDefault());
-
     cv.addEventListener('pointerdown', e => {
         cv.setPointerCapture(e.pointerId);
         lastPointer = { x: e.offsetX, y: e.offsetY };
         if (e.button === 2 || e.button === 1 || spaceDown) { panning = true; return; }
-        const wx = renderer.s2wx(e.offsetX), wy = renderer.s2wy(e.offsetY);
-        applyAt(wx, wy);
+        use(renderer.s2wx(e.offsetX), renderer.s2wy(e.offsetY));
         held = true;
     });
-
     cv.addEventListener('pointermove', e => {
         const wx = renderer.s2wx(e.offsetX), wy = renderer.s2wy(e.offsetY);
-        renderer.brush.x = wx; renderer.brush.y = wy; renderer.brush.show = true;
+        renderer.brush.x = Math.floor(wx); renderer.brush.y = Math.floor(wy);
         if (panning) {
             renderer.cam.x -= (e.offsetX - lastPointer.x) / renderer.cam.zoom;
             renderer.cam.y -= (e.offsetY - lastPointer.y) / renderer.cam.zoom;
             renderer.clampCam();
         }
         lastPointer = { x: e.offsetX, y: e.offsetY };
-        updateTooltip(e.offsetX, e.offsetY, wx, wy);
+        showTip(e.offsetX, e.offsetY, wx, wy);
     });
-
     const stop = () => { held = false; panning = false; };
     cv.addEventListener('pointerup', stop);
     cv.addEventListener('pointercancel', stop);
-    cv.addEventListener('pointerleave', () => {
-        stop();
-        renderer.brush.show = false;
-        $('tooltip').style.display = 'none';
-    });
-
+    cv.addEventListener('pointerleave', () => { stop(); $('tip').style.display = 'none'; });
     cv.addEventListener('wheel', e => {
         e.preventDefault();
-        renderer.zoomAt(e.offsetX, e.offsetY, e.deltaY < 0 ? 1.16 : 1 / 1.16);
+        renderer.zoomAt(e.offsetX, e.offsetY, e.deltaY < 0 ? 1.15 : 1 / 1.15);
     }, { passive: false });
 }
 
-function applyAt(wx, wy) {
+function use(wx, wy) {
     if (wx < 0 || wy < 0 || wx >= world.w || wy >= world.h) return;
-    const p = POWER_MAP[power];
-    if (p.id === 'inspect') {
-        renderer.select(renderer.creatureAt(wx, wy));
-        renderInspector();
+    if (tool === 'hand') {
+        renderer.select(renderer.pick(wx, wy));
+        renderCard();
         return;
     }
-    if (sim.faith < p.cost) {
-        toast('🙏 Málo víry – získej věřící zázraky nebo počkej na modlitby');
-        $('faith-bar').classList.remove('flash');
-        void $('faith-bar').offsetWidth;
-        $('faith-bar').classList.add('flash');
-        return;
-    }
-    usePower(sim, power, wx, wy, brushR, 1);
+    const res = applyTool(life, tool, Math.floor(wx), Math.floor(wy), brushR);
+    if (res === 'faith') {
+        toast('🙏 Málo víry – požehnej lidem, ať v tebe věří');
+        const bar = $('faith-bar');
+        bar.classList.remove('flash');
+        void bar.offsetWidth;
+        bar.classList.add('flash');
+    } else if (res === 'blocked') toast('Sem se národ usadit nemůže – zkus souš');
+    else if (res === 'nothing') toast('Klikni na území nějakého království');
 }
 
 let toastTimer = null;
@@ -247,207 +245,160 @@ function toast(text) {
     t.textContent = text;
     t.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-function updateTooltip(sx, sy, wx, wy) {
-    const tip = $('tooltip');
+function showTip(sx, sy, wx, wy) {
+    const tip = $('tip');
     if (wx < 0 || wy < 0 || wx >= world.w || wy >= world.h) { tip.style.display = 'none'; return; }
-    const xi = wx | 0, yi = wy | 0, i = yi * world.w + xi;
-    const alt = Math.round((world.height[i] - world.seaLevel) * 4000);
-    const t = world.tempAt(xi, yi, i);
-    const c = renderer.creatureAt(wx, wy);
-    let text = `${alt >= 0 ? '⛰️ ' + alt + ' m n. m.' : '🌊 ' + (-alt) + ' m pod hladinou'}\n` +
-        `🌡️ ${t.toFixed(1)} °C   🌿 ${(world.veg[i] * 100) | 0} %\n` +
-        `💧 vláha ${(world.moist[i] * 100) | 0} %   🌾 půda ${(world.fert[i] * 100) | 0} %`;
-    if (world.water[i] > 0.02) text += `\n🌊 hloubka ${(world.water[i] * 4000) | 0} m`;
-    if (world.rad[i] > 0.02) text += `\n☢️ radiace ${(world.rad[i] * 100) | 0} %`;
-    if (c) {
-        const sp = sim.getSpecies(c.sp);
-        text += `\n──────────\n${c.carn ? '🦷' : '🌿'} ${sp ? sp.name : '?'} · ${c.gen}. generace\n` +
-            `❤️ ${(100 * c.energy / c.maxE) | 0} %  ⏳ ${c.age}/${c.lifespan | 0}${c.sick ? '  🦠 nemocný' : ''}${c.faith > 0.35 ? '  🙏 věřící' : ''}`;
+    const i = life.tileAt(wx, wy);
+    const realm = life.realmById(world.owner[i]);
+    let text = `${TILE_NAME[world.type[i]]}   ${world.tempAt(i).toFixed(0)} °C`;
+    if (realm) text += `\n👑 ${realm.name}`;
+    const u = renderer.pick(wx, wy);
+    if (u) {
+        if (u.kind === 'village') text += `\n🏘️ ${u.v.name} – ${u.v.pop} obyvatel`;
+        else if (u.kind === 'person') text += `\n${RACES[u.race].emoji} ${u.name} · ${JOBS[u.job] || u.job}`;
+        else text += `\n${ANIMALS[u.race].emoji} ${ANIMALS[u.race].name}`;
     }
     tip.textContent = text;
     tip.style.display = 'block';
     const box = $('box').getBoundingClientRect();
-    tip.style.left = Math.min(sx + 16, box.width - 190) + 'px';
-    tip.style.top = Math.min(sy + 16, box.height - 100) + 'px';
+    tip.style.left = Math.min(sx + 16, box.width - 175) + 'px';
+    tip.style.top = Math.min(sy + 16, box.height - 80) + 'px';
 }
 
-/* ---------------- vykreslování panelů ---------------- */
+/* ---------------- panely ---------------- */
 
-function renderInspector() {
-    const el = $('inspector');
-    const c = renderer.validSelection();
-    if (!c) { el.hidden = true; return; }
-    const sp = sim.getSpecies(c.sp);
-    let genes = '';
-    for (let k = 0; k < GENE_COUNT; k++) {
-        genes += `<div class="gene"><span>${GENE_INFO[k].icon} ${GENE_INFO[k].name}</span>` +
-            `<div class="bar"><i style="width:${(c.g[k] * 100) | 0}%"></i></div><em>${(c.g[k] * 100) | 0}</em></div>`;
+function renderCard() {
+    const el = $('card');
+    const s = renderer.validSelection();
+    if (!s) { el.hidden = true; return; }
+    if (s.kind === 'village') {
+        const v = s.v, realm = life.realmById(v.realm);
+        el.innerHTML = `<h5><span class="chip" style="background:${realm ? realm.color : '#888'}"></span>🏘️ ${v.name}
+            <button class="close">✕</button></h5>
+            <div class="row"><span>království</span><b>${realm ? realm.name : '–'}</b></div>
+            <div class="row"><span>obyvatel</span><b>${v.pop}</b></div>
+            <div class="row"><span>vojáků</span><b>${v.soldiers}</b></div>
+            <div class="row"><span>domů</span><b>${v.houses.length}</b></div>
+            <div class="row"><span>zásoby jídla</span><b>${v.food | 0}</b></div>
+            <div class="row"><span>založena</span><b>${Math.floor(v.born / 60)}. rok</b></div>`;
+    } else if (s.kind === 'person') {
+        const realm = life.realmById(s.realm), v = life.villageById(s.village);
+        el.innerHTML = `<h5><span class="chip" style="background:${realm ? realm.color : '#888'}"></span>${RACES[s.race].emoji} ${s.name}
+            <button class="close">✕</button></h5>
+            <div class="row"><span>rod</span><b>${RACES[s.race].name}</b></div>
+            <div class="row"><span>království</span><b>${realm ? realm.name : 'bez domova'}</b></div>
+            <div class="row"><span>domov</span><b>${v ? v.name : '–'}</b></div>
+            <div class="row"><span>povolání</span><b>${JOBS[s.job] || s.job}</b></div>
+            <div class="row"><span>zrovna</span><b>${STATES[s.state] || '–'}</b></div>
+            <div class="row"><span>věk</span><b>${Math.floor(s.age / 60)} let</b></div>
+            <div class="bar-row"><span>zdraví</span><div class="bar"><i style="width:${(100 * s.hp / s.maxHp) | 0}%;background:#e05555"></i></div></div>
+            <div class="bar-row"><span>sytost</span><div class="bar"><i style="width:${(100 * s.food) | 0}%;background:#7cc46a"></i></div></div>
+            <div class="bar-row"><span>víra</span><div class="bar"><i style="width:${(100 * s.faith) | 0}%;background:#ffd166"></i></div></div>`;
+    } else {
+        el.innerHTML = `<h5>${ANIMALS[s.race].emoji} ${ANIMALS[s.race].name}<button class="close">✕</button></h5>
+            <div class="row"><span>věk</span><b>${Math.floor(s.age / 60)} let</b></div>
+            <div class="bar-row"><span>zdraví</span><div class="bar"><i style="width:${(100 * s.hp / s.maxHp) | 0}%;background:#e05555"></i></div></div>
+            <div class="bar-row"><span>sytost</span><div class="bar"><i style="width:${(100 * s.food) | 0}%;background:#7cc46a"></i></div></div>`;
     }
-    el.innerHTML = `<h5><span class="chip" style="background:${sp ? sp.color : '#fff'}"></span>${sp ? sp.name : '?'}
-        <button class="close" title="Zavřít">✕</button></h5>
-        <div class="row"><span>strava</span><b>${c.carn ? 'masožravec' : c.g[G_AGGR] > 0.3 ? 'všežravec' : 'býložravec'}</b></div>
-        <div class="row"><span>generace</span><b>${c.gen}.</b></div>
-        <div class="row"><span>věk</span><b>${c.age} / ${c.lifespan | 0}</b></div>
-        <div class="row"><span>energie</span><b>${(100 * c.energy / c.maxE) | 0} %</b></div>
-        <div class="row"><span>víra</span><b>${(c.faith * 100) | 0} %</b></div>
-        <div class="row"><span>stav</span><b>${c.sick ? '🦠 nemocný' : c.imm ? '💪 imunní' : 'zdravý'}</b></div>
-        <div style="margin-top:.4rem">${genes}</div>`;
     el.hidden = false;
     el.querySelector('.close').addEventListener('click', () => { renderer.select(null); el.hidden = true; });
 }
 
 function renderHud() {
-    const s = sim.stats();
-    $('hud-year').textContent = world.year;
-    $('hud-pop').textContent = s.pop;
-    $('hud-species').textContent = s.species;
-    $('hud-gen').textContent = sim.generation;
-    $('hud-believers').textContent = sim.believers;
+    const s = life.summary();
+    $('hud-year').textContent = Math.floor(life.tick / 60);
+    $('hud-pop').textContent = s.people;
+    $('hud-realms').textContent = s.realms.length;
+    $('hud-villages').textContent = s.villages;
+    $('hud-animals').textContent = s.animals;
 
-    let tsum = 0, n = 0;
-    for (let y = 4; y < world.h; y += 9) for (let x = 4; x < world.w; x += 9) { tsum += world.tempAt(x, y, y * world.w + x); n++; }
-    $('hud-temp').textContent = (tsum / n).toFixed(1) + ' °C';
+    $('faith-fill').style.width = clamp(life.faith / life.faithMax, 0, 1) * 100 + '%';
+    $('faith-text').textContent = `${life.faith | 0} / ${life.faithMax | 0} víry`;
+    $('believers').textContent = life.believers;
 
-    const pct = clamp(sim.faith / sim.faithMax, 0, 1) * 100;
-    $('faith-fill').style.width = pct + '%';
-    $('faith-text').textContent = `${sim.faith | 0} / ${sim.faithMax | 0} víry`;
-    $('align-love').style.setProperty('--v', (sim.love * 100) + '%');
-    $('align-fear').style.setProperty('--v', (sim.fear * 100) + '%');
-    $('align-label').textContent =
-        sim.love < 0.04 && sim.fear < 0.04 ? 'neznámý bůh' :
-        sim.love > sim.fear * 1.6 ? 'milovaný bůh' :
-        sim.fear > sim.love * 1.6 ? 'obávaný bůh' : 'rozporuplný bůh';
-
-    document.querySelectorAll('.power').forEach(el => {
-        el.classList.toggle('locked', POWER_MAP[el.dataset.id].cost > sim.faith);
+    document.querySelectorAll('.tool').forEach(e => {
+        e.classList.toggle('locked', TOOL_MAP[e.dataset.id].cost > life.faith);
     });
-
-    $('stats').innerHTML = [
-        ['vrchol populace', sim.peakPop], ['narozeno celkem', sim.born],
-        ['zemřelo celkem', sim.died], ['dravců', s.carn],
-        ['nemocných', s.sick], ['sídel', s.structures],
-        ['chrámů', s.temples], ['modlitby', sim.prayers.toFixed(2) + '/tik'],
-        ['hladina moře', ((world.seaLevel - world.baseSea) * 4000).toFixed(0) + ' m'],
-        ['popel v ovzduší', world.dust.toFixed(1) + ' °C']
-    ].map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('');
-
-    let genes = '';
-    for (let k = 0; k < GENE_COUNT; k++) {
-        const v = (s.genes[k] * 100) | 0;
-        genes += `<div class="gene"><span>${GENE_INFO[k].icon} ${GENE_INFO[k].name}</span>` +
-            `<div class="bar"><i style="width:${v}%"></i></div><em>${v}</em></div>`;
-    }
-    $('genes').innerHTML = genes;
-
-    const b = $('banner');
-    if (s.pop === 0) {
-        b.textContent = '☠️ Svět je bez života. Vyber 🐣 Stvořit život a klikni na souš.';
-        b.classList.add('show');
-    } else b.classList.remove('show');
+    if (!$('tab-realms').hidden) renderRealms(s);
 }
 
-function renderSpecies() {
-    const el = $('tab-species');
-    if (el.hidden) return;
-    const live = sim.species.filter(s => !s.extinct && s.count > 0).sort((a, b) => b.count - a.count);
-    const dead = sim.species.filter(s => s.extinct && s.peak >= 8).length;
-    let html = `<h4>Žijící druhy (${live.length})</h4>`;
-    if (!live.length) html += '<div class="card">Nikdo tu není. Zkus stvořit život.</div>';
-    for (const sp of live.slice(0, 14)) {
-        const carn = sp.genes[G_AGGR] > 0.55;
-        html += `<div class="sp-row" data-sp="${sp.id}">
-            <div class="sp-head"><span class="chip" style="background:${sp.color}"></span>
-                <b>${carn ? '🦷 ' : ''}${sp.name}</b><em>${sp.count}</em></div>
-            <div class="sp-meta"><span>vznik: ${sp.born}. rok</span><span>vrchol: ${sp.peak}</span>
-                <span>${sp.genes[G_SWIM] > 0.6 ? '🌊 vodní' : sp.genes[G_INTEL] > 0.55 ? '🧠 chytrý' : ''}</span></div>
-            <div class="sp-bars">
-                ${[G_SIZE, G_SPEED, G_INTEL, G_AGGR, G_COLD, G_HEAT, G_SWIM].map(g =>
-                    `<i title="${GENE_INFO[g].name}: ${(sp.genes[g] * 100) | 0}%" style="--v:${(sp.genes[g] * 100) | 0}%"></i>`).join('')}
-            </div></div>`;
+function renderRealms(s) {
+    const el = $('tab-realms');
+    let html = '';
+    if (!s.realms.length) html += '<div class="empty">Zatím tu není žádné království.<br>Vezmi 🧑 <b>Lidi</b> a klikni na souš.</div>';
+    for (const r of s.realms.slice().sort((a, b) => b.villages.length - a.villages.length)) {
+        let pop = 0, soldiers = 0;
+        for (const u of life.units) if (u.alive && u.realm === r.id) { pop++; if (u.job === 'soldier') soldiers++; }
+        const wars = [...r.wars].map(id => { const o = life.realmById(id); return o ? o.name : null; }).filter(Boolean);
+        html += `<div class="realm" data-realm="${r.id}">
+            <div class="realm-head"><span class="chip" style="background:${r.color}"></span>
+                <b>${r.name}</b><em>${RACES[r.race].emoji}</em></div>
+            <div class="realm-meta">
+                <span>🏘️ ${r.villages.length}</span><span>🧑 ${pop}</span><span>⚔️ ${soldiers}</span>
+                <span>od ${Math.floor(r.born / 60)}. roku</span></div>
+            ${wars.length ? `<div class="war">⚔️ ve válce s: ${wars.join(', ')}</div>` : '<div class="peace">🕊️ mír</div>'}
+        </div>`;
     }
-    html += `<h4>Vyhynulé druhy: ${dead}</h4>`;
+    html += `<div class="side-stats">
+        <div><b>${s.houses}</b><span>staveb</span></div>
+        <div><b>${life.stats.born}</b><span>narozených</span></div>
+        <div><b>${life.stats.died}</b><span>mrtvých</span></div>
+        <div><b>${life.stats.peak}</b><span>vrchol populace</span></div></div>`;
     el.innerHTML = html;
-    el.querySelectorAll('.sp-row').forEach(row => row.addEventListener('click', () => {
-        const id = parseInt(row.dataset.sp, 10);
-        for (const c of sim.list) {
-            if (c.alive && c.sp === id) {
-                renderer.cam.x = c.x; renderer.cam.y = c.y;
-                renderer.cam.zoom = Math.max(renderer.cam.zoom, 7);
-                renderer.clampCam();
-                renderer.select(c);
-                renderInspector();
-                break;
-            }
+    el.querySelectorAll('.realm').forEach(row => row.addEventListener('click', () => {
+        const r = life.realmById(parseInt(row.dataset.realm, 10));
+        const v = r && life.villageById(r.capital);
+        if (v) {
+            renderer.cam.x = v.x; renderer.cam.y = v.y;
+            renderer.cam.zoom = Math.max(renderer.cam.zoom, 12);
+            renderer.clampCam();
+            renderer.select({ kind: 'village', v, uid: -v.id, alive: true });
+            renderCard();
         }
     }));
 }
 
 function renderLog() {
     const el = $('log');
-    while (logIndex < sim.events.length) {
-        const e = sim.events[logIndex++];
+    while (logIndex < life.events.length) {
+        const e = life.events[logIndex++];
         const d = document.createElement('div');
         d.className = 'ev ' + e.kind;
         d.innerHTML = `<time>${e.year}. rok</time>${e.text}`;
         el.appendChild(d);
-        if (el.children.length > 160) el.removeChild(el.firstChild);
+        if (el.children.length > 140) el.removeChild(el.firstChild);
     }
-}
-
-function renderGraph() {
-    const cv = $('graph'), ctx = cv.getContext('2d');
-    const h = sim.history;
-    const W = cv.width, H = cv.height;
-    ctx.clearRect(0, 0, W, H);
-    if (h.pop.length < 2) return;
-    const n = h.pop.length;
-    const maxPop = Math.max(10, ...h.pop);
-    const maxSp = Math.max(3, ...h.species);
-    const line = (arr, max, color, fill) => {
-        ctx.beginPath();
-        for (let i = 0; i < n; i++) {
-            const x = i / (n - 1) * W, y = H - (arr[i] / max) * (H - 6) - 3;
-            i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-        }
-        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
-        if (fill) {
-            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-            ctx.fillStyle = fill; ctx.fill();
-        }
-    };
-    line(h.pop, maxPop, '#6ee7a8', 'rgba(110,231,168,0.12)');
-    line(h.species, maxSp, '#7cc4ff');
-    line(h.faith, Math.max(50, sim.faithMax), '#ffd166');
-    ctx.fillStyle = 'rgba(223,230,247,0.5)';
-    ctx.font = '9px sans-serif';
-    ctx.fillText('max ' + maxPop, 4, 10);
 }
 
 /* ---------------- smyčka ---------------- */
 
-let frame = 0;
-function loop() {
+let lastTime = performance.now(), acc = 0, frame = 0;
+function loop(now) {
     requestAnimationFrame(loop);
+    const dt = Math.min(300, now - lastTime);
+    lastTime = now;
     frame++;
 
     if (speed > 0) {
-        const t0 = performance.now();
-        for (let i = 0; i < speed; i++) {
-            sim.step();
-            if (performance.now() - t0 > 22) break;    // radši nižší rychlost než trhání
-        }
+        acc += dt * speed;
+        let steps = 0;
+        while (acc >= TICK_MS && steps < 6) { life.step(); acc -= TICK_MS; steps++; }
+        if (acc > TICK_MS * 3) acc = 0;
+    } else acc = 0;
+
+    if (held && TOOL_MAP[tool].hold && now - lastApply > 90) {
+        lastApply = now;
+        use(renderer.brush.x + 0.5, renderer.brush.y + 0.5);
     }
-    if (held && POWER_MAP[power].hold && frame % 6 === 0) applyAt(renderer.brush.x, renderer.brush.y);
 
-    renderer.draw(speed === 0);
+    renderer.draw(speed > 0 ? clamp(acc / TICK_MS, 0, 1) : 1, speed === 0);
 
-    if (frame % 10 === 0) renderHud();
-    if (frame % 30 === 0) { renderSpecies(); renderGraph(); }
-    if (sim.dirtyLog) { renderLog(); sim.dirtyLog = false; }
-    if (frame % 15 === 0 && renderer.selected) renderInspector();
+    if (frame % 12 === 0) renderHud();
+    if (frame % 20 === 0 && renderer.selected) renderCard();
+    if (life.dirtyLog) { renderLog(); life.dirtyLog = false; }
 }
 
 document.addEventListener('DOMContentLoaded', boot);

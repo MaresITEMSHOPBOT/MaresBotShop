@@ -1,42 +1,44 @@
 'use strict';
-/* Vykreslování: terén přes ImageData, tvorové, efekty, box kolem světa a minimapa. */
+/* Vykreslování. Terén se kreslí do vyrovnávací plochy a překresluje se jen tam,
+   kde se něco změnilo. Panáčci se mezi tiky plynule dopočítávají. */
 
-const OVERLAYS = [
-    { id: 'normal', name: 'Svět', icon: '🌍' },
-    { id: 'temp', name: 'Teplota', icon: '🌡️' },
-    { id: 'moist', name: 'Vláha', icon: '💧' },
-    { id: 'fert', name: 'Úrodnost', icon: '🌾' },
-    { id: 'rad', name: 'Radiace', icon: '☢️' },
-    { id: 'species', name: 'Druhy', icon: '🧬' },
-    { id: 'faith', name: 'Víra', icon: '🙏' }
+const TPX = 14;                      // velikost dlaždice ve vyrovnávací ploše (px)
+
+const MAP_MODES = [
+    { id: 'normal', name: 'Krajina', icon: '🗺️' },
+    { id: 'realms', name: 'Království', icon: '👑' },
+    { id: 'temp', name: 'Teplota', icon: '🌡️' }
 ];
 
-function rgb(r, g, b) { return (255 << 24) | (b << 16) | (g << 8) | r; }
+function hash01(i) { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); }
 
 class Renderer {
-    constructor(canvas, mini, world, sim) {
+    constructor(canvas, mini, world, life) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d', { alpha: false });
         this.mini = mini;
         this.mctx = mini.getContext('2d');
         this.world = world;
-        this.sim = sim;
-        this.overlay = 'normal';
-        this.showGrid = false;
+        this.life = life;
+        this.mode = 'normal';
 
-        this.terrain = document.createElement('canvas');
-        this.terrain.width = world.w; this.terrain.height = world.h;
-        this.tctx = this.terrain.getContext('2d');
-        this.img = this.tctx.createImageData(world.w, world.h);
-        this.buf = new Uint32Array(this.img.data.buffer);
+        this.buf = document.createElement('canvas');
+        this.buf.width = world.w * TPX; this.buf.height = world.h * TPX;
+        this.bctx = this.buf.getContext('2d');
 
-        this.cam = { x: world.w / 2, y: world.h / 2, zoom: 4 };
+        this.terr = document.createElement('canvas');       // hranice království
+        this.terr.width = world.w * TPX; this.terr.height = world.h * TPX;
+        this.tctx = this.terr.getContext('2d');
+
+        this.cam = { x: world.w / 2, y: world.h / 2, zoom: 8 };
         this.particles = [];
         this.frame = 0;
         this.dpr = Math.min(2, window.devicePixelRatio || 1);
-        this.hover = null;
-        this.brush = { x: 0, y: 0, r: 8, show: false, color: '#fff' };
+        this.brush = { x: 0, y: 0, r: 4, show: false, color: '#fff' };
         this.selected = null;
+        this.selectedUid = 0;
+        this.labels = true;
+        this.terrDirty = true;
         this.resize();
     }
 
@@ -48,14 +50,14 @@ class Renderer {
         this.canvas.height = Math.floor(this.vh * this.dpr);
         this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
         this.minZoom = Math.min(this.vw / this.world.w, this.vh / this.world.h);
-        this.cam.zoom = Math.max(this.cam.zoom, this.minZoom);
+        this.cam.zoom = clamp(this.cam.zoom, this.minZoom, 30);
         this.clampCam();
     }
 
     clampCam() {
-        const halfW = this.vw / (2 * this.cam.zoom), halfH = this.vh / (2 * this.cam.zoom);
-        this.cam.x = clamp(this.cam.x, halfW, this.world.w - halfW);
-        this.cam.y = clamp(this.cam.y, halfH, this.world.h - halfH);
+        const hw = this.vw / (2 * this.cam.zoom), hh = this.vh / (2 * this.cam.zoom);
+        this.cam.x = clamp(this.cam.x, hw, this.world.w - hw);
+        this.cam.y = clamp(this.cam.y, hh, this.world.h - hh);
         if (this.world.w * this.cam.zoom < this.vw) this.cam.x = this.world.w / 2;
         if (this.world.h * this.cam.zoom < this.vh) this.cam.y = this.world.h / 2;
     }
@@ -65,486 +67,550 @@ class Renderer {
     s2wx(x) { return (x - this.vw / 2) / this.cam.zoom + this.cam.x; }
     s2wy(y) { return (y - this.vh / 2) / this.cam.zoom + this.cam.y; }
 
-    zoomAt(sx, sy, factor) {
+    zoomAt(sx, sy, f) {
         const wx = this.s2wx(sx), wy = this.s2wy(sy);
-        this.cam.zoom = clamp(this.cam.zoom * factor, this.minZoom, 22);
+        this.cam.zoom = clamp(this.cam.zoom * f, this.minZoom, 30);
         this.cam.x = wx - (sx - this.vw / 2) / this.cam.zoom;
         this.cam.y = wy - (sy - this.vh / 2) / this.cam.zoom;
         this.clampCam();
     }
 
-    viewBounds() {
-        const x0 = clamp(Math.floor(this.s2wx(0)) - 1, 0, this.world.w - 1);
-        const y0 = clamp(Math.floor(this.s2wy(0)) - 1, 0, this.world.h - 1);
-        const x1 = clamp(Math.ceil(this.s2wx(this.vw)) + 1, 1, this.world.w);
-        const y1 = clamp(Math.ceil(this.s2wy(this.vh)) + 1, 1, this.world.h);
-        return { x0, y0, x1, y1 };
+    select(u) { this.selected = u || null; this.selectedUid = u ? u.uid : 0; }
+
+    validSelection() {
+        const s = this.selected;
+        if (!s) return null;
+        if (s.kind === 'village') { if (s.v.dead) { this.selected = null; return null; } return s; }
+        if (s.alive && s.uid === this.selectedUid) return s;
+        this.selected = null;
+        return null;
     }
 
-    /* ---------- terén ---------- */
+    /* ---------------- kreslení dlaždic ---------------- */
 
-    paintTerrain(x0, y0, x1, y1) {
-        const w = this.world, buf = this.buf, W = w.w;
-        const seasonT = Math.sin(w.season * Math.PI * 2) * 7;
-        const ov = this.overlay;
-        const speciesTint = ov === 'species';
+    paintTile(i) {
+        const w = this.world, c = this.bctx;
+        const x = (i % w.w) * TPX, y = ((i / w.w) | 0) * TPX;
+        const t = w.type[i];
+        const r1 = hash01(i), r2 = hash01(i * 3 + 1), r3 = hash01(i * 7 + 5);
 
-        for (let y = y0; y < y1; y++) {
-            const lat = (y / w.h) * 2 - 1;
-            const rowT = 31 - 62 * Math.pow(Math.abs(lat), 1.5) + w.climate - w.dust + seasonT * lat;
-            for (let x = x0; x < x1; x++) {
-                const i = y * W + x;
-                const hgt = w.height[i], wat = w.water[i], veg = w.veg[i];
-                const alt = hgt - w.seaLevel;
-                let t = rowT - Math.max(0, alt) * 58 + (wat > 0.05 ? 2.5 : 0);
-                let r, g, b;
-
-                if (ov === 'temp') {
-                    const f = clamp((t + 30) / 75, 0, 1);
-                    r = (255 * clamp(f * 1.6 - 0.25, 0, 1)) | 0;
-                    g = (255 * clamp(1 - Math.abs(f - 0.5) * 2.1, 0, 1)) | 0;
-                    b = (255 * clamp(1.35 - f * 2.1, 0, 1)) | 0;
-                } else if (ov === 'moist') {
-                    const f = clamp(w.moist[i], 0, 1);
-                    r = (200 - 170 * f) | 0; g = (170 - 40 * f) | 0; b = (110 + 130 * f) | 0;
-                } else if (ov === 'fert') {
-                    const f = clamp(w.fert[i], 0, 1);
-                    r = (150 - 110 * f) | 0; g = (90 + 140 * f) | 0; b = (60 + 30 * f) | 0;
-                } else if (ov === 'rad') {
-                    const f = clamp(w.rad[i], 0, 1);
-                    const base = 40 + veg * 40;
-                    r = (base + f * 90) | 0; g = (base + f * 200) | 0; b = (base + 20) | 0;
-                } else {
-                    if (wat > 0.02) {
-                        const d = clamp(wat / 0.28, 0, 1);
-                        if (t < -2 && wat > 0.02) {           // led
-                            const ice = clamp((-t - 2) / 8, 0, 1);
-                            r = lerp(60 + 40 * (1 - d), 226, ice) | 0;
-                            g = lerp(120 + 40 * (1 - d), 238, ice) | 0;
-                            b = lerp(165 + 30 * (1 - d), 250, ice) | 0;
-                        } else {
-                            r = lerp(58, 8, d) | 0;
-                            g = lerp(140, 34, d) | 0;
-                            b = lerp(172, 74, d) | 0;
-                            if (veg > 0.05 && d < 0.6) {       // řasy v mělčinách
-                                const a = veg * 0.45 * (1 - d);
-                                r = lerp(r, 46, a) | 0; g = lerp(g, 132, a) | 0; b = lerp(b, 96, a) | 0;
-                            }
-                        }
-                    } else {
-                        const dry = clamp(1 - w.moist[i] * 1.7, 0, 1);
-                        // holá půda -> tráva -> les
-                        let br = lerp(196 - 40 * (1 - dry), 92, clamp(veg * 1.4, 0, 1));
-                        let bg = lerp(178 - 20 * (1 - dry), 138, clamp(veg * 1.4, 0, 1));
-                        let bb = lerp(132 - 40 * (1 - dry), 74, clamp(veg * 1.4, 0, 1));
-                        if (veg > 0.55) {
-                            const f = (veg - 0.55) / 0.45;
-                            br = lerp(br, 36, f); bg = lerp(bg, 88, f); bb = lerp(bb, 52, f);
-                        }
-                        if (alt > 0.16) {                       // skály
-                            const f = clamp((alt - 0.16) / 0.18, 0, 1) * (1 - veg * 0.5);
-                            br = lerp(br, 122, f); bg = lerp(bg, 116, f); bb = lerp(bb, 112, f);
-                        }
-                        if (t < 1) {                            // sníh
-                            const f = clamp((1 - t) / 9, 0, 1);
-                            br = lerp(br, 240, f); bg = lerp(bg, 244, f); bb = lerp(bb, 252, f);
-                        }
-                        r = br | 0; g = bg | 0; b = bb | 0;
-                    }
-
-                    // stínování svahů (světlo zleva shora)
-                    if (x > 0 && y > 0) {
-                        const dh = (hgt - w.height[i - W - 1]) * (wat > 0.02 ? 2 : 7);
-                        const s = clamp(1 + dh, 0.62, 1.42);
-                        r = clamp(r * s, 0, 255) | 0; g = clamp(g * s, 0, 255) | 0; b = clamp(b * s, 0, 255) | 0;
-                    }
-
-                    const rad = w.rad[i];
-                    if (rad > 0.02) {
-                        r = clamp(r * (1 - rad * 0.3), 0, 255) | 0;
-                        g = clamp(g * (1 - rad * 0.1) + rad * 55, 0, 255) | 0;
-                        b = clamp(b * (1 - rad * 0.5), 0, 255) | 0;
-                    }
+        switch (t) {
+            case T.DEEP: {
+                const d = clamp((w.seaLevel - w.height[i]) * 3, 0, 1);
+                c.fillStyle = `rgb(${(18 - d * 8) | 0}, ${(52 - d * 20) | 0}, ${(92 - d * 26) | 0})`;
+                c.fillRect(x, y, TPX, TPX);
+                if (r1 > 0.93) { c.fillStyle = 'rgba(255,255,255,0.05)'; c.fillRect(x + 2, y + TPX * 0.5, TPX - 4, 1.5); }
+                break;
+            }
+            case T.WATER: {
+                c.fillStyle = '#2f6f9e';
+                c.fillRect(x, y, TPX, TPX);
+                if (r1 > 0.6) { c.fillStyle = 'rgba(255,255,255,0.09)'; c.fillRect(x + 2, y + 3 + r2 * (TPX - 6), TPX * 0.45, 1.4); }
+                break;
+            }
+            case T.SAND: {
+                c.fillStyle = '#dcc78c';
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = 'rgba(160,135,80,0.35)';
+                c.fillRect(x + r1 * (TPX - 3), y + r2 * (TPX - 3), 2, 1.5);
+                c.fillRect(x + r3 * (TPX - 3), y + r1 * (TPX - 3), 1.5, 1.5);
+                break;
+            }
+            case T.GRASS: {
+                const v = w.veg[i], n = (r2 - 0.5) * 12;
+                c.fillStyle = `rgb(${(104 - v * 26 + n) | 0}, ${(152 + v * 10 + n) | 0}, ${(62 - v * 6 + n * 0.6) | 0})`;
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = 'rgba(60,105,40,0.4)';
+                c.fillRect(x + 2 + r1 * (TPX - 5), y + 3 + r2 * (TPX - 6), 1.4, 2.4);
+                c.fillRect(x + 2 + r3 * (TPX - 5), y + 2 + r1 * (TPX - 6), 1.4, 2);
+                break;
+            }
+            case T.FOREST: {
+                c.fillStyle = '#5b8f3e';
+                c.fillRect(x, y, TPX, TPX);
+                const trees = 2 + (r1 > 0.55 ? 1 : 0);
+                for (let k = 0; k < trees; k++) {
+                    const hx = x + 2.5 + hash01(i * 13 + k * 31) * (TPX - 6);
+                    const hy = y + 3 + hash01(i * 17 + k * 11) * (TPX - 7);
+                    const s = TPX * 0.26;
+                    c.fillStyle = 'rgba(20,40,15,0.35)';
+                    c.beginPath(); c.ellipse(hx, hy + s * 0.9, s * 0.8, s * 0.35, 0, 0, 6.3); c.fill();
+                    c.fillStyle = '#5a4224';
+                    c.fillRect(hx - 0.8, hy, 1.6, s * 0.9);
+                    c.fillStyle = k % 2 ? '#2f6b2a' : '#3b7d31';
+                    c.beginPath();
+                    c.moveTo(hx, hy - s * 1.35); c.lineTo(hx + s, hy + s * 0.25); c.lineTo(hx - s, hy + s * 0.25);
+                    c.closePath(); c.fill();
                 }
-
-                const lav = w.lava[i], fir = w.fire[i];
-                if (lav > 0.01) {
-                    const f = clamp(lav, 0, 1);
-                    r = clamp(lerp(r, 255, f), 0, 255) | 0;
-                    g = clamp(lerp(g, 90 + 120 * Math.min(1, lav), 0, 1) * 1, 0, 255) | 0;
-                    b = clamp(lerp(b, 30, f), 0, 255) | 0;
-                } else if (fir > 0.01) {
-                    const f = clamp(fir, 0, 1) * 0.85;
-                    r = clamp(lerp(r, 255, f), 0, 255) | 0;
-                    g = clamp(lerp(g, 150, f), 0, 255) | 0;
-                    b = clamp(lerp(b, 40, f), 0, 255) | 0;
+                break;
+            }
+            case T.HILL: {
+                const n = (r2 - 0.5) * 10;
+                c.fillStyle = `rgb(${(126 + n) | 0}, ${(146 + n) | 0}, ${(78 + n * 0.6) | 0})`;
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = 'rgba(108,120,72,0.85)';
+                c.beginPath();
+                c.moveTo(x + TPX * 0.15, y + TPX * 0.8);
+                c.quadraticCurveTo(x + TPX * 0.5, y + TPX * 0.28, x + TPX * 0.85, y + TPX * 0.8);
+                c.closePath(); c.fill();
+                c.fillStyle = 'rgba(255,255,255,0.13)';
+                c.beginPath();
+                c.moveTo(x + TPX * 0.3, y + TPX * 0.62);
+                c.quadraticCurveTo(x + TPX * 0.5, y + TPX * 0.34, x + TPX * 0.6, y + TPX * 0.6);
+                c.closePath(); c.fill();
+                if (r1 > 0.5) { c.fillStyle = 'rgba(120,116,104,0.9)'; c.fillRect(x + r3 * (TPX - 4), y + TPX * 0.72, 2.5, 2); }
+                break;
+            }
+            case T.MOUNT: {
+                c.fillStyle = '#6f6d6b';
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = '#8d8b88';
+                c.beginPath();
+                c.moveTo(x + TPX * 0.5, y + TPX * 0.12);
+                c.lineTo(x + TPX * 0.95, y + TPX * 0.9);
+                c.lineTo(x + TPX * 0.05, y + TPX * 0.9);
+                c.closePath(); c.fill();
+                c.fillStyle = w.tempAt(i) < 4 ? '#f2f6fb' : '#a9a7a3';
+                c.beginPath();
+                c.moveTo(x + TPX * 0.5, y + TPX * 0.12);
+                c.lineTo(x + TPX * 0.68, y + TPX * 0.42);
+                c.lineTo(x + TPX * 0.32, y + TPX * 0.42);
+                c.closePath(); c.fill();
+                break;
+            }
+            case T.SNOW: {
+                c.fillStyle = '#e6eef6';
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = 'rgba(160,190,220,0.5)';
+                c.fillRect(x + r1 * (TPX - 3), y + r2 * (TPX - 3), 2, 1.5);
+                break;
+            }
+            case T.LAVA: {
+                const p = (w.tick * 0.12 + i) % 1;
+                c.fillStyle = '#d63a10';
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = `rgba(255,${(170 + Math.sin(p * 6.3) * 50) | 0},60,0.85)`;
+                c.beginPath(); c.ellipse(x + TPX * 0.5, y + TPX * 0.5, TPX * 0.34, TPX * 0.28, 0, 0, 6.3); c.fill();
+                break;
+            }
+            case T.ASH: {
+                c.fillStyle = '#4a423d';
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = 'rgba(20,18,16,0.7)';
+                c.fillRect(x + r1 * (TPX - 4), y + r2 * (TPX - 4), 2.5, 2);
+                break;
+            }
+            case T.FARM: {
+                c.fillStyle = '#b98c4a';
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = 'rgba(90,60,30,0.5)';
+                for (let k = 2; k < TPX; k += 4) c.fillRect(x + 1, y + k, TPX - 2, 1.2);
+                const v = w.veg[i];
+                if (v > 0.2) {
+                    c.fillStyle = `rgba(120,180,60,${0.3 + v * 0.5})`;
+                    for (let k = 3; k < TPX; k += 4) c.fillRect(x + 2, y + k - 1, TPX - 4, 1.6);
                 }
-                if (speciesTint) { r = (r * 0.45) | 0; g = (g * 0.45) | 0; b = (b * 0.5) | 0; }
-                buf[i] = rgb(r, g, b);
+                break;
             }
         }
-        this.tctx.putImageData(this.img, 0, 0, x0, y0, x1 - x0, y1 - y0);
+
+        // stínování svahů – mapa dostane hloubku
+        if (t !== T.DEEP && t !== T.WATER && (i % w.w) > 0 && i >= w.w) {
+            const dh = w.height[i] - w.height[i - w.w - 1];
+            if (dh > 0.012) { c.fillStyle = `rgba(255,255,235,${Math.min(0.10, dh * 0.9)})`; c.fillRect(x, y, TPX, TPX); }
+            else if (dh < -0.012) { c.fillStyle = `rgba(0,0,25,${Math.min(0.12, -dh * 1.1)})`; c.fillRect(x, y, TPX, TPX); }
+        }
+
+        // pobřeží: světlý lem tam, kde se voda potkává se souší
+        if (t === T.WATER || t === T.DEEP) {
+            let coast = false;
+            w.neighbors(i, j => { if (!w.isWater(j)) coast = true; });
+            if (coast) { c.fillStyle = 'rgba(190,220,240,0.20)'; c.fillRect(x, y, TPX, TPX); }
+        }
+
+        if (w.fire[i]) {
+            const p = (w.tick * 0.2 + hash01(i) * 6) % 1;
+            c.fillStyle = `rgba(255,${(120 + p * 90) | 0},40,0.85)`;
+            c.beginPath();
+            c.moveTo(x + TPX * 0.5, y + TPX * (0.08 + p * 0.1));
+            c.lineTo(x + TPX * 0.82, y + TPX * 0.85);
+            c.lineTo(x + TPX * 0.18, y + TPX * 0.85);
+            c.closePath(); c.fill();
+            c.fillStyle = 'rgba(255,235,150,0.9)';
+            c.beginPath(); c.ellipse(x + TPX * 0.5, y + TPX * 0.65, TPX * 0.14, TPX * 0.2, 0, 0, 6.3); c.fill();
+        }
     }
 
-    /* ---------- hlavní kreslení ---------- */
+    flushTiles() {
+        const w = this.world;
+        if (w.allDirty) {
+            for (let i = 0; i < w.n; i++) this.paintTile(i);
+            w.allDirty = false;
+            w.dirty.clear();
+            this.terrDirty = true;
+            return;
+        }
+        if (!w.dirty.size) return;
+        for (const i of w.dirty) this.paintTile(i);
+        w.dirty.clear();
+    }
 
-    draw(paused) {
+    /* ---------------- hranice království ---------------- */
+
+    paintTerritory() {
+        const w = this.world, c = this.tctx, life = this.life;
+        c.clearRect(0, 0, this.terr.width, this.terr.height);
+        const colors = new Map();
+        for (const r of life.realms) if (!r.dead) colors.set(r.id, r.color);
+        const b = Math.max(2, TPX * 0.16);
+        for (let i = 0; i < w.n; i++) {
+            const o = w.owner[i];
+            if (!o) continue;
+            const col = colors.get(o);
+            if (!col) continue;
+            const x = (i % w.w) * TPX, y = ((i / w.w) | 0) * TPX;
+            c.globalAlpha = 0.16;
+            c.fillStyle = col;
+            c.fillRect(x, y, TPX, TPX);
+            c.globalAlpha = 0.95;
+            if ((i % w.w) === 0 || w.owner[i - 1] !== o) c.fillRect(x, y, b, TPX);
+            if ((i % w.w) === w.w - 1 || w.owner[i + 1] !== o) c.fillRect(x + TPX - b, y, b, TPX);
+            if (i < w.w || w.owner[i - w.w] !== o) c.fillRect(x, y, TPX, b);
+            if (i >= w.n - w.w || w.owner[i + w.w] !== o) c.fillRect(x, y + TPX - b, TPX, b);
+        }
+        c.globalAlpha = 1;
+        this.terrDirty = false;
+    }
+
+    /* ---------------- hlavní snímek ---------------- */
+
+    draw(alpha, paused) {
         this.frame++;
-        const ctx = this.ctx, w = this.world, sim = this.sim, cam = this.cam;
-        const v = this.viewBounds();
+        const ctx = this.ctx, cam = this.cam;
+        this.flushTiles();
+        if (this.life.territoryDirty) { this.life.territoryDirty = false; this.terrDirty = true; }
+        if (this.terrDirty) this.paintTerritory();
 
-        ctx.fillStyle = '#05070d';
+        ctx.fillStyle = '#070a12';
         ctx.fillRect(0, 0, this.vw, this.vh);
 
-        this.paintTerrain(v.x0, v.y0, v.x1, v.y1);
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(this.terrain, v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0,
-            this.w2sx(v.x0), this.w2sy(v.y0), (v.x1 - v.x0) * cam.zoom, (v.y1 - v.y0) * cam.zoom);
+        const sx = this.w2sx(0), sy = this.w2sy(0);
+        const sw = this.world.w * cam.zoom, sh = this.world.h * cam.zoom;
+        ctx.imageSmoothingEnabled = cam.zoom < TPX;
+        ctx.drawImage(this.buf, sx, sy, sw, sh);
+
+        if (this.mode === 'temp') this.drawTempOverlay();
+        else {
+            ctx.globalAlpha = this.mode === 'realms' ? 1 : 0.5;
+            ctx.drawImage(this.terr, sx, sy, sw, sh);
+            ctx.globalAlpha = 1;
+        }
         ctx.imageSmoothingEnabled = true;
 
-        // hrana světa – aby bylo poznat, kde krabice končí
-        ctx.strokeStyle = 'rgba(150,180,255,0.25)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(this.w2sx(0) - 1, this.w2sy(0) - 1, this.world.w * cam.zoom + 2, this.world.h * cam.zoom + 2);
-
-        if (this.overlay === 'faith') this.drawFaithOverlay(v);
-        this.drawStructures(v);
-        this.drawCreatures(v);
-        this.drawZones();
+        this.drawBuildings();
+        this.drawUnits(alpha);
+        this.drawLabels();
         this.drawEffects(paused);
         this.drawBrush();
         this.drawGlass();
-        if (this.frame % 12 === 0) this.drawMinimap();
+        if (this.frame % 10 === 0) this.drawMinimap();
     }
 
-    drawFaithOverlay(v) {
-        const ctx = this.ctx, sim = this.sim;
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        for (let i = 0; i < sim.list.length; i++) {
-            const c = sim.list[i];
-            if (!c.alive || c.faith < 0.05) continue;
-            const sx = this.w2sx(c.x), sy = this.w2sy(c.y);
-            if (sx < -30 || sy < -30 || sx > this.vw + 30 || sy > this.vh + 30) continue;
-            const r = 6 + c.faith * 22;
-            const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
-            grd.addColorStop(0, `rgba(255,220,130,${0.28 * c.faith})`);
-            grd.addColorStop(1, 'rgba(255,220,130,0)');
-            ctx.fillStyle = grd;
-            ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+    drawTempOverlay() {
+        const w = this.world, ctx = this.ctx, z = this.cam.zoom;
+        const x0 = clamp(Math.floor(this.s2wx(0)), 0, w.w - 1), x1 = clamp(Math.ceil(this.s2wx(this.vw)), 1, w.w);
+        const y0 = clamp(Math.floor(this.s2wy(0)), 0, w.h - 1), y1 = clamp(Math.ceil(this.s2wy(this.vh)), 1, w.h);
+        ctx.globalAlpha = 0.55;
+        for (let y = y0; y < y1; y++) {
+            for (let x = x0; x < x1; x++) {
+                const t = w.tempAt(y * w.w + x);
+                const f = clamp((t + 25) / 65, 0, 1);
+                ctx.fillStyle = `rgb(${(255 * clamp(f * 1.7 - 0.3, 0, 1)) | 0},${(255 * clamp(1 - Math.abs(f - 0.5) * 2.2, 0, 1)) | 0},${(255 * clamp(1.4 - f * 2.2, 0, 1)) | 0})`;
+                ctx.fillRect(this.w2sx(x), this.w2sy(y), z + 1, z + 1);
+            }
         }
-        ctx.restore();
+        ctx.globalAlpha = 1;
     }
 
-    drawStructures(v) {
-        const ctx = this.ctx, sim = this.sim, z = this.cam.zoom;
-        for (let k = 0; k < sim.structures.length; k++) {
-            const s = sim.structures[k];
-            if (!s.alive) continue;
-            if (s.x < v.x0 - 2 || s.x > v.x1 + 2 || s.y < v.y0 - 2 || s.y > v.y1 + 2) continue;
-            const sx = this.w2sx(s.x + 0.5), sy = this.w2sy(s.y + 0.5);
-            const size = Math.max(2.5, z * (s.type === 3 ? 1.7 : s.type === 2 ? 1.4 : 1.05));
-            if (s.type === 3) {
-                ctx.fillStyle = '#f4d47a';
-                ctx.strokeStyle = 'rgba(80,50,10,0.8)'; ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(sx, sy - size); ctx.lineTo(sx + size * 0.75, sy); ctx.lineTo(sx + size * 0.5, sy + size * 0.8);
-                ctx.lineTo(sx - size * 0.5, sy + size * 0.8); ctx.lineTo(sx - size * 0.75, sy);
-                ctx.closePath(); ctx.fill();
-                if (z > 3) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                    ctx.fillRect(sx - size * 0.1, sy - size * 1.6, size * 0.2, size * 0.6);
-                    ctx.fillRect(sx - size * 0.3, sy - size * 1.35, size * 0.6, size * 0.18);
-                }
+    drawBuildings() {
+        const ctx = this.ctx, z = this.cam.zoom, life = this.life;
+        for (const b of life.buildings) {
+            if (b.dead) continue;
+            const sx = this.w2sx(b.x + 0.5), sy = this.w2sy(b.y + 0.5);
+            if (sx < -20 || sy < -20 || sx > this.vw + 20 || sy > this.vh + 20) continue;
+            const realm = life.realmById(b.realm);
+            const col = realm ? realm.color : '#999';
+            const s = Math.max(3, z * (b.type === 'castle' ? 1.2 : 0.85));
+
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath(); ctx.ellipse(sx, sy + s * 0.45, s * 0.55, s * 0.22, 0, 0, 6.3); ctx.fill();
+
+            if (b.type === 'castle') {
+                ctx.fillStyle = '#b9b3aa';
+                ctx.fillRect(sx - s * 0.45, sy - s * 0.35, s * 0.9, s * 0.75);
+                ctx.fillStyle = '#8f8981';
+                for (let k = 0; k < 3; k++) ctx.fillRect(sx - s * 0.45 + k * s * 0.33, sy - s * 0.55, s * 0.2, s * 0.25);
+                ctx.fillStyle = '#6b655e';
+                ctx.fillRect(sx + s * 0.06, sy - s * 1.15, s * 0.07, s * 0.8);
+                ctx.fillStyle = col;
+                ctx.fillRect(sx + s * 0.12, sy - s * 1.12, s * 0.38, s * 0.3);
             } else {
-                ctx.fillStyle = s.type === 2 ? '#c98f5a' : '#a9744a';
-                ctx.fillRect(sx - size / 2, sy - size / 2, size, size);
-                if (z > 3) {
-                    ctx.fillStyle = 'rgba(60,32,18,0.85)';
+                ctx.fillStyle = '#c9a06a';
+                ctx.fillRect(sx - s * 0.35, sy - s * 0.1, s * 0.7, s * 0.5);
+                ctx.fillStyle = col;
+                ctx.beginPath();
+                ctx.moveTo(sx - s * 0.48, sy - s * 0.08);
+                ctx.lineTo(sx, sy - s * 0.62);
+                ctx.lineTo(sx + s * 0.48, sy - s * 0.08);
+                ctx.closePath(); ctx.fill();
+                if (z > 10) { ctx.fillStyle = 'rgba(60,40,20,0.8)'; ctx.fillRect(sx - s * 0.08, sy + s * 0.12, s * 0.16, s * 0.28); }
+            }
+            const full = b.type === 'castle' ? 120 : 45;
+            if (b.hp < full * 0.6) {
+                ctx.fillStyle = 'rgba(40,40,40,0.45)';
+                ctx.fillRect(sx - s * 0.4, sy - s * 0.5, s * 0.8, s * 0.4);
+            }
+        }
+    }
+
+    drawUnits(alpha) {
+        const ctx = this.ctx, z = this.cam.zoom, life = this.life;
+        const sel = this.validSelection();
+        for (const u of life.units) {
+            if (!u.alive) continue;
+            const x = lerp(u.ox, u.x, alpha), y = lerp(u.oy, u.y, alpha);
+            const sx = this.w2sx(x + 0.5), sy = this.w2sy(y + 0.5);
+            if (sx < -20 || sy < -20 || sx > this.vw + 20 || sy > this.vh + 20) continue;
+
+            const s = Math.max(4.5, z * 0.66);
+            const bob = Math.abs(Math.sin(u.phase || 0)) * s * 0.07;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.28)';
+            ctx.beginPath(); ctx.ellipse(sx, sy + s * 0.42, s * 0.3, s * 0.12, 0, 0, 6.3); ctx.fill();
+
+            if (u.kind === 'animal') {
+                const a = ANIMALS[u.race];
+                ctx.fillStyle = a.color;
+                if (u.race === 'sheep') {
+                    ctx.beginPath(); ctx.ellipse(sx, sy - s * 0.12 - bob, s * 0.32, s * 0.24, 0, 0, 6.3); ctx.fill();
+                    ctx.fillStyle = '#3c3a38';
+                    ctx.beginPath(); ctx.arc(sx + (u.dir || 1) * s * 0.28, sy - s * 0.22 - bob, s * 0.12, 0, 6.3); ctx.fill();
+                } else {
+                    ctx.beginPath(); ctx.ellipse(sx, sy - s * 0.14 - bob, s * 0.36, s * 0.2, 0, 0, 6.3); ctx.fill();
                     ctx.beginPath();
-                    ctx.moveTo(sx - size * 0.62, sy - size * 0.45);
-                    ctx.lineTo(sx, sy - size * 1.05);
-                    ctx.lineTo(sx + size * 0.62, sy - size * 0.45);
+                    ctx.moveTo(sx + (u.dir || 1) * s * 0.3, sy - s * 0.22 - bob);
+                    ctx.lineTo(sx + (u.dir || 1) * s * 0.62, sy - s * 0.34 - bob);
+                    ctx.lineTo(sx + (u.dir || 1) * s * 0.34, sy - s * 0.02 - bob);
                     ctx.closePath(); ctx.fill();
                 }
-            }
-        }
-    }
-
-    drawCreatures(v) {
-        const ctx = this.ctx, sim = this.sim, z = this.cam.zoom;
-        const colors = new Map();
-        for (const sp of sim.species) colors.set(sp.id, sp);
-        const detail = z >= 3.2;
-
-        for (let i = 0; i < sim.list.length; i++) {
-            const c = sim.list[i];
-            if (!c.alive) continue;
-            if (c.x < v.x0 - 1 || c.x > v.x1 + 1 || c.y < v.y0 - 1 || c.y > v.y1 + 1) continue;
-            const sx = this.w2sx(c.x), sy = this.w2sy(c.y);
-            const sp = colors.get(c.sp);
-            let col = sp ? sp.color : '#fff';
-            if (c.sick > 0) col = '#a6e05a';
-
-            const rad = Math.max(1.5, z * 0.34 * (0.5 + c.size * 0.6));
-            if (!detail) {
-                ctx.fillStyle = col;
-                const d = Math.max(2, rad * 1.6);
-                ctx.fillRect(sx - d * 0.5, sy - d * 0.5, d, d);
+                if (sel === u) this.ring(sx, sy, s);
                 continue;
             }
-            ctx.fillStyle = 'rgba(0,0,0,0.35)';
-            ctx.beginPath(); ctx.ellipse(sx, sy + rad * 0.75, rad * 0.95, rad * 0.5, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath();
-            if (c.carn) {
-                const a = Math.atan2(c.dy, c.dx);
-                ctx.moveTo(sx + Math.cos(a) * rad * 1.7, sy + Math.sin(a) * rad * 1.7);
-                ctx.lineTo(sx + Math.cos(a + 2.5) * rad * 1.2, sy + Math.sin(a + 2.5) * rad * 1.2);
-                ctx.lineTo(sx + Math.cos(a - 2.5) * rad * 1.2, sy + Math.sin(a - 2.5) * rad * 1.2);
-                ctx.closePath();
-            } else {
-                ctx.arc(sx, sy, rad, 0, Math.PI * 2);
-            }
-            ctx.fillStyle = col;
-            ctx.fill();
-            if (z > 4) {
-                ctx.strokeStyle = sp ? sp.colorDark : '#333';
-                ctx.lineWidth = Math.max(0.6, z * 0.06);
-                ctx.stroke();
-            }
-            if (z > 6) {
-                if (c.faith > 0.35) {                      // svatozář věřícího
-                    ctx.strokeStyle = 'rgba(255,224,140,0.9)';
-                    ctx.beginPath();
-                    ctx.arc(sx, sy - rad * 1.3, rad * 0.7, Math.PI * 1.05, Math.PI * 1.95);
-                    ctx.stroke();
-                }
-                if (c.energy < c.maxE * 0.22) {            // hlad
-                    ctx.fillStyle = 'rgba(255,80,80,0.9)';
-                    ctx.fillRect(sx - rad, sy - rad * 2.2, rad * 2 * (c.energy / (c.maxE * 0.22)), 1.6);
-                }
-            }
-            if (this.selected === c && c.uid === this.selectedUid) {
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.arc(sx, sy, rad * 2.6, 0, Math.PI * 2); ctx.stroke();
-            }
-        }
-    }
 
-    drawZones() {
-        const ctx = this.ctx, sim = this.sim, z = this.cam.zoom;
-        for (const t of sim.tornados) {
-            const sx = this.w2sx(t.x), sy = this.w2sy(t.y), r = t.r * z;
-            const grd = ctx.createRadialGradient(sx, sy, r * 0.05, sx, sy, r);
-            grd.addColorStop(0, 'rgba(40,42,55,0.85)');
-            grd.addColorStop(0.25, 'rgba(215,218,232,0.8)');
-            grd.addColorStop(0.6, 'rgba(150,152,178,0.45)');
-            grd.addColorStop(1, 'rgba(90,90,110,0)');
-            ctx.fillStyle = grd;
-            ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-            ctx.lineWidth = 1.6;
-            for (let k = 0; k < 4; k++) {
+            const race = RACES[u.race];
+            const realm = u.realm ? life.realmById(u.realm) : null;
+            const cloth = realm ? realm.color : '#9aa3b5';
+
+            if (z >= 5) {
+                ctx.strokeStyle = '#3b3227';
+                ctx.lineWidth = Math.max(1, s * 0.1);
+                const legSwing = Math.sin(u.phase || 0) * s * 0.12;
                 ctx.beginPath();
-                const a0 = (t.ang || 0) * 0.12 + k * 2.1;
-                for (let s = 0; s <= 14; s++) {
-                    const p = s / 14;
-                    const ang = a0 + p * 7;
-                    const rr = r * (0.15 + p * 0.85);
-                    const px = sx + Math.cos(ang) * rr, py = sy + Math.sin(ang) * rr * 0.65;
-                    s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-                }
+                ctx.moveTo(sx - s * 0.1, sy + s * 0.12); ctx.lineTo(sx - s * 0.1 + legSwing, sy + s * 0.4);
+                ctx.moveTo(sx + s * 0.1, sy + s * 0.12); ctx.lineTo(sx + s * 0.1 - legSwing, sy + s * 0.4);
                 ctx.stroke();
             }
-        }
-        for (const zn of sim.zones) {
-            const sx = this.w2sx(zn.x), sy = this.w2sy(zn.y), r = zn.r * z;
-            if (zn.type === 'rain') {
-                ctx.save();
-                ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.clip();
-                ctx.strokeStyle = 'rgba(150,200,255,0.55)'; ctx.lineWidth = 1;
-                const off = (this.frame * 7) % 22;
-                for (let k = -20; k < 40; k++) {
-                    const px = sx - r + k * 7;
-                    ctx.beginPath();
-                    ctx.moveTo(px + off, sy - r); ctx.lineTo(px + off - 8, sy + r);
-                    ctx.stroke();
-                }
-                ctx.restore();
-                ctx.strokeStyle = 'rgba(140,190,255,0.35)';
-                ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
-            } else if (zn.type === 'freeze') {
-                const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
-                grd.addColorStop(0, 'rgba(190,235,255,0.35)');
-                grd.addColorStop(1, 'rgba(150,210,255,0)');
-                ctx.fillStyle = grd;
-                ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
-            } else if (zn.type === 'bless') {
-                const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
-                grd.addColorStop(0, 'rgba(255,236,170,0.30)');
-                grd.addColorStop(1, 'rgba(255,220,120,0)');
-                ctx.fillStyle = grd;
-                ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = cloth;
+            ctx.fillRect(sx - s * 0.19, sy - s * 0.2 - bob, s * 0.38, s * 0.36);
+            ctx.fillStyle = race.skin;
+            ctx.beginPath(); ctx.arc(sx, sy - s * 0.36 - bob, s * 0.2, 0, 6.3); ctx.fill();
+
+            if (u.job === 'soldier' && z >= 6) {
+                ctx.strokeStyle = '#e8eaf0';
+                ctx.lineWidth = Math.max(1, s * 0.09);
+                ctx.beginPath();
+                ctx.moveTo(sx + (u.dir || 1) * s * 0.24, sy + s * 0.04);
+                ctx.lineTo(sx + (u.dir || 1) * s * 0.34, sy - s * 0.42);
+                ctx.stroke();
             }
-        }
-        for (const v of sim.volcanoes) {
-            const sx = this.w2sx(v.x + 0.5), sy = this.w2sy(v.y + 0.5);
-            const r = z * 2.5 * (1 + 0.15 * Math.sin(this.frame * 0.2));
-            const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
-            grd.addColorStop(0, 'rgba(255,220,120,0.9)');
-            grd.addColorStop(0.4, 'rgba(255,120,40,0.55)');
-            grd.addColorStop(1, 'rgba(120,30,10,0)');
-            ctx.fillStyle = grd;
-            ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
-        }
-        for (const m of this.sim.meteors) {
-            const p = 1 - m.life / m.max;
-            const sx = this.w2sx(m.x), sy = this.w2sy(m.y);
-            const d = (1 - p) * Math.max(this.vw, this.vh) * 0.9;
-            const px = sx - d * 0.8, py = sy - d;
-            const grd = ctx.createLinearGradient(px - 40, py - 50, px, py);
-            grd.addColorStop(0, 'rgba(255,180,60,0)');
-            grd.addColorStop(1, 'rgba(255,230,150,0.95)');
-            ctx.strokeStyle = grd; ctx.lineWidth = 3 + p * 6;
-            ctx.beginPath(); ctx.moveTo(px - 70, py - 88); ctx.lineTo(px, py); ctx.stroke();
-            ctx.fillStyle = '#ffe9b0';
-            ctx.beginPath(); ctx.arc(px, py, 3 + p * 7, 0, Math.PI * 2); ctx.fill();
-            // cílový kříž
-            ctx.strokeStyle = 'rgba(255,120,60,0.8)'; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.arc(sx, sy, m.r * this.cam.zoom * (0.6 + 0.4 * Math.sin(this.frame * 0.3)), 0, Math.PI * 2); ctx.stroke();
+            if (u.carry > 0 && z >= 8) {
+                ctx.fillStyle = '#e0b055';
+                ctx.fillRect(sx - s * 0.12, sy - s * 0.62 - bob, s * 0.24, s * 0.16);
+            }
+            if (u.sick && z >= 6) {
+                ctx.fillStyle = 'rgba(140,220,90,0.85)';
+                ctx.beginPath(); ctx.arc(sx + s * 0.26, sy - s * 0.52 - bob, s * 0.1, 0, 6.3); ctx.fill();
+            }
+            if (u.faith > 0.3 && z >= 6) {
+                ctx.strokeStyle = 'rgba(255,220,130,0.9)';
+                ctx.lineWidth = Math.max(1, s * 0.07);
+                ctx.beginPath(); ctx.ellipse(sx, sy - s * 0.64 - bob, s * 0.2, s * 0.08, 0, 0, 6.3); ctx.stroke();
+            }
+            if (u.hp < u.maxHp * 0.5 && z >= 7) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(sx - s * 0.25, sy - s * 0.74 - bob, s * 0.5, s * 0.09);
+                ctx.fillStyle = '#e05555';
+                ctx.fillRect(sx - s * 0.25, sy - s * 0.74 - bob, s * 0.5 * (u.hp / u.maxHp), s * 0.09);
+            }
+            if (sel === u) this.ring(sx, sy, s);
         }
     }
 
-    spawnParticles(x, y, n, opts) {
+    ring(sx, sy, s) {
+        const ctx = this.ctx;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.ellipse(sx, sy + s * 0.42, s * 0.62, s * 0.3, 0, 0, 6.3); ctx.stroke();
+    }
+
+    drawLabels() {
+        if (!this.labels || this.cam.zoom < 5) return;
+        const ctx = this.ctx, life = this.life;
+        ctx.textAlign = 'center';
+        const fs = clamp(this.cam.zoom * 0.85, 9, 15);
+        ctx.font = `600 ${fs}px system-ui, sans-serif`;
+        for (const v of life.villages) {
+            if (v.dead) continue;
+            const sx = this.w2sx(v.x + 0.5), sy = this.w2sy(v.y + 0.5);
+            if (sx < 0 || sy < 0 || sx > this.vw || sy > this.vh) continue;
+            const realm = life.realmById(v.realm);
+            const isCapital = realm && realm.capital === v.id;
+            const ty = sy - this.cam.zoom * 1.15;
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+            const label = (isCapital ? '♛ ' : '') + v.name;
+            ctx.strokeText(label, sx, ty);
+            ctx.fillStyle = realm ? realm.color : '#ddd';
+            ctx.fillText(label, sx, ty);
+            if (isCapital && realm) {
+                ctx.font = `700 ${fs * 1.15}px system-ui, sans-serif`;
+                ctx.strokeText(realm.name, sx, ty - fs * 1.25);
+                ctx.fillStyle = '#fff';
+                ctx.fillText(realm.name, sx, ty - fs * 1.25);
+                ctx.font = `600 ${fs}px system-ui, sans-serif`;
+            }
+        }
+        ctx.textAlign = 'left';
+    }
+
+    /* ---------------- efekty ---------------- */
+
+    spawnParticles(x, y, n, o) {
         for (let k = 0; k < n; k++) {
-            const a = Math.random() * Math.PI * 2;
-            const sp = (opts.speed || 1) * (0.3 + Math.random());
+            const a = Math.random() * 6.283, sp = (o.speed || 0.6) * (0.3 + Math.random());
             this.particles.push({
                 x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-                life: opts.life || 30, max: opts.life || 30,
-                size: opts.size || 2, color: opts.color || '#ffb15c', grav: opts.grav || 0
+                life: o.life || 26, max: o.life || 26, size: o.size || 2.2, color: o.color || '#ffb15c', grav: o.grav || 0
             });
         }
     }
 
     drawEffects(paused) {
-        const ctx = this.ctx, sim = this.sim, z = this.cam.zoom;
-        for (let k = sim.fx.length - 1; k >= 0; k--) {
-            const f = sim.fx[k];
+        const ctx = this.ctx, life = this.life, z = this.cam.zoom;
+        for (let k = life.fx.length - 1; k >= 0; k--) {
+            const f = life.fx[k];
             const p = 1 - f.life / f.max;
-            const sx = this.w2sx(f.x), sy = this.w2sy(f.y);
+            const sx = this.w2sx(f.x + 0.5), sy = this.w2sy(f.y + 0.5);
             switch (f.type) {
                 case 'boom': {
-                    const r = f.r * z * (0.25 + p * 1.1);
-                    const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
-                    const a = (1 - p) * (f.nuke ? 0.95 : 0.85);
-                    grd.addColorStop(0, `rgba(255,255,225,${a})`);
-                    grd.addColorStop(0.35, `rgba(255,170,60,${a * 0.85})`);
-                    grd.addColorStop(0.7, `rgba(180,60,20,${a * 0.5})`);
-                    grd.addColorStop(1, 'rgba(60,20,10,0)');
-                    ctx.fillStyle = grd;
-                    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
-                    if (f.life === f.max) this.spawnParticles(f.x, f.y, f.nuke ? 90 : 45, { speed: f.r * 0.09, life: 46, color: '#ffca7a', size: 2.4, grav: 0.004 });
+                    const r = f.r * z * (0.3 + p * 1.1);
+                    const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+                    const a = 1 - p;
+                    g.addColorStop(0, `rgba(255,255,220,${a})`);
+                    g.addColorStop(0.4, `rgba(255,160,50,${a * 0.8})`);
+                    g.addColorStop(1, 'rgba(90,30,10,0)');
+                    ctx.fillStyle = g;
+                    ctx.beginPath(); ctx.arc(sx, sy, r, 0, 6.3); ctx.fill();
+                    if (f.life === f.max) this.spawnParticles(f.x, f.y, 34, { speed: f.r * 0.1, life: 34, color: '#ffcb7a', grav: 0.006 });
                     break;
                 }
                 case 'shock': {
-                    const r = f.r * z * p;
-                    ctx.strokeStyle = `rgba(255,255,255,${(1 - p) * 0.55})`;
+                    ctx.strokeStyle = `rgba(255,255,255,${(1 - p) * 0.5})`;
                     ctx.lineWidth = 2 + (1 - p) * 4;
-                    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(sx, sy, f.r * z * p, 0, 6.3); ctx.stroke();
                     break;
                 }
                 case 'splash': {
-                    const r = f.r * z * (0.3 + p);
                     ctx.strokeStyle = `rgba(150,220,255,${(1 - p) * 0.8})`;
                     ctx.lineWidth = 2.5;
-                    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
-                    if (f.life === f.max) this.spawnParticles(f.x, f.y, 30, { speed: f.r * 0.06, life: 34, color: '#8fd6ff', size: 2, grav: 0.006 });
+                    ctx.beginPath(); ctx.arc(sx, sy, f.r * z * (0.3 + p), 0, 6.3); ctx.stroke();
                     break;
                 }
                 case 'sparkle': {
-                    const r = f.r * z;
                     ctx.fillStyle = f.color;
                     ctx.globalAlpha = (1 - p) * 0.9;
-                    for (let s = 0; s < 14; s++) {
-                        const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * r;
-                        ctx.fillRect(sx + Math.cos(a) * d, sy + Math.sin(a) * d, 2.2, 2.2);
+                    for (let s = 0; s < 10; s++) {
+                        const a = Math.random() * 6.283, d = Math.sqrt(Math.random()) * f.r * z;
+                        ctx.fillRect(sx + Math.cos(a) * d, sy + Math.sin(a) * d, 2.4, 2.4);
                     }
                     ctx.globalAlpha = 1;
                     break;
                 }
                 case 'beam': {
                     const r = f.r * z;
-                    const grd = ctx.createLinearGradient(sx, sy - this.vh, sx, sy);
-                    grd.addColorStop(0, 'rgba(255,255,255,0)');
-                    grd.addColorStop(1, `rgba(255,235,170,${(1 - p) * 0.45})`);
-                    ctx.fillStyle = grd;
+                    const g = ctx.createLinearGradient(sx, sy - this.vh, sx, sy);
+                    g.addColorStop(0, 'rgba(255,90,90,0)');
+                    g.addColorStop(1, `rgba(255,90,90,${(1 - p) * 0.5})`);
+                    ctx.fillStyle = g;
                     ctx.fillRect(sx - r * 0.5, sy - this.vh, r, this.vh);
-                    ctx.fillStyle = `rgba(255,255,255,${(1 - p) * 0.5})`;
-                    ctx.beginPath(); ctx.ellipse(sx, sy, r * 0.6, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
                     break;
                 }
                 case 'bolt': {
                     ctx.strokeStyle = `rgba(255,255,255,${1 - p})`;
                     ctx.lineWidth = 2.5;
                     ctx.beginPath();
-                    let px = sx + (Math.random() - 0.5) * 20, py = sy - this.vh;
-                    ctx.moveTo(px, py);
-                    const steps = 9;
-                    for (let s = 1; s <= steps; s++) {
-                        const tp = s / steps;
-                        px = lerp(px, sx, 0.55) + (Math.random() - 0.5) * 26 * (1 - tp);
-                        py = sy - this.vh * (1 - tp);
-                        ctx.lineTo(px, py);
+                    let px = sx + (Math.random() - 0.5) * 16;
+                    ctx.moveTo(px, sy - this.vh);
+                    for (let s = 1; s <= 8; s++) {
+                        px = lerp(px, sx, 0.5) + (Math.random() - 0.5) * 22 * (1 - s / 8);
+                        ctx.lineTo(px, sy - this.vh * (1 - s / 8));
                     }
                     ctx.lineTo(sx, sy);
                     ctx.stroke();
-                    ctx.strokeStyle = `rgba(180,220,255,${(1 - p) * 0.5})`;
-                    ctx.lineWidth = 6; ctx.stroke();
+                    ctx.strokeStyle = `rgba(170,210,255,${(1 - p) * 0.5})`;
+                    ctx.lineWidth = 7; ctx.stroke();
                     break;
                 }
-                case 'frost': {
-                    const r = f.r * z;
-                    ctx.fillStyle = `rgba(220,245,255,${0.5 * (1 - p) * 0.5})`;
-                    for (let s = 0; s < 10; s++) {
-                        const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * r;
-                        ctx.fillRect(sx + Math.cos(a) * d, sy + Math.sin(a) * d, 2, 2);
+                case 'rain': {
+                    ctx.save();
+                    ctx.beginPath(); ctx.arc(sx, sy, f.r * z, 0, 6.3); ctx.clip();
+                    ctx.strokeStyle = 'rgba(150,200,255,0.5)'; ctx.lineWidth = 1;
+                    const off = (this.frame * 6) % 20;
+                    for (let s = -14; s < 28; s++) {
+                        const lx = sx - f.r * z + s * 8 + off;
+                        ctx.beginPath(); ctx.moveTo(lx, sy - f.r * z); ctx.lineTo(lx - 7, sy + f.r * z); ctx.stroke();
                     }
+                    ctx.restore();
                     break;
                 }
-                case 'rain': break;   // kreslí se jako zóna
-                case 'meteor': break; // kreslí se v drawZones
+                case 'meteor': {
+                    const d = (f.life / f.max) * Math.max(this.vw, this.vh);
+                    const px = sx - d * 0.75, py = sy - d;
+                    const g = ctx.createLinearGradient(px - 60, py - 70, px, py);
+                    g.addColorStop(0, 'rgba(255,180,60,0)');
+                    g.addColorStop(1, 'rgba(255,235,160,0.95)');
+                    ctx.strokeStyle = g; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(px - 60, py - 70); ctx.lineTo(px, py); ctx.stroke();
+                    ctx.fillStyle = '#ffe9b0';
+                    ctx.beginPath(); ctx.arc(px, py, 5, 0, 6.3); ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,120,60,0.8)'; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.arc(sx, sy, 22, 0, 6.3); ctx.stroke();
+                    break;
+                }
             }
-            if (!paused) { f.life--; if (f.life <= 0) sim.fx.splice(k, 1); }
+            if (!paused) { f.life--; if (f.life <= 0) life.fx.splice(k, 1); }
         }
 
-        // částice
         for (let k = this.particles.length - 1; k >= 0; k--) {
             const p = this.particles[k];
-            const sx = this.w2sx(p.x), sy = this.w2sy(p.y);
-            const a = p.life / p.max;
+            ctx.globalAlpha = p.life / p.max;
             ctx.fillStyle = p.color;
-            ctx.globalAlpha = a;
-            ctx.fillRect(sx, sy, p.size, p.size);
+            ctx.fillRect(this.w2sx(p.x), this.w2sy(p.y), p.size, p.size);
             ctx.globalAlpha = 1;
             if (!paused) {
-                p.x += p.vx; p.y += p.vy;
-                p.vy += p.grav; p.vx *= 0.97; p.vy *= 0.97;
-                p.life--;
-                if (p.life <= 0) this.particles.splice(k, 1);
-            }
-        }
-        // dým z požárů
-        if (this.world.fireSet.size && this.frame % 3 === 0) {
-            let n = 0;
-            for (const i of this.world.fireSet) {
-                if (n++ > 6) break;
-                const x = i % this.world.w, y = (i / this.world.w) | 0;
-                this.particles.push({
-                    x: x + Math.random(), y: y + Math.random(), vx: 0.01, vy: -0.03,
-                    life: 40, max: 40, size: 2, color: 'rgba(90,80,80,0.7)', grav: -0.0015
-                });
+                p.x += p.vx * 0.1; p.y += p.vy * 0.1;
+                p.vy += p.grav; p.vx *= 0.96; p.vy *= 0.96;
+                if (--p.life <= 0) this.particles.splice(k, 1);
             }
         }
     }
@@ -552,78 +618,66 @@ class Renderer {
     drawBrush() {
         if (!this.brush.show) return;
         const ctx = this.ctx;
-        const sx = this.w2sx(this.brush.x), sy = this.w2sy(this.brush.y);
-        const r = this.brush.r * this.cam.zoom;
+        const sx = this.w2sx(this.brush.x + 0.5), sy = this.w2sy(this.brush.y + 0.5);
+        const r = Math.max(this.brush.r * this.cam.zoom, 6);
         ctx.save();
         ctx.strokeStyle = this.brush.color;
-        ctx.globalAlpha = 0.85;
         ctx.lineWidth = 1.5;
         ctx.setLineDash([5, 4]);
-        ctx.lineDashOffset = -this.frame * 0.4;
-        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.globalAlpha = 0.12;
+        ctx.lineDashOffset = -this.frame * 0.3;
+        ctx.beginPath(); ctx.arc(sx, sy, r, 0, 6.3); ctx.stroke();
+        ctx.globalAlpha = 0.10;
         ctx.fillStyle = this.brush.color;
         ctx.fill();
         ctx.restore();
     }
 
-    /* sklo a stíny boxu */
     drawGlass() {
         const ctx = this.ctx;
-        const g = ctx.createLinearGradient(0, 0, this.vw * 0.7, this.vh);
-        g.addColorStop(0, 'rgba(255,255,255,0.07)');
-        g.addColorStop(0.25, 'rgba(255,255,255,0.02)');
-        g.addColorStop(0.45, 'rgba(255,255,255,0)');
+        const g = ctx.createLinearGradient(0, 0, this.vw * 0.65, this.vh);
+        g.addColorStop(0, 'rgba(255,255,255,0.055)');
+        g.addColorStop(0.3, 'rgba(255,255,255,0)');
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, this.vw, this.vh);
-
-        const v = ctx.createRadialGradient(this.vw / 2, this.vh / 2, Math.min(this.vw, this.vh) * 0.35,
-            this.vw / 2, this.vh / 2, Math.max(this.vw, this.vh) * 0.78);
+        const v = ctx.createRadialGradient(this.vw / 2, this.vh / 2, Math.min(this.vw, this.vh) * 0.42,
+            this.vw / 2, this.vh / 2, Math.max(this.vw, this.vh) * 0.8);
         v.addColorStop(0, 'rgba(0,0,0,0)');
-        v.addColorStop(1, 'rgba(0,0,10,0.55)');
+        v.addColorStop(1, 'rgba(0,0,8,0.45)');
         ctx.fillStyle = v;
         ctx.fillRect(0, 0, this.vw, this.vh);
     }
 
     drawMinimap() {
-        const m = this.mini, c = this.mctx;
-        if (m.width !== 220) { m.width = 220; m.height = Math.round(220 * this.world.h / this.world.w); }
-        this.paintTerrain(0, 0, this.world.w, this.world.h);
-        c.imageSmoothingEnabled = false;
-        c.drawImage(this.terrain, 0, 0, m.width, m.height);
-        // sídla
-        c.fillStyle = '#ffd97a';
-        for (const s of this.sim.structures) {
-            if (!s.alive) continue;
-            c.fillRect(s.x / this.world.w * m.width - 1, s.y / this.world.h * m.height - 1, 2, 2);
+        const m = this.mini, c = this.mctx, w = this.world;
+        const want = 200;
+        if (m.width !== want) { m.width = want; m.height = Math.round(want * w.h / w.w); }
+        c.imageSmoothingEnabled = true;
+        c.drawImage(this.buf, 0, 0, m.width, m.height);
+        c.globalAlpha = 0.55;
+        c.drawImage(this.terr, 0, 0, m.width, m.height);
+        c.globalAlpha = 1;
+        for (const v of this.life.villages) {
+            if (v.dead) continue;
+            const r = this.life.realmById(v.realm);
+            c.fillStyle = r ? r.color : '#fff';
+            c.fillRect(v.x / w.w * m.width - 1.5, v.y / w.h * m.height - 1.5, 3, 3);
         }
-        // výřez
-        const x = (this.cam.x - this.vw / (2 * this.cam.zoom)) / this.world.w * m.width;
-        const y = (this.cam.y - this.vh / (2 * this.cam.zoom)) / this.world.h * m.height;
-        const w = this.vw / this.cam.zoom / this.world.w * m.width;
-        const h = this.vh / this.cam.zoom / this.world.h * m.height;
+        const x = (this.cam.x - this.vw / (2 * this.cam.zoom)) / w.w * m.width;
+        const y = (this.cam.y - this.vh / (2 * this.cam.zoom)) / w.h * m.height;
         c.strokeStyle = 'rgba(255,255,255,0.9)';
         c.lineWidth = 1;
-        c.strokeRect(x, y, w, h);
+        c.strokeRect(x, y, this.vw / this.cam.zoom / w.w * m.width, this.vh / this.cam.zoom / w.h * m.height);
     }
 
-    select(c) { this.selected = c || null; this.selectedUid = c ? c.uid : 0; }
-
-    /* vybraný tvor mohl umřít a jeho slot dostal někdo jiný – pak výběr zrušíme */
-    validSelection() {
-        const c = this.selected;
-        if (c && c.alive && c.uid === this.selectedUid) return c;
-        this.selected = null;
+    /* co je pod kurzorem: nejdřív panáček, pak vesnice */
+    pick(wx, wy) {
+        let best = null, bd = Math.max(0.8, 9 / this.cam.zoom);
+        bd *= bd;
+        this.life.forEachNear(wx, wy, 2.5, (u, d2) => { if (d2 < bd) { bd = d2; best = u; } });
+        if (best) return best;
+        for (const v of this.life.villages) {
+            if (!v.dead && dist2(v.x + 0.5, v.y + 0.5, wx, wy) < 4) return { kind: 'village', v, uid: -v.id, alive: true };
+        }
         return null;
-    }
-
-    creatureAt(wx, wy) {
-        let best = null, bestD = 4 / this.cam.zoom + 0.8;
-        bestD *= bestD;
-        this.sim.forEachNear(wx, wy, 3, (c, d2) => {
-            if (d2 < bestD) { bestD = d2; best = c; }
-        });
-        return best;
     }
 }

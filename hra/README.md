@@ -1,8 +1,8 @@
 # 🌍 Bůh světa
 
-Simulátor světa v krabici. Máš před sebou živou planetu – tvorové se v ní sami živí, množí,
-mutují a vyvíjejí. Ty jsi bůh: můžeš jim pomáhat, nebo na ně poslat bombu, povodeň, sopku
-a meteorit.
+Sandbox ve stylu WorldBoxu. Ve skleněné krabici žijí panáčci: sbírají jídlo, staví domy,
+zakládají vesnice a království, uzavírají mír a válčí. Ty jsi bůh – maluješ krajinu,
+sázíš národy, žehnáš jim nebo na ně posíláš meteorit.
 
 ## Jak to spustit
 
@@ -15,55 +15,61 @@ a meteorit.
 
 | Akce | Ovládání |
 | --- | --- |
-| Použít vybranou moc | levé tlačítko (u některých mocí lze držet a táhnout) |
+| Použít nástroj | levé tlačítko (štětce jdou držet a táhnout) |
 | Posun mapy | pravé tlačítko nebo mezerník + tah |
 | Přiblížení | kolečko myši |
-| Volba moci | klávesy 1–9, 0 |
+| Prohlédnout si panáčka / vesnici | nástroj 🖐️ Ruka a klik |
+| Volba nástroje | klávesy 1–9, 0 |
 | Pauza | mezerník |
-| Přepnutí pohledu na mapu | Tab |
 | Nápověda | H |
 
 ## Co se ve světě děje
 
-**Terén a klima.** Mapa 320 × 200 políček s výškou, vodou, vláhou, úrodností a teplotou.
-Voda teče podle výšky terénu, odpařuje se a stéká do moře. Teplota závisí na zeměpisné
-šířce, nadmořské výšce, ročním období a na klimatu, které si nastavíš posuvníkem. Oheň se
-šíří po vegetaci, láva teče z kopce a po vychladnutí zvedá terén a hnojí půdu.
+**Klidný obraz.** Simulace běží v pevném tempu 8 tiků za vteřinu a vykreslování mezi tiky
+dopočítává mezipolohy, takže panáčci chodí plynule. Mapa se překresluje jen tam, kde se
+opravdu něco změnilo – nic nebliká ani nekmitá.
 
-**Život.** Každý tvor má 11 genů: velikost, rychlost, zrak, metabolismus, plodnost, dravost,
-odolnost vůči teplu i zimě, plavání, inteligenci a délku života. Geny určují, kolik energie
-tvor spálí, co snese a jak se chová. Tvorové hledají potravu, páří se s partnerem svého druhu,
-mláděti zkříží geny a přidají mutace. Kdo nepřežije, geny nepředá – evoluce tu není naskriptovaná,
-vypadne ze selekce.
+**Krajina.** Mapa 144 × 90 dlaždic: hlubina, mělčina, písek, louka, les, kopce, hory, sníh,
+pole, spáleniště, láva. Typ dlaždice se počítá z výšky, teploty a vláhy. Oheň se šíří po
+porostu a nechává po sobě spáleniště, které časem zaroste. Láva teče z kopce a tuhne v novou
+skálu. Voda z povodně teče podle terénu a odtéká do moře.
 
-**Druhy.** Když se geny mláděte dost vzdálí od průměru rodičovského druhu, odštěpí se nový druh
-s vlastním jménem a barvou. Kronika zapisuje, co se prosadilo a co vymřelo.
+**Panáčci.** Čtyři rody – lidé, orkové, elfové a trpaslíci – se liší rychlostí, silou,
+plodností, délkou života a tím, kde se jim líbí. Každý má jméno, věk, zdraví, sytost a
+povolání (dítě, dělník, voják, tulák). Dělník chodí sbírat jídlo na les, louku nebo pole,
+nosí ho do vesnice a staví domy. K tomu po světě běhají ovce a vlci.
 
-**Civilizace.** Když inteligence stoupne dost vysoko, tvorové začnou stavět: chýše → vesnice → chrám.
-Sídla zúrodňují okolí, chrání před teplotními výkyvy a chrámy ti posílají víru.
+**Vesnice a království.** Vesnice má zásobu jídla, domy a obyvatele. Když je jí těsno,
+založí opodál novou vesnici – tak království roste. Hranice na mapě ukazují, kam které
+království dosáhne; hlavní město pozná podle hradu s vlajkou a značky ♛.
 
-**Víra.** Víra je tvá mana a platíš jí každý zásah. Vyrábějí ji tvorové, kteří v tebe věří –
-získáš je zázraky (požehnání, déšť, zjevení). Podle svých činů jsi milovaný, nebo obávaný bůh.
+**Války.** Sousední království si mezi sebou občas vyhlásí válku (orkové výrazně častěji).
+Vesnice povolají vojáky, ti pochodují na nejbližší nepřátelskou vesnici, bijí se a bourají
+domy. Když vesnice přijde o všechny domy, padne; když království přijde o všechny vesnice,
+zaniká. Mír se dá uzavřít sám – nebo ho můžeš vnutit nástrojem 🕊️.
+
+**Víra.** Víra je tvá mana. ✨ Požehnání uzdraví a nasytí panáčky a udělá z nich věřící;
+věřící ti pak víru doplňují. Katastrofy víru stojí, malování krajiny je zdarma.
 
 ## Zdrojové soubory
 
 | Soubor | Obsah |
 | --- | --- |
-| `js/core.js` | generátor náhody, Perlinův šum, matematické pomůcky |
-| `js/world.js` | terén, voda, vlhkost, vegetace, oheň, láva, klima |
-| `js/creatures.js` | geny, chování, rozmnožování, druhy, sídla, víra |
-| `js/powers.js` | boží schopnosti a katastrofy |
-| `js/render.js` | vykreslování canvasu, efekty, minimapa |
-| `js/game.js` | propojení s uživatelským rozhraním |
+| `js/core.js` | náhoda, Perlinův šum, matematika, generátor jmen |
+| `js/world.js` | dlaždicová mapa, oheň, láva, povodně, růst porostu |
+| `js/life.js` | panáčci, zvířata, vesnice, království, války |
+| `js/powers.js` | nástroje hráče (štětce, národy, zázraky, katastrofy) |
+| `js/render.js` | kreslení dlaždic, panáčků, staveb a hranic, minimapa |
+| `js/game.js` | rozhraní, smyčka s pevným tempem |
 
-Soubory `core/world/creatures/powers` nesahají na DOM, takže je lze spustit i mimo prohlížeč.
+Soubory `core/world/life/powers` nesahají na DOM, takže je lze spustit i mimo prohlížeč.
 
 ## Vývoj
 
 ```bash
-node hra/test/sim-test.js 12000 4242   # simulace bez prohlížeče: tiků, semínko
+node hra/test/sim-test.js 6000 12345   # simulace bez prohlížeče: tiků, semínko
 node hra/build.js                      # sestaví hra.html v kořeni repozitáře
 ```
 
-Test vypíše vývoj populace, druhů, dravců, staveb a rychlost simulace v ms na tik
-(pro plynulých 60 FPS je potřeba zůstat pod 8 ms).
+Test vypíše, jak rostou národy, kolik je vesnic, staveb, vojáků a válek, a kolik milisekund
+zabere jeden tik (hra běží 8 tiků za vteřinu, takže je potřeba zůstat hluboko pod 15 ms).

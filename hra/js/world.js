@@ -1,305 +1,189 @@
 'use strict';
-/* Svět: terén, voda, vegetace, klima, oheň a láva. Čistá simulace bez DOM. */
+/* Svět jako mapa dlaždic. Terén se mění jen když se opravdu něco stane –
+   žádné překreslování každý snímek, žádné kmitání. */
 
-const TICKS_PER_YEAR = 100;
+const T = { DEEP: 0, WATER: 1, SAND: 2, GRASS: 3, FOREST: 4, HILL: 5, MOUNT: 6, SNOW: 7, LAVA: 8, ASH: 9, FARM: 10 };
+const TILE_NAME = ['hlubina', 'mělčina', 'písek', 'louka', 'les', 'kopce', 'hory', 'sníh', 'láva', 'spáleniště', 'pole'];
+const WATER_TILE = [true, true, false, false, false, false, false, false, false, false, false];
+const WALK_COST = [99, 99, 1.3, 1, 1.25, 1.6, 2.6, 1.5, 99, 1.1, 1];
+/* kolik jídla se dá z dlaždice získat */
+const FOOD_TILE = [0, 0.4, 0, 0.5, 1, 0.3, 0, 0.1, 0, 0, 1.6];
 
 class World {
     constructor(w, h, seed) {
         this.w = w; this.h = h; this.n = w * h;
         this.seed = seed >>> 0;
 
-        this.height = new Float32Array(this.n);   // 0..1 nadmořská výška
-        this.water = new Float32Array(this.n);    // hloubka vody nad terénem
-        this.veg = new Float32Array(this.n);      // 0..1 vegetace (potrava)
-        this.fert = new Float32Array(this.n);     // 0..1 úrodnost půdy
-        this.moist = new Float32Array(this.n);    // 0..1 vlhkost
-        this.fire = new Float32Array(this.n);     // 0..1 hoření
-        this.lava = new Float32Array(this.n);     // 0..1 láva
-        this.rad = new Float32Array(this.n);      // 0..1 radiace
+        this.type = new Uint8Array(this.n);
+        this.height = new Float32Array(this.n);
+        this.moist = new Float32Array(this.n);
+        this.veg = new Float32Array(this.n);      // zásoba porostu (těží se z ní jídlo)
+        this.wet = new Float32Array(this.n);      // rozlitá voda z povodní
+        this.fire = new Uint8Array(this.n);       // zbývající tiky hoření
+        this.lava = new Uint8Array(this.n);
+        this.build = new Int16Array(this.n);      // index stavby + 1
+        this.owner = new Int16Array(this.n);      // id říše, 0 = nikoho
 
-        this.baseSea = 0.555;
-        this.seaLevel = 0.555;
-        this.climate = 0;      // globální posun teploty (°C)
-        this.dust = 0;         // popel v atmosféře po dopadech (ochlazuje svět)
-        this.rain = 0.5;       // 0..1 srážky
-        this.season = 0;       // 0..1 fáze roku
+        this.seaLevel = 0.46;
+        this.climate = 0;
         this.tick = 0;
-        this.stripe = 0;
 
         this.fireSet = new Set();
         this.lavaSet = new Set();
+        this.wetSet = new Set();
+        this.dirty = new Set();                   // dlaždice k překreslení
+        this.allDirty = true;
+        this.scan = 0;
 
         this.generate(this.seed);
     }
 
     idx(x, y) { return y * this.w + x; }
     inside(x, y) { return x >= 0 && y >= 0 && x < this.w && y < this.h; }
+    isWater(i) { return WATER_TILE[this.type[i]]; }
+    walkable(i) { return WALK_COST[this.type[i]] < 90; }
+    mark(i) { this.dirty.add(i); }
 
-    get year() { return Math.floor(this.tick / TICKS_PER_YEAR); }
+    tempAt(i) {
+        const y = (i / this.w) | 0;
+        const lat = (y / this.h) * 2 - 1;
+        return 30 - 58 * Math.pow(Math.abs(lat), 1.45) - Math.max(0, this.height[i] - this.seaLevel) * 46 + this.climate;
+    }
+
+    /* ---------------- generování ---------------- */
 
     generate(seed) {
         this.seed = seed >>> 0;
-        const rng = makeRNG(this.seed);
         const nBase = new Noise(this.seed);
         const nWarp = new Noise((this.seed ^ 0x9e3779b9) >>> 0);
         const nCont = new Noise((this.seed * 7 + 13) >>> 0);
-        const nFert = new Noise((this.seed ^ 0x51ab3f) >>> 0);
-        const { w, h, height } = this;
+        const nMoist = new Noise((this.seed ^ 0x51ab3f) >>> 0);
+        const { w, h } = this;
 
         for (let y = 0; y < h; y++) {
             const ny = y / h;
             for (let x = 0; x < w; x++) {
-                const i = y * w + x;
-                const nx = x / w;
-                // deformace domény -> členitější pobřeží
-                const wx = nx * 4.2 + 0.7 * nWarp.fbm(nx * 2.6, ny * 2.6, 3);
-                const wy = ny * 3.0 + 0.7 * nWarp.fbm(nx * 2.6 + 5.2, ny * 2.6 + 1.3, 3);
+                const i = y * w + x, nx = x / w;
+                const wx = nx * 3.4 + 0.55 * nWarp.fbm(nx * 2.4, ny * 2.4, 3);
+                const wy = ny * 2.6 + 0.55 * nWarp.fbm(nx * 2.4 + 5.2, ny * 2.4 + 1.3, 3);
 
-                let e = nBase.fbm(wx, wy, 6, 2.0, 0.5) * 0.5 + 0.5;
-                const cont = nCont.fbm(nx * 1.7, ny * 1.4, 2) * 0.5 + 0.5;
-                e = e * 0.6 + cont * 0.5;
+                let e = nBase.fbm(wx, wy, 5, 2, 0.5) * 0.5 + 0.5;
+                e = e * 0.6 + (nCont.fbm(nx * 1.5, ny * 1.3, 2) * 0.5 + 0.5) * 0.5;
+                const ridge = 1 - Math.abs(nBase.fbm(wx * 1.6 + 9, wy * 1.6 - 4, 3));
+                e += Math.pow(Math.max(0, e - 0.5), 1.15) * ridge * 1.05;
 
-                // hory na vyvýšeninách
-                const ridge = 1 - Math.abs(nBase.fbm(wx * 1.7 + 9, wy * 1.7 - 4, 4));
-                e += Math.pow(Math.max(0, e - 0.55), 1.15) * ridge * 0.8;
+                // okraje světa stahujeme do moře, aby byl svět uzavřený v krabici
+                const d = Math.max(Math.abs(nx * 2 - 1), Math.abs(ny * 2 - 1));
+                const fall = smoothstep(0.68, 1, d);
+                e = e * (1 - fall) + 0.12 * fall;
 
-                // okraje mapy stahujeme do hlubokého oceánu – svět je uzavřený box
-                const dx = Math.abs(nx * 2 - 1), dy = Math.abs(ny * 2 - 1);
-                const fall = smoothstep(0.70, 1.0, Math.max(dx, dy));
-                e = e * (1 - fall) + 0.13 * fall;
-
-                height[i] = clamp(e, 0, 1);
-                this.fert[i] = clamp(0.45 + nFert.fbm(nx * 6, ny * 6, 3) * 0.9, 0.05, 1);
+                this.height[i] = clamp(e, 0, 1);
+                this.moist[i] = clamp(0.5 + nMoist.fbm(nx * 4, ny * 4, 3) * 1.1, 0, 1);
+                this.wet[i] = 0; this.fire[i] = 0; this.lava[i] = 0;
+                this.build[i] = 0; this.owner[i] = 0;
             }
         }
 
-        // voda, vlhkost, počáteční vegetace
+        // vlhkost stoupá u vody (jednoduché rozostření směrem od moře)
+        for (let pass = 0; pass < 3; pass++) {
+            const src = Float32Array.from(this.moist);
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const i = y * w + x;
+                    const sea = this.height[i] < this.seaLevel ? 1 : 0;
+                    const avg = (src[i - 1] + src[i + 1] + src[i - w] + src[i + w]) * 0.25;
+                    this.moist[i] = clamp(Math.max(sea, avg * 0.85 + src[i] * 0.15), 0, 1);
+                }
+            }
+        }
+
         for (let i = 0; i < this.n; i++) {
-            this.water[i] = this.height[i] < this.seaLevel ? this.seaLevel - this.height[i] : 0;
-            this.moist[i] = this.water[i] > 0 ? 1 : 0;
-            this.veg[i] = 0; this.fire[i] = 0; this.lava[i] = 0; this.rad[i] = 0;
+            const t = this.tempAt(i);
+            this.veg[i] = this.height[i] < this.seaLevel ? 0
+                : clamp(this.moist[i] * 1.05 - Math.max(0, (t - 28) / 14) - Math.max(0, (2 - t) / 12), 0, 1);
+            this.classify(i);
         }
-        this.fireSet.clear(); this.lavaSet.clear();
-
-        // vlhkost necháme rozlít a zeleň narůst do rovnováhy
-        for (let k = 0; k < 26; k++) this.stepMoisture(0, this.h);
-        for (let k = 0; k < 30; k++) this.stepVegetation(0, this.h, 3);
-        rng();
+        this.fireSet.clear(); this.lavaSet.clear(); this.wetSet.clear();
+        this.allDirty = true;
     }
 
-    tempAt(x, y, i) {
-        const lat = (y / this.h) * 2 - 1;
-        let t = 31 - 62 * Math.pow(Math.abs(lat), 1.5);
-        t -= Math.max(0, this.height[i] - this.seaLevel) * 58;
-        t += this.climate - this.dust;
-        t += Math.sin(this.season * Math.PI * 2) * 7 * lat;      // roční období (opačná na polokoulích)
-        if (this.water[i] > 0.05) t += 2.5;                       // voda teplotu tlumí
-        if (this.lava[i] > 0.02) t += 40 * this.lava[i];
-        return t;
-    }
-
-    tempAtIdx(i) { return this.tempAt(i % this.w, (i / this.w) | 0, i); }
-
-    /* ---------- jednotlivé kroky simulace ---------- */
-
-    stepWater(y0, y1) {
-        const { w, height, water } = this;
-        for (let y = y0; y < y1; y++) {
-            for (let x = 0; x < w; x++) {
-                const i = y * w + x;
-                const wv = water[i];
-                if (wv <= 1e-4) continue;
-                const lvl = height[i] + wv;
-                let total = 0;
-                const dl = this._dl || (this._dl = new Float32Array(4));
-                const nb = this._nb || (this._nb = new Int32Array(4));
-                let cnt = 0;
-                if (x > 0) { const j = i - 1; const d = lvl - (height[j] + water[j]); if (d > 0) { dl[cnt] = d; nb[cnt++] = j; total += d; } }
-                if (x < w - 1) { const j = i + 1; const d = lvl - (height[j] + water[j]); if (d > 0) { dl[cnt] = d; nb[cnt++] = j; total += d; } }
-                if (y > 0) { const j = i - w; const d = lvl - (height[j] + water[j]); if (d > 0) { dl[cnt] = d; nb[cnt++] = j; total += d; } }
-                if (y < this.h - 1) { const j = i + w; const d = lvl - (height[j] + water[j]); if (d > 0) { dl[cnt] = d; nb[cnt++] = j; total += d; } }
-                if (!cnt) continue;
-                const move = Math.min(wv, total * 0.22);
-                for (let k = 0; k < cnt; k++) {
-                    const t = move * (dl[k] / total);
-                    water[nb[k]] += t;
-                    water[i] -= t;
-                }
-            }
+    /* podle výšky, teploty, vláhy a porostu určí, co na dlaždici je */
+    classify(i) {
+        const h = this.height[i];
+        let t;
+        if (this.lava[i] > 0) t = T.LAVA;
+        else if (h < this.seaLevel - 0.055) t = T.DEEP;
+        else if (h < this.seaLevel) t = T.WATER;
+        else if (this.wet[i] > 0.12) t = T.WATER;
+        else {
+            const temp = this.tempAt(i);
+            if (h > 0.75) t = T.MOUNT;
+            else if (temp < -5) t = T.SNOW;
+            else if (h > 0.645) t = T.HILL;
+            else if (h < this.seaLevel + 0.012) t = T.SAND;
+            else if (this.moist[i] < 0.3 && temp > 15) t = T.SAND;
+            else if (this.veg[i] > 0.6) t = T.FOREST;
+            else t = T.GRASS;
         }
-        // oceán = nekonečný zdroj i odtok, drží hladinu
-        for (let y = y0; y < y1; y++) {
-            for (let x = 0; x < w; x++) {
-                const i = y * w + x;
-                if (height[i] < this.seaLevel) {
-                    water[i] = this.seaLevel - height[i];
-                } else if (water[i] > 0) {
-                    const t = this.tempAt(x, y, i);
-                    const evap = t > 0 ? 0.004 + t * 0.0004 : 0.001;
-                    water[i] = Math.max(0, water[i] - evap);
-                }
-            }
-        }
+        if (this.type[i] !== t) { this.type[i] = t; this.mark(i); return true; }
+        return false;
     }
 
-    stepMoisture(y0, y1) {
-        const { w, h, moist, water } = this;
-        for (let y = y0; y < y1; y++) {
-            for (let x = 0; x < w; x++) {
-                const i = y * w + x;
-                let target;
-                if (water[i] > 0.03) target = 1;
-                else {
-                    const l = x > 0 ? moist[i - 1] : moist[i];
-                    const r = x < w - 1 ? moist[i + 1] : moist[i];
-                    const u = y > 0 ? moist[i - w] : moist[i];
-                    const d = y < h - 1 ? moist[i + w] : moist[i];
-                    target = Math.min(1, (l + r + u + d) * 0.243 + this.rain * 0.30);
-                }
-                moist[i] += (target - moist[i]) * 0.18;
-            }
-        }
+    setType(i, t) {
+        if (this.type[i] === t) return;
+        this.type[i] = t;
+        this.mark(i);
     }
 
-    stepVegetation(y0, y1, mult = 1) {
-        const { w, veg, fert, moist, water, height, rad } = this;
-        for (let y = y0; y < y1; y++) {
-            for (let x = 0; x < w; x++) {
-                const i = y * w + x;
-                if (this.lava[i] > 0.01) { veg[i] = 0; continue; }
-                const depth = water[i];
-                if (depth > 0.16) { veg[i] = 0; continue; }              // hlubina je pustá
-                if (depth > 0.10) {                                      // zatopeno – rostliny hnijí
-                    veg[i] = Math.max(0, veg[i] - 0.02 * mult);
-                    continue;
-                }
-                const t = this.tempAt(x, y, i);
-                let tf = 1 - Math.abs(t - 21) / 27;
-                if (t < -3 || t > 47) tf = -0.6;
-                const wf = Math.min(1, moist[i] * 1.15);
-                const rf = 1 - rad[i] * 0.9;
-                let g = fert[i] * tf * wf * rf;
-                if (depth > 0.02) g *= 0.55;                             // mělčiny: řasy a plankton
-                if (g > 0) veg[i] = Math.min(1, veg[i] + g * (1 - veg[i]) * 0.013 * mult);
-                else veg[i] = Math.max(0, veg[i] + g * 0.02 * mult);
-
-                // úrodnost se pomalu obnovuje, radiace ji ničí
-                if (fert[i] < 0.62) fert[i] = Math.min(0.62, fert[i] + 0.0004 * mult);
-                if (rad[i] > 0.01) fert[i] = Math.max(0.03, fert[i] - rad[i] * 0.0025 * mult);
-            }
-        }
+    /* natvrdo přemaluje dlaždici (štětce hráče) */
+    paint(i, t) {
+        const sea = this.seaLevel;
+        if (t === T.DEEP) { this.height[i] = sea - 0.12; this.wet[i] = 0; }
+        else if (t === T.WATER) { this.height[i] = sea - 0.02; this.wet[i] = 0; }
+        else if (t === T.MOUNT) this.height[i] = 0.86;
+        else if (t === T.HILL) this.height[i] = 0.74;
+        else if (this.height[i] < sea + 0.02) this.height[i] = sea + 0.05;
+        if (t === T.FOREST) this.veg[i] = 1;
+        if (t === T.GRASS) this.veg[i] = 0.35;
+        if (t === T.SAND) { this.veg[i] = 0; this.moist[i] = Math.min(this.moist[i], 0.25); }
+        if (t === T.SNOW) this.veg[i] = 0;
+        this.lava[i] = 0; this.fire[i] = 0;
+        this.lavaSet.delete(i); this.fireSet.delete(i);
+        this.setType(i, t);
     }
 
-    stepFire(rng) {
-        if (!this.fireSet.size) return;
-        const { w, h, veg, fire, water, moist, fert } = this;
-        const done = [];
-        for (const i of this.fireSet) {
-            const x = i % w, y = (i / w) | 0;
-            if (water[i] > 0.02) { fire[i] = 0; done.push(i); continue; }
-            veg[i] = Math.max(0, veg[i] - 0.09);
-            fert[i] = Math.min(1, fert[i] + 0.004);   // popel hnojí
-            fire[i] -= 0.018 + moist[i] * 0.02;
-            if (fire[i] <= 0 || veg[i] <= 0.01) { fire[i] = 0; done.push(i); continue; }
-            // šíření
-            for (let k = 0; k < 4; k++) {
-                const nx = x + (k === 0 ? -1 : k === 1 ? 1 : 0);
-                const ny = y + (k === 2 ? -1 : k === 3 ? 1 : 0);
-                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-                const j = ny * w + nx;
-                if (fire[j] > 0 || water[j] > 0.02 || veg[j] < 0.12) continue;
-                if (rng() < veg[j] * 0.17 * (1 - moist[j] * 0.55)) {
-                    fire[j] = 1; this.fireSet.add(j);
-                }
-            }
-        }
-        for (const i of done) this.fireSet.delete(i);
+    ignite(i) {
+        const t = this.type[i];
+        if (t !== T.FOREST && t !== T.GRASS && t !== T.FARM) return false;
+        if (this.fire[i]) return false;
+        this.fire[i] = 26 + (t === T.FOREST ? 22 : 0);
+        this.fireSet.add(i);
+        this.mark(i);
+        return true;
     }
 
-    stepLava(rng) {
-        if (!this.lavaSet.size) return;
-        const { w, h, height, water, veg, lava, fert } = this;
-        const done = [];
-        const added = [];
-        for (const i of this.lavaSet) {
-            const x = i % w, y = (i / w) | 0;
-            let l = lava[i];
-            if (water[i] > 0.02) { water[i] = Math.max(0, water[i] - 0.05); l -= 0.05; }
-            // tečení do nižšího souseda
-            if (l > 0.22) {
-                let best = -1, bestLvl = height[i] + lava[i] * 0.35;
-                for (let k = 0; k < 4; k++) {
-                    const nx = x + (k === 0 ? -1 : k === 1 ? 1 : 0);
-                    const ny = y + (k === 2 ? -1 : k === 3 ? 1 : 0);
-                    if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-                    const j = ny * w + nx;
-                    const lvl = height[j] + lava[j] * 0.35;
-                    if (lvl < bestLvl - 0.001) { bestLvl = lvl; best = j; }
-                }
-                if (best >= 0) {
-                    const t = l * 0.34;
-                    lava[best] += t; l -= t;
-                    added.push(best);
-                }
-            }
-            // zapaluje okolí
-            for (let k = 0; k < 4; k++) {
-                const nx = x + (k === 0 ? -1 : k === 1 ? 1 : 0);
-                const ny = y + (k === 2 ? -1 : k === 3 ? 1 : 0);
-                if (!this.inside(nx, ny)) continue;
-                const j = ny * w + nx;
-                if (veg[j] > 0.15 && this.fire[j] === 0 && rng() < 0.25) { this.fire[j] = 1; this.fireSet.add(j); }
-            }
-            veg[i] = 0;
-            l -= 0.012;                       // tuhne
-            if (l <= 0.02) {
-                lava[i] = 0;
-                height[i] = clamp(height[i] + 0.012, 0, 1);   // nová sopečná hornina
-                fert[i] = clamp(fert[i] + 0.25, 0, 1);        // úrodná sopečná půda
-                done.push(i);
-            } else lava[i] = l;
-        }
-        for (const i of done) this.lavaSet.delete(i);
-        for (const i of added) if (this.lava[i] > 0.02) this.lavaSet.add(i);
+    addLava(i) {
+        this.lava[i] = 45;
+        this.lavaSet.add(i);
+        this.fire[i] = 0; this.fireSet.delete(i);
+        this.veg[i] = 0;
+        this.setType(i, T.LAVA);
     }
 
-    stepRadiation(y0, y1) {
-        const { w, rad } = this;
-        for (let y = y0; y < y1; y++) {
-            for (let x = 0; x < w; x++) {
-                const i = y * w + x;
-                if (rad[i] > 0) rad[i] = Math.max(0, rad[i] - 0.0009);
-            }
-        }
+    addWater(i, amount) {
+        if (this.height[i] < this.seaLevel) return;
+        this.wet[i] += amount;
+        this.wetSet.add(i);
+        this.classify(i);
     }
 
-    step(rng) {
-        this.tick++;
-        this.season = (this.tick % TICKS_PER_YEAR) / TICKS_PER_YEAR;
-
-        // těžké průchody rozdělíme do 4 pruhů, každý tik jeden
-        const bands = 4;
-        const bandH = Math.ceil(this.h / bands);
-        const y0 = this.stripe * bandH;
-        const y1 = Math.min(this.h, y0 + bandH);
-        this.stripe = (this.stripe + 1) % bands;
-
-        this.stepWater(y0, y1);
-        this.stepMoisture(y0, y1);
-        this.stepVegetation(y0, y1, bands);
-        this.stepRadiation(y0, y1);
-        this.stepFire(rng);
-        this.stepLava(rng);
-
-        // popel z dopadů se pomalu usazuje
-        if (this.dust > 0) this.dust = Math.max(0, this.dust - 0.005);
-
-        // tání ledovců / růst hladiny podle klimatu
-        const targetSea = this.baseSea + clamp(this.climate, -12, 18) * 0.0016;
-        this.seaLevel += (targetSea - this.seaLevel) * 0.004;
+    neighbors(i, fn) {
+        const x = i % this.w, y = (i / this.w) | 0;
+        if (x > 0) fn(i - 1, x - 1, y);
+        if (x < this.w - 1) fn(i + 1, x + 1, y);
+        if (y > 0) fn(i - this.w, x, y - 1);
+        if (y < this.h - 1) fn(i + this.w, x, y + 1);
     }
-
-    /* ---------- pomocné operace pro boží zásahy ---------- */
 
     forEachInRadius(cx, cy, r, fn) {
         const x0 = Math.max(0, Math.floor(cx - r)), x1 = Math.min(this.w - 1, Math.ceil(cx + r));
@@ -307,17 +191,109 @@ class World {
         const r2 = r * r;
         for (let y = y0; y <= y1; y++) {
             for (let x = x0; x <= x1; x++) {
-                const d2 = dist2(x + 0.5, y + 0.5, cx, cy);
-                if (d2 > r2) continue;
-                fn(y * this.w + x, x, y, Math.sqrt(d2) / r);
+                const d2 = dist2(x + 0.5, y + 0.5, cx + 0.5, cy + 0.5);
+                if (d2 <= r2) fn(y * this.w + x, x, y, Math.sqrt(d2) / r);
             }
         }
     }
 
-    ignite(i) { if (this.veg[i] > 0.08 && this.water[i] < 0.02) { this.fire[i] = 1; this.fireSet.add(i); } }
-    addLava(i, amount) { this.lava[i] = Math.min(1.6, this.lava[i] + amount); this.lavaSet.add(i); }
+    /* ---------------- běh světa ---------------- */
+
+    step(rng) {
+        this.tick++;
+        this.stepFire(rng);
+        this.stepLava(rng);
+        this.stepWater();
+        this.stepGrowth(rng);
+    }
+
+    stepFire(rng) {
+        if (!this.fireSet.size) return;
+        const done = [];
+        for (const i of this.fireSet) {
+            if (--this.fire[i] <= 0) {
+                this.fire[i] = 0;
+                this.veg[i] = 0;
+                this.setType(i, T.ASH);
+                done.push(i);
+                continue;
+            }
+            if ((this.tick & 1) === 0) this.mark(i);          // pomalé mihotání plamene
+            if (rng() < 0.14) this.neighbors(i, j => { if (rng() < 0.5) this.ignite(j); });
+        }
+        for (const i of done) this.fireSet.delete(i);
+    }
+
+    stepLava(rng) {
+        if (!this.lavaSet.size) return;
+        const done = [], add = [];
+        for (const i of this.lavaSet) {
+            if (rng() < 0.10) {
+                let best = -1, bestH = this.height[i];
+                this.neighbors(i, j => { if (this.height[j] < bestH && !this.lava[j]) { bestH = this.height[j]; best = j; } });
+                if (best >= 0 && rng() < 0.6) add.push(best);
+            }
+            this.neighbors(i, j => { if (rng() < 0.08) this.ignite(j); });
+            if (--this.lava[i] <= 0) {
+                this.lava[i] = 0;
+                this.height[i] = Math.min(1, this.height[i] + 0.03);
+                this.moist[i] = Math.min(1, this.moist[i] + 0.1);   // sopečná půda je úrodná
+                this.veg[i] = 0.2;
+                this.classify(i);
+                done.push(i);
+            } else if ((this.tick % 3) === 0) this.mark(i);
+        }
+        for (const i of done) this.lavaSet.delete(i);
+        for (const i of add) this.addLava(i);
+    }
+
+    stepWater() {
+        if (!this.wetSet.size) return;
+        const done = [];
+        for (const i of this.wetSet) {
+            const wv = this.wet[i];
+            if (wv <= 0.01) { this.wet[i] = 0; this.classify(i); done.push(i); continue; }
+            const lvl = this.height[i] + wv;
+            this.neighbors(i, j => {
+                if (this.height[j] < this.seaLevel) { this.wet[i] = Math.max(0, this.wet[i] - wv * 0.3); return; }
+                const dl = lvl - (this.height[j] + this.wet[j]);
+                if (dl > 0.02) {
+                    const move = Math.min(this.wet[i], dl * 0.22);
+                    this.wet[i] -= move; this.wet[j] += move;
+                    this.wetSet.add(j); this.classify(j);
+                }
+            });
+            this.wet[i] = Math.max(0, this.wet[i] - 0.006);
+            this.classify(i);
+        }
+        for (const i of done) this.wetSet.delete(i);
+    }
+
+    /* pomalý růst porostu – projde vždy kousek mapy, aby se svět měnil klidně */
+    stepGrowth(rng) {
+        for (let k = 0; k < 260; k++) {
+            const i = (this.scan = (this.scan + 7919) % this.n);
+            const t = this.type[i];
+            if (t === T.DEEP || t === T.WATER || t === T.MOUNT || t === T.LAVA || t === T.FARM) continue;
+            const temp = this.tempAt(i);
+            const good = temp > 0 && temp < 34 ? this.moist[i] : 0;
+            if (t === T.ASH) {
+                this.veg[i] += 0.03 * good;
+                if (this.veg[i] > 0.25) this.classify(i);
+                continue;
+            }
+            this.veg[i] = clamp(this.veg[i] + (good * 0.95 - this.veg[i]) * 0.04, 0, 1);
+            if (rng() < 0.3) this.classify(i);
+        }
+    }
+
+    /* změna klimatu překreslí celou mapu naráz */
+    reclassifyAll() {
+        for (let i = 0; i < this.n; i++) this.classify(i);
+        this.allDirty = true;
+    }
 }
 
 if (typeof module !== 'undefined') {
-    module.exports = { World, TICKS_PER_YEAR };
+    module.exports = { World, T, TILE_NAME, WATER_TILE, WALK_COST, FOOD_TILE };
 }

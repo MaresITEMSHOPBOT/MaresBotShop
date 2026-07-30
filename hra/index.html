@@ -3,63 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bůh světa – simulátor stvoření a zkázy</title>
+<title>Bůh světa – sandbox s královstvími</title>
 <link rel="stylesheet" href="css/game.css">
 </head>
 <body>
 
 <div id="app">
     <header id="topbar">
-        <div class="brand">
-            <span class="logo">🌍</span>
-            <span><b>BŮH SVĚTA</b><i>svět v krabici · evoluce · katastrofy</i></span>
-        </div>
+        <div class="brand"><span class="logo">🌍</span><span><b>BŮH SVĚTA</b><i>svět v krabici</i></span></div>
 
-        <div class="hud" id="hud">
-            <div class="hud-item" title="Uplynulý čas ve světě"><span>📅</span><b id="hud-year">0</b><i>rok</i></div>
-            <div class="hud-item" title="Počet živých tvorů"><span>👣</span><b id="hud-pop">0</b><i>tvorů</i></div>
-            <div class="hud-item" title="Žijící druhy"><span>🧬</span><b id="hud-species">0</b><i>druhů</i></div>
-            <div class="hud-item" title="Nejvyšší dosažená generace"><span>⏳</span><b id="hud-gen">0</b><i>generace</i></div>
-            <div class="hud-item" title="Tvorové, kteří v tebe věří"><span>🙏</span><b id="hud-believers">0</b><i>věřících</i></div>
-            <div class="hud-item" title="Průměrná teplota světa"><span>🌡️</span><b id="hud-temp">0 °C</b><i>průměr</i></div>
+        <div class="hud">
+            <div class="hud-item"><span>📅</span><b id="hud-year">0</b><i>rok</i></div>
+            <div class="hud-item"><span>🧑</span><b id="hud-pop">0</b><i>obyvatel</i></div>
+            <div class="hud-item"><span>👑</span><b id="hud-realms">0</b><i>království</i></div>
+            <div class="hud-item"><span>🏘️</span><b id="hud-villages">0</b><i>vesnic</i></div>
+            <div class="hud-item"><span>🐑</span><b id="hud-animals">0</b><i>zvířat</i></div>
         </div>
 
         <div class="faith-block">
-            <div class="faith-bar" id="faith-bar" title="Víra = tvá mana. Roste modlitbami věřících.">
-                <i id="faith-fill"></i>
-                <span id="faith-text">80 / 200</span>
+            <div class="faith-bar" id="faith-bar" title="Víra je tvá mana. Vyrábějí ji lidé, kteří v tebe věří.">
+                <i id="faith-fill"></i><span id="faith-text">60 / 200 víry</span>
             </div>
-            <div class="align" title="Podle svých činů jsi buď milovaný, nebo obávaný bůh.">
-                <i class="love" id="align-love"></i>
-                <i class="fear" id="align-fear"></i>
-                <u id="align-label">neznámý bůh</u>
-            </div>
+            <div class="faith-note">🙏 věřících: <b id="believers">0</b></div>
         </div>
 
         <div class="speeds" id="speeds">
             <button data-speed="0" title="Pauza (mezerník)">⏸</button>
-            <button data-speed="1" class="active" title="Normální rychlost">▶</button>
-            <button data-speed="2" title="Dvojnásobná rychlost">▶▶</button>
-            <button data-speed="4" title="Čtyřnásobná rychlost">▶▶▶</button>
+            <button data-speed="1" class="active" title="Normální tempo">▶</button>
+            <button data-speed="2" title="Dvakrát rychleji">▶▶</button>
+            <button data-speed="4" title="Čtyřikrát rychleji">▶▶▶</button>
             <button id="btn-help" title="Nápověda (H)">?</button>
         </div>
     </header>
 
     <main>
         <aside id="left">
-            <h3>Boží moc</h3>
-            <div class="power-group"><span>Stvoření a pomoc</span></div>
-            <div class="powers" id="powers-create"></div>
-            <div class="power-group"><span>Tvar země</span></div>
-            <div class="powers" id="powers-terra"></div>
-            <div class="power-group"><span>Zkáza</span></div>
-            <div class="powers" id="powers-doom"></div>
-
+            <div id="tools"></div>
             <div class="ctrl">
-                <label for="brush">Velikost zásahu <output id="brush-val">8</output></label>
-                <input type="range" id="brush" min="1" max="34" value="8">
+                <label for="brush">Velikost štětce <output id="brush-val">4</output></label>
+                <input type="range" id="brush" min="1" max="16" value="4">
             </div>
-            <div class="desc" id="power-desc"></div>
+            <div class="desc" id="tool-desc"></div>
         </aside>
 
         <section id="stage">
@@ -67,10 +51,9 @@
                 <div id="box">
                     <canvas id="world"></canvas>
                     <div class="glass"></div>
-                    <div class="banner" id="banner"></div>
-                    <div class="overlay-bar" id="overlay-bar"></div>
-                    <div class="minimap" id="minimap-wrap"><canvas id="minimap"></canvas></div>
-                    <div class="tooltip" id="tooltip"></div>
+                    <div class="modes" id="modes"></div>
+                    <div class="minimap"><canvas id="minimap"></canvas></div>
+                    <div class="tip" id="tip"></div>
                     <div class="toast" id="toast"></div>
                 </div>
                 <div class="lid"></div>
@@ -79,52 +62,24 @@
 
         <aside id="right">
             <div class="tabs" id="tabs">
-                <button data-tab="world" class="active">Svět</button>
-                <button data-tab="species">Druhy</button>
+                <button data-tab="realms" class="active">Království</button>
                 <button data-tab="log">Kronika</button>
             </div>
-
-            <div class="tab-body" id="tab-world">
-                <div class="card" id="inspector" hidden></div>
-
-                <h4>Vývoj světa</h4>
-                <canvas id="graph" width="280" height="96"></canvas>
-                <div class="legend">
-                    <span><i style="background:#6ee7a8"></i>populace</span>
-                    <span><i style="background:#7cc4ff"></i>druhy</span>
-                    <span><i style="background:#ffd166"></i>víra</span>
-                </div>
-
-                <h4>Průměrné geny</h4>
-                <div id="genes"></div>
-
-                <h4>Zákony přírody</h4>
+            <div class="card" id="card" hidden></div>
+            <div class="tab-body" id="tab-realms"></div>
+            <div class="tab-body" id="tab-log" hidden><div id="log"></div></div>
+            <div class="bottom-controls">
                 <div class="ctrl">
                     <label for="climate">Klima <output id="climate-val">0 °C</output></label>
-                    <input type="range" id="climate" min="-18" max="18" step="0.5" value="0">
+                    <input type="range" id="climate" min="-15" max="15" step="1" value="0">
                 </div>
-                <div class="ctrl">
-                    <label for="rain">Srážky <output id="rain-val">50 %</output></label>
-                    <input type="range" id="rain" min="0" max="100" value="50">
-                </div>
-                <div class="ctrl">
-                    <label for="mut">Rychlost mutací <output id="mut-val">6 %</output></label>
-                    <input type="range" id="mut" min="0" max="25" value="6">
-                </div>
-
-                <h4>Statistiky</h4>
-                <div class="stats" id="stats"></div>
-
-                <h4>Nový svět</h4>
                 <div class="newworld">
                     <input type="number" id="seed" value="12345" title="Semínko světa">
-                    <button id="btn-new">🌱 Stvořit svět</button>
+                    <button id="btn-new" title="Vytvoří svět podle semínka">🌱 Svět</button>
+                    <button id="btn-random" title="Náhodný svět">🎲</button>
                 </div>
-                <button id="btn-life" class="wide">🐣 Zasít život znovu</button>
+                <button id="btn-empty" class="wide">🗺️ Prázdný svět bez národů</button>
             </div>
-
-            <div class="tab-body" id="tab-species" hidden></div>
-            <div class="tab-body" id="tab-log" hidden><div id="log"></div></div>
         </aside>
     </main>
 </div>
@@ -132,37 +87,39 @@
 <div class="modal" id="help" hidden>
     <div class="modal-box">
         <h2>🌍 Vítej, bože</h2>
-        <p>Před tebou je svět v krabici. Život v něm se sám živí, množí, mutuje a vyvíjí – ty do toho můžeš kdykoli sáhnout.</p>
+        <p>Ve skleněné krabici před tebou žijí panáčci. Sbírají jídlo, staví domy, zakládají vesnice a království,
+        hádají se a válčí. Ty do toho můžeš kdykoli sáhnout – nebo jen sledovat, co z toho vyroste.</p>
         <div class="help-grid">
             <div>
                 <h4>Ovládání</h4>
                 <ul>
-                    <li><b>Levé tlačítko</b> – použije vybranou moc (u některých mocí drž a táhni)</li>
-                    <li><b>Pravé tlačítko / mezerník+tah</b> – posun mapy</li>
-                    <li><b>Kolečko</b> – přiblížení a oddálení</li>
-                    <li><b>1–9, 0</b> – rychlá volba moci, <b>Tab</b> – pohled na mapu, <b>H</b> – nápověda</li>
-                    <li><b>Mezerník</b> – pauza</li>
+                    <li><b>Levé tlačítko</b> – použije vybraný nástroj (štětce se dají držet a táhnout)</li>
+                    <li><b>Pravé tlačítko</b> nebo <b>mezerník + tah</b> – posun mapy</li>
+                    <li><b>Kolečko</b> – přiblížení (přibliž si vesnici, ať vidíš panáčky zblízka)</li>
+                    <li><b>🖐️ Ruka</b> – klikni na panáčka nebo vesnici a uvidíš, kdo to je a co dělá</li>
+                    <li><b>1–9, 0</b> – rychlá volba nástroje, <b>mezerník</b> – pauza, <b>H</b> – nápověda</li>
                 </ul>
             </div>
             <div>
                 <h4>Jak to funguje</h4>
                 <ul>
-                    <li><b>Víra</b> je tvá mana. Vyrábějí ji tvorové, kteří v tebe věří – získáš je zázraky (✨ požehnání, 🌧️ déšť, 👁️ zjevení) a chrámy.</li>
-                    <li><b>Evoluce</b> je skutečná: geny se dědí, kříží a mutují. Kdo nepřežije, geny nepředá.</li>
-                    <li><b>Druh</b> se odštěpí, když se geny mláděte dost vzdálí od rodičů.</li>
-                    <li><b>Civilizace</b> vzniká sama, když inteligence stoupne dost vysoko – chýše, vesnice, chrámy.</li>
-                    <li><b>Katastrofy</b> mění krajinu natrvalo: krátery, láva, nová moře, radiace.</li>
+                    <li><b>Národ</b> zasadíš nástrojem 🧑 👹 🧝 🧔 – vznikne království s vlastním jménem a barvou.</li>
+                    <li><b>Vesnice</b> roste, staví domy a pole, a když je jí těsno, založí další vesnici opodál.</li>
+                    <li><b>Hranice</b> na mapě ukazují, kam které království dosáhne.</li>
+                    <li><b>Války</b> vznikají mezi sousedy samy (orkové hlavně). Můžeš je vyvolat ⚔️ nebo ukončit 🕊️.</li>
+                    <li><b>Víra</b> je tvá mana: ✨ požehnej lidem, začnou v tebe věřit a víra ti poroste.</li>
+                    <li><b>Krajinu</b> maluješ přímo – vodou, lesem, horami. Změny jsou trvalé.</li>
                 </ul>
             </div>
         </div>
-        <p class="tip">Tip: začni ✨ požehnáním u velké skupiny tvorů – získáš věřící a s nimi víru na ty dražší hračky. 💣☄️🌋</p>
-        <button id="help-close">Rozumím, jdu tvořit</button>
+        <p class="tip-line">Tip: zapni ▶ a nech svět chvíli běžet. Pak si přibliž vesnici a sleduj, jak panáčci nosí jídlo domů.</p>
+        <button id="help-close">Jdu na to</button>
     </div>
 </div>
 
 <script src="js/core.js"></script>
 <script src="js/world.js"></script>
-<script src="js/creatures.js"></script>
+<script src="js/life.js"></script>
 <script src="js/powers.js"></script>
 <script src="js/render.js"></script>
 <script src="js/game.js"></script>
