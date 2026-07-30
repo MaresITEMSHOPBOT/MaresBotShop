@@ -6,17 +6,23 @@ zůstávají v tvém `localStorage`.
 
 ## Spuštění
 
+Spotify přijímá jen adresy na `https` nebo na loopbacku `http://127.0.0.1` — otevřít
+`index.html` dvojklikem (`file://`) proto nestačí a appka to rovnou napíše.
+
+**Nejrychleji — spouštěč.** Ve složce `maresfy/`:
+
+| Systém | Soubor |
+|---|---|
+| Windows | dvojklik na `start.bat` |
+| macOS | dvojklik na `start.command` |
+| Linux | `./start.sh` |
+
+Nastartuje malý server a otevře `http://127.0.0.1:8080/maresfy/`. Zastavíš ho `Ctrl+C`.
+Potřebuje Python 3 nebo Node.js — jeden z nich má skoro každý.
+
 **Na webu (GitHub Pages)** — v repu `Settings → Pages → Source: Deploy from a branch`,
 vyber větev a `/ (root)`. Appka pak žije na
 `https://<uživatel>.github.io/<repo>/maresfy/`.
-
-**Lokálně** — Spotify vyžaduje `https` nebo loopback `127.0.0.1`, takže otevřít soubor
-přes `file://` nestačí:
-
-```bash
-npx http-server . -p 8080     # z kořene repa
-# → http://127.0.0.1:8080/maresfy/
-```
 
 ## Připojení Spotify (jednou, ~1 minuta)
 
@@ -31,6 +37,17 @@ npx http-server . -p 8080     # z kořene repa
 **Přehrávání v prohlížeči vyžaduje Spotify Premium** — to je podmínka Spotify, ne appky.
 S free účtem appka ukáže, co ti hraje na telefonu nebo v desktopové aplikaci, ale
 nespustí přehrávání sama.
+
+### Když to nejede
+
+| Co vidíš | Co s tím |
+|---|---|
+| `INVALID_CLIENT: Invalid redirect URI` na stránce Spotify | V dashboardu chybí přesně ta adresa, kterou appka vypisuje — včetně koncového lomítka. Přidej ji a dej *Save*. |
+| „Client ID Spotify nezná" | Zkopíroval jsi Client **Secret** místo Client **ID**, nebo ID z jiné aplikace. |
+| „Tohle nevypadá na Client ID" | Client ID má 32 znaků (0–9, a–f). |
+| Status „špatná adresa" | Appka běží z `file://` nebo z `localhost` — použij spouštěč a `127.0.0.1`. |
+| „Na tohle je potřeba Spotify Premium" | Ovládání přehrávání přes API mají jen Premium účty. |
+| „Není aktivní zařízení" | Klikni na **Zařízení** (přesune přehrávání sem), nebo si nech hrát Spotify na telefonu. |
 
 ## Jak funguje vizualizace Spotify skladeb
 

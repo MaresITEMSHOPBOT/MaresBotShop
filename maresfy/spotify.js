@@ -64,8 +64,13 @@ async function challenge(verifier) {
   return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 async function login() {
-  clientId = $('#spClientId').value.trim();
+  clientId = ($('#spClientId').value || localStorage.getItem(LS.cid) || '').trim();
   if (!clientId) { MF.toast('Nejdřív vlož Client ID své Spotify aplikace.', true); $('#spClientId').focus(); return; }
+  if (!/^[0-9a-f]{32}$/i.test(clientId)) {
+    MF.toast('Tohle nevypadá na Client ID — má 32 znaků (písmena a čísla). Pozor, ne Client Secret.', true);
+    $('#spClientId').focus(); return;
+  }
+  if (!canLogin()) return;
   localStorage.setItem(LS.cid, clientId);
   const verifier = randomString(96);
   localStorage.setItem(LS.ver, verifier);
@@ -86,10 +91,19 @@ async function exchangeCode(code) {
       redirect_uri: REDIRECT, code_verifier: verifier || ''
     })
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error_description || data.error || 'token error');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(tokenErrorText(data));
   saveToken({ access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + data.expires_in * 1000 });
   localStorage.removeItem(LS.ver);
+}
+/* Spotify vrací strohé kódy — přeložíme je na to, co se s tím dá udělat. */
+function tokenErrorText(data) {
+  const e = (data && data.error) || '';
+  const d = (data && data.error_description) || '';
+  if (e === 'invalid_client') return 'Client ID Spotify nezná. Zkopíruj ho znovu z dashboardu (Client ID, ne Secret).';
+  if (e === 'invalid_grant' && /redirect/i.test(d)) return 'Redirect URI se neshoduje. V dashboardu musí být přesně: ' + REDIRECT;
+  if (e === 'invalid_grant') return 'Přihlašovací kód propadl. Klikni na přihlášení znovu.';
+  return d || e || 'přihlášení selhalo';
 }
 async function refresh() {
   if (!token || !token.refresh_token) throw new Error('no refresh token');
@@ -467,9 +481,8 @@ async function play(track, contextUri, index) {
     : { uris: [track.uri] };
   try {
     await api('/me/player/play' + qs, { method: 'PUT', body: JSON.stringify(body) });
-    isPlaying = true;
-    $('#spPlay').textContent = '⏸';
-    MF.setTrackTitle(track.name);
+    // nečekáme na událost přehrávače — kartu naplníme hned tím, na co se kliklo
+    applyState({ item: track, is_playing: true, progress_ms: 0, duration: track.duration_ms });
   } catch (e) {
     if (e.status === 403) MF.toast('Přehrávání ovládá jen Spotify Premium.', true);
     else if (e.status === 404) MF.toast('Není aktivní zařízení. Klikni na „Zařízení" nebo spusť Spotify.', true);
@@ -480,6 +493,34 @@ async function play(track, contextUri, index) {
 /* ---------- přihlášení / odhlášení / UI ---------- */
 $('#spRedirect').textContent = REDIRECT;
 $('#spClientId').value = clientId;
+// ID si pamatujeme hned při psaní, ať se neztratí při přesměrování
+$('#spClientId').addEventListener('input', e => {
+  const v = e.target.value.trim();
+  clientId = v;
+  if (v) localStorage.setItem(LS.cid, v); else localStorage.removeItem(LS.cid);
+});
+$('#spClientId').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+/* Spotify pustí přihlášení jen z https nebo z loopbacku 127.0.0.1 —
+   otevřít index.html dvojklikem (file://) tedy nestačí. */
+function envProblem() {
+  if (location.protocol === 'file:') {
+    return 'Appka běží ze souboru (file://). Spotify takovou adresu nepřijme — spusť <b>start.command</b> ' +
+      '(Mac/Linux) nebo <b>start.bat</b> (Windows) ve složce maresfy a otevři <code>http://127.0.0.1:8080/maresfy/</code>.';
+  }
+  if (location.protocol !== 'https:' && !/^(127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+    return 'Spotify přijímá jen <b>https</b> adresy nebo <b>http://127.0.0.1</b>. ' +
+      (location.hostname === 'localhost'
+        ? 'Otevři tu samou adresu přes <code>127.0.0.1</code> místo <code>localhost</code>.'
+        : 'Spusť appku přes GitHub Pages nebo lokálně na 127.0.0.1.');
+  }
+  return null;
+}
+function canLogin() {
+  const p = envProblem();
+  if (p) { MF.toast(p.replace(/<[^>]+>/g, ''), true); return false; }
+  return true;
+}
 $('#spCopy').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(REDIRECT); MF.toast('Redirect URI zkopírováno.'); }
   catch (e) { MF.toast('Zkopíruj ručně: ' + REDIRECT, true); }
@@ -524,11 +565,25 @@ function showEmbeddedNotice() {
   setStatus('náhled', 'warn');
 }
 
+function showEnvNotice(msg) {
+  const box = document.createElement('p');
+  box.className = 'hint';
+  box.style.cssText = 'border:1px solid var(--c2);border-radius:10px;padding:10px 12px';
+  box.innerHTML = msg;
+  $('#spSetup').prepend(box);
+}
+
 async function boot() {
   if (embedded()) { showEmbeddedNotice(); return; }
+  const envMsg = envProblem();
+  if (envMsg) { showEnvNotice(envMsg); setStatus('špatná adresa', 'warn'); }
+
   const params = new URLSearchParams(location.search);
   if (params.get('error')) {
-    MF.toast('Spotify přihlášení zamítnuto: ' + params.get('error'), true);
+    const err = params.get('error');
+    MF.toast(err === 'access_denied'
+      ? 'Přístup jsi Spotify nepovolil — zkus to znovu a dej Agree.'
+      : 'Spotify odmítlo přihlášení: ' + err, true);
     history.replaceState({}, '', REDIRECT);
   }
   const code = params.get('code');
@@ -537,8 +592,9 @@ async function boot() {
     try {
       await exchangeCode(code);
     } catch (e) {
-      MF.toast('Přihlášení selhalo: ' + e.message + ' — zkontroluj Redirect URI v dashboardu.', true);
+      MF.toast('Přihlášení selhalo: ' + e.message, true);
       showLoggedOut();
+      $('#spClientId').value = clientId;
       return;
     }
   } else loadToken();
