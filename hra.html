@@ -1,0 +1,3090 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Sestaveno skriptem hra/build.js – needituj ručně, uprav zdroje v adresáři hra/ -->
+<title>Bůh světa – simulátor stvoření a zkázy</title>
+<style>
+:root {
+    --bg: #070912;
+    --bg2: #0d1120;
+    --panel: rgba(20, 25, 44, 0.86);
+    --panel-2: rgba(30, 36, 60, 0.7);
+    --line: rgba(120, 140, 200, 0.18);
+    --text: #dfe6f7;
+    --dim: #8f9bbd;
+    --gold: #ffd166;
+    --good: #6ee7a8;
+    --bad: #ff7b7b;
+    --evo: #c79bff;
+    --blue: #7cc4ff;
+    --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    background: radial-gradient(1200px 700px at 20% -10%, #1a2142 0%, var(--bg) 60%) fixed;
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+button, input, select { font-family: inherit; color: inherit; }
+h3, h4 { margin: 0 0 .5rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: .72rem; color: var(--dim); }
+
+#app { display: flex; flex-direction: column; height: 100%; }
+
+/* ---------------- horní lišta ---------------- */
+#topbar {
+    display: flex; align-items: center; gap: 1rem;
+    padding: .5rem .8rem;
+    background: linear-gradient(180deg, rgba(28,34,60,.95), rgba(14,18,34,.9));
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 6px 24px rgba(0,0,0,.5);
+    z-index: 5;
+    flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: .55rem; }
+.brand .logo { font-size: 1.6rem; filter: drop-shadow(0 0 8px rgba(120,180,255,.5)); }
+.brand b { display: block; letter-spacing: .12em; font-size: .95rem; }
+.brand i { display: block; font-style: normal; font-size: .68rem; color: var(--dim); }
+
+.hud { display: flex; gap: .35rem; flex: 1; flex-wrap: wrap; }
+.hud-item {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
+    padding: .25rem .5rem; min-width: 74px; text-align: center; line-height: 1.15;
+}
+.hud-item span { font-size: .78rem; opacity: .85; }
+.hud-item b { display: block; font-size: .95rem; color: #fff; }
+.hud-item i { font-style: normal; font-size: .6rem; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; }
+
+.faith-block { width: 210px; }
+.faith-bar {
+    position: relative; height: 22px; border-radius: 11px; overflow: hidden;
+    background: rgba(0,0,0,.45); border: 1px solid rgba(255,209,102,.35);
+}
+.faith-bar i {
+    position: absolute; inset: 0; width: 40%;
+    background: linear-gradient(90deg, #b9822a, var(--gold) 70%, #fff3c9);
+    box-shadow: 0 0 18px rgba(255,209,102,.55);
+    transition: width .25s ease;
+}
+.faith-bar span {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: .72rem; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.9);
+}
+.faith-bar.flash { animation: shake .4s; }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+.align { display: flex; align-items: center; gap: 4px; margin-top: 4px; height: 10px; }
+.align i { display: block; height: 5px; border-radius: 3px; flex: 1; background: rgba(255,255,255,.08); position: relative; overflow: hidden; }
+.align i::after { content: ''; position: absolute; inset: 0; width: var(--v, 0%); }
+.align .love::after { background: linear-gradient(90deg, #4fd08a, #b6ffd8); }
+.align .fear::after { background: linear-gradient(90deg, #d04f6a, #ff9aa9); }
+.align u { text-decoration: none; font-size: .6rem; color: var(--dim); white-space: nowrap; }
+
+.speeds { display: flex; gap: 4px; }
+.speeds button {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: .35rem .5rem; cursor: pointer; font-size: .8rem; min-width: 34px;
+}
+.speeds button:hover { background: rgba(90,120,200,.3); }
+.speeds button.active { background: linear-gradient(180deg, #4a6bd8, #2c3f96); border-color: #7f9bff; color: #fff; }
+
+/* ---------------- rozvržení ---------------- */
+main { flex: 1; display: grid; grid-template-columns: 216px minmax(0, 1fr) 306px; gap: .6rem; padding: .6rem; min-height: 0; }
+aside {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: .7rem; overflow-y: auto; backdrop-filter: blur(6px);
+}
+aside::-webkit-scrollbar, .tab-body::-webkit-scrollbar { width: 8px; }
+aside::-webkit-scrollbar-thumb { background: rgba(140,160,220,.25); border-radius: 4px; }
+
+/* ---------------- levý panel: moci ---------------- */
+.power-group { margin: .6rem 0 .3rem; display: flex; align-items: center; gap: .4rem; }
+.power-group span { font-size: .62rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); white-space: nowrap; }
+.power-group::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+.powers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.power {
+    position: relative; aspect-ratio: 1; border-radius: 10px; cursor: pointer;
+    background: var(--panel-2); border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+    transition: transform .08s, background .15s, border-color .15s;
+}
+.power:hover { transform: translateY(-2px); background: rgba(90,120,200,.28); }
+.power.active { border-color: var(--gold); background: rgba(255,209,102,.18); box-shadow: 0 0 14px rgba(255,209,102,.3) inset; }
+.power.locked { opacity: .38; filter: grayscale(.7); }
+.power b { position: absolute; bottom: 1px; right: 3px; font-size: .55rem; color: var(--gold); font-weight: 700; }
+.power u { position: absolute; top: 1px; left: 3px; font-size: .52rem; color: var(--dim); text-decoration: none; }
+
+.ctrl { margin: .7rem 0 .4rem; }
+.ctrl label { display: flex; justify-content: space-between; font-size: .7rem; color: var(--dim); margin-bottom: .25rem; }
+.ctrl output { color: var(--text); font-weight: 700; }
+input[type=range] { width: 100%; accent-color: #6f8bff; height: 18px; }
+
+.desc {
+    margin-top: .6rem; font-size: .72rem; line-height: 1.45; color: var(--dim);
+    background: rgba(0,0,0,.28); border: 1px solid var(--line); border-radius: 10px; padding: .5rem .55rem; min-height: 62px;
+}
+.desc b { color: var(--text); display: block; margin-bottom: .2rem; }
+
+/* ---------------- střed: box se světem ---------------- */
+#stage { position: relative; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#case {
+    position: relative;
+    width: 100%; max-width: calc((100vh - 130px) * 1.6); max-height: 100%;
+    aspect-ratio: 320 / 200;
+    padding: 10px 10px 16px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #2a3152, #151a2e 40%, #0c1020);
+    box-shadow: 0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12);
+    border: 1px solid rgba(150,170,230,.22);
+}
+#box {
+    position: relative; height: 100%; border-radius: 10px; overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), inset 0 8px 26px rgba(0,0,0,.75), 0 0 40px rgba(70,110,255,.12);
+    background: #05070d;
+}
+#box canvas { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+#box .glass {
+    position: absolute; inset: 0; pointer-events: none; border-radius: 10px;
+    background: linear-gradient(122deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.03) 18%, rgba(255,255,255,0) 34%),
+                linear-gradient(0deg, rgba(120,160,255,.06), rgba(0,0,0,0) 40%);
+    box-shadow: inset 0 0 60px rgba(0,0,0,.45);
+}
+#case .lid {
+    position: absolute; left: 10px; right: 10px; bottom: 4px; height: 8px; border-radius: 0 0 8px 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.02) 40%, rgba(0,0,0,.5));
+}
+#case::before, #case::after {
+    content: ''; position: absolute; width: 7px; height: 7px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #dfe6ff, #5b6690);
+    top: 3px;
+}
+#case::before { left: 4px; }
+#case::after { right: 4px; }
+
+.banner {
+    position: absolute; left: 50%; top: 18px; transform: translateX(-50%);
+    background: rgba(10,12,24,.85); border: 1px solid rgba(255,120,120,.45); color: #ffd9d9;
+    padding: .5rem .9rem; border-radius: 10px; font-size: .82rem; display: none; backdrop-filter: blur(4px);
+}
+.banner.show { display: block; animation: pulse 2s infinite; }
+@keyframes pulse { 50% { border-color: rgba(255,120,120,.9); } }
+
+.overlay-bar { position: absolute; left: 10px; top: 10px; z-index: 3; display: flex; gap: 4px; flex-wrap: wrap; max-width: 60%; }
+.overlay-bar button {
+    background: rgba(10,14,28,.75); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: .22rem .45rem; font-size: .68rem; cursor: pointer; backdrop-filter: blur(4px);
+}
+.overlay-bar button.active { border-color: var(--gold); color: var(--gold); background: rgba(255,209,102,.14); }
+
+.minimap {
+    position: absolute; right: 10px; bottom: 10px; z-index: 3; border-radius: 8px; overflow: hidden;
+    border: 1px solid rgba(150,170,230,.3); box-shadow: 0 8px 24px rgba(0,0,0,.6); background: #05070d;
+    line-height: 0;
+}
+.minimap canvas { width: 190px; display: block; cursor: pointer; }
+
+.tooltip {
+    position: absolute; pointer-events: none; z-index: 8; display: none;
+    background: rgba(8,10,20,.92); border: 1px solid var(--line); border-radius: 8px;
+    padding: .35rem .5rem; font-size: .68rem; line-height: 1.5; white-space: pre; backdrop-filter: blur(4px);
+}
+.toast {
+    position: absolute; left: 50%; bottom: 26px; z-index: 4; transform: translateX(-50%) translateY(12px);
+    background: rgba(12,16,30,.94); border: 1px solid var(--line); border-radius: 10px;
+    padding: .45rem .8rem; font-size: .78rem; opacity: 0; transition: .25s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------------- pravý panel ---------------- */
+#right { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+.tabs button {
+    flex: 1; background: none; border: none; color: var(--dim); padding: .6rem .2rem; cursor: pointer;
+    font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 2px solid transparent;
+}
+.tabs button.active { color: var(--gold); border-bottom-color: var(--gold); background: rgba(255,209,102,.06); }
+.tab-body { padding: .7rem; overflow-y: auto; flex: 1; }
+.tab-body h4 { margin-top: 1rem; }
+.tab-body h4:first-child { margin-top: 0; }
+
+#graph { width: 100%; height: 96px; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 8px; }
+.legend { display: flex; gap: .6rem; font-size: .62rem; color: var(--dim); margin-top: .3rem; }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 3px; }
+
+.gene { display: flex; align-items: center; gap: .4rem; margin-bottom: 3px; font-size: .68rem; }
+.gene span { width: 92px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gene .bar { flex: 1; height: 7px; background: rgba(255,255,255,.07); border-radius: 4px; overflow: hidden; }
+.gene .bar i { display: block; height: 100%; background: linear-gradient(90deg, #4a6bd8, #7cc4ff); }
+.gene em { font-style: normal; width: 28px; text-align: right; color: var(--text); }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: .7rem; }
+.stats div { background: rgba(0,0,0,.25); border: 1px solid var(--line); border-radius: 8px; padding: .3rem .45rem; }
+.stats b { display: block; color: #fff; font-size: .8rem; }
+.stats span { color: var(--dim); font-size: .62rem; }
+
+.newworld { display: flex; gap: 5px; }
+.newworld input { flex: 1; min-width: 0; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 8px; padding: .35rem .5rem; }
+button.wide, .newworld button {
+    background: linear-gradient(180deg, #3d5cc4, #2a3b8a); border: 1px solid #6d86e8; color: #fff;
+    border-radius: 8px; padding: .38rem .6rem; cursor: pointer; font-size: .74rem;
+}
+button.wide { width: 100%; margin-top: 5px; }
+button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
+
+.card { background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 10px; padding: .55rem; margin-bottom: .7rem; font-size: .72rem; }
+.card h5 { margin: 0 0 .35rem; font-size: .82rem; display: flex; align-items: center; gap: .35rem; }
+.card .chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.card .row { display: flex; justify-content: space-between; color: var(--dim); }
+.card .row b { color: var(--text); }
+.card .close { float: right; background: none; border: none; color: var(--dim); cursor: pointer; }
+
+.sp-row { background: rgba(0,0,0,.25); border: 1px solid var(--line); border-radius: 10px; padding: .45rem .5rem; margin-bottom: 5px; cursor: pointer; }
+.sp-row:hover { border-color: rgba(255,209,102,.5); }
+.sp-head { display: flex; align-items: center; gap: .4rem; font-size: .78rem; }
+.sp-head .chip { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
+.sp-head b { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-head em { font-style: normal; color: var(--gold); font-size: .72rem; }
+.sp-meta { display: flex; gap: .5rem; font-size: .62rem; color: var(--dim); margin-top: 2px; }
+.sp-bars { display: flex; gap: 2px; margin-top: 4px; }
+.sp-bars i { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.08); position: relative; }
+.sp-bars i::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--v); background: #7cc4ff; border-radius: 2px; }
+
+#log { display: flex; flex-direction: column-reverse; gap: 4px; font-size: .72rem; }
+.ev { background: rgba(0,0,0,.25); border-left: 2px solid var(--line); border-radius: 6px; padding: .3rem .45rem; line-height: 1.4; }
+.ev time { color: var(--dim); font-size: .62rem; margin-right: .3rem; }
+.ev.good { border-left-color: var(--good); }
+.ev.bad { border-left-color: var(--bad); }
+.ev.evo { border-left-color: var(--evo); }
+
+/* ---------------- nápověda ---------------- */
+.modal { position: fixed; inset: 0; background: rgba(4,6,14,.82); display: flex; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(6px); padding: 1rem; }
+.modal[hidden] { display: none; }
+.modal-box {
+    max-width: 720px; max-height: 90vh; overflow: auto; background: linear-gradient(180deg, #1a2039, #10141f);
+    border: 1px solid rgba(150,170,230,.3); border-radius: 16px; padding: 1.4rem 1.6rem;
+    box-shadow: 0 30px 80px rgba(0,0,0,.7);
+}
+.modal-box h2 { margin: 0 0 .5rem; }
+.modal-box p { color: var(--dim); line-height: 1.6; }
+.help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin: 1rem 0; }
+.help-grid ul { margin: 0; padding-left: 1.1rem; color: var(--dim); line-height: 1.7; font-size: .82rem; }
+.help-grid b { color: var(--text); }
+.modal-box .tip { background: rgba(255,209,102,.1); border: 1px solid rgba(255,209,102,.3); border-radius: 10px; padding: .6rem .8rem; font-size: .82rem; }
+.modal-box button {
+    margin-top: .8rem; background: linear-gradient(180deg, #3d5cc4, #2a3b8a); border: 1px solid #6d86e8;
+    color: #fff; border-radius: 10px; padding: .55rem 1.1rem; cursor: pointer; font-size: .86rem;
+}
+
+@media (max-width: 1180px) {
+    main { grid-template-columns: 180px minmax(0, 1fr) 260px; }
+    .hud-item { min-width: 62px; }
+}
+@media (max-width: 940px) {
+    html, body { overflow: auto; }
+    main { grid-template-columns: 1fr; height: auto; }
+    #stage { height: 62vh; }
+    aside { max-height: 46vh; }
+    .help-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<div id="app">
+    <header id="topbar">
+        <div class="brand">
+            <span class="logo">🌍</span>
+            <span><b>BŮH SVĚTA</b><i>svět v krabici · evoluce · katastrofy</i></span>
+        </div>
+
+        <div class="hud" id="hud">
+            <div class="hud-item" title="Uplynulý čas ve světě"><span>📅</span><b id="hud-year">0</b><i>rok</i></div>
+            <div class="hud-item" title="Počet živých tvorů"><span>👣</span><b id="hud-pop">0</b><i>tvorů</i></div>
+            <div class="hud-item" title="Žijící druhy"><span>🧬</span><b id="hud-species">0</b><i>druhů</i></div>
+            <div class="hud-item" title="Nejvyšší dosažená generace"><span>⏳</span><b id="hud-gen">0</b><i>generace</i></div>
+            <div class="hud-item" title="Tvorové, kteří v tebe věří"><span>🙏</span><b id="hud-believers">0</b><i>věřících</i></div>
+            <div class="hud-item" title="Průměrná teplota světa"><span>🌡️</span><b id="hud-temp">0 °C</b><i>průměr</i></div>
+        </div>
+
+        <div class="faith-block">
+            <div class="faith-bar" id="faith-bar" title="Víra = tvá mana. Roste modlitbami věřících.">
+                <i id="faith-fill"></i>
+                <span id="faith-text">80 / 200</span>
+            </div>
+            <div class="align" title="Podle svých činů jsi buď milovaný, nebo obávaný bůh.">
+                <i class="love" id="align-love"></i>
+                <i class="fear" id="align-fear"></i>
+                <u id="align-label">neznámý bůh</u>
+            </div>
+        </div>
+
+        <div class="speeds" id="speeds">
+            <button data-speed="0" title="Pauza (mezerník)">⏸</button>
+            <button data-speed="1" class="active" title="Normální rychlost">▶</button>
+            <button data-speed="2" title="Dvojnásobná rychlost">▶▶</button>
+            <button data-speed="4" title="Čtyřnásobná rychlost">▶▶▶</button>
+            <button id="btn-help" title="Nápověda (H)">?</button>
+        </div>
+    </header>
+
+    <main>
+        <aside id="left">
+            <h3>Boží moc</h3>
+            <div class="power-group"><span>Stvoření a pomoc</span></div>
+            <div class="powers" id="powers-create"></div>
+            <div class="power-group"><span>Tvar země</span></div>
+            <div class="powers" id="powers-terra"></div>
+            <div class="power-group"><span>Zkáza</span></div>
+            <div class="powers" id="powers-doom"></div>
+
+            <div class="ctrl">
+                <label for="brush">Velikost zásahu <output id="brush-val">8</output></label>
+                <input type="range" id="brush" min="1" max="34" value="8">
+            </div>
+            <div class="desc" id="power-desc"></div>
+        </aside>
+
+        <section id="stage">
+            <div id="case">
+                <div id="box">
+                    <canvas id="world"></canvas>
+                    <div class="glass"></div>
+                    <div class="banner" id="banner"></div>
+                    <div class="overlay-bar" id="overlay-bar"></div>
+                    <div class="minimap" id="minimap-wrap"><canvas id="minimap"></canvas></div>
+                    <div class="tooltip" id="tooltip"></div>
+                    <div class="toast" id="toast"></div>
+                </div>
+                <div class="lid"></div>
+            </div>
+        </section>
+
+        <aside id="right">
+            <div class="tabs" id="tabs">
+                <button data-tab="world" class="active">Svět</button>
+                <button data-tab="species">Druhy</button>
+                <button data-tab="log">Kronika</button>
+            </div>
+
+            <div class="tab-body" id="tab-world">
+                <div class="card" id="inspector" hidden></div>
+
+                <h4>Vývoj světa</h4>
+                <canvas id="graph" width="280" height="96"></canvas>
+                <div class="legend">
+                    <span><i style="background:#6ee7a8"></i>populace</span>
+                    <span><i style="background:#7cc4ff"></i>druhy</span>
+                    <span><i style="background:#ffd166"></i>víra</span>
+                </div>
+
+                <h4>Průměrné geny</h4>
+                <div id="genes"></div>
+
+                <h4>Zákony přírody</h4>
+                <div class="ctrl">
+                    <label for="climate">Klima <output id="climate-val">0 °C</output></label>
+                    <input type="range" id="climate" min="-18" max="18" step="0.5" value="0">
+                </div>
+                <div class="ctrl">
+                    <label for="rain">Srážky <output id="rain-val">50 %</output></label>
+                    <input type="range" id="rain" min="0" max="100" value="50">
+                </div>
+                <div class="ctrl">
+                    <label for="mut">Rychlost mutací <output id="mut-val">6 %</output></label>
+                    <input type="range" id="mut" min="0" max="25" value="6">
+                </div>
+
+                <h4>Statistiky</h4>
+                <div class="stats" id="stats"></div>
+
+                <h4>Nový svět</h4>
+                <div class="newworld">
+                    <input type="number" id="seed" value="12345" title="Semínko světa">
+                    <button id="btn-new">🌱 Stvořit svět</button>
+                </div>
+                <button id="btn-life" class="wide">🐣 Zasít život znovu</button>
+            </div>
+
+            <div class="tab-body" id="tab-species" hidden></div>
+            <div class="tab-body" id="tab-log" hidden><div id="log"></div></div>
+        </aside>
+    </main>
+</div>
+
+<div class="modal" id="help" hidden>
+    <div class="modal-box">
+        <h2>🌍 Vítej, bože</h2>
+        <p>Před tebou je svět v krabici. Život v něm se sám živí, množí, mutuje a vyvíjí – ty do toho můžeš kdykoli sáhnout.</p>
+        <div class="help-grid">
+            <div>
+                <h4>Ovládání</h4>
+                <ul>
+                    <li><b>Levé tlačítko</b> – použije vybranou moc (u některých mocí drž a táhni)</li>
+                    <li><b>Pravé tlačítko / mezerník+tah</b> – posun mapy</li>
+                    <li><b>Kolečko</b> – přiblížení a oddálení</li>
+                    <li><b>1–9, 0</b> – rychlá volba moci, <b>Tab</b> – pohled na mapu, <b>H</b> – nápověda</li>
+                    <li><b>Mezerník</b> – pauza</li>
+                </ul>
+            </div>
+            <div>
+                <h4>Jak to funguje</h4>
+                <ul>
+                    <li><b>Víra</b> je tvá mana. Vyrábějí ji tvorové, kteří v tebe věří – získáš je zázraky (✨ požehnání, 🌧️ déšť, 👁️ zjevení) a chrámy.</li>
+                    <li><b>Evoluce</b> je skutečná: geny se dědí, kříží a mutují. Kdo nepřežije, geny nepředá.</li>
+                    <li><b>Druh</b> se odštěpí, když se geny mláděte dost vzdálí od rodičů.</li>
+                    <li><b>Civilizace</b> vzniká sama, když inteligence stoupne dost vysoko – chýše, vesnice, chrámy.</li>
+                    <li><b>Katastrofy</b> mění krajinu natrvalo: krátery, láva, nová moře, radiace.</li>
+                </ul>
+            </div>
+        </div>
+        <p class="tip">Tip: začni ✨ požehnáním u velké skupiny tvorů – získáš věřící a s nimi víru na ty dražší hračky. 💣☄️🌋</p>
+        <button id="help-close">Rozumím, jdu tvořit</button>
+    </div>
+</div>
+
+<script>
+'use strict';
+/* Základní matematika, generátor náhody a šum. Bez DOM – aby šlo testovat i v Node. */
+
+function makeRNG(seed) {
+    let a = (seed >>> 0) || 1;
+    return function () {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function smoothstep(e0, e1, x) {
+    const t = clamp((x - e0) / (e1 - e0), 0, 1);
+    return t * t * (3 - 2 * t);
+}
+function dist2(ax, ay, bx, by) { const dx = ax - bx, dy = ay - by; return dx * dx + dy * dy; }
+
+/* Perlinův šum s permutační tabulkou podle semínka */
+class Noise {
+    constructor(seed) {
+        const rng = makeRNG(seed);
+        const perm = new Uint8Array(256);
+        for (let i = 0; i < 256; i++) perm[i] = i;
+        for (let i = 255; i > 0; i--) {
+            const j = (rng() * (i + 1)) | 0;
+            const t = perm[i]; perm[i] = perm[j]; perm[j] = t;
+        }
+        this.p = new Uint8Array(512);
+        for (let i = 0; i < 512; i++) this.p[i] = perm[i & 255];
+    }
+    grad(hash, x, y) {
+        switch (hash & 7) {
+            case 0: return x + y;
+            case 1: return x - y;
+            case 2: return -x + y;
+            case 3: return -x - y;
+            case 4: return x;
+            case 5: return -x;
+            case 6: return y;
+            default: return -y;
+        }
+    }
+    noise2(x, y) {
+        const p = this.p;
+        const X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
+        const xf = x - Math.floor(x), yf = y - Math.floor(y);
+        const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10);
+        const v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);
+        const aa = p[p[X] + Y], ab = p[p[X] + Y + 1];
+        const ba = p[p[X + 1] + Y], bb = p[p[X + 1] + Y + 1];
+        const x1 = lerp(this.grad(aa, xf, yf), this.grad(ba, xf - 1, yf), u);
+        const x2 = lerp(this.grad(ab, xf, yf - 1), this.grad(bb, xf - 1, yf - 1), u);
+        return lerp(x1, x2, v);
+    }
+    fbm(x, y, oct = 5, lac = 2, gain = 0.5) {
+        let sum = 0, amp = 1, freq = 1, norm = 0;
+        for (let i = 0; i < oct; i++) {
+            sum += this.noise2(x * freq, y * freq) * amp;
+            norm += amp;
+            amp *= gain; freq *= lac;
+        }
+        return sum / norm;
+    }
+}
+
+if (typeof module !== 'undefined') {
+    module.exports = { makeRNG, clamp, lerp, smoothstep, dist2, Noise };
+}
+
+</script>
+<script>
+'use strict';
+/* Svět: terén, voda, vegetace, klima, oheň a láva. Čistá simulace bez DOM. */
+
+const TICKS_PER_YEAR = 100;
+
+class World {
+    constructor(w, h, seed) {
+        this.w = w; this.h = h; this.n = w * h;
+        this.seed = seed >>> 0;
+
+        this.height = new Float32Array(this.n);   // 0..1 nadmořská výška
+        this.water = new Float32Array(this.n);    // hloubka vody nad terénem
+        this.veg = new Float32Array(this.n);      // 0..1 vegetace (potrava)
+        this.fert = new Float32Array(this.n);     // 0..1 úrodnost půdy
+        this.moist = new Float32Array(this.n);    // 0..1 vlhkost
+        this.fire = new Float32Array(this.n);     // 0..1 hoření
+        this.lava = new Float32Array(this.n);     // 0..1 láva
+        this.rad = new Float32Array(this.n);      // 0..1 radiace
+
+        this.baseSea = 0.555;
+        this.seaLevel = 0.555;
+        this.climate = 0;      // globální posun teploty (°C)
+        this.dust = 0;         // popel v atmosféře po dopadech (ochlazuje svět)
+        this.rain = 0.5;       // 0..1 srážky
+        this.season = 0;       // 0..1 fáze roku
+        this.tick = 0;
+        this.stripe = 0;
+
+        this.fireSet = new Set();
+        this.lavaSet = new Set();
+
+        this.generate(this.seed);
+    }
+
+    idx(x, y) { return y * this.w + x; }
+    inside(x, y) { return x >= 0 && y >= 0 && x < this.w && y < this.h; }
+
+    get year() { return Math.floor(this.tick / TICKS_PER_YEAR); }
+
+    generate(seed) {
+        this.seed = seed >>> 0;
+        const rng = makeRNG(this.seed);
+        const nBase = new Noise(this.seed);
+        const nWarp = new Noise((this.seed ^ 0x9e3779b9) >>> 0);
+        const nCont = new Noise((this.seed * 7 + 13) >>> 0);
+        const nFert = new Noise((this.seed ^ 0x51ab3f) >>> 0);
+        const { w, h, height } = this;
+
+        for (let y = 0; y < h; y++) {
+            const ny = y / h;
+            for (let x = 0; x < w; x++) {
+                const i = y * w + x;
+                const nx = x / w;
+                // deformace domény -> členitější pobřeží
+                const wx = nx * 4.2 + 0.7 * nWarp.fbm(nx * 2.6, ny * 2.6, 3);
+                const wy = ny * 3.0 + 0.7 * nWarp.fbm(nx * 2.6 + 5.2, ny * 2.6 + 1.3, 3);
+
+                let e = nBase.fbm(wx, wy, 6, 2.0, 0.5) * 0.5 + 0.5;
+                const cont = nCont.fbm(nx * 1.7, ny * 1.4, 2) * 0.5 + 0.5;
+                e = e * 0.6 + cont * 0.5;
+
+                // hory na vyvýšeninách
+                const ridge = 1 - Math.abs(nBase.fbm(wx * 1.7 + 9, wy * 1.7 - 4, 4));
+                e += Math.pow(Math.max(0, e - 0.55), 1.15) * ridge * 0.8;
+
+                // okraje mapy stahujeme do hlubokého oceánu – svět je uzavřený box
+                const dx = Math.abs(nx * 2 - 1), dy = Math.abs(ny * 2 - 1);
+                const fall = smoothstep(0.70, 1.0, Math.max(dx, dy));
+                e = e * (1 - fall) + 0.13 * fall;
+
+                height[i] = clamp(e, 0, 1);
+                this.fert[i] = clamp(0.45 + nFert.fbm(nx * 6, ny * 6, 3) * 0.9, 0.05, 1);
+            }
+        }
+
+        // voda, vlhkost, počáteční vegetace
+        for (let i = 0; i < this.n; i++) {
+            this.water[i] = this.height[i] < this.seaLevel ? this.seaLevel - this.height[i] : 0;
+            this.moist[i] = this.water[i] > 0 ? 1 : 0;
+            this.veg[i] = 0; this.fire[i] = 0; this.lava[i] = 0; this.rad[i] = 0;
+        }
+        this.fireSet.clear(); this.lavaSet.clear();
+
+        // vlhkost necháme rozlít a zeleň narůst do rovnováhy
+        for (let k = 0; k < 26; k++) this.stepMoisture(0, this.h);
+        for (let k = 0; k < 30; k++) this.stepVegetation(0, this.h, 3);
+        rng();
+    }
+
+    tempAt(x, y, i) {
+        const lat = (y / this.h) * 2 - 1;
+        let t = 31 - 62 * Math.pow(Math.abs(lat), 1.5);
+        t -= Math.max(0, this.height[i] - this.seaLevel) * 58;
+        t += this.climate - this.dust;
+        t += Math.sin(this.season * Math.PI * 2) * 7 * lat;      // roční období (opačná na polokoulích)
+        if (this.water[i] > 0.05) t += 2.5;                       // voda teplotu tlumí
+        if (this.lava[i] > 0.02) t += 40 * this.lava[i];
+        return t;
+    }
+
+    tempAtIdx(i) { return this.tempAt(i % this.w, (i / this.w) | 0, i); }
+
+    /* ---------- jednotlivé kroky simulace ---------- */
+
+    stepWater(y0, y1) {
+        const { w, height, water } = this;
+        for (let y = y0; y < y1; y++) {
+            for (let x = 0; x < w; x++) {
+                const i = y * w + x;
+                const wv = water[i];
+                if (wv <= 1e-4) continue;
+                const lvl = height[i] + wv;
+                let total = 0;
+                const dl = this._dl || (this._dl = new Float32Array(4));
+                const nb = this._nb || (this._nb = new Int32Array(4));
+                let cnt = 0;
+                if (x > 0) { const j = i - 1; const d = lvl - (height[j] + water[j]); if (d > 0) { dl[cnt] = d; nb[cnt++] = j; total += d; } }
+                if (x < w - 1) { const j = i + 1; const d = lvl - (height[j] + water[j]); if (d > 0) { dl[cnt] = d; nb[cnt++] = j; total += d; } }
+                if (y > 0) { const j = i - w; const d = lvl - (height[j] + water[j]); if (d > 0) { dl[cnt] = d; nb[cnt++] = j; total += d; } }
+                if (y < this.h - 1) { const j = i + w; const d = lvl - (height[j] + water[j]); if (d > 0) { dl[cnt] = d; nb[cnt++] = j; total += d; } }
+                if (!cnt) continue;
+                const move = Math.min(wv, total * 0.22);
+                for (let k = 0; k < cnt; k++) {
+                    const t = move * (dl[k] / total);
+                    water[nb[k]] += t;
+                    water[i] -= t;
+                }
+            }
+        }
+        // oceán = nekonečný zdroj i odtok, drží hladinu
+        for (let y = y0; y < y1; y++) {
+            for (let x = 0; x < w; x++) {
+                const i = y * w + x;
+                if (height[i] < this.seaLevel) {
+                    water[i] = this.seaLevel - height[i];
+                } else if (water[i] > 0) {
+                    const t = this.tempAt(x, y, i);
+                    const evap = t > 0 ? 0.004 + t * 0.0004 : 0.001;
+                    water[i] = Math.max(0, water[i] - evap);
+                }
+            }
+        }
+    }
+
+    stepMoisture(y0, y1) {
+        const { w, h, moist, water } = this;
+        for (let y = y0; y < y1; y++) {
+            for (let x = 0; x < w; x++) {
+                const i = y * w + x;
+                let target;
+                if (water[i] > 0.03) target = 1;
+                else {
+                    const l = x > 0 ? moist[i - 1] : moist[i];
+                    const r = x < w - 1 ? moist[i + 1] : moist[i];
+                    const u = y > 0 ? moist[i - w] : moist[i];
+                    const d = y < h - 1 ? moist[i + w] : moist[i];
+                    target = Math.min(1, (l + r + u + d) * 0.243 + this.rain * 0.30);
+                }
+                moist[i] += (target - moist[i]) * 0.18;
+            }
+        }
+    }
+
+    stepVegetation(y0, y1, mult = 1) {
+        const { w, veg, fert, moist, water, height, rad } = this;
+        for (let y = y0; y < y1; y++) {
+            for (let x = 0; x < w; x++) {
+                const i = y * w + x;
+                if (this.lava[i] > 0.01) { veg[i] = 0; continue; }
+                const depth = water[i];
+                if (depth > 0.16) { veg[i] = 0; continue; }              // hlubina je pustá
+                if (depth > 0.10) {                                      // zatopeno – rostliny hnijí
+                    veg[i] = Math.max(0, veg[i] - 0.02 * mult);
+                    continue;
+                }
+                const t = this.tempAt(x, y, i);
+                let tf = 1 - Math.abs(t - 21) / 27;
+                if (t < -3 || t > 47) tf = -0.6;
+                const wf = Math.min(1, moist[i] * 1.15);
+                const rf = 1 - rad[i] * 0.9;
+                let g = fert[i] * tf * wf * rf;
+                if (depth > 0.02) g *= 0.55;                             // mělčiny: řasy a plankton
+                if (g > 0) veg[i] = Math.min(1, veg[i] + g * (1 - veg[i]) * 0.013 * mult);
+                else veg[i] = Math.max(0, veg[i] + g * 0.02 * mult);
+
+                // úrodnost se pomalu obnovuje, radiace ji ničí
+                if (fert[i] < 0.62) fert[i] = Math.min(0.62, fert[i] + 0.0004 * mult);
+                if (rad[i] > 0.01) fert[i] = Math.max(0.03, fert[i] - rad[i] * 0.0025 * mult);
+            }
+        }
+    }
+
+    stepFire(rng) {
+        if (!this.fireSet.size) return;
+        const { w, h, veg, fire, water, moist, fert } = this;
+        const done = [];
+        for (const i of this.fireSet) {
+            const x = i % w, y = (i / w) | 0;
+            if (water[i] > 0.02) { fire[i] = 0; done.push(i); continue; }
+            veg[i] = Math.max(0, veg[i] - 0.09);
+            fert[i] = Math.min(1, fert[i] + 0.004);   // popel hnojí
+            fire[i] -= 0.018 + moist[i] * 0.02;
+            if (fire[i] <= 0 || veg[i] <= 0.01) { fire[i] = 0; done.push(i); continue; }
+            // šíření
+            for (let k = 0; k < 4; k++) {
+                const nx = x + (k === 0 ? -1 : k === 1 ? 1 : 0);
+                const ny = y + (k === 2 ? -1 : k === 3 ? 1 : 0);
+                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                const j = ny * w + nx;
+                if (fire[j] > 0 || water[j] > 0.02 || veg[j] < 0.12) continue;
+                if (rng() < veg[j] * 0.17 * (1 - moist[j] * 0.55)) {
+                    fire[j] = 1; this.fireSet.add(j);
+                }
+            }
+        }
+        for (const i of done) this.fireSet.delete(i);
+    }
+
+    stepLava(rng) {
+        if (!this.lavaSet.size) return;
+        const { w, h, height, water, veg, lava, fert } = this;
+        const done = [];
+        const added = [];
+        for (const i of this.lavaSet) {
+            const x = i % w, y = (i / w) | 0;
+            let l = lava[i];
+            if (water[i] > 0.02) { water[i] = Math.max(0, water[i] - 0.05); l -= 0.05; }
+            // tečení do nižšího souseda
+            if (l > 0.22) {
+                let best = -1, bestLvl = height[i] + lava[i] * 0.35;
+                for (let k = 0; k < 4; k++) {
+                    const nx = x + (k === 0 ? -1 : k === 1 ? 1 : 0);
+                    const ny = y + (k === 2 ? -1 : k === 3 ? 1 : 0);
+                    if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                    const j = ny * w + nx;
+                    const lvl = height[j] + lava[j] * 0.35;
+                    if (lvl < bestLvl - 0.001) { bestLvl = lvl; best = j; }
+                }
+                if (best >= 0) {
+                    const t = l * 0.34;
+                    lava[best] += t; l -= t;
+                    added.push(best);
+                }
+            }
+            // zapaluje okolí
+            for (let k = 0; k < 4; k++) {
+                const nx = x + (k === 0 ? -1 : k === 1 ? 1 : 0);
+                const ny = y + (k === 2 ? -1 : k === 3 ? 1 : 0);
+                if (!this.inside(nx, ny)) continue;
+                const j = ny * w + nx;
+                if (veg[j] > 0.15 && this.fire[j] === 0 && rng() < 0.25) { this.fire[j] = 1; this.fireSet.add(j); }
+            }
+            veg[i] = 0;
+            l -= 0.012;                       // tuhne
+            if (l <= 0.02) {
+                lava[i] = 0;
+                height[i] = clamp(height[i] + 0.012, 0, 1);   // nová sopečná hornina
+                fert[i] = clamp(fert[i] + 0.25, 0, 1);        // úrodná sopečná půda
+                done.push(i);
+            } else lava[i] = l;
+        }
+        for (const i of done) this.lavaSet.delete(i);
+        for (const i of added) if (this.lava[i] > 0.02) this.lavaSet.add(i);
+    }
+
+    stepRadiation(y0, y1) {
+        const { w, rad } = this;
+        for (let y = y0; y < y1; y++) {
+            for (let x = 0; x < w; x++) {
+                const i = y * w + x;
+                if (rad[i] > 0) rad[i] = Math.max(0, rad[i] - 0.0009);
+            }
+        }
+    }
+
+    step(rng) {
+        this.tick++;
+        this.season = (this.tick % TICKS_PER_YEAR) / TICKS_PER_YEAR;
+
+        // těžké průchody rozdělíme do 4 pruhů, každý tik jeden
+        const bands = 4;
+        const bandH = Math.ceil(this.h / bands);
+        const y0 = this.stripe * bandH;
+        const y1 = Math.min(this.h, y0 + bandH);
+        this.stripe = (this.stripe + 1) % bands;
+
+        this.stepWater(y0, y1);
+        this.stepMoisture(y0, y1);
+        this.stepVegetation(y0, y1, bands);
+        this.stepRadiation(y0, y1);
+        this.stepFire(rng);
+        this.stepLava(rng);
+
+        // popel z dopadů se pomalu usazuje
+        if (this.dust > 0) this.dust = Math.max(0, this.dust - 0.005);
+
+        // tání ledovců / růst hladiny podle klimatu
+        const targetSea = this.baseSea + clamp(this.climate, -12, 18) * 0.0016;
+        this.seaLevel += (targetSea - this.seaLevel) * 0.004;
+    }
+
+    /* ---------- pomocné operace pro boží zásahy ---------- */
+
+    forEachInRadius(cx, cy, r, fn) {
+        const x0 = Math.max(0, Math.floor(cx - r)), x1 = Math.min(this.w - 1, Math.ceil(cx + r));
+        const y0 = Math.max(0, Math.floor(cy - r)), y1 = Math.min(this.h - 1, Math.ceil(cy + r));
+        const r2 = r * r;
+        for (let y = y0; y <= y1; y++) {
+            for (let x = x0; x <= x1; x++) {
+                const d2 = dist2(x + 0.5, y + 0.5, cx, cy);
+                if (d2 > r2) continue;
+                fn(y * this.w + x, x, y, Math.sqrt(d2) / r);
+            }
+        }
+    }
+
+    ignite(i) { if (this.veg[i] > 0.08 && this.water[i] < 0.02) { this.fire[i] = 1; this.fireSet.add(i); } }
+    addLava(i, amount) { this.lava[i] = Math.min(1.6, this.lava[i] + amount); this.lavaSet.add(i); }
+}
+
+if (typeof module !== 'undefined') {
+    module.exports = { World, TICKS_PER_YEAR };
+}
+
+</script>
+<script>
+'use strict';
+/* Život: geny, chování, rozmnožování, evoluce, druhy, civilizace a víra. Bez DOM. */
+
+const G_SIZE = 0, G_SPEED = 1, G_VISION = 2, G_METAB = 3, G_FERT = 4, G_AGGR = 5,
+    G_HEAT = 6, G_COLD = 7, G_SWIM = 8, G_INTEL = 9, G_LIFE = 10;
+const GENE_COUNT = 11;
+
+const GENE_INFO = [
+    { key: 'size', name: 'Velikost', icon: '📏' },
+    { key: 'speed', name: 'Rychlost', icon: '💨' },
+    { key: 'vision', name: 'Zrak', icon: '👁️' },
+    { key: 'metab', name: 'Metabolismus', icon: '🔋' },
+    { key: 'fert', name: 'Plodnost', icon: '🥚' },
+    { key: 'aggr', name: 'Dravost', icon: '🦷' },
+    { key: 'heat', name: 'Odolnost vůči teplu', icon: '🔥' },
+    { key: 'cold', name: 'Odolnost vůči zimě', icon: '❄️' },
+    { key: 'swim', name: 'Plavání', icon: '🌊' },
+    { key: 'intel', name: 'Inteligence', icon: '🧠' },
+    { key: 'life', name: 'Délka života', icon: '⏳' }
+];
+
+/* Váhy pro určení, jak moc se dva genomy liší (dravost a plavání dělají nové druhy snáz) */
+const SPECIATION_W = [1, 1, 0.7, 0.8, 0.8, 1.6, 1, 1, 1.5, 1.2, 0.7];
+
+const SYL_A = ['Gra', 'Mor', 'Zel', 'Kra', 'Ven', 'Lup', 'Ort', 'Byš', 'Nur', 'Tar', 'Hel', 'Sar', 'Dro', 'Pyr', 'Ves', 'Klo', 'Ryn', 'Ozz', 'Fen', 'Chy'];
+const SYL_B = ['bar', 'don', 'mir', 'tak', 'lus', 'nex', 'pod', 'ryt', 'sil', 'vor', 'zim', 'gan', 'kul', 'ther', 'mos', 'dar', 'fix', 'pil', 'ork', 'nis'];
+const SYL_C = ['us', 'ix', 'on', 'ar', 'is', 'ek', 'or', 'yn', 'an', 'ul'];
+
+const BAL = {
+    maxPop: 2600,
+    eatRate: 0.16,           // kolik vegetace sežere za tik
+    foodEnergy: 14,          // energie z jednotky vegetace
+    baseCost: 0.78,
+    sizeCost: 0.38,
+    speedCost: 1.6,
+    visionCost: 0.03,
+    brainCost: 0.05,
+    tempCost: 0.055,
+    matureAge: 55,
+    birthCost: 0.50,         // podíl maximální energie, který stojí zplození
+    speciationDist: 0.66,
+    minSpeciesPop: 20
+};
+
+class Species {
+    constructor(id, name, genes, year, parent, hue) {
+        this.id = id;
+        this.name = name;
+        this.genes = Float32Array.from(genes);
+        this.born = year;
+        this.parent = parent;
+        this.hue = hue;
+        this.count = 0;
+        this.peak = 0;
+        this.extinct = false;
+        this.extinctYear = null;
+        this.color = `hsl(${hue}, 72%, 60%)`;
+        this.colorDark = `hsl(${hue}, 60%, 34%)`;
+    }
+}
+
+class Sim {
+    constructor(world, seed) {
+        this.world = world;
+        this.rng = makeRNG((seed ^ 0x51f3a2) >>> 0);
+        this.list = [];
+        this.freeList = [];
+        this.count = 0;
+        this.uid = 0;
+        this.born = 0;
+        this.died = 0;
+        this.generation = 0;
+
+        this.species = [];
+        this.nextSpeciesId = 1;
+
+        this.structures = [];
+        this.structAt = new Int32Array(world.n);   // 0 = nic, jinak index+1
+
+        this.mutationRate = 0.06;
+        this.faith = 80;
+        this.faithMax = 200;
+        this.love = 0;
+        this.fear = 0;
+        this.believers = 0;
+        this.prayers = 0;
+
+        this.fx = [];           // vizuální efekty pro renderer
+        this.zones = [];        // dočasné oblasti (déšť, mráz, požehnání)
+        this.tornados = [];
+        this.volcanoes = [];
+        this.meteors = [];
+
+        this.events = [];
+        this.history = { pop: [], species: [], intel: [], carn: [], faith: [] };
+        this.peakPop = 0;
+        this.milestones = { hut: false, village: false, temple: false, carn: false, swim: false, smart: false };
+
+        // prostorová mřížka pro rychlé hledání sousedů
+        this.cell = 4;
+        this.cw = Math.ceil(world.w / this.cell);
+        this.ch = Math.ceil(world.h / this.cell);
+        this.head = new Int32Array(this.cw * this.ch).fill(-1);
+        this.nextIdx = new Int32Array(BAL.maxPop + 64).fill(-1);
+    }
+
+    /* ---------- druhy ---------- */
+
+    randomName() {
+        const r = this.rng;
+        const a = SYL_A[(r() * SYL_A.length) | 0];
+        const b = SYL_B[(r() * SYL_B.length) | 0];
+        const c = r() < 0.45 ? SYL_C[(r() * SYL_C.length) | 0] : '';
+        return a + b + c;
+    }
+
+    createSpecies(genes, parent) {
+        const hue = parent ? (parent.hue + 40 + this.rng() * 90) % 360 : this.rng() * 360;
+        const sp = new Species(this.nextSpeciesId++, this.randomName(), genes, this.world.year, parent ? parent.id : null, hue);
+        this.species.push(sp);
+        return sp;
+    }
+
+    getSpecies(id) {
+        for (let i = 0; i < this.species.length; i++) if (this.species[i].id === id) return this.species[i];
+        return null;
+    }
+
+    geneDistance(a, b) {
+        let s = 0;
+        for (let k = 0; k < GENE_COUNT; k++) {
+            const d = (a[k] - b[k]) * SPECIATION_W[k];
+            s += d * d;
+        }
+        return Math.sqrt(s);
+    }
+
+    /* ---------- tvorové ---------- */
+
+    derive(c) {
+        const g = c.g;
+        c.size = 0.35 + g[G_SIZE] * 1.7;
+        c.speedT = 0.045 + g[G_SPEED] * 0.30;
+        c.vision = 2 + g[G_VISION] * 12;
+        c.eff = 0.6 + g[G_METAB] * 0.75 + g[G_INTEL] * 0.22;
+        c.repThresh = 0.80 - 0.30 * g[G_FERT];
+        c.repCool = 90 - 55 * g[G_FERT];
+        c.carn = g[G_AGGR] > 0.55;
+        c.tMax = 19 + g[G_HEAT] * 29;
+        c.tMin = 13 - g[G_COLD] * 46;
+        c.swimDepth = 0.03 + g[G_SWIM] * 0.75;
+        c.intel = g[G_INTEL];
+        c.lifespan = 220 + g[G_LIFE] * 780;
+        c.maxE = 30 + c.size * 70;
+        c.cost = BAL.baseCost + BAL.sizeCost * (c.size - 0.35) + BAL.speedCost * c.speedT * c.speedT * c.size
+            + BAL.visionCost * g[G_VISION] + BAL.brainCost * c.intel * c.intel;
+    }
+
+    newCreature() {
+        if (this.freeList.length) {
+            const i = this.freeList.pop();
+            return { slot: i, obj: this.list[i] };
+        }
+        if (this.list.length >= BAL.maxPop) return null;
+        const c = { g: new Float32Array(GENE_COUNT) };
+        this.list.push(c);
+        if (this.list.length > this.nextIdx.length) {
+            const n = new Int32Array(this.list.length + 64).fill(-1);
+            n.set(this.nextIdx); this.nextIdx = n;
+        }
+        return { slot: this.list.length - 1, obj: c };
+    }
+
+    spawn(x, y, genes, species) {
+        const slotObj = this.newCreature();
+        if (!slotObj) return null;
+        const c = slotObj.obj;
+        c.slot = slotObj.slot;
+        c.uid = ++this.uid;          // volné sloty se recyklují, proto má každý tvor vlastní číslo
+        c.alive = true;
+        c.x = x; c.y = y;
+        c.dx = this.rng() * 2 - 1; c.dy = this.rng() * 2 - 1;
+        const l = Math.hypot(c.dx, c.dy) || 1; c.dx /= l; c.dy /= l;
+        for (let k = 0; k < GENE_COUNT; k++) c.g[k] = clamp(genes[k], 0, 1);
+        this.derive(c);
+        c.energy = c.maxE * 0.62;
+        c.age = 0;
+        c.cool = BAL.matureAge;
+        c.sp = species.id;
+        c.faith = 0;
+        c.sick = 0;
+        c.imm = 0;
+        c.hurt = 0;
+        c.gen = 0;
+        this.count++;
+        this.born++;
+        species.count++;
+        return c;
+    }
+
+    kill(c, cause) {
+        if (!c.alive) return;
+        c.alive = false;
+        this.count--;
+        this.died++;
+        const sp = this.getSpecies(c.sp);
+        if (sp) sp.count--;
+        this.freeList.push(c.slot);
+        // mrtvola pohnojí půdu
+        const w = this.world;
+        const xi = c.x | 0, yi = c.y | 0;
+        if (w.inside(xi, yi)) {
+            const idx = yi * w.w + xi;
+            w.fert[idx] = Math.min(1, w.fert[idx] + 0.006 * c.size);
+        }
+        if (cause === 'god') { this.fear = Math.min(1, this.fear + 0.004 * (1 + c.faith)); }
+    }
+
+    seedLife(n = 160) {
+        const w = this.world;
+        const base = new Float32Array(GENE_COUNT);
+        base[G_SIZE] = 0.3; base[G_SPEED] = 0.35; base[G_VISION] = 0.35; base[G_METAB] = 0.5;
+        base[G_FERT] = 0.55; base[G_AGGR] = 0.15; base[G_HEAT] = 0.4; base[G_COLD] = 0.35;
+        base[G_SWIM] = 0.15; base[G_INTEL] = 0.2; base[G_LIFE] = 0.35;
+        const sp = this.createSpecies(base, null);
+        sp.name = 'Prapůvodník';
+        let placed = 0, guard = 0;
+        const g = new Float32Array(GENE_COUNT);
+        while (placed < n && guard++ < n * 400) {
+            const x = this.rng() * w.w, y = this.rng() * w.h;
+            const i = (y | 0) * w.w + (x | 0);
+            if (w.water[i] > 0.02 || w.veg[i] < 0.25) continue;
+            const t = w.tempAtIdx(i);
+            if (t < 5 || t > 35) continue;
+            for (let k = 0; k < GENE_COUNT; k++) g[k] = clamp(base[k] + (this.rng() * 2 - 1) * 0.08, 0, 1);
+            if (this.spawn(x, y, g, sp)) placed++;
+        }
+        this.log(`✨ Na svět byl seslán první život – druh ${sp.name} (${placed} jedinců)`, 'good');
+        return placed;
+    }
+
+    /* ---------- prostorová mřížka ---------- */
+
+    rebuildHash() {
+        this.head.fill(-1);
+        const cw = this.cw, cell = this.cell;
+        for (let i = 0; i < this.list.length; i++) {
+            const c = this.list[i];
+            if (!c.alive) continue;
+            const cx = Math.min(this.cw - 1, (c.x / cell) | 0);
+            const cy = Math.min(this.ch - 1, (c.y / cell) | 0);
+            const h = cy * cw + cx;
+            this.nextIdx[i] = this.head[h];
+            this.head[h] = i;
+        }
+    }
+
+    forEachNear(x, y, r, fn) {
+        const cell = this.cell;
+        const cx0 = Math.max(0, ((x - r) / cell) | 0), cx1 = Math.min(this.cw - 1, ((x + r) / cell) | 0);
+        const cy0 = Math.max(0, ((y - r) / cell) | 0), cy1 = Math.min(this.ch - 1, ((y + r) / cell) | 0);
+        const r2 = r * r;
+        for (let cy = cy0; cy <= cy1; cy++) {
+            for (let cx = cx0; cx <= cx1; cx++) {
+                let i = this.head[cy * this.cw + cx];
+                while (i !== -1) {
+                    const o = this.list[i];
+                    if (o.alive) {
+                        const d2 = dist2(o.x, o.y, x, y);
+                        if (d2 <= r2 && fn(o, d2) === false) return;
+                    }
+                    i = this.nextIdx[i];
+                }
+            }
+        }
+    }
+
+    /* ---------- hlavní krok ---------- */
+
+    step() {
+        const w = this.world;
+        const rng = this.rng;
+        w.step(rng);
+        this.rebuildHash();
+        this.updateZones();
+        this.updateHazards();
+
+        let faithIncome = 0, believers = 0;
+        const list = this.list;
+
+        for (let li = 0; li < list.length; li++) {
+            const c = list[li];
+            if (!c.alive) continue;
+
+            const xi = clamp(c.x | 0, 0, w.w - 1), yi = clamp(c.y | 0, 0, w.h - 1);
+            const idx = yi * w.w + xi;
+            const depth = w.water[idx];
+            const temp = w.tempAt(xi, yi, idx);
+
+            /* --- smrtelná prostředí --- */
+            if (w.lava[idx] > 0.02) { this.kill(c, 'lava'); continue; }
+            if (w.fire[idx] > 0.1) { c.energy -= 6; c.hurt = 1; }
+            if (depth > c.swimDepth) {
+                c.energy -= 2.5 + (depth - c.swimDepth) * 22;   // topí se
+                c.hurt = 1;
+            }
+            if (w.rad[idx] > 0.05) c.energy -= w.rad[idx] * 2.2;
+
+            /* --- teplotní stres (stavby chrání) --- */
+            const sheltered = this.structAt[idx] > 0;
+            let stress = 0;
+            if (temp > c.tMax) stress = temp - c.tMax;
+            else if (temp < c.tMin) stress = c.tMin - temp;
+            if (sheltered) stress *= 0.45;
+
+            /* --- energie --- */
+            let cost = c.cost + stress * BAL.tempCost;
+            if (c.sick > 0) cost += 0.55;
+            c.energy -= cost;
+
+            /* --- příjem potravy --- */
+            if (c.carn) {
+                let prey = null, bestD = 1e9;
+                this.forEachNear(c.x, c.y, c.vision, (o, d2) => {
+                    if (o === c || o.carn) return;
+                    if (d2 < bestD) { bestD = d2; prey = o; }
+                });
+                if (prey) {
+                    const d = Math.sqrt(bestD);
+                    if (d < 0.9 + c.size * 0.2) {
+                        const win = c.size * (0.6 + c.speedT) > prey.size * (0.55 + prey.speedT * 0.9) * (0.7 + rng() * 0.6);
+                        if (win) {
+                            c.energy = Math.min(c.maxE, c.energy + prey.energy * 0.55 + prey.size * 26);
+                            if (prey.sick > 0 && !c.imm && rng() < 0.5) c.sick = 1;
+                            this.kill(prey, 'hunt');
+                        } else {
+                            c.energy -= 6; prey.energy -= 10; prey.hurt = 1;
+                        }
+                    } else {
+                        c.dx = (prey.x - c.x) / d; c.dy = (prey.y - c.y) / d;
+                    }
+                } else {
+                    // dravec bez kořisti se spokojí i s mršinou/rostlinami, ale málo
+                    const bite = Math.min(w.veg[idx], BAL.eatRate * 0.35);
+                    if (bite > 0) { w.veg[idx] -= bite; c.energy += bite * BAL.foodEnergy * 0.4 * c.eff; }
+                    this.forage(c, xi, yi, false);
+                }
+            } else {
+                const bite = Math.min(w.veg[idx], BAL.eatRate * (0.5 + c.size * 0.5));
+                if (bite > 0.0005) {
+                    w.veg[idx] -= bite;
+                    let gain = bite * BAL.foodEnergy * c.eff;
+                    if (this.structAt[idx] > 0) gain *= 1.6;       // pole u vesnic
+                    c.energy += gain;
+                }
+                // všežravec: při troše dravosti si troufne i na sousedy
+                if (c.g[G_AGGR] > 0.3 && rng() < 0.25) {
+                    let prey = null, bestD = 1e9;
+                    this.forEachNear(c.x, c.y, 1.6 + c.size, (o, d2) => {
+                        if (o === c || o.sp === c.sp) return;
+                        if (d2 < bestD) { bestD = d2; prey = o; }
+                    });
+                    if (prey && c.size * (0.5 + c.g[G_AGGR]) > prey.size * (0.5 + prey.g[G_AGGR] * 0.6) * (0.8 + rng() * 0.5)) {
+                        c.energy = Math.min(c.maxE, c.energy + prey.energy * 0.4 + prey.size * 18);
+                        this.kill(prey, 'hunt');
+                    }
+                }
+                this.forage(c, xi, yi, w.veg[idx] > 0.35);
+            }
+            if (c.energy > c.maxE) c.energy = c.maxE;
+
+            /* --- pohyb --- */
+            let sp = c.speedT;
+            if (depth > 0.02) sp *= (0.25 + c.g[G_SWIM] * 0.85);
+            if (stress > 0) sp *= 0.85;
+            if (c.energy < c.maxE * 0.15) sp *= 0.7;
+            c.x += c.dx * sp; c.y += c.dy * sp;
+            if (c.x < 0.5) { c.x = 0.5; c.dx = Math.abs(c.dx); }
+            if (c.y < 0.5) { c.y = 0.5; c.dy = Math.abs(c.dy); }
+            if (c.x > w.w - 0.5) { c.x = w.w - 0.5; c.dx = -Math.abs(c.dx); }
+            if (c.y > w.h - 0.5) { c.y = w.h - 0.5; c.dy = -Math.abs(c.dy); }
+
+            /* --- nemoc --- */
+            if (c.sick > 0) {
+                c.sick++;
+                if (rng() < 0.02) {
+                    this.forEachNear(c.x, c.y, 2.2, (o) => {
+                        if (o !== c && !o.sick && !o.imm && rng() < 0.35) o.sick = 1;
+                    });
+                }
+                if (rng() < 0.006) { this.kill(c, 'mor'); continue; }
+                if (c.sick > 260) { c.sick = 0; c.imm = 1; }
+            }
+
+            /* --- víra --- */
+            if (c.faith > 0) {
+                c.faith = Math.max(0, c.faith - 0.0003);
+                faithIncome += c.faith * (0.0016 + c.intel * 0.004);
+                if (c.faith > 0.3) believers++;
+            }
+
+            /* --- stárnutí a smrt --- */
+            c.age++;
+            if (c.energy <= 0) { this.kill(c, 'hlad'); continue; }
+            if (c.age > c.lifespan && rng() < 0.02 + (c.age - c.lifespan) / 4000) { this.kill(c, 'stáří'); continue; }
+
+            /* --- rozmnožování --- */
+            if (c.cool > 0) c.cool--;
+            else if (c.age > BAL.matureAge && c.energy > c.maxE * c.repThresh && this.count < BAL.maxPop) {
+                if (this.count > BAL.maxPop * 0.88 && rng() < 0.7) { /* přelidněno */ }
+                else this.tryReproduce(c);
+            }
+
+            /* --- stavby --- */
+            if (c.intel > 0.45 && !c.carn && depth < 0.02 && c.energy > c.maxE * 0.5 && rng() < 0.004) {
+                this.tryBuild(c, idx, xi, yi);
+            }
+            c.hurt = 0;
+        }
+
+        this.believers = believers;
+        this.updateStructures();
+        this.faith = Math.min(this.faithMax, this.faith + faithIncome + 0.035);
+        this.prayers = faithIncome;
+        this.love = Math.max(0, this.love - 0.0006);
+        this.fear = Math.max(0, this.fear - 0.0009);
+        this.faithMax = 200 + believers * 0.35;
+
+        if (w.tick % 25 === 0) this.updateSpecies();
+        if (w.tick % 10 === 0) this.recordHistory();
+    }
+
+    /* Výběr směru: osm směrů, hodnotíme potravu a nebezpečí */
+    forage(c, xi, yi, satisfied) {
+        const w = this.world;
+        const rng = this.rng;
+        if (satisfied && rng() < 0.75) return;                      // má co žrát, zůstává
+        const r = Math.max(2, c.vision * (0.5 + c.intel * 0.5));
+        let bestScore = -1e9, bx = c.dx, by = c.dy;
+        const steps = c.intel > 0.5 ? 8 : 6;
+        const rot = rng() * Math.PI * 2;
+        for (let k = 0; k < steps; k++) {
+            const a = rot + (k / steps) * Math.PI * 2;
+            const dx = Math.cos(a), dy = Math.sin(a);
+            const tx = clamp((xi + dx * r) | 0, 0, w.w - 1);
+            const ty = clamp((yi + dy * r) | 0, 0, w.h - 1);
+            const ti = ty * w.w + tx;
+            const depth = w.water[ti];
+            let s = w.veg[ti] * 10;
+            if (depth > c.swimDepth) s -= 40 + depth * 60;
+            else if (depth > 0.02) s -= 3;
+            if (w.fire[ti] > 0) s -= 60;
+            if (w.lava[ti] > 0) s -= 200;
+            if (w.rad[ti] > 0.05) s -= w.rad[ti] * 45;
+            const t = w.tempAt(tx, ty, ti);
+            if (t > c.tMax) s -= (t - c.tMax) * 1.4;
+            if (t < c.tMin) s -= (c.tMin - t) * 1.4;
+            if (this.structAt[ti] > 0) s += 3 * c.intel;
+            s += (c.dx * dx + c.dy * dy) * 2.5;                     // setrvačnost
+            s += rng() * 2.5;
+            if (s > bestScore) { bestScore = s; bx = dx; by = dy; }
+        }
+        c.dx = bx; c.dy = by;
+    }
+
+    tryReproduce(c) {
+        const rng = this.rng;
+        let mate = null;
+        this.forEachNear(c.x, c.y, 4.5, (o) => {
+            if (o === c || o.sp !== c.sp) return;
+            if (o.age < BAL.matureAge || o.cool > 0) return;
+            if (o.energy < o.maxE * 0.45) return;
+            mate = o; return false;
+        });
+        // bez partnera se po dlouhém čekání rozdělí sám (aby život nevyhynul)
+        if (!mate && !(c.energy > c.maxE * 0.95 && rng() < 0.05)) return;
+
+        const child = new Float32Array(GENE_COUNT);
+        const w = this.world;
+        const idx = clamp(c.y | 0, 0, w.h - 1) * w.w + clamp(c.x | 0, 0, w.w - 1);
+        const mut = this.mutationRate * (1 + w.rad[idx] * 6);
+        for (let k = 0; k < GENE_COUNT; k++) {
+            let v = mate ? (rng() < 0.5 ? c.g[k] : mate.g[k]) : c.g[k];
+            if (rng() < mut) v += (rng() * 2 - 1) * 0.16;
+            child[k] = clamp(v, 0, 1);
+        }
+
+        let sp = this.getSpecies(c.sp);
+        if (sp && sp.count >= BAL.minSpeciesPop && this.geneDistance(child, sp.genes) > BAL.speciationDist) {
+            const nsp = this.createSpecies(child, sp);
+            nsp.parentName = sp.name;
+            sp = nsp;
+            this.checkGeneMilestones(child);
+        }
+
+        const baby = this.spawn(c.x + (rng() - 0.5), c.y + (rng() - 0.5), child, sp);
+        if (!baby) return;
+        baby.energy = baby.maxE * 0.40;      // mládě dostane míň, než rodiče zaplatí – energie se nesmí tvořit z ničeho
+        baby.gen = (c.gen || 0) + 1;
+        if (baby.gen > this.generation) this.generation = baby.gen;
+        baby.faith = c.faith * 0.6;      // víra se dědí po rodičích
+        c.energy -= c.maxE * BAL.birthCost;
+        c.cool = c.repCool;
+        if (mate) { mate.energy -= mate.maxE * BAL.birthCost * 0.6; mate.cool = mate.repCool; }
+    }
+
+    checkGeneMilestones(g) {
+        if (!this.milestones.carn && g[G_AGGR] > 0.55) {
+            this.milestones.carn = true;
+            this.log('🦷 Poprvé se objevil masožravec – potravní řetězec se rozvětvil', 'evo');
+        }
+        if (!this.milestones.swim && g[G_SWIM] > 0.7) {
+            this.milestones.swim = true;
+            this.log('🌊 Život se naučil plavat a vydal se do moří', 'evo');
+        }
+        if (!this.milestones.smart && g[G_INTEL] > 0.6) {
+            this.milestones.smart = true;
+            this.log('🧠 Zrodila se skutečná inteligence', 'evo');
+        }
+    }
+
+    /* ---------- civilizace ---------- */
+
+    tryBuild(c, idx, xi, yi) {
+        const w = this.world;
+        if (this.structAt[idx] > 0) {
+            const s = this.structures[this.structAt[idx] - 1];
+            if (!s || !s.alive) return;
+            // vylepšení
+            let near = 0, faithSum = 0;
+            this.forEachNear(c.x, c.y, 6, (o) => { near++; faithSum += o.faith; });
+            if (s.type === 1 && near >= 6 && c.intel > 0.5) {
+                s.type = 2; this.milestone('village', `🏘️ Vyrostla první vesnice (${this.world.year}. rok)`);
+            } else if (s.type === 2 && near >= 8 && c.intel > 0.56 && faithSum / Math.max(1, near) > 0.3) {
+                s.type = 3; this.milestone('temple', '⛪ Byl postaven první chrám k tvé poctě – modlitby ti nesou víru');
+            }
+            return;
+        }
+        if (this.structures.length > 420) return;
+        if (w.veg[idx] < 0.2) return;
+        let near = 0, tooClose = false;
+        this.forEachNear(c.x, c.y, 5, () => { near++; });
+        if (near < 4) return;
+        for (let k = 0; k < this.structures.length; k++) {
+            const s = this.structures[k];
+            if (s.alive && dist2(s.x, s.y, xi, yi) < 16) { tooClose = true; break; }
+        }
+        if (tooClose) return;
+        const s = { x: xi, y: yi, type: 1, alive: true, sp: c.sp, born: w.year };
+        this.structures.push(s);
+        this.structAt[idx] = this.structures.length;
+        this.milestone('hut', '🛖 Tvorové postavili první obydlí');
+    }
+
+    milestone(key, text) {
+        if (this.milestones[key]) return;
+        this.milestones[key] = true;
+        this.log(text, 'evo');
+    }
+
+    updateStructures() {
+        const w = this.world;
+        if (w.tick % 12 !== 0) return;
+        for (let k = 0; k < this.structures.length; k++) {
+            const s = this.structures[k];
+            if (!s.alive) continue;
+            const idx = s.y * w.w + s.x;
+            if (w.lava[idx] > 0.01 || w.water[idx] > 0.12 || w.fire[idx] > 0.2) {
+                this.destroyStructure(k, true);
+                continue;
+            }
+            // pole kolem sídla zvyšují úrodnost
+            w.forEachInRadius(s.x + 0.5, s.y + 0.5, 1.5 + s.type, (i) => {
+                if (w.height[i] > w.seaLevel) w.fert[i] = Math.min(1, w.fert[i] + 0.004 * s.type);
+            });
+            if (s.type === 3) {
+                this.faith = Math.min(this.faithMax, this.faith + 0.25);
+                this.forEachNear(s.x, s.y, 8, (o) => { o.faith = Math.min(1, o.faith + 0.006); });
+            }
+            // opuštěná sídla zanikají
+            let pop = 0;
+            this.forEachNear(s.x, s.y, 7, () => { pop++; });
+            if (pop === 0 && this.rng() < 0.25) this.destroyStructure(k, false);
+        }
+    }
+
+    destroyStructure(k, violent) {
+        const s = this.structures[k];
+        if (!s || !s.alive) return;
+        s.alive = false;
+        const idx = s.y * this.world.w + s.x;
+        if (this.structAt[idx] === k + 1) this.structAt[idx] = 0;
+        if (violent && s.type === 3) this.log('💔 Chrám byl zničen', 'bad');
+    }
+
+    /* ---------- dočasné jevy ---------- */
+
+    updateZones() {
+        const w = this.world;
+        for (let k = this.zones.length - 1; k >= 0; k--) {
+            const z = this.zones[k];
+            z.life--;
+            if (z.life <= 0) { this.zones.splice(k, 1); continue; }
+            if (z.type === 'rain') {
+                w.forEachInRadius(z.x, z.y, z.r, (i) => {
+                    w.moist[i] = Math.min(1, w.moist[i] + 0.05);
+                    if (w.height[i] > w.seaLevel) w.water[i] += 0.0018;
+                    if (w.fire[i] > 0) { w.fire[i] = 0; w.fireSet.delete(i); }
+                });
+            } else if (z.type === 'freeze') {
+                w.forEachInRadius(z.x, z.y, z.r, (i) => {
+                    w.veg[i] = Math.max(0, w.veg[i] - 0.012);
+                    if (w.fire[i] > 0) { w.fire[i] = 0; w.fireSet.delete(i); }
+                });
+                this.forEachNear(z.x, z.y, z.r, (o) => {
+                    const tol = o.g[G_COLD];
+                    o.energy -= 1.6 * (1 - tol * 0.9);
+                    if (o.energy <= 0) this.kill(o, 'god');
+                });
+            } else if (z.type === 'bless') {
+                w.forEachInRadius(z.x, z.y, z.r, (i) => {
+                    w.veg[i] = Math.min(1, w.veg[i] + 0.02);
+                    w.fert[i] = Math.min(1, w.fert[i] + 0.004);
+                    w.rad[i] = Math.max(0, w.rad[i] - 0.01);
+                });
+                this.forEachNear(z.x, z.y, z.r, (o) => {
+                    o.energy = Math.min(o.maxE, o.energy + 1.2);
+                    if (o.sick > 0 && this.rng() < 0.06) { o.sick = 0; o.imm = 1; }
+                    o.faith = Math.min(1, o.faith + 0.01);
+                });
+            }
+        }
+    }
+
+    updateHazards() {
+        const w = this.world, rng = this.rng;
+
+        for (let k = this.tornados.length - 1; k >= 0; k--) {
+            const t = this.tornados[k];
+            t.life--;
+            t.dx += (rng() - 0.5) * 0.25; t.dy += (rng() - 0.5) * 0.25;
+            const l = Math.hypot(t.dx, t.dy) || 1;
+            t.dx = t.dx / l * 0.55; t.dy = t.dy / l * 0.55;
+            t.x = clamp(t.x + t.dx, 0, w.w - 1); t.y = clamp(t.y + t.dy, 0, w.h - 1);
+            t.ang = (t.ang || 0) + 0.5;
+            w.forEachInRadius(t.x, t.y, t.r, (i) => {
+                w.veg[i] = Math.max(0, w.veg[i] - 0.05);
+                if (w.fire[i] > 0 && rng() < 0.4) { w.fire[i] = 0; w.fireSet.delete(i); }
+            });
+            this.forEachNear(t.x, t.y, t.r, (o) => {
+                const ang = rng() * Math.PI * 2;
+                o.x = clamp(o.x + Math.cos(ang) * 1.6, 0, w.w - 1);
+                o.y = clamp(o.y + Math.sin(ang) * 1.6, 0, w.h - 1);
+                o.energy -= 5;
+                if (o.energy <= 0) this.kill(o, 'god');
+            });
+            for (let s = 0; s < this.structures.length; s++) {
+                const st = this.structures[s];
+                if (st.alive && dist2(st.x, st.y, t.x, t.y) < t.r * t.r && rng() < 0.25) this.destroyStructure(s, true);
+            }
+            if (t.life <= 0) this.tornados.splice(k, 1);
+        }
+
+        for (let k = this.volcanoes.length - 1; k >= 0; k--) {
+            const v = this.volcanoes[k];
+            v.life--;
+            const i = (v.y | 0) * w.w + (v.x | 0);
+            w.addLava(i, 0.5);
+            w.height[i] = clamp(w.height[i] + 0.0012, 0, 1);
+            if (rng() < 0.5) {
+                const a = rng() * Math.PI * 2, d = rng() * 2.2;
+                const nx = clamp((v.x + Math.cos(a) * d) | 0, 0, w.w - 1);
+                const ny = clamp((v.y + Math.sin(a) * d) | 0, 0, w.h - 1);
+                w.addLava(ny * w.w + nx, 0.35);
+            }
+            if (v.life <= 0) this.volcanoes.splice(k, 1);
+        }
+
+        for (let k = this.meteors.length - 1; k >= 0; k--) {
+            const m = this.meteors[k];
+            m.life--;
+            if (m.life <= 0) {
+                if (m.onImpact) m.onImpact(m);
+                this.meteors.splice(k, 1);
+            }
+        }
+    }
+
+    /* ---------- statistiky ---------- */
+
+    updateSpecies() {
+        const sums = new Map();
+        for (let i = 0; i < this.list.length; i++) {
+            const c = this.list[i];
+            if (!c.alive) continue;
+            let e = sums.get(c.sp);
+            if (!e) { e = { n: 0, g: new Float64Array(GENE_COUNT) }; sums.set(c.sp, e); }
+            e.n++;
+            for (let k = 0; k < GENE_COUNT; k++) e.g[k] += c.g[k];
+        }
+        for (const sp of this.species) {
+            const e = sums.get(sp.id);
+            const n = e ? e.n : 0;
+            sp.count = n;
+            if (n > 0) {
+                for (let k = 0; k < GENE_COUNT; k++) sp.genes[k] = sp.genes[k] * 0.7 + (e.g[k] / n) * 0.3;
+                if (n > sp.peak) sp.peak = n;
+                if (!sp.announced && n >= 25) {          // hlásíme až druhy, které se opravdu uchytily
+                    sp.announced = true;
+                    if (sp.parentName) this.log(`🧬 Z druhu ${sp.parentName} se odštěpil nový druh ${sp.name}`, 'evo');
+                }
+                if (sp.extinct) { sp.extinct = false; sp.extinctYear = null; }
+            } else if (!sp.extinct) {
+                sp.extinct = true;
+                sp.extinctYear = this.world.year;
+                if (sp.peak >= 25) this.log(`☠️ Druh ${sp.name} vymřel (žil ${sp.born}–${sp.extinctYear})`, 'bad');
+            }
+        }
+        if (this.count === 0 && this.lastCount > 0) {
+            this.log('🕯️ Veškerý život ve světě vyhasl. Můžeš stvořit nový.', 'bad');
+        }
+        this.lastCount = this.count;
+    }
+
+    recordHistory() {
+        let intel = 0, carn = 0, alive = 0;
+        for (let i = 0; i < this.list.length; i++) {
+            const c = this.list[i];
+            if (!c.alive) continue;
+            alive++; intel += c.intel; if (c.carn) carn++;
+        }
+        const h = this.history;
+        h.pop.push(this.count);
+        h.species.push(this.species.filter(s => !s.extinct).length);
+        h.intel.push(alive ? intel / alive : 0);
+        h.carn.push(carn);
+        h.faith.push(this.faith);
+        for (const k in h) if (h[k].length > 420) h[k].shift();
+        if (this.count > this.peakPop) this.peakPop = this.count;
+    }
+
+    stats() {
+        let intel = 0, size = 0, speed = 0, carn = 0, sick = 0, n = 0, oldest = 0;
+        const g = new Float64Array(GENE_COUNT);
+        for (let i = 0; i < this.list.length; i++) {
+            const c = this.list[i];
+            if (!c.alive) continue;
+            n++; intel += c.intel; size += c.size; speed += c.speedT;
+            if (c.carn) carn++;
+            if (c.sick) sick++;
+            if (c.age > oldest) oldest = c.age;
+            for (let k = 0; k < GENE_COUNT; k++) g[k] += c.g[k];
+        }
+        if (n) for (let k = 0; k < GENE_COUNT; k++) g[k] /= n;
+        return {
+            pop: n, avgIntel: n ? intel / n : 0, avgSize: n ? size / n : 0, avgSpeed: n ? speed / n : 0,
+            carn, sick, oldest, genes: g,
+            species: this.species.filter(s => !s.extinct).length,
+            structures: this.structures.filter(s => s.alive).length,
+            temples: this.structures.filter(s => s.alive && s.type === 3).length
+        };
+    }
+
+    log(text, kind = 'info') {
+        this.events.push({ year: this.world.year, text, kind });
+        if (this.events.length > 220) this.events.shift();
+        this.dirtyLog = true;
+    }
+}
+
+if (typeof module !== 'undefined') {
+    module.exports = { Sim, Species, GENE_INFO, GENE_COUNT, BAL, G_SIZE, G_SPEED, G_VISION, G_METAB, G_FERT, G_AGGR, G_HEAT, G_COLD, G_SWIM, G_INTEL, G_LIFE };
+}
+
+</script>
+<script>
+'use strict';
+/* Boží schopnosti – zásahy do světa. Nic tu nekreslí, jen mění stav a hlásí efekty. */
+
+function fx(sim, o) { sim.fx.push(o); }
+
+function killIn(sim, x, y, r, chance, cause) {
+    let n = 0;
+    sim.forEachNear(x, y, r, (c, d2) => {
+        const t = 1 - Math.sqrt(d2) / r;
+        if (sim.rng() < chance * (0.35 + t)) { sim.kill(c, cause); n++; }
+    });
+    return n;
+}
+
+function crater(world, x, y, r, depth) {
+    world.forEachInRadius(x, y, r, (i, tx, ty, t) => {
+        const f = 1 - t;
+        if (world.height[i] > world.seaLevel - 0.05) {
+            world.height[i] = clamp(world.height[i] - depth * f * f + depth * 0.22 * t, 0.02, 1);
+        }
+        world.veg[i] = Math.max(0, world.veg[i] - f);
+        world.fert[i] = Math.max(0.02, world.fert[i] - 0.4 * f);
+    });
+}
+
+function wreckStructures(sim, x, y, r, chance) {
+    for (let k = 0; k < sim.structures.length; k++) {
+        const s = sim.structures[k];
+        if (s.alive && dist2(s.x, s.y, x, y) < r * r && sim.rng() < chance) sim.destroyStructure(k, true);
+    }
+}
+
+const POWERS = [
+    /* ---------------- STVOŘENÍ ---------------- */
+    {
+        id: 'inspect', name: 'Zkoumat', emoji: '🔍', cost: 0, group: 'create', hold: false,
+        desc: 'Prohlédni si tvora nebo políčko světa.',
+        apply() { }
+    },
+    {
+        id: 'spawn', name: 'Stvořit život', emoji: '🐣', cost: 10, group: 'create', hold: false,
+        desc: 'Vysadí hrst nových tvorů. Když svět osiří, začni tímhle.',
+        apply(sim, x, y, r) {
+            const w = sim.world;
+            let sp = null, best = 0;
+            sim.forEachNear(x, y, 30, (c) => { const s = sim.getSpecies(c.sp); if (s && s.count > best) { best = s.count; sp = s; } });
+            const genes = new Float32Array(GENE_COUNT);
+            if (sp) genes.set(sp.genes);
+            else {
+                const base = [0.3, 0.35, 0.35, 0.5, 0.55, 0.15, 0.4, 0.35, 0.15, 0.2, 0.35];
+                for (let k = 0; k < GENE_COUNT; k++) genes[k] = base[k];
+                sp = sim.createSpecies(genes, null);
+                sim.log(`✨ Stvořil jsi nový rod ${sp.name}`, 'good');
+            }
+            let placed = 0;
+            const g = new Float32Array(GENE_COUNT);
+            for (let k = 0; k < 60 && placed < 14; k++) {
+                const a = sim.rng() * Math.PI * 2, d = sim.rng() * r;
+                const px = clamp(x + Math.cos(a) * d, 1, w.w - 2), py = clamp(y + Math.sin(a) * d, 1, w.h - 2);
+                const i = (py | 0) * w.w + (px | 0);
+                if (w.water[i] > sp.genes[G_SWIM] * 0.6 + 0.03) continue;
+                for (let q = 0; q < GENE_COUNT; q++) g[q] = clamp(genes[q] + (sim.rng() * 2 - 1) * 0.07, 0, 1);
+                if (sim.spawn(px, py, g, sp)) placed++;
+            }
+            fx(sim, { type: 'sparkle', x, y, r, life: 40, max: 40, color: '#7dffc4' });
+            sim.love = Math.min(1, sim.love + 0.01);
+            return placed > 0;
+        }
+    },
+    {
+        id: 'bless', name: 'Požehnání', emoji: '✨', cost: 8, group: 'create', hold: true,
+        desc: 'Uzdravuje, sytí, léčí nemoci a rozdmýchává víru. Věřící ti vracejí víru zpět.',
+        apply(sim, x, y, r) {
+            sim.zones.push({ type: 'bless', x, y, r, life: 130 });
+            fx(sim, { type: 'sparkle', x, y, r, life: 50, max: 50, color: '#ffe89a' });
+            sim.love = Math.min(1, sim.love + 0.02);
+            sim.forEachNear(x, y, r, (c) => { c.faith = Math.min(1, c.faith + 0.45); });
+            return true;
+        }
+    },
+    {
+        id: 'rain', name: 'Déšť', emoji: '🌧️', cost: 5, group: 'create', hold: true,
+        desc: 'Zavlaží krajinu, uhasí požáry a nastartuje růst rostlin.',
+        apply(sim, x, y, r) {
+            sim.zones.push({ type: 'rain', x, y, r, life: 170 });
+            fx(sim, { type: 'rain', x, y, r, life: 170, max: 170 });
+            sim.love = Math.min(1, sim.love + 0.008);
+            return true;
+        }
+    },
+    {
+        id: 'grow', name: 'Rozkvět', emoji: '🌱', cost: 4, group: 'create', hold: true,
+        desc: 'Okamžitě vyžene vegetaci a obnoví úrodnost půdy.',
+        apply(sim, x, y, r) {
+            const w = sim.world;
+            w.forEachInRadius(x, y, r, (i, tx, ty, t) => {
+                if (w.water[i] > 0.16) return;
+                w.veg[i] = Math.min(1, w.veg[i] + 0.5 * (1 - t));
+                w.fert[i] = Math.min(1, w.fert[i] + 0.12 * (1 - t));
+                w.rad[i] = Math.max(0, w.rad[i] - 0.02);
+            });
+            fx(sim, { type: 'sparkle', x, y, r, life: 26, max: 26, color: '#8ef07a' });
+            sim.love = Math.min(1, sim.love + 0.006);
+            return true;
+        }
+    },
+    {
+        id: 'reveal', name: 'Zjevení', emoji: '👁️', cost: 14, group: 'create', hold: false,
+        desc: 'Zjevíš se tvorům. Získáš věřící – a ti ti pak posílají víru (tvou manu).',
+        apply(sim, x, y, r) {
+            let n = 0;
+            sim.forEachNear(x, y, r * 1.6, (c) => { c.faith = Math.min(1, c.faith + 0.55 + c.intel * 0.3); n++; });
+            fx(sim, { type: 'beam', x, y, r: r * 1.6, life: 60, max: 60, color: '#ffe9a8' });
+            sim.love = Math.min(1, sim.love + 0.03);
+            if (n > 0) sim.log(`👁️ Zjevil ses ${n} tvorům`, 'good');
+            return true;
+        }
+    },
+    {
+        id: 'mutate', name: 'Mutace', emoji: '🧬', cost: 16, group: 'create', hold: false,
+        desc: 'Zamíchá geny všech tvorů v okolí. Rychlá cesta k novým druhům – i k monstrům.',
+        apply(sim, x, y, r) {
+            let n = 0;
+            sim.forEachNear(x, y, r, (c) => {
+                for (let k = 0; k < GENE_COUNT; k++) c.g[k] = clamp(c.g[k] + (sim.rng() * 2 - 1) * 0.22, 0, 1);
+                sim.derive(c);
+                c.energy = Math.min(c.energy, c.maxE);
+                n++;
+            });
+            fx(sim, { type: 'sparkle', x, y, r, life: 34, max: 34, color: '#d08cff' });
+            if (n) sim.log(`🧬 Zasáhl jsi do genů ${n} tvorů`, 'evo');
+            return true;
+        }
+    },
+
+    /* ---------------- ZEMĚ ---------------- */
+    {
+        id: 'raise', name: 'Zvednout zemi', emoji: '⛰️', cost: 3, group: 'terra', hold: true,
+        desc: 'Vytáhne pevninu vzhůru – nové ostrovy, hory a hráze proti vodě.',
+        apply(sim, x, y, r, s) {
+            const w = sim.world;
+            w.forEachInRadius(x, y, r, (i, tx, ty, t) => {
+                const f = (1 - t) * (1 - t);
+                w.height[i] = clamp(w.height[i] + 0.02 * f * s, 0, 1);
+                if (w.height[i] > w.seaLevel && w.water[i] > 0) w.water[i] = Math.max(0, w.water[i] - 0.02 * f);
+            });
+            return true;
+        }
+    },
+    {
+        id: 'lower', name: 'Prohloubit', emoji: '🕳️', cost: 3, group: 'terra', hold: true,
+        desc: 'Propadne terén dolů. Pod hladinou vznikne moře, na souši údolí a jezera.',
+        apply(sim, x, y, r, s) {
+            const w = sim.world;
+            w.forEachInRadius(x, y, r, (i, tx, ty, t) => {
+                const f = (1 - t) * (1 - t);
+                w.height[i] = clamp(w.height[i] - 0.02 * f * s, 0.01, 1);
+            });
+            return true;
+        }
+    },
+    {
+        id: 'flood', name: 'Povodeň', emoji: '🌊', cost: 12, group: 'terra', hold: true,
+        desc: 'Vylije obrovské množství vody. Ta pak teče podle terénu a topí vše, co neumí plavat.',
+        apply(sim, x, y, r) {
+            const w = sim.world;
+            w.forEachInRadius(x, y, r, (i, tx, ty, t) => {
+                w.water[i] += 0.35 * (1 - t);
+                w.moist[i] = 1;
+                if (w.fire[i] > 0) { w.fire[i] = 0; w.fireSet.delete(i); }
+            });
+            fx(sim, { type: 'splash', x, y, r, life: 34, max: 34 });
+            sim.fear = Math.min(1, sim.fear + 0.02);
+            return true;
+        }
+    },
+    {
+        id: 'dry', name: 'Vysušit', emoji: '🏜️', cost: 8, group: 'terra', hold: true,
+        desc: 'Odsaje vodu a vláhu. Z jezer jsou pláně, z pralesů poušť.',
+        apply(sim, x, y, r) {
+            const w = sim.world;
+            w.forEachInRadius(x, y, r, (i, tx, ty, t) => {
+                const f = 1 - t;
+                if (w.height[i] > w.seaLevel) w.water[i] = Math.max(0, w.water[i] - 0.3 * f);
+                w.moist[i] = Math.max(0, w.moist[i] - 0.5 * f);
+            });
+            return true;
+        }
+    },
+
+    /* ---------------- ZKÁZA ---------------- */
+    {
+        id: 'lightning', name: 'Blesk', emoji: '⚡', cost: 4, group: 'doom', hold: false,
+        desc: 'Úder z nebes. Zabíjí na místě a zapaluje suchý porost.',
+        apply(sim, x, y, r) {
+            const w = sim.world;
+            killIn(sim, x, y, Math.max(1.5, r * 0.35), 0.95, 'god');
+            w.forEachInRadius(x, y, r * 0.5, (i) => { if (sim.rng() < 0.5) w.ignite(i); });
+            fx(sim, { type: 'bolt', x, y, life: 18, max: 18 });
+            sim.fear = Math.min(1, sim.fear + 0.006);
+            return true;
+        }
+    },
+    {
+        id: 'fire', name: 'Požár', emoji: '🔥', cost: 7, group: 'doom', hold: true,
+        desc: 'Zapálí krajinu. Oheň se sám šíří po vegetaci – zastaví ho jen voda nebo poušť.',
+        apply(sim, x, y, r) {
+            const w = sim.world;
+            w.forEachInRadius(x, y, r, (i) => { if (sim.rng() < 0.65) w.ignite(i); });
+            fx(sim, { type: 'sparkle', x, y, r, life: 20, max: 20, color: '#ff9a3c' });
+            sim.fear = Math.min(1, sim.fear + 0.008);
+            return true;
+        }
+    },
+    {
+        id: 'bomb', name: 'Bomba', emoji: '💣', cost: 15, group: 'doom', hold: false,
+        desc: 'Klasika. Kráter, tlaková vlna, mrtví a hořící okolí.',
+        apply(sim, x, y, r) {
+            const w = sim.world;
+            crater(w, x, y, r, 0.05);
+            killIn(sim, x, y, r * 1.15, 0.95, 'god');
+            wreckStructures(sim, x, y, r * 1.2, 0.9);
+            w.forEachInRadius(x, y, r * 1.5, (i) => { if (sim.rng() < 0.3) w.ignite(i); });
+            fx(sim, { type: 'boom', x, y, r: r * 1.6, life: 34, max: 34 });
+            sim.fear = Math.min(1, sim.fear + 0.03);
+            return true;
+        }
+    },
+    {
+        id: 'nuke', name: 'Jaderná puma', emoji: '☢️', cost: 45, group: 'doom', hold: false,
+        desc: 'Obří kráter a radioaktivní spad. Radiace zabíjí, ale také prudce zrychluje mutace.',
+        apply(sim, x, y, r) {
+            const w = sim.world;
+            const R = r * 2.2;
+            crater(w, x, y, R, 0.09);
+            killIn(sim, x, y, R * 1.2, 1.0, 'god');
+            wreckStructures(sim, x, y, R * 1.3, 1);
+            w.forEachInRadius(x, y, R * 1.6, (i, tx, ty, t) => {
+                w.rad[i] = Math.min(1, w.rad[i] + 0.9 * (1 - t));
+                if (sim.rng() < 0.5 * (1 - t)) w.ignite(i);
+            });
+            fx(sim, { type: 'boom', x, y, r: R * 1.8, life: 60, max: 60, nuke: true });
+            sim.fear = Math.min(1, sim.fear + 0.12);
+            sim.log('☢️ Jaderný výbuch zamořil krajinu', 'bad');
+            return true;
+        }
+    },
+    {
+        id: 'meteor', name: 'Meteorit', emoji: '☄️', cost: 60, group: 'doom', hold: false,
+        desc: 'Padá z nebe pár vteřin. Po dopadu obří kráter, ohnivá bouře a zatmění – doba ledová.',
+        apply(sim, x, y, r) {
+            const R = r * 2.6;
+            sim.meteors.push({
+                x, y, r: R, life: 46, max: 46,
+                onImpact: (m) => {
+                    const w = sim.world;
+                    crater(w, m.x, m.y, R, 0.14);
+                    killIn(sim, m.x, m.y, R * 1.4, 1.0, 'god');
+                    wreckStructures(sim, m.x, m.y, R * 1.5, 1);
+                    w.forEachInRadius(m.x, m.y, R * 2.2, (i, tx, ty, t) => {
+                        if (sim.rng() < 0.75 * (1 - t)) w.ignite(i);
+                        w.fert[i] = Math.min(1, w.fert[i] + 0.15 * (1 - t));
+                    });
+                    for (let k = 0; k < 6; k++) {
+                        const a = sim.rng() * Math.PI * 2, d = R * (1 + sim.rng() * 2);
+                        const px = clamp(m.x + Math.cos(a) * d, 1, w.w - 2), py = clamp(m.y + Math.sin(a) * d, 1, w.h - 2);
+                        w.forEachInRadius(px, py, R * 0.3, (i) => w.ignite(i));
+                        fx(sim, { type: 'boom', x: px, y: py, r: R * 0.5, life: 26, max: 26 });
+                    }
+                    w.dust = Math.min(22, w.dust + 11);
+                    fx(sim, { type: 'boom', x: m.x, y: m.y, r: R * 2.4, life: 80, max: 80 });
+                    fx(sim, { type: 'shock', x: m.x, y: m.y, r: R * 6, life: 70, max: 70 });
+                    sim.log('☄️ Meteorit dopadl! Obloha potemněla popelem.', 'bad');
+                }
+            });
+            fx(sim, { type: 'meteor', x, y, life: 46, max: 46 });
+            sim.fear = Math.min(1, sim.fear + 0.15);
+            return true;
+        }
+    },
+    {
+        id: 'volcano', name: 'Sopka', emoji: '🌋', cost: 40, group: 'doom', hold: false,
+        desc: 'Otevře sopouch. Láva teče z kopce, spaluje vše – a po vychladnutí tvoří úrodnou půdu.',
+        apply(sim, x, y, r) {
+            sim.volcanoes.push({ x: Math.floor(x), y: Math.floor(y), life: 220 + r * 12 });
+            sim.world.forEachInRadius(x, y, Math.max(1, r * 0.4), (i) => sim.world.addLava(i, 0.6));
+            fx(sim, { type: 'boom', x, y, r: r * 1.2, life: 40, max: 40 });
+            sim.fear = Math.min(1, sim.fear + 0.05);
+            sim.log('🌋 Ze země se probudila sopka', 'bad');
+            return true;
+        }
+    },
+    {
+        id: 'tornado', name: 'Tornádo', emoji: '🌪️', cost: 25, group: 'doom', hold: false,
+        desc: 'Vypustí smršť, která si sama bloudí krajinou, ničí sídla a rozhazuje tvory.',
+        apply(sim, x, y, r) {
+            sim.tornados.push({ x, y, dx: 0.4, dy: 0.2, r: Math.max(3.5, r * 0.85), life: 420 });
+            sim.fear = Math.min(1, sim.fear + 0.03);
+            sim.log('🌪️ Krajinou se prohnalo tornádo', 'bad');
+            return true;
+        }
+    },
+    {
+        id: 'freeze', name: 'Mráz', emoji: '❄️', cost: 20, group: 'doom', hold: true,
+        desc: 'Ledová vichřice. Kdo nemá odolnost vůči zimě, zmrzne – ostatní zesílí.',
+        apply(sim, x, y, r) {
+            sim.zones.push({ type: 'freeze', x, y, r, life: 210 });
+            fx(sim, { type: 'frost', x, y, r, life: 210, max: 210 });
+            sim.fear = Math.min(1, sim.fear + 0.02);
+            return true;
+        }
+    },
+    {
+        id: 'plague', name: 'Mor', emoji: '🦠', cost: 30, group: 'doom', hold: false,
+        desc: 'Nakazí tvory nemocí, která se sama šíří dotykem. Kdo přežije, získá imunitu.',
+        apply(sim, x, y, r) {
+            let n = 0;
+            sim.forEachNear(x, y, r, (c) => { if (!c.imm) { c.sick = 1; n++; } });
+            fx(sim, { type: 'sparkle', x, y, r, life: 40, max: 40, color: '#9ee86a' });
+            sim.fear = Math.min(1, sim.fear + 0.05);
+            if (n) sim.log(`🦠 Vypukl mor – nakaženo ${n} tvorů`, 'bad');
+            return true;
+        }
+    },
+    {
+        id: 'quake', name: 'Zemětřesení', emoji: '〰️', cost: 35, group: 'doom', hold: false,
+        desc: 'Rozláme zemi, srovná sídla se zemí a otevře trhliny, do kterých se valí voda.',
+        apply(sim, x, y, r) {
+            const w = sim.world;
+            const R = r * 2;
+            const a = sim.rng() * Math.PI;
+            const nx = Math.cos(a), ny = Math.sin(a);
+            w.forEachInRadius(x, y, R, (i, tx, ty, t) => {
+                const rel = (tx - x) * ny - (ty - y) * nx;              // vzdálenost od zlomu
+                const f = (1 - t) * Math.exp(-Math.abs(rel) * 0.55);
+                w.height[i] = clamp(w.height[i] - 0.09 * f + (sim.rng() - 0.5) * 0.01 * (1 - t), 0.01, 1);
+            });
+            killIn(sim, x, y, R, 0.45, 'god');
+            wreckStructures(sim, x, y, R, 0.85);
+            fx(sim, { type: 'shock', x, y, r: R * 1.6, life: 45, max: 45 });
+            sim.fear = Math.min(1, sim.fear + 0.06);
+            sim.log('〰️ Zemí otřáslo zemětřesení', 'bad');
+            return true;
+        }
+    },
+    {
+        id: 'smite', name: 'Boží hněv', emoji: '☠️', cost: 12, group: 'doom', hold: true,
+        desc: 'Přesná poprava. Tvorové v okruhu prostě zmizí – ostatní se tě začnou bát.',
+        apply(sim, x, y, r) {
+            const n = killIn(sim, x, y, r, 1.0, 'god');
+            fx(sim, { type: 'beam', x, y, r, life: 26, max: 26, color: '#ff6b6b' });
+            sim.fear = Math.min(1, sim.fear + 0.02 + n * 0.002);
+            return true;
+        }
+    }
+];
+
+const POWER_MAP = {};
+for (const p of POWERS) POWER_MAP[p.id] = p;
+
+function usePower(sim, id, x, y, radius, strength = 1) {
+    const p = POWER_MAP[id];
+    if (!p) return false;
+    if (p.cost > 0 && sim.faith < p.cost) return false;
+    const ok = p.apply(sim, x, y, radius, strength);
+    if (ok !== false && p.cost > 0) sim.faith -= p.cost;
+    return ok !== false;
+}
+
+if (typeof module !== 'undefined') {
+    module.exports = { POWERS, POWER_MAP, usePower };
+}
+
+</script>
+<script>
+'use strict';
+/* Vykreslování: terén přes ImageData, tvorové, efekty, box kolem světa a minimapa. */
+
+const OVERLAYS = [
+    { id: 'normal', name: 'Svět', icon: '🌍' },
+    { id: 'temp', name: 'Teplota', icon: '🌡️' },
+    { id: 'moist', name: 'Vláha', icon: '💧' },
+    { id: 'fert', name: 'Úrodnost', icon: '🌾' },
+    { id: 'rad', name: 'Radiace', icon: '☢️' },
+    { id: 'species', name: 'Druhy', icon: '🧬' },
+    { id: 'faith', name: 'Víra', icon: '🙏' }
+];
+
+function rgb(r, g, b) { return (255 << 24) | (b << 16) | (g << 8) | r; }
+
+class Renderer {
+    constructor(canvas, mini, world, sim) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d', { alpha: false });
+        this.mini = mini;
+        this.mctx = mini.getContext('2d');
+        this.world = world;
+        this.sim = sim;
+        this.overlay = 'normal';
+        this.showGrid = false;
+
+        this.terrain = document.createElement('canvas');
+        this.terrain.width = world.w; this.terrain.height = world.h;
+        this.tctx = this.terrain.getContext('2d');
+        this.img = this.tctx.createImageData(world.w, world.h);
+        this.buf = new Uint32Array(this.img.data.buffer);
+
+        this.cam = { x: world.w / 2, y: world.h / 2, zoom: 4 };
+        this.particles = [];
+        this.frame = 0;
+        this.dpr = Math.min(2, window.devicePixelRatio || 1);
+        this.hover = null;
+        this.brush = { x: 0, y: 0, r: 8, show: false, color: '#fff' };
+        this.selected = null;
+        this.resize();
+    }
+
+    resize() {
+        const rect = this.canvas.getBoundingClientRect();
+        this.vw = Math.max(200, rect.width);
+        this.vh = Math.max(200, rect.height);
+        this.canvas.width = Math.floor(this.vw * this.dpr);
+        this.canvas.height = Math.floor(this.vh * this.dpr);
+        this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+        this.minZoom = Math.min(this.vw / this.world.w, this.vh / this.world.h);
+        this.cam.zoom = Math.max(this.cam.zoom, this.minZoom);
+        this.clampCam();
+    }
+
+    clampCam() {
+        const halfW = this.vw / (2 * this.cam.zoom), halfH = this.vh / (2 * this.cam.zoom);
+        this.cam.x = clamp(this.cam.x, halfW, this.world.w - halfW);
+        this.cam.y = clamp(this.cam.y, halfH, this.world.h - halfH);
+        if (this.world.w * this.cam.zoom < this.vw) this.cam.x = this.world.w / 2;
+        if (this.world.h * this.cam.zoom < this.vh) this.cam.y = this.world.h / 2;
+    }
+
+    w2sx(x) { return (x - this.cam.x) * this.cam.zoom + this.vw / 2; }
+    w2sy(y) { return (y - this.cam.y) * this.cam.zoom + this.vh / 2; }
+    s2wx(x) { return (x - this.vw / 2) / this.cam.zoom + this.cam.x; }
+    s2wy(y) { return (y - this.vh / 2) / this.cam.zoom + this.cam.y; }
+
+    zoomAt(sx, sy, factor) {
+        const wx = this.s2wx(sx), wy = this.s2wy(sy);
+        this.cam.zoom = clamp(this.cam.zoom * factor, this.minZoom, 22);
+        this.cam.x = wx - (sx - this.vw / 2) / this.cam.zoom;
+        this.cam.y = wy - (sy - this.vh / 2) / this.cam.zoom;
+        this.clampCam();
+    }
+
+    viewBounds() {
+        const x0 = clamp(Math.floor(this.s2wx(0)) - 1, 0, this.world.w - 1);
+        const y0 = clamp(Math.floor(this.s2wy(0)) - 1, 0, this.world.h - 1);
+        const x1 = clamp(Math.ceil(this.s2wx(this.vw)) + 1, 1, this.world.w);
+        const y1 = clamp(Math.ceil(this.s2wy(this.vh)) + 1, 1, this.world.h);
+        return { x0, y0, x1, y1 };
+    }
+
+    /* ---------- terén ---------- */
+
+    paintTerrain(x0, y0, x1, y1) {
+        const w = this.world, buf = this.buf, W = w.w;
+        const seasonT = Math.sin(w.season * Math.PI * 2) * 7;
+        const ov = this.overlay;
+        const speciesTint = ov === 'species';
+
+        for (let y = y0; y < y1; y++) {
+            const lat = (y / w.h) * 2 - 1;
+            const rowT = 31 - 62 * Math.pow(Math.abs(lat), 1.5) + w.climate - w.dust + seasonT * lat;
+            for (let x = x0; x < x1; x++) {
+                const i = y * W + x;
+                const hgt = w.height[i], wat = w.water[i], veg = w.veg[i];
+                const alt = hgt - w.seaLevel;
+                let t = rowT - Math.max(0, alt) * 58 + (wat > 0.05 ? 2.5 : 0);
+                let r, g, b;
+
+                if (ov === 'temp') {
+                    const f = clamp((t + 30) / 75, 0, 1);
+                    r = (255 * clamp(f * 1.6 - 0.25, 0, 1)) | 0;
+                    g = (255 * clamp(1 - Math.abs(f - 0.5) * 2.1, 0, 1)) | 0;
+                    b = (255 * clamp(1.35 - f * 2.1, 0, 1)) | 0;
+                } else if (ov === 'moist') {
+                    const f = clamp(w.moist[i], 0, 1);
+                    r = (200 - 170 * f) | 0; g = (170 - 40 * f) | 0; b = (110 + 130 * f) | 0;
+                } else if (ov === 'fert') {
+                    const f = clamp(w.fert[i], 0, 1);
+                    r = (150 - 110 * f) | 0; g = (90 + 140 * f) | 0; b = (60 + 30 * f) | 0;
+                } else if (ov === 'rad') {
+                    const f = clamp(w.rad[i], 0, 1);
+                    const base = 40 + veg * 40;
+                    r = (base + f * 90) | 0; g = (base + f * 200) | 0; b = (base + 20) | 0;
+                } else {
+                    if (wat > 0.02) {
+                        const d = clamp(wat / 0.28, 0, 1);
+                        if (t < -2 && wat > 0.02) {           // led
+                            const ice = clamp((-t - 2) / 8, 0, 1);
+                            r = lerp(60 + 40 * (1 - d), 226, ice) | 0;
+                            g = lerp(120 + 40 * (1 - d), 238, ice) | 0;
+                            b = lerp(165 + 30 * (1 - d), 250, ice) | 0;
+                        } else {
+                            r = lerp(58, 8, d) | 0;
+                            g = lerp(140, 34, d) | 0;
+                            b = lerp(172, 74, d) | 0;
+                            if (veg > 0.05 && d < 0.6) {       // řasy v mělčinách
+                                const a = veg * 0.45 * (1 - d);
+                                r = lerp(r, 46, a) | 0; g = lerp(g, 132, a) | 0; b = lerp(b, 96, a) | 0;
+                            }
+                        }
+                    } else {
+                        const dry = clamp(1 - w.moist[i] * 1.7, 0, 1);
+                        // holá půda -> tráva -> les
+                        let br = lerp(196 - 40 * (1 - dry), 92, clamp(veg * 1.4, 0, 1));
+                        let bg = lerp(178 - 20 * (1 - dry), 138, clamp(veg * 1.4, 0, 1));
+                        let bb = lerp(132 - 40 * (1 - dry), 74, clamp(veg * 1.4, 0, 1));
+                        if (veg > 0.55) {
+                            const f = (veg - 0.55) / 0.45;
+                            br = lerp(br, 36, f); bg = lerp(bg, 88, f); bb = lerp(bb, 52, f);
+                        }
+                        if (alt > 0.16) {                       // skály
+                            const f = clamp((alt - 0.16) / 0.18, 0, 1) * (1 - veg * 0.5);
+                            br = lerp(br, 122, f); bg = lerp(bg, 116, f); bb = lerp(bb, 112, f);
+                        }
+                        if (t < 1) {                            // sníh
+                            const f = clamp((1 - t) / 9, 0, 1);
+                            br = lerp(br, 240, f); bg = lerp(bg, 244, f); bb = lerp(bb, 252, f);
+                        }
+                        r = br | 0; g = bg | 0; b = bb | 0;
+                    }
+
+                    // stínování svahů (světlo zleva shora)
+                    if (x > 0 && y > 0) {
+                        const dh = (hgt - w.height[i - W - 1]) * (wat > 0.02 ? 2 : 7);
+                        const s = clamp(1 + dh, 0.62, 1.42);
+                        r = clamp(r * s, 0, 255) | 0; g = clamp(g * s, 0, 255) | 0; b = clamp(b * s, 0, 255) | 0;
+                    }
+
+                    const rad = w.rad[i];
+                    if (rad > 0.02) {
+                        r = clamp(r * (1 - rad * 0.3), 0, 255) | 0;
+                        g = clamp(g * (1 - rad * 0.1) + rad * 55, 0, 255) | 0;
+                        b = clamp(b * (1 - rad * 0.5), 0, 255) | 0;
+                    }
+                }
+
+                const lav = w.lava[i], fir = w.fire[i];
+                if (lav > 0.01) {
+                    const f = clamp(lav, 0, 1);
+                    r = clamp(lerp(r, 255, f), 0, 255) | 0;
+                    g = clamp(lerp(g, 90 + 120 * Math.min(1, lav), 0, 1) * 1, 0, 255) | 0;
+                    b = clamp(lerp(b, 30, f), 0, 255) | 0;
+                } else if (fir > 0.01) {
+                    const f = clamp(fir, 0, 1) * 0.85;
+                    r = clamp(lerp(r, 255, f), 0, 255) | 0;
+                    g = clamp(lerp(g, 150, f), 0, 255) | 0;
+                    b = clamp(lerp(b, 40, f), 0, 255) | 0;
+                }
+                if (speciesTint) { r = (r * 0.45) | 0; g = (g * 0.45) | 0; b = (b * 0.5) | 0; }
+                buf[i] = rgb(r, g, b);
+            }
+        }
+        this.tctx.putImageData(this.img, 0, 0, x0, y0, x1 - x0, y1 - y0);
+    }
+
+    /* ---------- hlavní kreslení ---------- */
+
+    draw(paused) {
+        this.frame++;
+        const ctx = this.ctx, w = this.world, sim = this.sim, cam = this.cam;
+        const v = this.viewBounds();
+
+        ctx.fillStyle = '#05070d';
+        ctx.fillRect(0, 0, this.vw, this.vh);
+
+        this.paintTerrain(v.x0, v.y0, v.x1, v.y1);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(this.terrain, v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0,
+            this.w2sx(v.x0), this.w2sy(v.y0), (v.x1 - v.x0) * cam.zoom, (v.y1 - v.y0) * cam.zoom);
+        ctx.imageSmoothingEnabled = true;
+
+        // hrana světa – aby bylo poznat, kde krabice končí
+        ctx.strokeStyle = 'rgba(150,180,255,0.25)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.w2sx(0) - 1, this.w2sy(0) - 1, this.world.w * cam.zoom + 2, this.world.h * cam.zoom + 2);
+
+        if (this.overlay === 'faith') this.drawFaithOverlay(v);
+        this.drawStructures(v);
+        this.drawCreatures(v);
+        this.drawZones();
+        this.drawEffects(paused);
+        this.drawBrush();
+        this.drawGlass();
+        if (this.frame % 12 === 0) this.drawMinimap();
+    }
+
+    drawFaithOverlay(v) {
+        const ctx = this.ctx, sim = this.sim;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < sim.list.length; i++) {
+            const c = sim.list[i];
+            if (!c.alive || c.faith < 0.05) continue;
+            const sx = this.w2sx(c.x), sy = this.w2sy(c.y);
+            if (sx < -30 || sy < -30 || sx > this.vw + 30 || sy > this.vh + 30) continue;
+            const r = 6 + c.faith * 22;
+            const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+            grd.addColorStop(0, `rgba(255,220,130,${0.28 * c.faith})`);
+            grd.addColorStop(1, 'rgba(255,220,130,0)');
+            ctx.fillStyle = grd;
+            ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+        }
+        ctx.restore();
+    }
+
+    drawStructures(v) {
+        const ctx = this.ctx, sim = this.sim, z = this.cam.zoom;
+        for (let k = 0; k < sim.structures.length; k++) {
+            const s = sim.structures[k];
+            if (!s.alive) continue;
+            if (s.x < v.x0 - 2 || s.x > v.x1 + 2 || s.y < v.y0 - 2 || s.y > v.y1 + 2) continue;
+            const sx = this.w2sx(s.x + 0.5), sy = this.w2sy(s.y + 0.5);
+            const size = Math.max(2.5, z * (s.type === 3 ? 1.7 : s.type === 2 ? 1.4 : 1.05));
+            if (s.type === 3) {
+                ctx.fillStyle = '#f4d47a';
+                ctx.strokeStyle = 'rgba(80,50,10,0.8)'; ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy - size); ctx.lineTo(sx + size * 0.75, sy); ctx.lineTo(sx + size * 0.5, sy + size * 0.8);
+                ctx.lineTo(sx - size * 0.5, sy + size * 0.8); ctx.lineTo(sx - size * 0.75, sy);
+                ctx.closePath(); ctx.fill();
+                if (z > 3) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                    ctx.fillRect(sx - size * 0.1, sy - size * 1.6, size * 0.2, size * 0.6);
+                    ctx.fillRect(sx - size * 0.3, sy - size * 1.35, size * 0.6, size * 0.18);
+                }
+            } else {
+                ctx.fillStyle = s.type === 2 ? '#c98f5a' : '#a9744a';
+                ctx.fillRect(sx - size / 2, sy - size / 2, size, size);
+                if (z > 3) {
+                    ctx.fillStyle = 'rgba(60,32,18,0.85)';
+                    ctx.beginPath();
+                    ctx.moveTo(sx - size * 0.62, sy - size * 0.45);
+                    ctx.lineTo(sx, sy - size * 1.05);
+                    ctx.lineTo(sx + size * 0.62, sy - size * 0.45);
+                    ctx.closePath(); ctx.fill();
+                }
+            }
+        }
+    }
+
+    drawCreatures(v) {
+        const ctx = this.ctx, sim = this.sim, z = this.cam.zoom;
+        const colors = new Map();
+        for (const sp of sim.species) colors.set(sp.id, sp);
+        const detail = z >= 3.2;
+
+        for (let i = 0; i < sim.list.length; i++) {
+            const c = sim.list[i];
+            if (!c.alive) continue;
+            if (c.x < v.x0 - 1 || c.x > v.x1 + 1 || c.y < v.y0 - 1 || c.y > v.y1 + 1) continue;
+            const sx = this.w2sx(c.x), sy = this.w2sy(c.y);
+            const sp = colors.get(c.sp);
+            let col = sp ? sp.color : '#fff';
+            if (c.sick > 0) col = '#a6e05a';
+
+            const rad = Math.max(1.5, z * 0.34 * (0.5 + c.size * 0.6));
+            if (!detail) {
+                ctx.fillStyle = col;
+                const d = Math.max(2, rad * 1.6);
+                ctx.fillRect(sx - d * 0.5, sy - d * 0.5, d, d);
+                continue;
+            }
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
+            ctx.beginPath(); ctx.ellipse(sx, sy + rad * 0.75, rad * 0.95, rad * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath();
+            if (c.carn) {
+                const a = Math.atan2(c.dy, c.dx);
+                ctx.moveTo(sx + Math.cos(a) * rad * 1.7, sy + Math.sin(a) * rad * 1.7);
+                ctx.lineTo(sx + Math.cos(a + 2.5) * rad * 1.2, sy + Math.sin(a + 2.5) * rad * 1.2);
+                ctx.lineTo(sx + Math.cos(a - 2.5) * rad * 1.2, sy + Math.sin(a - 2.5) * rad * 1.2);
+                ctx.closePath();
+            } else {
+                ctx.arc(sx, sy, rad, 0, Math.PI * 2);
+            }
+            ctx.fillStyle = col;
+            ctx.fill();
+            if (z > 4) {
+                ctx.strokeStyle = sp ? sp.colorDark : '#333';
+                ctx.lineWidth = Math.max(0.6, z * 0.06);
+                ctx.stroke();
+            }
+            if (z > 6) {
+                if (c.faith > 0.35) {                      // svatozář věřícího
+                    ctx.strokeStyle = 'rgba(255,224,140,0.9)';
+                    ctx.beginPath();
+                    ctx.arc(sx, sy - rad * 1.3, rad * 0.7, Math.PI * 1.05, Math.PI * 1.95);
+                    ctx.stroke();
+                }
+                if (c.energy < c.maxE * 0.22) {            // hlad
+                    ctx.fillStyle = 'rgba(255,80,80,0.9)';
+                    ctx.fillRect(sx - rad, sy - rad * 2.2, rad * 2 * (c.energy / (c.maxE * 0.22)), 1.6);
+                }
+            }
+            if (this.selected === c && c.uid === this.selectedUid) {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(sx, sy, rad * 2.6, 0, Math.PI * 2); ctx.stroke();
+            }
+        }
+    }
+
+    drawZones() {
+        const ctx = this.ctx, sim = this.sim, z = this.cam.zoom;
+        for (const t of sim.tornados) {
+            const sx = this.w2sx(t.x), sy = this.w2sy(t.y), r = t.r * z;
+            const grd = ctx.createRadialGradient(sx, sy, r * 0.05, sx, sy, r);
+            grd.addColorStop(0, 'rgba(40,42,55,0.85)');
+            grd.addColorStop(0.25, 'rgba(215,218,232,0.8)');
+            grd.addColorStop(0.6, 'rgba(150,152,178,0.45)');
+            grd.addColorStop(1, 'rgba(90,90,110,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = 1.6;
+            for (let k = 0; k < 4; k++) {
+                ctx.beginPath();
+                const a0 = (t.ang || 0) * 0.12 + k * 2.1;
+                for (let s = 0; s <= 14; s++) {
+                    const p = s / 14;
+                    const ang = a0 + p * 7;
+                    const rr = r * (0.15 + p * 0.85);
+                    const px = sx + Math.cos(ang) * rr, py = sy + Math.sin(ang) * rr * 0.65;
+                    s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+        }
+        for (const zn of sim.zones) {
+            const sx = this.w2sx(zn.x), sy = this.w2sy(zn.y), r = zn.r * z;
+            if (zn.type === 'rain') {
+                ctx.save();
+                ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.clip();
+                ctx.strokeStyle = 'rgba(150,200,255,0.55)'; ctx.lineWidth = 1;
+                const off = (this.frame * 7) % 22;
+                for (let k = -20; k < 40; k++) {
+                    const px = sx - r + k * 7;
+                    ctx.beginPath();
+                    ctx.moveTo(px + off, sy - r); ctx.lineTo(px + off - 8, sy + r);
+                    ctx.stroke();
+                }
+                ctx.restore();
+                ctx.strokeStyle = 'rgba(140,190,255,0.35)';
+                ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
+            } else if (zn.type === 'freeze') {
+                const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+                grd.addColorStop(0, 'rgba(190,235,255,0.35)');
+                grd.addColorStop(1, 'rgba(150,210,255,0)');
+                ctx.fillStyle = grd;
+                ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+            } else if (zn.type === 'bless') {
+                const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+                grd.addColorStop(0, 'rgba(255,236,170,0.30)');
+                grd.addColorStop(1, 'rgba(255,220,120,0)');
+                ctx.fillStyle = grd;
+                ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        for (const v of sim.volcanoes) {
+            const sx = this.w2sx(v.x + 0.5), sy = this.w2sy(v.y + 0.5);
+            const r = z * 2.5 * (1 + 0.15 * Math.sin(this.frame * 0.2));
+            const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+            grd.addColorStop(0, 'rgba(255,220,120,0.9)');
+            grd.addColorStop(0.4, 'rgba(255,120,40,0.55)');
+            grd.addColorStop(1, 'rgba(120,30,10,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+        }
+        for (const m of this.sim.meteors) {
+            const p = 1 - m.life / m.max;
+            const sx = this.w2sx(m.x), sy = this.w2sy(m.y);
+            const d = (1 - p) * Math.max(this.vw, this.vh) * 0.9;
+            const px = sx - d * 0.8, py = sy - d;
+            const grd = ctx.createLinearGradient(px - 40, py - 50, px, py);
+            grd.addColorStop(0, 'rgba(255,180,60,0)');
+            grd.addColorStop(1, 'rgba(255,230,150,0.95)');
+            ctx.strokeStyle = grd; ctx.lineWidth = 3 + p * 6;
+            ctx.beginPath(); ctx.moveTo(px - 70, py - 88); ctx.lineTo(px, py); ctx.stroke();
+            ctx.fillStyle = '#ffe9b0';
+            ctx.beginPath(); ctx.arc(px, py, 3 + p * 7, 0, Math.PI * 2); ctx.fill();
+            // cílový kříž
+            ctx.strokeStyle = 'rgba(255,120,60,0.8)'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(sx, sy, m.r * this.cam.zoom * (0.6 + 0.4 * Math.sin(this.frame * 0.3)), 0, Math.PI * 2); ctx.stroke();
+        }
+    }
+
+    spawnParticles(x, y, n, opts) {
+        for (let k = 0; k < n; k++) {
+            const a = Math.random() * Math.PI * 2;
+            const sp = (opts.speed || 1) * (0.3 + Math.random());
+            this.particles.push({
+                x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+                life: opts.life || 30, max: opts.life || 30,
+                size: opts.size || 2, color: opts.color || '#ffb15c', grav: opts.grav || 0
+            });
+        }
+    }
+
+    drawEffects(paused) {
+        const ctx = this.ctx, sim = this.sim, z = this.cam.zoom;
+        for (let k = sim.fx.length - 1; k >= 0; k--) {
+            const f = sim.fx[k];
+            const p = 1 - f.life / f.max;
+            const sx = this.w2sx(f.x), sy = this.w2sy(f.y);
+            switch (f.type) {
+                case 'boom': {
+                    const r = f.r * z * (0.25 + p * 1.1);
+                    const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+                    const a = (1 - p) * (f.nuke ? 0.95 : 0.85);
+                    grd.addColorStop(0, `rgba(255,255,225,${a})`);
+                    grd.addColorStop(0.35, `rgba(255,170,60,${a * 0.85})`);
+                    grd.addColorStop(0.7, `rgba(180,60,20,${a * 0.5})`);
+                    grd.addColorStop(1, 'rgba(60,20,10,0)');
+                    ctx.fillStyle = grd;
+                    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+                    if (f.life === f.max) this.spawnParticles(f.x, f.y, f.nuke ? 90 : 45, { speed: f.r * 0.09, life: 46, color: '#ffca7a', size: 2.4, grav: 0.004 });
+                    break;
+                }
+                case 'shock': {
+                    const r = f.r * z * p;
+                    ctx.strokeStyle = `rgba(255,255,255,${(1 - p) * 0.55})`;
+                    ctx.lineWidth = 2 + (1 - p) * 4;
+                    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
+                    break;
+                }
+                case 'splash': {
+                    const r = f.r * z * (0.3 + p);
+                    ctx.strokeStyle = `rgba(150,220,255,${(1 - p) * 0.8})`;
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
+                    if (f.life === f.max) this.spawnParticles(f.x, f.y, 30, { speed: f.r * 0.06, life: 34, color: '#8fd6ff', size: 2, grav: 0.006 });
+                    break;
+                }
+                case 'sparkle': {
+                    const r = f.r * z;
+                    ctx.fillStyle = f.color;
+                    ctx.globalAlpha = (1 - p) * 0.9;
+                    for (let s = 0; s < 14; s++) {
+                        const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * r;
+                        ctx.fillRect(sx + Math.cos(a) * d, sy + Math.sin(a) * d, 2.2, 2.2);
+                    }
+                    ctx.globalAlpha = 1;
+                    break;
+                }
+                case 'beam': {
+                    const r = f.r * z;
+                    const grd = ctx.createLinearGradient(sx, sy - this.vh, sx, sy);
+                    grd.addColorStop(0, 'rgba(255,255,255,0)');
+                    grd.addColorStop(1, `rgba(255,235,170,${(1 - p) * 0.45})`);
+                    ctx.fillStyle = grd;
+                    ctx.fillRect(sx - r * 0.5, sy - this.vh, r, this.vh);
+                    ctx.fillStyle = `rgba(255,255,255,${(1 - p) * 0.5})`;
+                    ctx.beginPath(); ctx.ellipse(sx, sy, r * 0.6, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+                    break;
+                }
+                case 'bolt': {
+                    ctx.strokeStyle = `rgba(255,255,255,${1 - p})`;
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    let px = sx + (Math.random() - 0.5) * 20, py = sy - this.vh;
+                    ctx.moveTo(px, py);
+                    const steps = 9;
+                    for (let s = 1; s <= steps; s++) {
+                        const tp = s / steps;
+                        px = lerp(px, sx, 0.55) + (Math.random() - 0.5) * 26 * (1 - tp);
+                        py = sy - this.vh * (1 - tp);
+                        ctx.lineTo(px, py);
+                    }
+                    ctx.lineTo(sx, sy);
+                    ctx.stroke();
+                    ctx.strokeStyle = `rgba(180,220,255,${(1 - p) * 0.5})`;
+                    ctx.lineWidth = 6; ctx.stroke();
+                    break;
+                }
+                case 'frost': {
+                    const r = f.r * z;
+                    ctx.fillStyle = `rgba(220,245,255,${0.5 * (1 - p) * 0.5})`;
+                    for (let s = 0; s < 10; s++) {
+                        const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * r;
+                        ctx.fillRect(sx + Math.cos(a) * d, sy + Math.sin(a) * d, 2, 2);
+                    }
+                    break;
+                }
+                case 'rain': break;   // kreslí se jako zóna
+                case 'meteor': break; // kreslí se v drawZones
+            }
+            if (!paused) { f.life--; if (f.life <= 0) sim.fx.splice(k, 1); }
+        }
+
+        // částice
+        for (let k = this.particles.length - 1; k >= 0; k--) {
+            const p = this.particles[k];
+            const sx = this.w2sx(p.x), sy = this.w2sy(p.y);
+            const a = p.life / p.max;
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = a;
+            ctx.fillRect(sx, sy, p.size, p.size);
+            ctx.globalAlpha = 1;
+            if (!paused) {
+                p.x += p.vx; p.y += p.vy;
+                p.vy += p.grav; p.vx *= 0.97; p.vy *= 0.97;
+                p.life--;
+                if (p.life <= 0) this.particles.splice(k, 1);
+            }
+        }
+        // dým z požárů
+        if (this.world.fireSet.size && this.frame % 3 === 0) {
+            let n = 0;
+            for (const i of this.world.fireSet) {
+                if (n++ > 6) break;
+                const x = i % this.world.w, y = (i / this.world.w) | 0;
+                this.particles.push({
+                    x: x + Math.random(), y: y + Math.random(), vx: 0.01, vy: -0.03,
+                    life: 40, max: 40, size: 2, color: 'rgba(90,80,80,0.7)', grav: -0.0015
+                });
+            }
+        }
+    }
+
+    drawBrush() {
+        if (!this.brush.show) return;
+        const ctx = this.ctx;
+        const sx = this.w2sx(this.brush.x), sy = this.w2sy(this.brush.y);
+        const r = this.brush.r * this.cam.zoom;
+        ctx.save();
+        ctx.strokeStyle = this.brush.color;
+        ctx.globalAlpha = 0.85;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.lineDashOffset = -this.frame * 0.4;
+        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = this.brush.color;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    /* sklo a stíny boxu */
+    drawGlass() {
+        const ctx = this.ctx;
+        const g = ctx.createLinearGradient(0, 0, this.vw * 0.7, this.vh);
+        g.addColorStop(0, 'rgba(255,255,255,0.07)');
+        g.addColorStop(0.25, 'rgba(255,255,255,0.02)');
+        g.addColorStop(0.45, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, this.vw, this.vh);
+
+        const v = ctx.createRadialGradient(this.vw / 2, this.vh / 2, Math.min(this.vw, this.vh) * 0.35,
+            this.vw / 2, this.vh / 2, Math.max(this.vw, this.vh) * 0.78);
+        v.addColorStop(0, 'rgba(0,0,0,0)');
+        v.addColorStop(1, 'rgba(0,0,10,0.55)');
+        ctx.fillStyle = v;
+        ctx.fillRect(0, 0, this.vw, this.vh);
+    }
+
+    drawMinimap() {
+        const m = this.mini, c = this.mctx;
+        if (m.width !== 220) { m.width = 220; m.height = Math.round(220 * this.world.h / this.world.w); }
+        this.paintTerrain(0, 0, this.world.w, this.world.h);
+        c.imageSmoothingEnabled = false;
+        c.drawImage(this.terrain, 0, 0, m.width, m.height);
+        // sídla
+        c.fillStyle = '#ffd97a';
+        for (const s of this.sim.structures) {
+            if (!s.alive) continue;
+            c.fillRect(s.x / this.world.w * m.width - 1, s.y / this.world.h * m.height - 1, 2, 2);
+        }
+        // výřez
+        const x = (this.cam.x - this.vw / (2 * this.cam.zoom)) / this.world.w * m.width;
+        const y = (this.cam.y - this.vh / (2 * this.cam.zoom)) / this.world.h * m.height;
+        const w = this.vw / this.cam.zoom / this.world.w * m.width;
+        const h = this.vh / this.cam.zoom / this.world.h * m.height;
+        c.strokeStyle = 'rgba(255,255,255,0.9)';
+        c.lineWidth = 1;
+        c.strokeRect(x, y, w, h);
+    }
+
+    select(c) { this.selected = c || null; this.selectedUid = c ? c.uid : 0; }
+
+    /* vybraný tvor mohl umřít a jeho slot dostal někdo jiný – pak výběr zrušíme */
+    validSelection() {
+        const c = this.selected;
+        if (c && c.alive && c.uid === this.selectedUid) return c;
+        this.selected = null;
+        return null;
+    }
+
+    creatureAt(wx, wy) {
+        let best = null, bestD = 4 / this.cam.zoom + 0.8;
+        bestD *= bestD;
+        this.sim.forEachNear(wx, wy, 3, (c, d2) => {
+            if (d2 < bestD) { bestD = d2; best = c; }
+        });
+        return best;
+    }
+}
+
+</script>
+<script>
+'use strict';
+/* Propojení simulace s uživatelským rozhraním. */
+
+const WORLD_W = 320, WORLD_H = 200;
+const $ = id => document.getElementById(id);
+
+let world, sim, renderer;
+let speed = 1;
+let power = 'bless';
+let brushR = 8;
+let held = false, panning = false, spaceDown = false;
+let lastPointer = { x: 0, y: 0 };
+let logIndex = 0;
+let hotkeys = [];
+
+/* ---------------- start ---------------- */
+
+function newWorld(seed) {
+    world = new World(WORLD_W, WORLD_H, seed >>> 0);
+    sim = new Sim(world, seed >>> 0);
+    world.rain = parseInt($('rain').value, 10) / 100;
+    world.climate = parseFloat($('climate').value);
+    sim.mutationRate = parseInt($('mut').value, 10) / 100;
+    sim.seedLife(180);
+    const zoom = renderer ? renderer.cam.zoom : 0;
+    renderer = new Renderer($('world'), $('minimap'), world, sim);
+    renderer.cam.zoom = zoom ? Math.max(zoom, renderer.minZoom) : renderer.minZoom;
+    renderer.clampCam();
+    renderer.overlay = document.querySelector('.overlay-bar button.active')?.dataset.ov || 'normal';
+    logIndex = 0;
+    $('log').innerHTML = '';
+    renderer.select(null);
+    $('inspector').hidden = true;
+    sim.log('🌍 Zrodil se nový svět. Semínko: ' + (seed >>> 0), 'good');
+}
+
+function boot() {
+    buildPowers();
+    buildOverlays();
+    buildTabs();
+    bindControls();
+    bindCanvas();
+    newWorld(parseInt($('seed').value, 10) || 1);
+    selectPower('bless');
+    if (!localStorage.getItem('bs-help-seen')) $('help').hidden = false;
+    requestAnimationFrame(loop);
+}
+
+/* ---------------- panely ---------------- */
+
+function buildPowers() {
+    const groups = { create: $('powers-create'), terra: $('powers-terra'), doom: $('powers-doom') };
+    hotkeys = [];
+    for (const p of POWERS) {
+        const el = document.createElement('button');
+        el.className = 'power';
+        el.dataset.id = p.id;
+        const key = hotkeys.length < 10 ? (hotkeys.length + 1) % 10 : '';
+        if (key !== '') hotkeys.push(p.id);
+        el.innerHTML = `${p.emoji}${p.cost ? `<b>${p.cost}</b>` : ''}${key !== '' ? `<u>${key}</u>` : ''}`;
+        el.title = `${p.name}${p.cost ? ' – ' + p.cost + ' víry' : ''}`;
+        el.addEventListener('click', () => selectPower(p.id));
+        el.addEventListener('mouseenter', () => showDesc(p));
+        groups[p.group].appendChild(el);
+    }
+    $('powers-create').parentElement.addEventListener('mouseleave', () => showDesc(POWER_MAP[power]));
+}
+
+function showDesc(p) {
+    $('power-desc').innerHTML = `<b>${p.emoji} ${p.name}${p.cost ? ` · ${p.cost} víry` : ''}</b>${p.desc}${p.hold ? '<br><i style="color:#7cc4ff">Můžeš držet a táhnout.</i>' : ''}`;
+}
+
+function selectPower(id) {
+    power = id;
+    document.querySelectorAll('.power').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+    showDesc(POWER_MAP[id]);
+    const p = POWER_MAP[id];
+    renderer.brush.color = p.group === 'doom' ? '#ff9a9a' : p.group === 'terra' ? '#b0e0a0' : '#ffe6a0';
+}
+
+function buildOverlays() {
+    const bar = $('overlay-bar');
+    for (const o of OVERLAYS) {
+        const b = document.createElement('button');
+        b.textContent = `${o.icon} ${o.name}`;
+        b.dataset.ov = o.id;
+        if (o.id === 'normal') b.classList.add('active');
+        b.addEventListener('click', () => {
+            renderer.overlay = o.id;
+            bar.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+        });
+        bar.appendChild(b);
+    }
+}
+
+function buildTabs() {
+    $('tabs').addEventListener('click', e => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+        for (const t of ['world', 'species', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
+    });
+}
+
+function bindControls() {
+    $('brush').addEventListener('input', e => {
+        brushR = parseInt(e.target.value, 10);
+        $('brush-val').textContent = brushR;
+        renderer.brush.r = brushR;
+    });
+    $('climate').addEventListener('input', e => {
+        world.climate = parseFloat(e.target.value);
+        $('climate-val').textContent = (world.climate > 0 ? '+' : '') + world.climate + ' °C';
+    });
+    $('rain').addEventListener('input', e => {
+        world.rain = parseInt(e.target.value, 10) / 100;
+        $('rain-val').textContent = e.target.value + ' %';
+    });
+    $('mut').addEventListener('input', e => {
+        sim.mutationRate = parseInt(e.target.value, 10) / 100;
+        $('mut-val').textContent = e.target.value + ' %';
+    });
+    $('speeds').addEventListener('click', e => {
+        const b = e.target.closest('button[data-speed]');
+        if (!b) return;
+        speed = parseInt(b.dataset.speed, 10);
+        $('speeds').querySelectorAll('button[data-speed]').forEach(x => x.classList.toggle('active', x === b));
+    });
+    $('btn-new').addEventListener('click', () => {
+        newWorld(parseInt($('seed').value, 10) || Date.now() & 0xffff);
+        toast('🌍 Nový svět je na světě');
+    });
+    $('btn-life').addEventListener('click', () => {
+        sim.seedLife(180);
+        toast('🐣 Zasel jsi nový život');
+    });
+    $('btn-help').addEventListener('click', () => { $('help').hidden = false; });
+    $('help-close').addEventListener('click', () => {
+        $('help').hidden = true;
+        localStorage.setItem('bs-help-seen', '1');
+    });
+
+    window.addEventListener('resize', () => renderer.resize());
+    window.addEventListener('keydown', e => {
+        if (e.target.tagName === 'INPUT') return;
+        if (e.code === 'Space') { e.preventDefault(); spaceDown = true; togglePause(); }
+        if (e.key === 'h' || e.key === 'H') $('help').hidden = !$('help').hidden;
+        if (e.key === 'Tab') { e.preventDefault(); cycleOverlay(); }
+        const n = parseInt(e.key, 10);
+        if (!isNaN(n) && e.key.length === 1) {
+            const idx = n === 0 ? 9 : n - 1;
+            if (hotkeys[idx]) selectPower(hotkeys[idx]);
+        }
+    });
+    window.addEventListener('keyup', e => { if (e.code === 'Space') spaceDown = false; });
+
+    $('minimap').addEventListener('click', e => {
+        const r = e.target.getBoundingClientRect();
+        renderer.cam.x = (e.clientX - r.left) / r.width * world.w;
+        renderer.cam.y = (e.clientY - r.top) / r.height * world.h;
+        renderer.clampCam();
+    });
+}
+
+function togglePause() {
+    speed = speed === 0 ? 1 : 0;
+    $('speeds').querySelectorAll('button[data-speed]').forEach(x =>
+        x.classList.toggle('active', parseInt(x.dataset.speed, 10) === speed));
+}
+
+function cycleOverlay() {
+    const bar = $('overlay-bar');
+    const btns = [...bar.querySelectorAll('button')];
+    const i = btns.findIndex(b => b.classList.contains('active'));
+    btns[(i + 1) % btns.length].click();
+}
+
+/* ---------------- ovládání myší ---------------- */
+
+function bindCanvas() {
+    const cv = $('world');
+    cv.addEventListener('contextmenu', e => e.preventDefault());
+
+    cv.addEventListener('pointerdown', e => {
+        cv.setPointerCapture(e.pointerId);
+        lastPointer = { x: e.offsetX, y: e.offsetY };
+        if (e.button === 2 || e.button === 1 || spaceDown) { panning = true; return; }
+        const wx = renderer.s2wx(e.offsetX), wy = renderer.s2wy(e.offsetY);
+        applyAt(wx, wy);
+        held = true;
+    });
+
+    cv.addEventListener('pointermove', e => {
+        const wx = renderer.s2wx(e.offsetX), wy = renderer.s2wy(e.offsetY);
+        renderer.brush.x = wx; renderer.brush.y = wy; renderer.brush.show = true;
+        if (panning) {
+            renderer.cam.x -= (e.offsetX - lastPointer.x) / renderer.cam.zoom;
+            renderer.cam.y -= (e.offsetY - lastPointer.y) / renderer.cam.zoom;
+            renderer.clampCam();
+        }
+        lastPointer = { x: e.offsetX, y: e.offsetY };
+        updateTooltip(e.offsetX, e.offsetY, wx, wy);
+    });
+
+    const stop = () => { held = false; panning = false; };
+    cv.addEventListener('pointerup', stop);
+    cv.addEventListener('pointercancel', stop);
+    cv.addEventListener('pointerleave', () => {
+        stop();
+        renderer.brush.show = false;
+        $('tooltip').style.display = 'none';
+    });
+
+    cv.addEventListener('wheel', e => {
+        e.preventDefault();
+        renderer.zoomAt(e.offsetX, e.offsetY, e.deltaY < 0 ? 1.16 : 1 / 1.16);
+    }, { passive: false });
+}
+
+function applyAt(wx, wy) {
+    if (wx < 0 || wy < 0 || wx >= world.w || wy >= world.h) return;
+    const p = POWER_MAP[power];
+    if (p.id === 'inspect') {
+        renderer.select(renderer.creatureAt(wx, wy));
+        renderInspector();
+        return;
+    }
+    if (sim.faith < p.cost) {
+        toast('🙏 Málo víry – získej věřící zázraky nebo počkej na modlitby');
+        $('faith-bar').classList.remove('flash');
+        void $('faith-bar').offsetWidth;
+        $('faith-bar').classList.add('flash');
+        return;
+    }
+    usePower(sim, power, wx, wy, brushR, 1);
+}
+
+let toastTimer = null;
+function toast(text) {
+    const t = $('toast');
+    t.textContent = text;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function updateTooltip(sx, sy, wx, wy) {
+    const tip = $('tooltip');
+    if (wx < 0 || wy < 0 || wx >= world.w || wy >= world.h) { tip.style.display = 'none'; return; }
+    const xi = wx | 0, yi = wy | 0, i = yi * world.w + xi;
+    const alt = Math.round((world.height[i] - world.seaLevel) * 4000);
+    const t = world.tempAt(xi, yi, i);
+    const c = renderer.creatureAt(wx, wy);
+    let text = `${alt >= 0 ? '⛰️ ' + alt + ' m n. m.' : '🌊 ' + (-alt) + ' m pod hladinou'}\n` +
+        `🌡️ ${t.toFixed(1)} °C   🌿 ${(world.veg[i] * 100) | 0} %\n` +
+        `💧 vláha ${(world.moist[i] * 100) | 0} %   🌾 půda ${(world.fert[i] * 100) | 0} %`;
+    if (world.water[i] > 0.02) text += `\n🌊 hloubka ${(world.water[i] * 4000) | 0} m`;
+    if (world.rad[i] > 0.02) text += `\n☢️ radiace ${(world.rad[i] * 100) | 0} %`;
+    if (c) {
+        const sp = sim.getSpecies(c.sp);
+        text += `\n──────────\n${c.carn ? '🦷' : '🌿'} ${sp ? sp.name : '?'} · ${c.gen}. generace\n` +
+            `❤️ ${(100 * c.energy / c.maxE) | 0} %  ⏳ ${c.age}/${c.lifespan | 0}${c.sick ? '  🦠 nemocný' : ''}${c.faith > 0.35 ? '  🙏 věřící' : ''}`;
+    }
+    tip.textContent = text;
+    tip.style.display = 'block';
+    const box = $('box').getBoundingClientRect();
+    tip.style.left = Math.min(sx + 16, box.width - 190) + 'px';
+    tip.style.top = Math.min(sy + 16, box.height - 100) + 'px';
+}
+
+/* ---------------- vykreslování panelů ---------------- */
+
+function renderInspector() {
+    const el = $('inspector');
+    const c = renderer.validSelection();
+    if (!c) { el.hidden = true; return; }
+    const sp = sim.getSpecies(c.sp);
+    let genes = '';
+    for (let k = 0; k < GENE_COUNT; k++) {
+        genes += `<div class="gene"><span>${GENE_INFO[k].icon} ${GENE_INFO[k].name}</span>` +
+            `<div class="bar"><i style="width:${(c.g[k] * 100) | 0}%"></i></div><em>${(c.g[k] * 100) | 0}</em></div>`;
+    }
+    el.innerHTML = `<h5><span class="chip" style="background:${sp ? sp.color : '#fff'}"></span>${sp ? sp.name : '?'}
+        <button class="close" title="Zavřít">✕</button></h5>
+        <div class="row"><span>strava</span><b>${c.carn ? 'masožravec' : c.g[G_AGGR] > 0.3 ? 'všežravec' : 'býložravec'}</b></div>
+        <div class="row"><span>generace</span><b>${c.gen}.</b></div>
+        <div class="row"><span>věk</span><b>${c.age} / ${c.lifespan | 0}</b></div>
+        <div class="row"><span>energie</span><b>${(100 * c.energy / c.maxE) | 0} %</b></div>
+        <div class="row"><span>víra</span><b>${(c.faith * 100) | 0} %</b></div>
+        <div class="row"><span>stav</span><b>${c.sick ? '🦠 nemocný' : c.imm ? '💪 imunní' : 'zdravý'}</b></div>
+        <div style="margin-top:.4rem">${genes}</div>`;
+    el.hidden = false;
+    el.querySelector('.close').addEventListener('click', () => { renderer.select(null); el.hidden = true; });
+}
+
+function renderHud() {
+    const s = sim.stats();
+    $('hud-year').textContent = world.year;
+    $('hud-pop').textContent = s.pop;
+    $('hud-species').textContent = s.species;
+    $('hud-gen').textContent = sim.generation;
+    $('hud-believers').textContent = sim.believers;
+
+    let tsum = 0, n = 0;
+    for (let y = 4; y < world.h; y += 9) for (let x = 4; x < world.w; x += 9) { tsum += world.tempAt(x, y, y * world.w + x); n++; }
+    $('hud-temp').textContent = (tsum / n).toFixed(1) + ' °C';
+
+    const pct = clamp(sim.faith / sim.faithMax, 0, 1) * 100;
+    $('faith-fill').style.width = pct + '%';
+    $('faith-text').textContent = `${sim.faith | 0} / ${sim.faithMax | 0} víry`;
+    $('align-love').style.setProperty('--v', (sim.love * 100) + '%');
+    $('align-fear').style.setProperty('--v', (sim.fear * 100) + '%');
+    $('align-label').textContent =
+        sim.love < 0.04 && sim.fear < 0.04 ? 'neznámý bůh' :
+        sim.love > sim.fear * 1.6 ? 'milovaný bůh' :
+        sim.fear > sim.love * 1.6 ? 'obávaný bůh' : 'rozporuplný bůh';
+
+    document.querySelectorAll('.power').forEach(el => {
+        el.classList.toggle('locked', POWER_MAP[el.dataset.id].cost > sim.faith);
+    });
+
+    $('stats').innerHTML = [
+        ['vrchol populace', sim.peakPop], ['narozeno celkem', sim.born],
+        ['zemřelo celkem', sim.died], ['dravců', s.carn],
+        ['nemocných', s.sick], ['sídel', s.structures],
+        ['chrámů', s.temples], ['modlitby', sim.prayers.toFixed(2) + '/tik'],
+        ['hladina moře', ((world.seaLevel - world.baseSea) * 4000).toFixed(0) + ' m'],
+        ['popel v ovzduší', world.dust.toFixed(1) + ' °C']
+    ].map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('');
+
+    let genes = '';
+    for (let k = 0; k < GENE_COUNT; k++) {
+        const v = (s.genes[k] * 100) | 0;
+        genes += `<div class="gene"><span>${GENE_INFO[k].icon} ${GENE_INFO[k].name}</span>` +
+            `<div class="bar"><i style="width:${v}%"></i></div><em>${v}</em></div>`;
+    }
+    $('genes').innerHTML = genes;
+
+    const b = $('banner');
+    if (s.pop === 0) {
+        b.textContent = '☠️ Svět je bez života. Vyber 🐣 Stvořit život a klikni na souš.';
+        b.classList.add('show');
+    } else b.classList.remove('show');
+}
+
+function renderSpecies() {
+    const el = $('tab-species');
+    if (el.hidden) return;
+    const live = sim.species.filter(s => !s.extinct && s.count > 0).sort((a, b) => b.count - a.count);
+    const dead = sim.species.filter(s => s.extinct && s.peak >= 8).length;
+    let html = `<h4>Žijící druhy (${live.length})</h4>`;
+    if (!live.length) html += '<div class="card">Nikdo tu není. Zkus stvořit život.</div>';
+    for (const sp of live.slice(0, 14)) {
+        const carn = sp.genes[G_AGGR] > 0.55;
+        html += `<div class="sp-row" data-sp="${sp.id}">
+            <div class="sp-head"><span class="chip" style="background:${sp.color}"></span>
+                <b>${carn ? '🦷 ' : ''}${sp.name}</b><em>${sp.count}</em></div>
+            <div class="sp-meta"><span>vznik: ${sp.born}. rok</span><span>vrchol: ${sp.peak}</span>
+                <span>${sp.genes[G_SWIM] > 0.6 ? '🌊 vodní' : sp.genes[G_INTEL] > 0.55 ? '🧠 chytrý' : ''}</span></div>
+            <div class="sp-bars">
+                ${[G_SIZE, G_SPEED, G_INTEL, G_AGGR, G_COLD, G_HEAT, G_SWIM].map(g =>
+                    `<i title="${GENE_INFO[g].name}: ${(sp.genes[g] * 100) | 0}%" style="--v:${(sp.genes[g] * 100) | 0}%"></i>`).join('')}
+            </div></div>`;
+    }
+    html += `<h4>Vyhynulé druhy: ${dead}</h4>`;
+    el.innerHTML = html;
+    el.querySelectorAll('.sp-row').forEach(row => row.addEventListener('click', () => {
+        const id = parseInt(row.dataset.sp, 10);
+        for (const c of sim.list) {
+            if (c.alive && c.sp === id) {
+                renderer.cam.x = c.x; renderer.cam.y = c.y;
+                renderer.cam.zoom = Math.max(renderer.cam.zoom, 7);
+                renderer.clampCam();
+                renderer.select(c);
+                renderInspector();
+                break;
+            }
+        }
+    }));
+}
+
+function renderLog() {
+    const el = $('log');
+    while (logIndex < sim.events.length) {
+        const e = sim.events[logIndex++];
+        const d = document.createElement('div');
+        d.className = 'ev ' + e.kind;
+        d.innerHTML = `<time>${e.year}. rok</time>${e.text}`;
+        el.appendChild(d);
+        if (el.children.length > 160) el.removeChild(el.firstChild);
+    }
+}
+
+function renderGraph() {
+    const cv = $('graph'), ctx = cv.getContext('2d');
+    const h = sim.history;
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    if (h.pop.length < 2) return;
+    const n = h.pop.length;
+    const maxPop = Math.max(10, ...h.pop);
+    const maxSp = Math.max(3, ...h.species);
+    const line = (arr, max, color, fill) => {
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const x = i / (n - 1) * W, y = H - (arr[i] / max) * (H - 6) - 3;
+            i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+        if (fill) {
+            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+            ctx.fillStyle = fill; ctx.fill();
+        }
+    };
+    line(h.pop, maxPop, '#6ee7a8', 'rgba(110,231,168,0.12)');
+    line(h.species, maxSp, '#7cc4ff');
+    line(h.faith, Math.max(50, sim.faithMax), '#ffd166');
+    ctx.fillStyle = 'rgba(223,230,247,0.5)';
+    ctx.font = '9px sans-serif';
+    ctx.fillText('max ' + maxPop, 4, 10);
+}
+
+/* ---------------- smyčka ---------------- */
+
+let frame = 0;
+function loop() {
+    requestAnimationFrame(loop);
+    frame++;
+
+    if (speed > 0) {
+        const t0 = performance.now();
+        for (let i = 0; i < speed; i++) {
+            sim.step();
+            if (performance.now() - t0 > 22) break;    // radši nižší rychlost než trhání
+        }
+    }
+    if (held && POWER_MAP[power].hold && frame % 6 === 0) applyAt(renderer.brush.x, renderer.brush.y);
+
+    renderer.draw(speed === 0);
+
+    if (frame % 10 === 0) renderHud();
+    if (frame % 30 === 0) { renderSpecies(); renderGraph(); }
+    if (sim.dirtyLog) { renderLog(); sim.dirtyLog = false; }
+    if (frame % 15 === 0 && renderer.selected) renderInspector();
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+
+</script>
+</body>
+</html>
