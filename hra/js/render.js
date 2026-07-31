@@ -2,7 +2,8 @@
 /* Vykreslování. Terén se kreslí do vyrovnávací plochy a překresluje se jen tam,
    kde se něco změnilo. Panáčci se mezi tiky plynule dopočítávají. */
 
-const TPX = 14;                      // velikost dlaždice ve vyrovnávací ploše (px)
+let TPX = 14;                        // velikost dlaždice ve vyrovnávací ploše (px)
+function setTilePx(worldW) { TPX = Math.round(clamp(2400 / worldW, 7, 14)); }
 
 const MAP_MODES = [
     { id: 'normal', name: 'Krajina', icon: '🗺️' },
@@ -22,6 +23,7 @@ class Renderer {
         this.life = life;
         this.mode = 'normal';
 
+        setTilePx(world.w);
         this.buf = document.createElement('canvas');
         this.buf.width = world.w * TPX; this.buf.height = world.h * TPX;
         this.bctx = this.buf.getContext('2d');
@@ -307,6 +309,7 @@ class Renderer {
         }
         ctx.imageSmoothingEnabled = true;
 
+        this.drawHazards();
         this.drawBuildings();
         this.drawUnits(alpha);
         this.drawLabels();
@@ -332,6 +335,44 @@ class Renderer {
         ctx.globalAlpha = 1;
     }
 
+    drawHazards() {
+        const ctx = this.ctx, z = this.cam.zoom, life = this.life;
+        for (const t of (life.tornados || [])) {
+            const sx = this.w2sx(t.x + 0.5), sy = this.w2sy(t.y + 0.5), r = t.r * z;
+            const g = ctx.createRadialGradient(sx, sy, r * 0.05, sx, sy, r);
+            g.addColorStop(0, 'rgba(40,42,55,0.85)');
+            g.addColorStop(0.3, 'rgba(215,218,232,0.75)');
+            g.addColorStop(1, 'rgba(120,124,150,0)');
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(sx, sy, r, 0, 6.3); ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+            ctx.lineWidth = 1.5;
+            for (let k = 0; k < 4; k++) {
+                ctx.beginPath();
+                const a0 = this.frame * 0.14 + k * 1.6;
+                for (let p = 0; p <= 14; p++) {
+                    const f = p / 14, ang = a0 + f * 7, rr = r * (0.12 + f * 0.88);
+                    const px = sx + Math.cos(ang) * rr, py = sy + Math.sin(ang) * rr * 0.6;
+                    p === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+        }
+        for (const s2 of (life.storms || [])) {
+            const sx = this.w2sx(s2.x + 0.5), sy = this.w2sy(s2.y + 0.5), r = s2.r * z;
+            const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+            g.addColorStop(0, 'rgba(225,240,255,0.42)');
+            g.addColorStop(1, 'rgba(200,225,255,0)');
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(sx, sy, r, 0, 6.3); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            for (let k = 0; k < 16; k++) {
+                const a = (this.frame * 0.02 + k) % 6.283, d = ((this.frame * 2 + k * 37) % (r || 1));
+                ctx.fillRect(sx + Math.cos(a) * d, sy + Math.sin(a) * d * 0.7, 2, 2);
+            }
+        }
+    }
+
     drawBuildings() {
         const ctx = this.ctx, z = this.cam.zoom, life = this.life;
         for (const b of life.buildings) {
@@ -340,7 +381,7 @@ class Renderer {
             if (sx < -20 || sy < -20 || sx > this.vw + 20 || sy > this.vh + 20) continue;
             const realm = life.realmById(b.realm);
             const col = realm ? realm.color : '#999';
-            const s = Math.max(3, z * (b.type === 'castle' ? 1.2 : 0.85));
+            const s = Math.max(3, z * (b.type === 'castle' ? 1.25 : b.type === 'temple' || b.type === 'barracks' ? 1.0 : 0.85));
 
             ctx.fillStyle = 'rgba(0,0,0,0.3)';
             ctx.beginPath(); ctx.ellipse(sx, sy + s * 0.45, s * 0.55, s * 0.22, 0, 0, 6.3); ctx.fill();
@@ -354,6 +395,49 @@ class Renderer {
                 ctx.fillRect(sx + s * 0.06, sy - s * 1.15, s * 0.07, s * 0.8);
                 ctx.fillStyle = col;
                 ctx.fillRect(sx + s * 0.12, sy - s * 1.12, s * 0.38, s * 0.3);
+            } else if (b.type === 'temple') {
+                ctx.fillStyle = '#e8e2d2';
+                ctx.fillRect(sx - s * 0.38, sy - s * 0.15, s * 0.76, s * 0.55);
+                ctx.fillStyle = '#f2d98a';
+                ctx.beginPath();
+                ctx.moveTo(sx - s * 0.46, sy - s * 0.12); ctx.lineTo(sx, sy - s * 0.7); ctx.lineTo(sx + s * 0.46, sy - s * 0.12);
+                ctx.closePath(); ctx.fill();
+                if (z > 9) { ctx.fillStyle = '#ffd24a'; ctx.fillRect(sx - s * 0.05, sy - s * 1.0, s * 0.1, s * 0.3); }
+            } else if (b.type === 'market') {
+                ctx.fillStyle = '#c9a06a';
+                ctx.fillRect(sx - s * 0.4, sy - s * 0.05, s * 0.8, s * 0.42);
+                for (let k = 0; k < 4; k++) {
+                    ctx.fillStyle = k % 2 ? '#e05555' : '#f4f0e6';
+                    ctx.fillRect(sx - s * 0.44 + k * s * 0.22, sy - s * 0.42, s * 0.22, s * 0.38);
+                }
+            } else if (b.type === 'mine') {
+                ctx.fillStyle = '#7c7772';
+                ctx.beginPath();
+                ctx.moveTo(sx - s * 0.42, sy + s * 0.34); ctx.lineTo(sx, sy - s * 0.5); ctx.lineTo(sx + s * 0.42, sy + s * 0.34);
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#2a2622';
+                ctx.beginPath(); ctx.arc(sx, sy + s * 0.2, s * 0.2, Math.PI, 0); ctx.fill();
+                ctx.fillRect(sx - s * 0.2, sy + s * 0.18, s * 0.4, s * 0.18);
+            } else if (b.type === 'sawmill') {
+                ctx.fillStyle = '#a9744a';
+                ctx.fillRect(sx - s * 0.38, sy - s * 0.18, s * 0.76, s * 0.55);
+                ctx.fillStyle = '#6b4a2c';
+                ctx.fillRect(sx - s * 0.42, sy - s * 0.3, s * 0.84, s * 0.14);
+                if (z > 9) {
+                    ctx.strokeStyle = '#d8d4cc'; ctx.lineWidth = Math.max(1, s * 0.07);
+                    ctx.beginPath(); ctx.arc(sx + s * 0.14, sy + s * 0.08, s * 0.17, 0, 6.3); ctx.stroke();
+                }
+            } else if (b.type === 'barracks') {
+                ctx.fillStyle = '#6f7480';
+                ctx.fillRect(sx - s * 0.42, sy - s * 0.25, s * 0.84, s * 0.62);
+                ctx.fillStyle = col;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy - s * 0.62); ctx.lineTo(sx + s * 0.26, sy - s * 0.3); ctx.lineTo(sx - s * 0.26, sy - s * 0.3);
+                ctx.closePath(); ctx.fill();
+                if (z > 9) {
+                    ctx.strokeStyle = '#e8eaf0'; ctx.lineWidth = Math.max(1, s * 0.08);
+                    ctx.beginPath(); ctx.moveTo(sx - s * 0.16, sy + s * 0.28); ctx.lineTo(sx + s * 0.16, sy - s * 0.1); ctx.stroke();
+                }
             } else {
                 ctx.fillStyle = '#c9a06a';
                 ctx.fillRect(sx - s * 0.35, sy - s * 0.1, s * 0.7, s * 0.5);
@@ -365,8 +449,7 @@ class Renderer {
                 ctx.closePath(); ctx.fill();
                 if (z > 10) { ctx.fillStyle = 'rgba(60,40,20,0.8)'; ctx.fillRect(sx - s * 0.08, sy + s * 0.12, s * 0.16, s * 0.28); }
             }
-            const full = b.type === 'castle' ? 120 : 45;
-            if (b.hp < full * 0.6) {
+            if (b.hp < (b.maxHp || 45) * 0.6) {
                 ctx.fillStyle = 'rgba(40,40,40,0.45)';
                 ctx.fillRect(sx - s * 0.4, sy - s * 0.5, s * 0.8, s * 0.4);
             }
@@ -391,6 +474,30 @@ class Renderer {
             if (u.kind === 'animal') {
                 const a = ANIMALS[u.race];
                 ctx.fillStyle = a.color;
+                if (u.race === 'dragon') {
+                    const ds = s * 1.9;
+                    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                    ctx.beginPath(); ctx.ellipse(sx, sy + ds * 0.5, ds * 0.5, ds * 0.18, 0, 0, 6.3); ctx.fill();
+                    const flap = Math.sin(this.frame * 0.25) * ds * 0.25;
+                    ctx.fillStyle = '#8e2f28';
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy - ds * 0.1);
+                    ctx.lineTo(sx - ds * 0.75, sy - ds * 0.4 - flap);
+                    ctx.lineTo(sx - ds * 0.2, sy + ds * 0.12);
+                    ctx.closePath(); ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy - ds * 0.1);
+                    ctx.lineTo(sx + ds * 0.75, sy - ds * 0.4 - flap);
+                    ctx.lineTo(sx + ds * 0.2, sy + ds * 0.12);
+                    ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = a.color;
+                    ctx.beginPath(); ctx.ellipse(sx, sy - ds * 0.05, ds * 0.32, ds * 0.2, 0, 0, 6.3); ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx + (u.dir || 1) * ds * 0.34, sy - ds * 0.16, ds * 0.14, 0, 6.3); ctx.fill();
+                    ctx.fillStyle = '#ffd24a';
+                    ctx.fillRect(sx + (u.dir || 1) * ds * 0.44, sy - ds * 0.18, ds * 0.12, ds * 0.06);
+                    if (sel === u) this.ring(sx, sy, ds);
+                    continue;
+                }
                 if (u.race === 'sheep') {
                     ctx.beginPath(); ctx.ellipse(sx, sy - s * 0.12 - bob, s * 0.32, s * 0.24, 0, 0, 6.3); ctx.fill();
                     ctx.fillStyle = '#3c3a38';
@@ -409,7 +516,8 @@ class Renderer {
 
             const race = RACES[u.race];
             const realm = u.realm ? life.realmById(u.realm) : null;
-            const cloth = realm ? realm.color : '#9aa3b5';
+            const cloth = u.zombie ? '#4d6b3a' : (realm ? realm.color : '#9aa3b5');
+            const skin = u.zombie ? '#8fb56a' : race.skin;
 
             if (z >= 5) {
                 ctx.strokeStyle = '#3b3227';
@@ -422,8 +530,9 @@ class Renderer {
             }
             ctx.fillStyle = cloth;
             ctx.fillRect(sx - s * 0.19, sy - s * 0.2 - bob, s * 0.38, s * 0.36);
-            ctx.fillStyle = race.skin;
+            ctx.fillStyle = skin;
             ctx.beginPath(); ctx.arc(sx, sy - s * 0.36 - bob, s * 0.2, 0, 6.3); ctx.fill();
+            if (u.zombie && z >= 6) { ctx.fillStyle = '#c8f06a'; ctx.fillRect(sx - s * 0.1, sy - s * 0.4 - bob, s * 0.06, s * 0.06); ctx.fillRect(sx + s * 0.05, sy - s * 0.4 - bob, s * 0.06, s * 0.06); }
 
             if (u.job === 'soldier' && z >= 6) {
                 ctx.strokeStyle = '#e8eaf0';

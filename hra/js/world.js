@@ -7,7 +7,7 @@ const TILE_NAME = ['hlubina', 'mělčina', 'písek', 'louka', 'les', 'kopce', 'h
 const WATER_TILE = [true, true, false, false, false, false, false, false, false, false, false];
 const WALK_COST = [99, 99, 1.3, 1, 1.25, 1.6, 2.6, 1.5, 99, 1.1, 1];
 /* kolik jídla se dá z dlaždice získat */
-const FOOD_TILE = [0, 0.4, 0, 0.5, 1, 0.3, 0, 0.1, 0, 0, 1.6];
+const FOOD_TILE = [0, 0.4, 0, 0.5, 1, 0.3, 0, 0.1, 0, 0, 2.2];
 
 class World {
     constructor(w, h, seed) {
@@ -219,7 +219,7 @@ class World {
                 continue;
             }
             if ((this.tick & 1) === 0) this.mark(i);          // pomalé mihotání plamene
-            if (rng() < 0.14) this.neighbors(i, j => { if (rng() < 0.5) this.ignite(j); });
+            if (rng() < 0.07) this.neighbors(i, j => { if (rng() < 0.4) this.ignite(j); });
         }
         for (const i of done) this.fireSet.delete(i);
     }
@@ -278,7 +278,7 @@ class World {
             const temp = this.tempAt(i);
             const good = temp > 0 && temp < 34 ? this.moist[i] : 0;
             if (t === T.ASH) {
-                this.veg[i] += 0.03 * good;
+                this.veg[i] += 0.05 * good;
                 if (this.veg[i] > 0.25) this.classify(i);
                 continue;
             }

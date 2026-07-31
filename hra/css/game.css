@@ -120,7 +120,7 @@ input[type=range] { width: 100%; accent-color: #6f8bff; height: 18px; }
 #stage { position: relative; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
 #case {
     position: relative; width: 100%; max-height: 100%; max-width: calc((100vh - 128px) * 1.6);
-    aspect-ratio: 144 / 90;
+    aspect-ratio: 8 / 5;
     padding: 9px 9px 15px; border-radius: 16px;
     background: linear-gradient(180deg, #2a3152, #151a2e 40%, #0c1020);
     box-shadow: 0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12);
@@ -210,7 +210,7 @@ input[type=range] { width: 100%; accent-color: #6f8bff; height: 18px; }
 
 .bottom-controls { border-top: 1px solid var(--line); padding: .5rem .6rem .6rem; }
 .newworld { display: flex; gap: 5px; margin-top: .3rem; }
-.newworld input { flex: 1; min-width: 0; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 8px; padding: .32rem .45rem; }
+.newworld input { flex: 1; min-width: 0; text-align: center; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 8px; padding: .32rem .45rem; }
 button.wide, .newworld button {
     background: linear-gradient(180deg, #3d5cc4, #2a3b8a); border: 1px solid #6d86e8; color: #fff;
     border-radius: 8px; padding: .34rem .55rem; cursor: pointer; font-size: .72rem; white-space: nowrap;
@@ -248,4 +248,35 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
     #stage { height: 60vh; }
     aside { max-height: 44vh; }
     .help-grid { grid-template-columns: 1fr; }
+}
+
+
+/* ---------------- zákony ---------------- */
+.laws-intro { font-size: .72rem; color: var(--dim); line-height: 1.5; margin-bottom: .6rem; }
+.law { background: rgba(0,0,0,.25); border: 1px solid var(--line); border-radius: 10px; padding: .45rem .5rem; margin-bottom: 6px; }
+.law-head { font-size: .78rem; margin-bottom: .3rem; }
+.law-opts { display: flex; gap: 4px; }
+.law-opts button {
+    flex: 1; background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--dim);
+    border-radius: 7px; padding: .22rem .1rem; font-size: .64rem; cursor: pointer;
+}
+.law-opts button:hover { background: rgba(90,120,200,.3); }
+.law-opts button.on { background: rgba(255,209,102,.2); border-color: var(--gold); color: #fff; }
+.law-desc { font-size: .62rem; color: var(--dim); line-height: 1.4; margin-top: .3rem; }
+
+/* ---------------- grafy ---------------- */
+#tab-charts canvas { width: 100%; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 8px; display: block; }
+#tab-charts h4 { margin: .8rem 0 .3rem; }
+#tab-charts h4:first-child { margin-top: 0; }
+.legend { display: flex; gap: .5rem; flex-wrap: wrap; font-size: .6rem; color: var(--dim); margin-top: .25rem; }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 3px; }
+
+/* ---------------- říše ---------------- */
+.realm-sub { font-size: .64rem; color: var(--gold); margin-top: 1px; }
+.era-bar { height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.era-bar i { display: block; height: 100%; }
+#godmode.on { background: linear-gradient(180deg, #d8a13a, #a06d18); border-color: var(--gold); color: #fff; }
+.newworld select {
+    flex: 1.6; min-width: 0; background: rgba(0,0,0,.35); border: 1px solid var(--line);
+    border-radius: 8px; padding: .32rem .35rem; font-size: .72rem;
 }

@@ -128,7 +128,7 @@ input[type=range] { width: 100%; accent-color: #6f8bff; height: 18px; }
 #stage { position: relative; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
 #case {
     position: relative; width: 100%; max-height: 100%; max-width: calc((100vh - 128px) * 1.6);
-    aspect-ratio: 144 / 90;
+    aspect-ratio: 8 / 5;
     padding: 9px 9px 15px; border-radius: 16px;
     background: linear-gradient(180deg, #2a3152, #151a2e 40%, #0c1020);
     box-shadow: 0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12);
@@ -218,7 +218,7 @@ input[type=range] { width: 100%; accent-color: #6f8bff; height: 18px; }
 
 .bottom-controls { border-top: 1px solid var(--line); padding: .5rem .6rem .6rem; }
 .newworld { display: flex; gap: 5px; margin-top: .3rem; }
-.newworld input { flex: 1; min-width: 0; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 8px; padding: .32rem .45rem; }
+.newworld input { flex: 1; min-width: 0; text-align: center; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 8px; padding: .32rem .45rem; }
 button.wide, .newworld button {
     background: linear-gradient(180deg, #3d5cc4, #2a3b8a); border: 1px solid #6d86e8; color: #fff;
     border-radius: 8px; padding: .34rem .55rem; cursor: pointer; font-size: .72rem; white-space: nowrap;
@@ -258,6 +258,37 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
     .help-grid { grid-template-columns: 1fr; }
 }
 
+
+/* ---------------- zákony ---------------- */
+.laws-intro { font-size: .72rem; color: var(--dim); line-height: 1.5; margin-bottom: .6rem; }
+.law { background: rgba(0,0,0,.25); border: 1px solid var(--line); border-radius: 10px; padding: .45rem .5rem; margin-bottom: 6px; }
+.law-head { font-size: .78rem; margin-bottom: .3rem; }
+.law-opts { display: flex; gap: 4px; }
+.law-opts button {
+    flex: 1; background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--dim);
+    border-radius: 7px; padding: .22rem .1rem; font-size: .64rem; cursor: pointer;
+}
+.law-opts button:hover { background: rgba(90,120,200,.3); }
+.law-opts button.on { background: rgba(255,209,102,.2); border-color: var(--gold); color: #fff; }
+.law-desc { font-size: .62rem; color: var(--dim); line-height: 1.4; margin-top: .3rem; }
+
+/* ---------------- grafy ---------------- */
+#tab-charts canvas { width: 100%; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 8px; display: block; }
+#tab-charts h4 { margin: .8rem 0 .3rem; }
+#tab-charts h4:first-child { margin-top: 0; }
+.legend { display: flex; gap: .5rem; flex-wrap: wrap; font-size: .6rem; color: var(--dim); margin-top: .25rem; }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 3px; }
+
+/* ---------------- říše ---------------- */
+.realm-sub { font-size: .64rem; color: var(--gold); margin-top: 1px; }
+.era-bar { height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.era-bar i { display: block; height: 100%; }
+#godmode.on { background: linear-gradient(180deg, #d8a13a, #a06d18); border-color: var(--gold); color: #fff; }
+.newworld select {
+    flex: 1.6; min-width: 0; background: rgba(0,0,0,.35); border: 1px solid var(--line);
+    border-radius: 8px; padding: .32rem .35rem; font-size: .72rem;
+}
+
 </style>
 </head>
 <body>
@@ -267,25 +298,28 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
         <div class="brand"><span class="logo">🌍</span><span><b>BŮH SVĚTA</b><i>svět v krabici</i></span></div>
 
         <div class="hud">
-            <div class="hud-item"><span>📅</span><b id="hud-year">0</b><i>rok</i></div>
-            <div class="hud-item"><span>🧑</span><b id="hud-pop">0</b><i>obyvatel</i></div>
-            <div class="hud-item"><span>👑</span><b id="hud-realms">0</b><i>království</i></div>
-            <div class="hud-item"><span>🏘️</span><b id="hud-villages">0</b><i>vesnic</i></div>
-            <div class="hud-item"><span>🐑</span><b id="hud-animals">0</b><i>zvířat</i></div>
+            <div class="hud-item" title="Uplynulé roky"><span>📅</span><b id="hud-year">0</b><i>rok</i></div>
+            <div class="hud-item" title="Počet obyvatel"><span>🧑</span><b id="hud-pop">0</b><i>obyvatel</i></div>
+            <div class="hud-item" title="Žijící království"><span>👑</span><b id="hud-realms">0</b><i>království</i></div>
+            <div class="hud-item" title="Vesnice na mapě"><span>🏘️</span><b id="hud-villages">0</b><i>vesnic</i></div>
+            <div class="hud-item" title="Zlato ve světě"><span>🪙</span><b id="hud-gold">0</b><i>zlata</i></div>
+            <div class="hud-item" title="Probíhající války"><span>⚔️</span><b id="hud-wars">0</b><i>válek</i></div>
         </div>
 
         <div class="faith-block">
             <div class="faith-bar" id="faith-bar" title="Víra je tvá mana. Vyrábějí ji lidé, kteří v tebe věří.">
-                <i id="faith-fill"></i><span id="faith-text">60 / 200 víry</span>
+                <i id="faith-fill"></i><span id="faith-text">80 / 200 víry</span>
             </div>
             <div class="faith-note">🙏 věřících: <b id="believers">0</b></div>
         </div>
 
         <div class="speeds" id="speeds">
+            <button id="godmode" title="Nekonečná víra – všechno zdarma a bez omezení (G)">♾️</button>
             <button data-speed="0" title="Pauza (mezerník)">⏸</button>
             <button data-speed="1" class="active" title="Normální tempo">▶</button>
             <button data-speed="2" title="Dvakrát rychleji">▶▶</button>
             <button data-speed="4" title="Čtyřikrát rychleji">▶▶▶</button>
+            <button data-speed="10" title="Zrychlené dějiny">⏩</button>
             <button id="btn-help" title="Nápověda (H)">?</button>
         </div>
     </header>
@@ -295,7 +329,7 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
             <div id="tools"></div>
             <div class="ctrl">
                 <label for="brush">Velikost štětce <output id="brush-val">4</output></label>
-                <input type="range" id="brush" min="1" max="16" value="4">
+                <input type="range" id="brush" min="1" max="24" value="4">
             </div>
             <div class="desc" id="tool-desc"></div>
         </aside>
@@ -316,23 +350,50 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
 
         <aside id="right">
             <div class="tabs" id="tabs">
-                <button data-tab="realms" class="active">Království</button>
+                <button data-tab="realms" class="active">Říše</button>
+                <button data-tab="laws">Zákony</button>
+                <button data-tab="charts">Grafy</button>
                 <button data-tab="log">Kronika</button>
             </div>
             <div class="card" id="card" hidden></div>
+
             <div class="tab-body" id="tab-realms"></div>
+            <div class="tab-body" id="tab-laws" hidden></div>
+
+            <div class="tab-body" id="tab-charts" hidden>
+                <h4>Obyvatelstvo podle království</h4>
+                <canvas id="chart-realms" width="280" height="92"></canvas>
+                <div class="legend" id="legend-realms"></div>
+
+                <h4>Celkem obyvatel a vesnic</h4>
+                <canvas id="chart-pop" width="280" height="78"></canvas>
+                <div class="legend"><span><i style="background:#6ee7a8"></i>obyvatelé</span><span><i style="background:#7cc4ff"></i>vesnice ×5</span></div>
+
+                <h4>Hospodářství</h4>
+                <canvas id="chart-eco" width="280" height="78"></canvas>
+                <div class="legend"><span><i style="background:#ffd166"></i>zlato</span><span><i style="background:#8ac926"></i>jídlo</span><span><i style="background:#c98f5a"></i>dřevo</span></div>
+
+                <h4>Války</h4>
+                <canvas id="chart-wars" width="280" height="60"></canvas>
+                <div class="legend" id="charts-note"></div>
+            </div>
+
             <div class="tab-body" id="tab-log" hidden><div id="log"></div></div>
+
             <div class="bottom-controls">
                 <div class="ctrl">
                     <label for="climate">Klima <output id="climate-val">0 °C</output></label>
                     <input type="range" id="climate" min="-15" max="15" step="1" value="0">
                 </div>
                 <div class="newworld">
+                    <select id="mapsize" title="Velikost světa"></select>
                     <input type="number" id="seed" value="12345" title="Semínko světa">
-                    <button id="btn-new" title="Vytvoří svět podle semínka">🌱 Svět</button>
-                    <button id="btn-random" title="Náhodný svět">🎲</button>
                 </div>
-                <button id="btn-empty" class="wide">🗺️ Prázdný svět bez národů</button>
+                <div class="newworld">
+                    <button id="btn-new" title="Vytvoří svět podle semínka">🌱 Nový svět</button>
+                    <button id="btn-random" title="Náhodný svět">🎲</button>
+                    <button id="btn-empty" title="Svět bez národů">🗺️</button>
+                </div>
             </div>
         </aside>
     </main>
@@ -341,32 +402,37 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
 <div class="modal" id="help" hidden>
     <div class="modal-box">
         <h2>🌍 Vítej, bože</h2>
-        <p>Ve skleněné krabici před tebou žijí panáčci. Sbírají jídlo, staví domy, zakládají vesnice a království,
-        hádají se a válčí. Ty do toho můžeš kdykoli sáhnout – nebo jen sledovat, co z toho vyroste.</p>
+        <p>Ve skleněné krabici žijí panáčci. Sbírají jídlo, kácí dřevo, staví domy, pole, doly a chrámy,
+        zakládají vesnice a království, obchodují, bouří se a válčí. Ty do toho můžeš kdykoli sáhnout –
+        nebo jen sledovat, jaké dějiny z toho vzniknou.</p>
         <div class="help-grid">
             <div>
                 <h4>Ovládání</h4>
                 <ul>
-                    <li><b>Levé tlačítko</b> – použije vybraný nástroj (štětce se dají držet a táhnout)</li>
-                    <li><b>Pravé tlačítko</b> nebo <b>mezerník + tah</b> – posun mapy</li>
-                    <li><b>Kolečko</b> – přiblížení (přibliž si vesnici, ať vidíš panáčky zblízka)</li>
-                    <li><b>🖐️ Ruka</b> – klikni na panáčka nebo vesnici a uvidíš, kdo to je a co dělá</li>
-                    <li><b>1–9, 0</b> – rychlá volba nástroje, <b>mezerník</b> – pauza, <b>H</b> – nápověda</li>
+                    <li><b>Levé tlačítko</b> – použije nástroj (štětce jdou držet a táhnout)</li>
+                    <li><b>Pravé tlačítko</b> / <b>mezerník + tah</b> – posun mapy</li>
+                    <li><b>Kolečko</b> – přiblížení; přibliž si vesnici, ať vidíš panáčky zblízka</li>
+                    <li><b>🖐️ Ruka</b> – klikni na panáčka nebo vesnici a uvidíš, kdo to je</li>
+                    <li><b>♾️ nahoře (G)</b> – nekonečná víra: všechno je zdarma a neomezeně</li>
+                    <li><b>1–9, 0</b> – nástroje, <b>mezerník</b> – pauza, <b>H</b> – nápověda</li>
                 </ul>
             </div>
             <div>
-                <h4>Jak to funguje</h4>
+                <h4>Co všechno se dá dělat</h4>
                 <ul>
-                    <li><b>Národ</b> zasadíš nástrojem 🧑 👹 🧝 🧔 – vznikne království s vlastním jménem a barvou.</li>
-                    <li><b>Vesnice</b> roste, staví domy a pole, a když je jí těsno, založí další vesnici opodál.</li>
-                    <li><b>Hranice</b> na mapě ukazují, kam které království dosáhne.</li>
-                    <li><b>Války</b> vznikají mezi sousedy samy (orkové hlavně). Můžeš je vyvolat ⚔️ nebo ukončit 🕊️.</li>
-                    <li><b>Víra</b> je tvá mana: ✨ požehnej lidem, začnou v tebe věřit a víra ti poroste.</li>
-                    <li><b>Krajinu</b> maluješ přímo – vodou, lesem, horami. Změny jsou trvalé.</li>
+                    <li><b>Národy</b>: lidé, orkové, elfové, trpaslíci – každý s jinou silou, plodností a domovem.</li>
+                    <li><b>Hospodářství</b>: jídlo, dřevo a zlato. Pily, doly, tržiště, chrámy a kasárna.</li>
+                    <li><b>Zákony</b> (karta vpravo): daně, branná povinnost, porodnost, kácení, obchod,
+                        povinná víra, zahraniční politika, věda. Mění chování celého světa.</li>
+                    <li><b>Doby</b>: od kamenné po renesanci. Věda zrychluje výnosy i vojsko.</li>
+                    <li><b>Povstání</b>: nespokojená vesnice se odtrhne a založí vlastní království.</li>
+                    <li><b>Katastrofy</b>: meteorit, sopka, tornádo, vánice, povodeň, mor, nemrtví, drak.</li>
+                    <li><b>Grafy</b>: populace každého království, hospodářství, války – celé dějiny světa.</li>
                 </ul>
             </div>
         </div>
-        <p class="tip-line">Tip: zapni ▶ a nech svět chvíli běžet. Pak si přibliž vesnici a sleduj, jak panáčci nosí jídlo domů.</p>
+        <p class="tip-line">Tip: zapni ♾️, dej ⏩ zrychlené dějiny a sleduj, jak se svět sám rozdělí na říše.
+        Pak do toho začni mluvit zákony a katastrofami.</p>
         <button id="help-close">Jdu na to</button>
     </div>
 </div>
@@ -482,7 +548,7 @@ const TILE_NAME = ['hlubina', 'mělčina', 'písek', 'louka', 'les', 'kopce', 'h
 const WATER_TILE = [true, true, false, false, false, false, false, false, false, false, false];
 const WALK_COST = [99, 99, 1.3, 1, 1.25, 1.6, 2.6, 1.5, 99, 1.1, 1];
 /* kolik jídla se dá z dlaždice získat */
-const FOOD_TILE = [0, 0.4, 0, 0.5, 1, 0.3, 0, 0.1, 0, 0, 1.6];
+const FOOD_TILE = [0, 0.4, 0, 0.5, 1, 0.3, 0, 0.1, 0, 0, 2.2];
 
 class World {
     constructor(w, h, seed) {
@@ -694,7 +760,7 @@ class World {
                 continue;
             }
             if ((this.tick & 1) === 0) this.mark(i);          // pomalé mihotání plamene
-            if (rng() < 0.14) this.neighbors(i, j => { if (rng() < 0.5) this.ignite(j); });
+            if (rng() < 0.07) this.neighbors(i, j => { if (rng() < 0.4) this.ignite(j); });
         }
         for (const i of done) this.fireSet.delete(i);
     }
@@ -753,7 +819,7 @@ class World {
             const temp = this.tempAt(i);
             const good = temp > 0 && temp < 34 ? this.moist[i] : 0;
             if (t === T.ASH) {
-                this.veg[i] += 0.03 * good;
+                this.veg[i] += 0.05 * good;
                 if (this.veg[i] > 0.25) this.classify(i);
                 continue;
             }
@@ -776,24 +842,83 @@ if (typeof module !== 'undefined') {
 </script>
 <script>
 'use strict';
-/* Panáčci, zvířata, vesnice a království. Simulace běží v pevných ticích (8× za vteřinu),
-   vykreslování mezi tiky dopočítává mezipolohy – proto se nic netřese. */
+/* Panáčci, zvířata, vesnice, království, hospodářství, zákony a dějiny.
+   Simulace běží v pevných ticích (8× za vteřinu), vykreslování mezi tiky
+   dopočítává mezipolohy – proto se nic netřese. */
 
 const RACES = {
-    human: { id: 'human', name: 'Lidé', emoji: '🧑', skin: '#f0c9a0', color: '#4f86e8', speed: 0.30, str: 1.0, fert: 1.0, maxAge: 1500, homes: [T.GRASS, T.FOREST, T.SAND, T.FARM, T.HILL] },
-    orc: { id: 'orc', name: 'Orkové', emoji: '👹', skin: '#8bbf63', color: '#c8452f', speed: 0.31, str: 1.6, fert: 1.15, maxAge: 1100, homes: [T.GRASS, T.HILL, T.ASH, T.SAND] },
-    elf: { id: 'elf', name: 'Elfové', emoji: '🧝', skin: '#f6e2c8', color: '#2fae86', speed: 0.36, str: 0.85, fert: 0.75, maxAge: 2800, homes: [T.FOREST, T.GRASS] },
-    dwarf: { id: 'dwarf', name: 'Trpaslíci', emoji: '🧔', skin: '#dda879', color: '#d79a2b', speed: 0.25, str: 1.35, fert: 0.9, maxAge: 1900, homes: [T.HILL, T.MOUNT, T.SNOW, T.GRASS] }
+    human: { id: 'human', name: 'Lidé', emoji: '🧑', skin: '#f0c9a0', speed: 0.30, str: 1.0, fert: 1.0, maxAge: 1500, work: 1.1, homes: [T.GRASS, T.FOREST, T.SAND, T.FARM, T.HILL] },
+    orc: { id: 'orc', name: 'Orkové', emoji: '👹', skin: '#8bbf63', speed: 0.31, str: 1.6, fert: 1.15, maxAge: 1100, work: 0.85, homes: [T.GRASS, T.HILL, T.ASH, T.SAND] },
+    elf: { id: 'elf', name: 'Elfové', emoji: '🧝', skin: '#f6e2c8', speed: 0.36, str: 0.85, fert: 0.75, maxAge: 2800, work: 1.0, homes: [T.FOREST, T.GRASS] },
+    dwarf: { id: 'dwarf', name: 'Trpaslíci', emoji: '🧔', skin: '#dda879', speed: 0.25, str: 1.35, fert: 0.9, maxAge: 1900, work: 1.25, homes: [T.HILL, T.MOUNT, T.SNOW, T.GRASS] }
 };
 const ANIMALS = {
     sheep: { id: 'sheep', name: 'Ovce', emoji: '🐑', color: '#efece2', speed: 0.14, str: 0.15, maxAge: 900, prey: true },
-    wolf: { id: 'wolf', name: 'Vlci', emoji: '🐺', color: '#7b8090', speed: 0.34, str: 1.1, maxAge: 1100, prey: false }
+    wolf: { id: 'wolf', name: 'Vlci', emoji: '🐺', color: '#7b8090', speed: 0.34, str: 1.1, maxAge: 1100, prey: false },
+    dragon: { id: 'dragon', name: 'Drak', emoji: '🐉', color: '#b4453a', speed: 0.42, str: 9, maxAge: 6000, prey: false }
 };
 
-const REALM_COLORS = ['#4f86e8', '#c8452f', '#2fae86', '#d79a2b', '#9b5de5', '#f15bb5', '#00bbf9', '#8ac926', '#ff924c', '#59c3c3'];
+const ERAS = ['Doba kamenná', 'Doba bronzová', 'Doba železná', 'Středověk', 'Renesance'];
+const ERA_COST = [0, 350, 1100, 2600, 5200];
 
-const MAX_UNITS = 1100;
-const MAX_VILLAGES = 48;
+/* zákony světa – hráč je vyhlašuje pro celý svět */
+const LAWS = [
+    {
+        id: 'tax', name: 'Daně', icon: '🪙', opts: ['Žádné', 'Nízké', 'Vysoké'], def: 1,
+        desc: 'Kolik zlata odvádějí vesnice králi. Vysoké daně plní pokladnu, ale lidé je nemají rádi.'
+    },
+    {
+        id: 'army', name: 'Branná povinnost', icon: '⚔️', opts: ['Žádná', 'Malá', 'Velká'], def: 1,
+        desc: 'Kolik obyvatel se ve válce stane vojáky. Velká armáda vítězí, ale nikdo nesbírá jídlo.'
+    },
+    {
+        id: 'birth', name: 'Porodnost', icon: '👶', opts: ['Volná', 'Podporovaná', 'Omezená'], def: 0,
+        desc: 'Podpora rodin zrychlí růst, omezení šetří jídlo a lidé jsou klidnější.'
+    },
+    {
+        id: 'forest', name: 'Kácení lesů', icon: '🪵', opts: ['Zakázáno', 'Povolené'], def: 1,
+        desc: 'Bez dřeva se nestaví. Kácení ale mění lesy v holé louky.'
+    },
+    {
+        id: 'trade', name: 'Obchod', icon: '🛒', opts: ['Zákaz', 'Volný'], def: 1,
+        desc: 'Volný obchod nosí zlato ze sousedních měst, se kterými má království mír.'
+    },
+    {
+        id: 'faith', name: 'Povinná víra', icon: '🙏', opts: ['Ne', 'Ano'], def: 0,
+        desc: 'Všichni musí věřit v tebe. Roste ti víra, klesá spokojenost.'
+    },
+    {
+        id: 'war', name: 'Zahraniční politika', icon: '🏳️', opts: ['Mírová', 'Běžná', 'Dobyvačná'], def: 1,
+        desc: 'Určuje, jak často si království vyhlašují války.'
+    },
+    {
+        id: 'science', name: 'Podpora vědy', icon: '📜', opts: ['Ne', 'Ano'], def: 1,
+        desc: 'Vědou se postupuje do dalších dob – lepší stavby, silnější vojáci, vyšší výnosy.'
+    }
+];
+
+const REALM_COLORS = ['#4f86e8', '#c8452f', '#2fae86', '#d79a2b', '#9b5de5', '#f15bb5', '#00bbf9', '#8ac926', '#ff924c', '#59c3c3', '#e56b6f', '#b8f2e6'];
+
+const BUILDINGS = {
+    castle: { name: 'Hrad', hp: 130, wood: 0, food: 0, era: 0 },
+    house: { name: 'Dům', hp: 45, wood: 6, food: 8, era: 0 },
+    sawmill: { name: 'Pila', hp: 40, wood: 8, food: 4, era: 0 },
+    mine: { name: 'Důl', hp: 50, wood: 14, food: 6, era: 0 },
+    market: { name: 'Tržiště', hp: 45, wood: 18, food: 10, era: 1 },
+    temple: { name: 'Chrám', hp: 60, wood: 24, food: 14, era: 1 },
+    barracks: { name: 'Kasárna', hp: 70, wood: 20, food: 12, era: 2 },
+    farm: { name: 'Pole', hp: 0, wood: 0, food: 4, era: 0 }
+};
+
+let MAX_UNITS = 2200;
+let MAX_VILLAGES = 90;
+
+/* limity se přizpůsobí velikosti mapy */
+function setWorldLimits(w, h) {
+    const tiles = w * h;
+    MAX_UNITS = Math.round(clamp(tiles * 0.14, 900, 3200));
+    MAX_VILLAGES = Math.round(clamp(tiles / 230, 40, 220));
+}
 
 class Life {
     constructor(world, seed) {
@@ -804,18 +929,22 @@ class Life {
         this.villages = [];
         this.realms = [];
         this.buildings = [];
-        this.nextRealm = 1;
-        this.nextVillage = 1;
-        this.nextUnit = 1;
+        this.nextRealm = 1; this.nextVillage = 1; this.nextUnit = 1;
         this.tick = 0;
+
         this.events = [];
         this.dirtyLog = false;
         this.fx = [];
-        this.history = { pop: [], realms: [], villages: [] };
-        this.stats = { born: 0, died: 0, killed: 0, peak: 0 };
-        this.faith = 60;
+        this.stats = { born: 0, died: 0, warDead: 0, godDead: 0, peak: 0, builtTotal: 0, wars: 0 };
+        this.faith = 80;
         this.faithMax = 200;
         this.believers = 0;
+        this.godMode = false;
+
+        this.laws = {};
+        for (const l of LAWS) this.laws[l.id] = l.def;
+
+        this.hist = { t: [], pop: [], villages: [], gold: [], food: [], wood: [], wars: [], realms: new Map() };
 
         this.head = new Int32Array(world.n).fill(-1);
         this.next = new Int32Array(MAX_UNITS + 8).fill(-1);
@@ -823,20 +952,22 @@ class Life {
 
     /* ---------------- pomůcky ---------------- */
 
+    get year() { return Math.floor(this.tick / 60); }
+
     log(text, kind = 'info') {
-        this.events.push({ tick: this.tick, year: Math.floor(this.tick / 60), text, kind });
-        if (this.events.length > 200) this.events.shift();
+        this.events.push({ tick: this.tick, year: this.year, text, kind });
+        if (this.events.length > 260) this.events.shift();
         this.dirtyLog = true;
     }
 
-    realmById(id) { return this.realms.find(r => r.id === id && !r.dead) || null; }
-    villageById(id) { return this.villages.find(v => v.id === id && !v.dead) || null; }
+    realmById(id) { for (const r of this.realms) if (r.id === id && !r.dead) return r; return null; }
+    villageById(id) { for (const v of this.villages) if (v.id === id && !v.dead) return v; return null; }
+    law(id) { return this.laws[id]; }
 
     tileAt(x, y) {
         const xi = clamp(x | 0, 0, this.world.w - 1), yi = clamp(y | 0, 0, this.world.h - 1);
         return yi * this.world.w + xi;
     }
-
     walkableAt(x, y) {
         if (x < 0.2 || y < 0.2 || x > this.world.w - 1.2 || y > this.world.h - 1.2) return false;
         return this.world.walkable(this.tileAt(x, y));
@@ -875,8 +1006,23 @@ class Life {
 
     /* ---------------- tvorové ---------------- */
 
+    newUnit() {
+        if (this.free.length) {
+            const u = this.units[this.free.pop()];
+            u.uid = ++this.nextUnit;
+            return u;
+        }
+        const u = { slot: this.units.length, uid: ++this.nextUnit };
+        this.units.push(u);
+        if (this.units.length > this.next.length) {
+            const n = new Int32Array(this.units.length + 64).fill(-1);
+            n.set(this.next); this.next = n;
+        }
+        return u;
+    }
+
     spawnPerson(x, y, raceId, realm, village) {
-        if (this.countAlive() >= MAX_UNITS) return null;
+        if (this.count >= MAX_UNITS) return null;
         const race = RACES[raceId];
         const p = personName(this.rng, raceId);
         const u = this.newUnit();
@@ -885,15 +1031,16 @@ class Life {
             x, y, ox: x, oy: y, hp: 12 * race.str + 8, maxHp: 12 * race.str + 8,
             food: 0.8, age: 0, maxAge: race.maxAge * (0.8 + this.rng() * 0.4),
             realm: realm ? realm.id : 0, village: village ? village.id : 0,
-            job: 'child', state: 'idle', timer: 0, carry: 0, goal: -1, phase: this.rng() * 6.28,
-            faith: 0, str: race.str * (0.85 + this.rng() * 0.3), speed: race.speed * (0.9 + this.rng() * 0.2)
+            job: 'child', state: 'idle', timer: 0, carry: 0, carryType: 'food', goal: -1,
+            phase: this.rng() * 6.28, faith: 0, sick: 0, zombie: 0, kills: 0,
+            str: race.str * (0.85 + this.rng() * 0.3), speed: race.speed * (0.9 + this.rng() * 0.2)
         });
         this.stats.born++;
         return u;
     }
 
     spawnAnimal(x, y, kindId) {
-        if (this.countAlive() >= MAX_UNITS) return null;
+        if (this.count >= MAX_UNITS) return null;
         const a = ANIMALS[kindId];
         const u = this.newUnit();
         Object.assign(u, {
@@ -901,24 +1048,8 @@ class Life {
             x, y, ox: x, oy: y, hp: 8 * a.str + 4, maxHp: 8 * a.str + 4,
             food: 0.9, age: 0, maxAge: a.maxAge * (0.8 + this.rng() * 0.4),
             realm: 0, village: 0, job: 'wild', state: 'idle', timer: 0, carry: 0, goal: -1,
-            phase: this.rng() * 6.28, faith: 0, str: a.str, speed: a.speed
+            phase: this.rng() * 6.28, faith: 0, sick: 0, zombie: 0, str: a.str, speed: a.speed
         });
-        return u;
-    }
-
-    newUnit() {
-        if (this.free.length) {
-            const k = this.free.pop();
-            const u = this.units[k];
-            u.uid = ++this.nextUnit;
-            return u;
-        }
-        const u = { slot: this.units.length, uid: ++this.nextUnit };
-        this.units.push(u);
-        if (this.units.length > this.next.length) {
-            const n = new Int32Array(this.units.length + 32).fill(-1);
-            n.set(this.next); this.next = n;
-        }
         return u;
     }
 
@@ -927,10 +1058,15 @@ class Life {
         u.alive = false;
         this.free.push(u.slot);
         this.stats.died++;
-        if (cause === 'god' || cause === 'war') this.stats.killed++;
+        if (cause === 'war') this.stats.warDead++;
+        if (cause === 'god') this.stats.godDead++;
+        if (u.kind === 'person' && u.zombie === 0 && cause === 'zombie') {
+            const z = this.spawnPerson(u.x, u.y, u.race, null, null);
+            if (z) { z.zombie = 1; z.job = 'zombie'; z.realm = 0; z.village = 0; z.name = 'Nemrtvý ' + z.name; z.hp = z.maxHp; }
+        }
     }
 
-    countAlive() {
+    get count() {
         let n = 0;
         for (const u of this.units) if (u.alive) n++;
         return n;
@@ -938,13 +1074,21 @@ class Life {
 
     /* ---------------- království a vesnice ---------------- */
 
+    newRuler(realm, why) {
+        const p = personName(this.rng, realm.race);
+        realm.ruler = { name: p.name, female: p.female, since: this.year, age: 200 + this.rng() * 900 };
+        if (why) this.log(`👑 ${realm.name}: ${p.female ? 'novou královnou' : 'novým králem'} je ${p.name}`, 'info');
+    }
+
     foundRealm(raceId) {
         const id = this.nextRealm++;
         const realm = {
             id, name: realmName(this.rng), race: raceId,
             color: REALM_COLORS[(id - 1) % REALM_COLORS.length],
-            villages: [], wars: new Set(), born: this.tick, dead: false, capital: 0
+            villages: [], wars: new Set(), born: this.tick, dead: false, capital: 0,
+            gold: 20, research: 0, era: 0, ruler: null, peak: 0
         };
+        this.newRuler(realm);
         this.realms.push(realm);
         return realm;
     }
@@ -953,7 +1097,8 @@ class Life {
         if (this.villages.filter(v => !v.dead).length >= MAX_VILLAGES) return null;
         const v = {
             id: this.nextVillage++, name: villageName(this.rng), x: x | 0, y: y | 0,
-            realm: realm.id, houses: [], food: 14, pop: 0, dead: false, born: this.tick, soldiers: 0
+            realm: realm.id, houses: [], food: 16, wood: 10, gold: 5,
+            pop: 0, soldiers: 0, happy: 0.6, dead: false, born: this.tick, buildOrder: 0
         };
         this.villages.push(v);
         realm.villages.push(v.id);
@@ -962,8 +1107,7 @@ class Life {
         return v;
     }
 
-    /* najde volnou dlaždici pro stavbu poblíž vesnice */
-    freeSpot(v, radius = 4) {
+    freeSpot(v, radius = 5) {
         const w = this.world;
         for (let k = 0; k < 40; k++) {
             const a = this.rng() * Math.PI * 2, d = 1 + this.rng() * radius;
@@ -978,13 +1122,17 @@ class Life {
     }
 
     addBuilding(v, type, spot) {
-        const s = spot || this.freeSpot(v, type === 'castle' ? 2 : 5);
+        const def = BUILDINGS[type];
+        const s = spot || this.freeSpot(v, type === 'castle' ? 2 : 6);
         if (!s) return null;
-        const b = { i: s.i, x: s.x, y: s.y, type, village: v.id, realm: v.realm, hp: type === 'castle' ? 120 : 45, dead: false };
+        const realm = this.realmById(v.realm);
+        const hp = def.hp * (1 + (realm ? realm.era : 0) * 0.2);
+        const b = { i: s.i, x: s.x, y: s.y, type, village: v.id, realm: v.realm, hp, maxHp: hp, dead: false };
         this.buildings.push(b);
         this.world.build[s.i] = this.buildings.length;
         this.world.mark(s.i);
         v.houses.push(this.buildings.length - 1);
+        this.stats.builtTotal++;
         return b;
     }
 
@@ -997,7 +1145,7 @@ class Life {
         const v = this.villageById(b.village);
         if (v) {
             v.houses = v.houses.filter(h => h !== bi);
-            if (!v.houses.length) this.destroyVillage(v, quiet);
+            if (!v.houses.length) this.destroyVillage(v, quiet, 'war');
         }
     }
 
@@ -1015,38 +1163,22 @@ class Life {
                 r.dead = true;
                 for (const o of this.realms) o.wars.delete(r.id);
                 r.wars.clear();
-                this.log(`👑 Království ${r.name} zaniklo`, 'bad');
+                this.log(`👑 Království ${r.name} zaniklo (${Math.floor(r.born / 60)}–${this.year})`, 'bad');
                 for (let i = 0; i < this.world.n; i++) if (this.world.owner[i] === r.id) this.world.owner[i] = 0;
                 this.territoryDirty = true;
-            } else if (r.capital === v.id) r.capital = r.villages[0];
+            } else if (r.capital === v.id) {
+                r.capital = r.villages[0];
+                this.newRuler(r, true);
+                const cap = this.villageById(r.capital);
+                if (cap) this.log(`🏰 ${r.name} má nové hlavní město: ${cap.name}`, 'info');
+            }
         }
         for (const u of this.units) if (u.alive && u.village === v.id) { u.village = 0; u.job = 'wanderer'; }
     }
 
-    /* založí národ: království + vesnice + první obyvatelé */
-    seedTribe(x, y, raceId, count = 6) {
-        const w = this.world;
-        const i = this.tileAt(x, y);
-        if (!w.walkable(i)) return null;
-        const realm = this.foundRealm(raceId);
-        const v = this.foundVillage(x, y, realm);
-        if (!v) return null;
-        for (let k = 0; k < count; k++) {
-            const a = this.rng() * Math.PI * 2, d = this.rng() * 2.5;
-            const px = clamp(x + Math.cos(a) * d, 1, w.w - 2), py = clamp(y + Math.sin(a) * d, 1, w.h - 2);
-            if (!this.walkableAt(px, py)) continue;
-            const u = this.spawnPerson(px, py, raceId, realm, v);
-            if (u) { u.job = 'worker'; u.age = 260 + this.rng() * 200; }
-        }
-        this.territoryDirty = true;
-        this.log(`👑 Vzniklo království ${realm.name} (${RACES[raceId].name}) – hlavní vesnice ${v.name}`, 'good');
-        return realm;
-    }
-
-    /* najde vhodné místo pro nový národ – souš, kterou má rasa ráda, daleko od cizích vesnic */
     homeSpot(raceId) {
         const w = this.world, race = RACES[raceId] || RACES.human;
-        for (let k = 0; k < 600; k++) {
+        for (let k = 0; k < 700; k++) {
             const x = 3 + ((this.rng() * (w.w - 6)) | 0);
             const y = 3 + ((this.rng() * (w.h - 6)) | 0);
             const i = y * w.w + x;
@@ -1062,6 +1194,24 @@ class Life {
         return null;
     }
 
+    seedTribe(x, y, raceId, count = 6) {
+        const w = this.world;
+        if (!w.walkable(this.tileAt(x, y))) return null;
+        const realm = this.foundRealm(raceId);
+        const v = this.foundVillage(x, y, realm);
+        if (!v) return null;
+        for (let k = 0; k < count; k++) {
+            const a = this.rng() * Math.PI * 2, d = this.rng() * 2.5;
+            const px = clamp(x + Math.cos(a) * d, 1, w.w - 2), py = clamp(y + Math.sin(a) * d, 1, w.h - 2);
+            if (!this.walkableAt(px, py)) continue;
+            const u = this.spawnPerson(px, py, raceId, realm, v);
+            if (u) { u.job = 'worker'; u.age = 260 + this.rng() * 200; }
+        }
+        this.territoryDirty = true;
+        this.log(`👑 Vzniklo království ${realm.name} (${RACES[raceId].name}) – vládne ${realm.ruler.name}`, 'good');
+        return realm;
+    }
+
     /* ---------------- hlavní tik ---------------- */
 
     step() {
@@ -1069,25 +1219,30 @@ class Life {
         this.world.step(this.rng);
         this.rebuildIndex();
 
-        let believers = 0, animals = 0;
+        let believers = 0, animals = 0, people = 0;
         for (const u of this.units) {
             if (!u.alive) continue;
             u.ox = u.x; u.oy = u.y;
             this.stepUnit(u);
             if (!u.alive) continue;
             if (u.faith > 0.3) believers++;
-            if (u.kind === 'animal') animals++;
+            if (u.kind === 'animal') animals++; else people++;
         }
         this.believers = believers;
         this.animalCount = animals;
-        this.faithMax = 200 + believers * 0.6;
-        this.faith = Math.min(this.faithMax, this.faith + 0.05 + believers * 0.006);
+        this.peopleCount = people;
+        if (people > this.stats.peak) this.stats.peak = people;
 
         if (typeof stepHazards === 'function') stepHazards(this);
         if (this.tick % 10 === 0) this.stepVillages();
+        if (this.tick % 10 === 5) this.stepRealms();
         if (this.tick % 40 === 0) this.updateTerritory();
         if (this.tick % 260 === 0) this.diplomacy();
         if (this.tick % 20 === 0) this.record();
+
+        this.faithMax = 200 + believers * 0.8;
+        if (this.godMode) this.faith = this.faithMax;
+        else this.faith = Math.min(this.faithMax, this.faith + 0.05 + believers * 0.006);
     }
 
     /* ---------------- chování panáčka ---------------- */
@@ -1096,51 +1251,74 @@ class Life {
         const w = this.world;
         const i = this.tileAt(u.x, u.y);
 
-        // prostředí
         if (w.lava[i]) { this.kill(u, 'lava'); return; }
-        if (w.isWater(i)) { u.hp -= 3; if (u.hp <= 0) { this.kill(u, 'voda'); return; } }
-        if (w.fire[i]) { u.hp -= 2; if (u.hp <= 0) { this.kill(u, 'oheň'); return; } }
+        if (u.race !== 'dragon') {
+            if (w.isWater(i)) { u.hp -= 3; if (u.hp <= 0) { this.kill(u, 'voda'); return; } }
+            if (w.fire[i]) { u.hp -= 2; if (u.hp <= 0) { this.kill(u, 'oheň'); return; } }
+        }
 
         u.age++;
         if (u.age > u.maxAge) { this.kill(u, 'stáří'); return; }
+        if (u.zombie) {
+            this.stepZombie(u);
+            return;
+        }
         u.food -= u.kind === 'person' ? 0.0016 : 0.0012;
         if (u.food <= 0) {
             u.food = 0; u.hp -= 0.15;
             if (u.hp <= 0) { this.kill(u, 'hlad'); return; }
         } else if (u.hp < u.maxHp) u.hp = Math.min(u.maxHp, u.hp + 0.05);
-        if (u.faith > 0) u.faith = Math.max(0, u.faith - 0.0004);
+        if (u.sick > 0) {
+            u.sick--;
+            u.hp -= 0.12;
+            if (this.rng() < 0.01) this.forEachNear(u.x, u.y, 1.6, o => { if (o.kind === 'person' && !o.sick && this.rng() < 0.3) o.sick = 420; });
+            if (u.hp <= 0) { this.kill(u, 'mor'); return; }
+        }
+        if (u.faith > 0) u.faith = Math.max(0, u.faith - 0.0003);
 
         if (u.kind === 'animal') this.stepAnimal(u, i);
         else this.stepPerson(u, i);
     }
 
+    stepZombie(u) {
+        let prey = null, best = 1e9;
+        this.forEachNear(u.x, u.y, 8, o => {
+            if (o === u || o.zombie || o.kind !== 'person') return;
+            const d = dist2(o.x, o.y, u.x, u.y);
+            if (d < best) { best = d; prey = o; }
+        });
+        if (prey) {
+            if (best < 0.8) {
+                prey.hp -= 3;
+                if (prey.hp <= 0) this.kill(prey, 'zombie');
+            } else this.moveTo(u, prey.x, prey.y, 0.2);
+        } else this.wander(u);
+        if (this.rng() < 0.0008) this.kill(u, 'rozpad');
+    }
+
     stepAnimal(u, i) {
         const w = this.world, a = ANIMALS[u.race];
-        // mláďata
-        if (u.food > 0.8 && u.age > 150 && this.tick % 8 === 0 && (this.animalCount || 0) < 150 && this.countAlive() < MAX_UNITS) {
+        if (u.race === 'dragon') { this.stepDragon(u, i); return; }
+
+        if (u.food > 0.8 && u.age > 150 && this.tick % 8 === 0 && (this.animalCount || 0) < 150 && this.count < MAX_UNITS) {
             let near = 0;
             this.forEachNear(u.x, u.y, 6, o => { if (o.race === u.race) near++; });
-            const limit = a.prey ? 7 : 3;
-            if (near < limit && this.rng() < (a.prey ? 0.05 : 0.02)) {
+            if (near < (a.prey ? 7 : 3) && this.rng() < (a.prey ? 0.05 : 0.02)) {
                 const baby = this.spawnAnimal(u.x + this.rng() - 0.5, u.y + this.rng() - 0.5, u.race);
                 if (baby) { u.food -= 0.3; baby.food = 0.7; }
             }
         }
+
         if (a.prey) {
             if (u.food < 0.9 && w.veg[i] > 0.12 && !w.isWater(i)) {
                 w.veg[i] -= 0.015; u.food = Math.min(1, u.food + 0.02);
                 w.classify(i);
-                return;                                   // pase se, nikam nejde
-            }
-            // vlk poblíž? uteč
-            let danger = null;
-            this.forEachNear(u.x, u.y, 5, o => { if (o.race === 'wolf') { danger = o; return false; } });
-            if (danger) {
-                this.moveDir(u, u.x - danger.x, u.y - danger.y, u.speed * 1.3);
                 return;
             }
+            let danger = null;
+            this.forEachNear(u.x, u.y, 5, o => { if (o.race === 'wolf' || o.zombie) { danger = o; return false; } });
+            if (danger) { this.moveDir(u, u.x - danger.x, u.y - danger.y, u.speed * 1.3); return; }
         } else {
-            // vlk loví hlavně zvěř; na člověka si troufne, jen když není nic lepšího – a ten se brání
             let prey = null, best = 1e9, human = false;
             this.forEachNear(u.x, u.y, 7, o => {
                 if (o === u || o.race === 'wolf') return;
@@ -1152,10 +1330,7 @@ class Life {
             if (prey) {
                 if (dist2(prey.x, prey.y, u.x, u.y) < 0.8) {
                     prey.hp -= (human ? 1.5 : 4) * u.str;
-                    if (human) {
-                        u.hp -= prey.str * 2.2;                       // vesničan se ubrání
-                        if (u.hp <= 0) { this.kill(u, 'obrana'); return; }
-                    }
+                    if (human) { u.hp -= prey.str * 2.2; if (u.hp <= 0) { this.kill(u, 'obrana'); return; } }
                     if (prey.hp <= 0) { this.kill(prey, 'lov'); u.food = 1; }
                 } else this.moveTo(u, prey.x, prey.y, u.speed);
                 return;
@@ -1164,24 +1339,47 @@ class Life {
         this.wander(u);
     }
 
+    stepDragon(u, i) {
+        const w = this.world;
+        u.food = 1;
+        if (this.rng() < 0.035) {
+            w.ignite(i);
+            if (this.rng() < 0.4) w.neighbors(i, j => { if (this.rng() < 0.3) w.ignite(j); });
+        }
+        let prey = null, best = 1e9;
+        this.forEachNear(u.x, u.y, 14, o => {
+            if (o === u || o.race === 'dragon') return;
+            const d = dist2(o.x, o.y, u.x, u.y);
+            if (d < best) { best = d; prey = o; }
+        });
+        if (prey) {
+            if (best < 1.6) { this.kill(prey, 'drak'); u.kills = (u.kills || 0) + 1; }
+            else { this.moveDirFly(u, prey.x - u.x, prey.y - u.y, u.speed); return; }
+        }
+        // občas zapálí nejbližší stavbu
+        if (this.rng() < 0.02) {
+            for (const b of this.buildings) {
+                if (b.dead) continue;
+                if (dist2(b.x, b.y, u.x, u.y) < 100) { b.hp -= 12; w.mark(b.i); if (b.hp <= 0) this.destroyBuilding(this.buildings.indexOf(b)); break; }
+            }
+        }
+        this.moveDirFly(u, (this.rng() - 0.5), (this.rng() - 0.5), u.speed * 0.6);
+    }
+
     stepPerson(u, i) {
         const w = this.world;
         const v = u.village ? this.villageById(u.village) : null;
         if (!v && u.job !== 'wanderer') { u.job = 'wanderer'; u.village = 0; }
 
-        // dospívání
         if (u.job === 'child') {
             if (u.age > 240) { u.job = 'worker'; u.state = 'idle'; }
             if (v) this.stayNear(u, v.x, v.y, 3);
             return;
         }
-
         if (u.job === 'soldier') { this.stepSoldier(u, v); return; }
-
         if (u.job === 'wanderer') {
-            // hledá nový domov: přidá se k nejbližší vesnici svého rodu
             if (this.tick % 20 === 0) {
-                let best = null, bd = 900;
+                let best = null, bd = 1400;
                 for (const vv of this.villages) {
                     if (vv.dead) continue;
                     const r = this.realmById(vv.realm);
@@ -1189,41 +1387,46 @@ class Life {
                     const d = dist2(vv.x, vv.y, u.x, u.y);
                     if (d < bd) { bd = d; best = vv; }
                 }
-                if (best) { u.village = best.id; u.realm = best.realm; u.job = 'worker'; }
+                if (best) { u.village = best.id; u.realm = best.realm; u.job = 'worker'; u.state = 'idle'; }
             }
             this.wander(u);
             return;
         }
-
         if (!v) { this.wander(u); return; }
 
-        // hlad: doma se najím
-        if (u.food < 0.35 && v.food > 1 && dist2(u.x, u.y, v.x, v.y) < 9) {
-            v.food -= 1; u.food = 1;
-            return;
-        }
+        if (u.food < 0.35 && v.food > 1 && dist2(u.x, u.y, v.x, v.y) < 9) { v.food -= 0.7; u.food = 1; return; }
 
         switch (u.state) {
             case 'idle': {
                 if (u.carry > 0) { u.state = 'return'; break; }
-                if (v.buildOrder > 0) { u.state = 'build'; u.goal = -1; v.buildOrder--; break; }
+                if (v.buildOrder > 0) { v.buildOrder--; u.state = 'build'; u.goal = -1; break; }
+                if (v.wood < 6 + v.houses.length && this.laws.forest === 1 && this.rng() < 0.3) { u.state = 'chop'; u.goal = -1; break; }
                 u.state = 'gather'; u.goal = -1;
                 break;
             }
-            case 'gather': {
-                if (u.goal < 0 || !this.goodFood(u.goal)) {
-                    u.goal = this.findFood(v, u);
-                    if (u.goal < 0) { this.stayNear(u, v.x, v.y, 5); return; }
+            case 'gather': case 'chop': {
+                const wantWood = u.state === 'chop';
+                if (u.goal < 0 || !(wantWood ? this.world.type[u.goal] === T.FOREST : this.goodFood(u.goal))) {
+                    u.goal = wantWood ? this.findForest(v, u) : this.findFood(v, u);
+                    if (u.goal < 0) { u.state = 'gather'; this.stayNear(u, v.x, v.y, 5); return; }
                 }
                 const gx = u.goal % w.w + 0.5, gy = ((u.goal / w.w) | 0) + 0.5;
                 if (dist2(u.x, u.y, gx, gy) < 0.7) {
                     u.timer++;
-                    if (u.timer > 6) {
-                        const t = w.type[u.goal];
-                        const yield_ = FOOD_TILE[t] * 3;
-                        w.veg[u.goal] = Math.max(0, w.veg[u.goal] - (t === T.FARM ? 0.5 : 0.7));
-                        w.classify(u.goal);
-                        u.carry = yield_;
+                    const race = RACES[u.race];
+                    if (u.timer > 7 / race.work) {
+                        const realm = this.realmById(u.realm);
+                        const eraBonus = 1 + (realm ? realm.era : 0) * 0.12;
+                        if (wantWood) {
+                            w.veg[u.goal] = 0.15;
+                            w.paint(u.goal, T.GRASS);
+                            u.carry = 5 * eraBonus; u.carryType = 'wood';
+                        } else {
+                            const t = w.type[u.goal];
+                            w.veg[u.goal] = Math.max(0, w.veg[u.goal] - (t === T.FARM ? 0.5 : 0.7));
+                            w.classify(u.goal);
+                            u.carry = FOOD_TILE[t] * 3 * eraBonus; u.carryType = 'food';
+                        }
                         u.timer = 0; u.state = 'return'; u.goal = -1;
                     }
                 } else this.moveTo(u, gx, gy, u.speed);
@@ -1231,28 +1434,37 @@ class Life {
             }
             case 'return': {
                 if (dist2(u.x, u.y, v.x + 0.5, v.y + 0.5) < 2.2) {
-                    v.food += u.carry; u.carry = 0; u.state = 'idle';
+                    if (u.carryType === 'wood') v.wood += u.carry; else v.food += u.carry;
+                    u.carry = 0; u.state = 'idle';
                 } else this.moveTo(u, v.x + 0.5, v.y + 0.5, u.speed);
                 break;
             }
             case 'build': {
                 if (u.goal < 0) {
-                    const spot = this.freeSpot(v, 5);
+                    const spot = this.freeSpot(v, 6);
                     if (!spot) { u.state = 'idle'; break; }
                     u.goal = spot.i;
+                    u.buildType = this.chooseBuilding(v);
                 }
                 const gx = u.goal % w.w + 0.5, gy = ((u.goal / w.w) | 0) + 0.5;
                 if (dist2(u.x, u.y, gx, gy) < 0.8) {
                     u.timer++;
-                    if (u.timer > 14) {
-                        if (!w.build[u.goal] && v.food >= 8) {
-                            v.food -= 8;
+                    if (u.timer > 12) {
+                        const type = u.buildType || 'house';
+                        const def = BUILDINGS[type];
+                        if (!w.build[u.goal] && v.food >= def.food && v.wood >= def.wood) {
                             const gxi = u.goal % w.w, gyi = (u.goal / w.w) | 0;
-                            if (this.rng() < 0.35 && (w.type[u.goal] === T.GRASS || w.type[u.goal] === T.FOREST)) {
-                                w.paint(u.goal, T.FARM);       // pole kolem vesnice
-                                w.veg[u.goal] = 0.9;
+                            const t2 = w.type[u.goal];
+                            if (type === 'farm') {
+                                if (t2 === T.GRASS || t2 === T.FOREST || t2 === T.ASH || t2 === T.SAND) {
+                                    v.food -= def.food;
+                                    w.paint(u.goal, T.FARM);
+                                    w.veg[u.goal] = 0.9;
+                                    v.farmCount = (v.farmCount || 0) + 1;
+                                }
                             } else {
-                                this.addBuilding(v, 'house', { i: u.goal, x: gxi, y: gyi });
+                                v.food -= def.food; v.wood -= def.wood;
+                                this.addBuilding(v, type, { i: u.goal, x: gxi, y: gyi });
                             }
                         }
                         u.timer = 0; u.goal = -1; u.state = 'idle';
@@ -1264,31 +1476,51 @@ class Life {
         }
     }
 
+    chooseBuilding(v) {
+        const realm = this.realmById(v.realm);
+        const era = realm ? realm.era : 0;
+        const have = {};
+        for (const bi of v.houses) { const b = this.buildings[bi]; if (b && !b.dead) have[b.type] = (have[b.type] || 0) + 1; }
+        const cap = 3 + (have.house || 0) * 3;
+        if ((v.farmCount || 0) < Math.min(12, 2 + v.pop / 2.5)) return 'farm';
+        if (v.pop >= cap) return 'house';
+        if (!(have.sawmill) && this.laws.forest === 1) return 'sawmill';
+        if ((have.mine || 0) < 1 && this.nearTile(v, [T.HILL, T.MOUNT], 6)) return 'mine';
+        if (era >= 1 && !(have.market)) return 'market';
+        if (era >= 1 && !(have.temple) && this.believers > 4) return 'temple';
+        if (era >= 2 && !(have.barracks) && realm && realm.wars.size) return 'barracks';
+        return 'house';
+    }
+
+    nearTile(v, types, r) {
+        const w = this.world;
+        let found = false;
+        w.forEachInRadius(v.x, v.y, r, j => { if (types.includes(w.type[j])) found = true; });
+        return found;
+    }
+
     stepSoldier(u, v) {
         const realm = this.realmById(u.realm);
-        if (!realm || !realm.wars.size) {
-            u.job = 'worker'; u.state = 'idle';
-            return;
-        }
-        // nepřítel na dosah?
+        if (!realm || !realm.wars.size) { u.job = 'worker'; u.state = 'idle'; return; }
         let foe = null, best = 1e9;
         this.forEachNear(u.x, u.y, 6, o => {
             if (!o.alive || o.kind !== 'person') return;
+            if (o.zombie) { if (dist2(o.x, o.y, u.x, u.y) < best) { best = dist2(o.x, o.y, u.x, u.y); foe = o; } return; }
             if (!o.realm || o.realm === u.realm || !realm.wars.has(o.realm)) return;
             const d = dist2(o.x, o.y, u.x, u.y);
             if (d < best) { best = d; foe = o; }
         });
+        const power = u.str * (1 + realm.era * 0.15) * (this.hasBarracks(v) ? 1.25 : 1);
         if (foe) {
             if (best < 0.9) {
-                foe.hp -= 2.5 * u.str;
-                u.hp -= foe.str * (foe.job === 'soldier' ? 1.6 : 0.7);   // i dělník se brání
+                foe.hp -= 2.5 * power;
+                u.hp -= foe.str * (foe.job === 'soldier' ? 1.6 : 0.7);
                 u.attackFx = 3;
                 if (u.hp <= 0) { this.kill(u, 'war'); return; }
                 if (foe.hp <= 0) { this.kill(foe, 'war'); u.kills = (u.kills || 0) + 1; }
             } else this.moveTo(u, foe.x, foe.y, u.speed * 1.1);
             return;
         }
-        // jinak pochoduje na nejbližší nepřátelskou vesnici
         if (u.goal < 0 || this.tick % 40 === 0) {
             let target = null, bd = 1e9;
             for (const vv of this.villages) {
@@ -1301,17 +1533,27 @@ class Life {
         const tv = u.goal > 0 ? this.villageById(u.goal) : null;
         if (!tv) { u.job = 'worker'; u.state = 'idle'; u.goal = -1; return; }
         if (dist2(u.x, u.y, tv.x + 0.5, tv.y + 0.5) < 2.5) {
-            // bourá stavby
             if (tv.houses.length && this.rng() < 0.18) {
                 const bi = tv.houses[(this.rng() * tv.houses.length) | 0];
                 const b = this.buildings[bi];
                 if (b && !b.dead) {
-                    b.hp -= 3 * u.str;
+                    b.hp -= 3 * power;
                     this.world.mark(b.i);
                     if (b.hp <= 0) this.destroyBuilding(bi);
                 }
             }
+            if (tv.gold > 0 && this.rng() < 0.05) {           // rabování
+                const loot = Math.min(tv.gold, 2);
+                tv.gold -= loot;
+                if (realm) realm.gold += loot;
+            }
         } else this.moveTo(u, tv.x + 0.5, tv.y + 0.5, u.speed);
+    }
+
+    hasBarracks(v) {
+        if (!v) return false;
+        for (const bi of v.houses) { const b = this.buildings[bi]; if (b && !b.dead && b.type === 'barracks') return true; }
+        return false;
     }
 
     goodFood(i) {
@@ -1323,13 +1565,28 @@ class Life {
         const w = this.world;
         let best = -1, bestScore = -1;
         for (let k = 0; k < 26; k++) {
-            const a = this.rng() * Math.PI * 2, d = 1 + this.rng() * 9;
+            const a = this.rng() * Math.PI * 2, d = 1 + this.rng() * 10;
             const x = clamp((v.x + Math.cos(a) * d) | 0, 0, w.w - 1);
             const y = clamp((v.y + Math.sin(a) * d) | 0, 0, w.h - 1);
             const i = y * w.w + x;
             if (!this.goodFood(i) || w.build[i]) continue;
             const score = FOOD_TILE[w.type[i]] * w.veg[i] * 10 - Math.sqrt(dist2(x, y, u.x, u.y)) * 0.35;
             if (score > bestScore) { bestScore = score; best = i; }
+        }
+        return best;
+    }
+
+    findForest(v, u) {
+        const w = this.world;
+        let best = -1, bd = 1e9;
+        for (let k = 0; k < 26; k++) {
+            const a = this.rng() * Math.PI * 2, d = 1 + this.rng() * 11;
+            const x = clamp((v.x + Math.cos(a) * d) | 0, 0, w.w - 1);
+            const y = clamp((v.y + Math.sin(a) * d) | 0, 0, w.h - 1);
+            const i = y * w.w + x;
+            if (w.type[i] !== T.FOREST || w.build[i]) continue;
+            const dd = dist2(x, y, u.x, u.y);
+            if (dd < bd) { bd = dd; best = i; }
         }
         return best;
     }
@@ -1354,12 +1611,22 @@ class Life {
         }
     }
 
+    /* drak létá i nad vodou a horami */
+    moveDirFly(u, dx, dy, speed) {
+        const d = Math.hypot(dx, dy) || 1;
+        u.x = clamp(u.x + dx / d * speed, 0.5, this.world.w - 1.5);
+        u.y = clamp(u.y + dy / d * speed, 0.5, this.world.h - 1.5);
+        u.dir = dx < 0 ? -1 : 1;
+        u.phase += speed * 3;
+    }
+
     wander(u) {
         if (this.rng() < 0.06 || u.wx === undefined) {
             const a = this.rng() * Math.PI * 2;
             u.wx = Math.cos(a); u.wy = Math.sin(a);
         }
-        this.moveDir(u, u.wx, u.wy, u.speed * 0.55);
+        if (u.race === 'dragon') this.moveDirFly(u, u.wx, u.wy, u.speed * 0.6);
+        else this.moveDir(u, u.wx, u.wy, u.speed * 0.55);
     }
 
     stayNear(u, x, y, r) {
@@ -1370,44 +1637,86 @@ class Life {
     /* ---------------- vesnice ---------------- */
 
     stepVillages() {
+        const taxRate = [0, 0.15, 0.35][this.laws.tax];
+        const birthLaw = this.laws.birth;
+        const armyLaw = this.laws.army;
+
         for (const v of this.villages) {
             if (v.dead) continue;
             const realm = this.realmById(v.realm);
             if (!realm) { this.destroyVillage(v, true); continue; }
 
-            let pop = 0, soldiers = 0, workers = [];
+            let pop = 0, soldiers = 0;
+            const workers = [];
             for (const u of this.units) {
-                if (!u.alive || u.village !== v.id) continue;
+                if (!u.alive || u.village !== v.id || u.zombie) continue;
                 pop++;
                 if (u.job === 'soldier') soldiers++;
                 else if (u.job === 'worker') workers.push(u);
             }
             v.pop = pop; v.soldiers = soldiers;
-            const cap = 3 + v.houses.length * 3;
+
+            // budovy vyrábějí
+            let houses = 0, temples = 0, markets = 0, mines = 0, mills = 0;
+            for (const bi of v.houses) {
+                const b = this.buildings[bi];
+                if (!b || b.dead) continue;
+                if (b.type === 'house' || b.type === 'castle') houses++;
+                else if (b.type === 'temple') temples++;
+                else if (b.type === 'market') markets++;
+                else if (b.type === 'mine') mines++;
+                else if (b.type === 'sawmill') mills++;
+            }
+            const era = realm.era;
+            v.wood += mills * (2.4 + era * 0.4);
+            v.gold += mines * (0.9 + era * 0.2) + markets * (0.6 + (this.laws.trade ? this.tradePartners(v) * 0.35 : 0));
+            if (temples) {
+                this.faith = Math.min(this.faithMax, this.faith + temples * 0.35);
+                this.forEachNear(v.x, v.y, 8, o => { if (o.kind === 'person') o.faith = Math.min(1, o.faith + 0.01); });
+            }
+            if (this.laws.faith) this.forEachNear(v.x, v.y, 7, o => { if (o.kind === 'person') o.faith = Math.min(1, o.faith + 0.02); });
+
+            // daně
+            if (taxRate > 0) { const t = v.gold * taxRate; v.gold -= t; realm.gold += t; }
+
+            // spokojenost
+            let h = 0.45;
+            h += v.food > pop * 2 ? 0.2 : -0.15;
+            h += temples * 0.08;
+            h += [0.12, 0, -0.16][this.laws.tax];
+            h += birthLaw === 2 ? 0.06 : birthLaw === 1 ? -0.04 : 0;
+            h += this.laws.faith ? -0.08 : 0;
+            h += realm.wars.size ? -0.16 : 0.05;
+            h += markets * 0.05;
+            h += era * 0.03;
+            v.happy = clamp(lerp(v.happy, clamp(h, 0, 1), 0.25), 0, 1);
 
             // narození
-            if (pop < cap && v.food > 16 && this.countAlive() < MAX_UNITS) {
-                const fert = RACES[realm.race].fert;
-                if (this.rng() < 0.35 * fert) {
-                    v.food -= 8;
-                    const baby = this.spawnPerson(v.x + this.rng() - 0.5, v.y + this.rng() - 0.5, realm.race, realm, v);
-                    if (baby) baby.job = 'child';
-                }
+            const cap = 3 + houses * 3;
+            const birthChance = 0.35 * RACES[realm.race].fert * [1, 1.5, 0.5][birthLaw] * (0.6 + v.happy);
+            if (pop < cap && v.food > 14 && this.count < MAX_UNITS && this.rng() < birthChance) {
+                v.food -= 6;
+                const baby = this.spawnPerson(v.x + this.rng() - 0.5, v.y + this.rng() - 0.5, realm.race, realm, v);
+                if (baby) baby.job = 'child';
             }
-            // stavba
-            if (v.food > 22 && v.houses.length < 14 && pop >= v.houses.length * 2) v.buildOrder = (v.buildOrder || 0) + 1;
 
-            // vojáci ve válce
-            const wantSoldiers = realm.wars.size ? Math.min(6, 1 + Math.floor(pop * 0.35)) : 0;
+            // stavby
+            const def = BUILDINGS[this.chooseBuilding(v)];
+            if (v.food > def.food + 10 && v.wood >= def.wood && v.houses.length < 22) v.buildOrder = Math.min(3, (v.buildOrder || 0) + 1);
+
+            // vojáci
+            const wantSoldiers = realm.wars.size ? Math.round(pop * [0, 0.3, 0.55][armyLaw]) : 0;
             if (soldiers < wantSoldiers && workers.length > 1) {
-                const u = workers[0];
-                u.job = 'soldier'; u.state = 'idle'; u.goal = -1;
-            } else if (!realm.wars.size && soldiers > 0) {
+                workers[0].job = 'soldier'; workers[0].state = 'idle'; workers[0].goal = -1;
+            } else if (soldiers > wantSoldiers) {
                 for (const u of this.units) if (u.alive && u.village === v.id && u.job === 'soldier') { u.job = 'worker'; u.state = 'idle'; break; }
             }
 
-            // kolonizace – nová vesnice opodál
-            if (pop >= 12 && v.food > 60 && v.houses.length >= 4 && this.villages.filter(x => !x.dead).length < MAX_VILLAGES) {
+            // povstání nespokojených
+            if (v.happy < 0.18 && pop >= 6 && realm.villages.length > 1 && this.rng() < 0.04) this.rebel(v, realm);
+
+            // kolonizace
+            if (pop >= 10 && v.food > 45 && v.houses.length >= 3 && this.villages.filter(x => !x.dead).length < MAX_VILLAGES) {
                 const spot = this.colonySpot(v);
                 if (spot) {
                     v.food -= 45;
@@ -1427,10 +1736,38 @@ class Life {
         }
     }
 
+    tradePartners(v) {
+        let n = 0;
+        const realm = this.realmById(v.realm);
+        for (const o of this.villages) {
+            if (o.dead || o.id === v.id) continue;
+            if (dist2(o.x, o.y, v.x, v.y) > 900) continue;
+            if (o.realm !== v.realm && realm && realm.wars.has(o.realm)) continue;
+            n++;
+        }
+        return Math.min(4, n);
+    }
+
+    rebel(v, realm) {
+        const nr = this.foundRealm(realm.race);
+        realm.villages = realm.villages.filter(id => id !== v.id);
+        if (realm.capital === v.id) realm.capital = realm.villages[0];
+        v.realm = nr.id;
+        nr.villages.push(v.id);
+        nr.capital = v.id;
+        nr.era = realm.era;
+        for (const bi of v.houses) { const b = this.buildings[bi]; if (b) b.realm = nr.id; }
+        for (const u of this.units) if (u.alive && u.village === v.id) u.realm = nr.id;
+        v.happy = 0.6;
+        nr.wars.add(realm.id); realm.wars.add(nr.id);
+        this.territoryDirty = true;
+        this.log(`🔥 Vesnice ${v.name} se vzbouřila a založila království ${nr.name}!`, 'bad');
+    }
+
     colonySpot(v) {
         const w = this.world;
-        for (let k = 0; k < 30; k++) {
-            const a = this.rng() * Math.PI * 2, d = 12 + this.rng() * 12;
+        for (let k = 0; k < 45; k++) {
+            const a = this.rng() * Math.PI * 2, d = 11 + this.rng() * 18;
             const x = clamp((v.x + Math.cos(a) * d) | 0, 2, w.w - 3);
             const y = clamp((v.y + Math.sin(a) * d) | 0, 2, w.h - 3);
             const i = y * w.w + x;
@@ -1446,7 +1783,37 @@ class Life {
         return null;
     }
 
-    /* ---------------- území a diplomacie ---------------- */
+    /* ---------------- království ---------------- */
+
+    stepRealms() {
+        for (const r of this.realms) {
+            if (r.dead) continue;
+            let pop = 0;
+            for (const u of this.units) if (u.alive && u.realm === r.id && !u.zombie) pop++;
+            r.pop = pop;
+            if (pop > r.peak) r.peak = pop;
+
+            // věda a doby
+            const sci = this.laws.science ? 1 : 0.3;
+            let soldiers = 0;
+            for (const u of this.units) if (u.alive && u.realm === r.id && u.job === 'soldier') soldiers++;
+            const upkeep = soldiers * 0.25 + r.villages.length * 0.15;      // žold a správa říše
+            r.gold = Math.max(0, r.gold - upkeep);
+            const invest = Math.min(r.gold, pop * 0.12) * sci;              // co se dá do vědy
+            r.gold -= invest;
+            r.research += pop * 0.02 * sci + invest * 0.6;
+            while (r.era < ERAS.length - 1 && r.research >= ERA_COST[r.era + 1]) {
+                r.era++;
+                this.log(`📜 ${r.name} vstoupili do doby: ${ERAS[r.era]}`, 'good');
+            }
+
+            // panovník stárne
+            if (r.ruler) {
+                r.ruler.age -= 10;
+                if (r.ruler.age <= 0) this.newRuler(r, true);
+            }
+        }
+    }
 
     updateTerritory() {
         const w = this.world;
@@ -1457,11 +1824,11 @@ class Life {
         w.owner.fill(0);
         for (const v of this.villages) {
             if (v.dead) continue;
-            const r = 6 + Math.min(9, v.houses.length * 1.2);
+            const realm = this.realmById(v.realm);
+            const r = 6 + Math.min(11, v.houses.length * 1.2) + (realm ? realm.era : 0);
             w.forEachInRadius(v.x, v.y, r, (i, x, y, t) => {
                 if (w.type[i] === T.DEEP) return;
-                const d = t;
-                if (d < dist[i]) { dist[i] = d; w.owner[i] = v.realm; }
+                if (t < dist[i]) { dist[i] = t; w.owner[i] = v.realm; }
             });
         }
         for (let i = 0; i < w.n; i++) if (prev[i] !== w.owner[i]) { this.territoryDirty = true; return; }
@@ -1469,18 +1836,17 @@ class Life {
 
     diplomacy() {
         const live = this.realms.filter(r => !r.dead);
+        const policy = this.laws.war;
         for (const a of live) {
             for (const b of live) {
                 if (a.id >= b.id) continue;
-                const touching = this.realmsTouch(a, b);
-                if (!touching) continue;
+                if (!this.realmsTouch(a, b)) continue;
                 if (a.wars.has(b.id)) {
-                    if (this.rng() < 0.3) {                      // občas se uzavře mír
-                        a.wars.delete(b.id); b.wars.delete(a.id);
-                        this.log(`🕊️ ${a.name} a ${b.name} uzavřeli mír`, 'good');
-                    }
-                } else {
-                    const hostile = (a.race === 'orc' || b.race === 'orc') ? 0.24 : 0.1;
+                    const peace = policy === 0 ? 0.9 : policy === 2 ? 0.12 : 0.3;
+                    if (this.rng() < peace) this.makePeace(a, b);
+                } else if (policy > 0) {
+                    let hostile = (a.race === 'orc' || b.race === 'orc') ? 0.24 : 0.1;
+                    if (policy === 2) hostile *= 2.5;
                     if (this.rng() < hostile) this.declareWar(a, b);
                 }
             }
@@ -1493,7 +1859,7 @@ class Life {
             if (!v1) continue;
             for (const vb of b.villages) {
                 const v2 = this.villageById(vb);
-                if (v2 && dist2(v1.x, v1.y, v2.x, v2.y) < 900) return true;
+                if (v2 && dist2(v1.x, v1.y, v2.x, v2.y) < 1100) return true;
             }
         }
         return false;
@@ -1502,110 +1868,112 @@ class Life {
     declareWar(a, b) {
         if (!a || !b || a.dead || b.dead || a.wars.has(b.id)) return;
         a.wars.add(b.id); b.wars.add(a.id);
+        this.stats.wars++;
         this.log(`⚔️ ${a.name} vyhlásili válku království ${b.name}`, 'bad');
     }
 
     makePeace(a, b) {
-        if (!a || !b) return;
+        if (!a || !b || !a.wars.has(b.id)) return;
         a.wars.delete(b.id); b.wars.delete(a.id);
         this.log(`🕊️ ${a.name} a ${b.name} uzavřeli mír`, 'good');
     }
 
-    /* ---------------- statistiky ---------------- */
+    /* ---------------- dějiny a statistiky ---------------- */
 
     record() {
-        let pop = 0;
-        for (const u of this.units) if (u.alive && u.kind === 'person') pop++;
-        const h = this.history;
+        const h = this.hist;
+        let pop = 0, gold = 0, food = 0, wood = 0, wars = 0;
+        for (const u of this.units) if (u.alive && u.kind === 'person' && !u.zombie) pop++;
+        for (const v of this.villages) if (!v.dead) { gold += v.gold; food += v.food; wood += v.wood; }
+        for (const r of this.realms) if (!r.dead) { gold += r.gold; wars += r.wars.size; }
+        h.t.push(this.year);
         h.pop.push(pop);
-        h.realms.push(this.realms.filter(r => !r.dead).length);
         h.villages.push(this.villages.filter(v => !v.dead).length);
-        for (const k in h) if (h[k].length > 260) h[k].shift();
-        if (pop > this.stats.peak) this.stats.peak = pop;
+        h.gold.push(gold);
+        h.food.push(food);
+        h.wood.push(wood);
+        h.wars.push(wars / 2);
+        for (const r of this.realms) {
+            if (!h.realms.has(r.id)) h.realms.set(r.id, { color: r.color, name: r.name, data: new Array(h.t.length - 1).fill(0) });
+            h.realms.get(r.id).data.push(r.dead ? 0 : (r.pop || 0));
+        }
+        const len = h.t.length;
+        for (const [, s] of h.realms) while (s.data.length < len) s.data.push(0);
+        if (len > 300) {
+            for (const k of ['t', 'pop', 'villages', 'gold', 'food', 'wood', 'wars']) h[k].shift();
+            for (const [, s] of h.realms) s.data.shift();
+        }
     }
 
     summary() {
-        let people = 0, animals = 0, soldiers = 0;
+        let people = 0, animals = 0, soldiers = 0, zombies = 0, sick = 0, gold = 0, food = 0, wood = 0;
         const byRace = {};
         for (const u of this.units) {
             if (!u.alive) continue;
             if (u.kind === 'person') {
+                if (u.zombie) { zombies++; continue; }
                 people++;
                 byRace[u.race] = (byRace[u.race] || 0) + 1;
                 if (u.job === 'soldier') soldiers++;
+                if (u.sick) sick++;
             } else animals++;
         }
+        const realms = this.realms.filter(r => !r.dead);
+        for (const r of realms) gold += r.gold;
+        for (const v of this.villages) if (!v.dead) { gold += v.gold; food += v.food; wood += v.wood; }
         return {
-            people, animals, soldiers, byRace,
-            realms: this.realms.filter(r => !r.dead),
+            people, animals, soldiers, zombies, sick, byRace, realms,
             villages: this.villages.filter(v => !v.dead).length,
             houses: this.buildings.filter(b => !b.dead).length,
-            wars: this.realms.reduce((n, r) => n + (r.dead ? 0 : r.wars.size), 0) / 2
+            wars: realms.reduce((n, r) => n + r.wars.size, 0) / 2,
+            gold: Math.round(gold), food: Math.round(food), wood: Math.round(wood)
         };
     }
 }
 
 if (typeof module !== 'undefined') {
-    module.exports = { Life, RACES, ANIMALS, MAX_UNITS };
+    module.exports = { Life, RACES, ANIMALS, LAWS, ERAS, BUILDINGS, setWorldLimits };
 }
 
 </script>
 <script>
 'use strict';
-/* Nástroje hráče: štětce na krajinu, sázení národů a zvířat, katastrofy a zázraky. */
+/* Nástroje hráče: štětce na krajinu, sázení národů, dary, zázraky a katastrofy. */
 
 function fx(life, o) { life.fx.push(o); }
 
 const TOOLS = [
-    /* ---------- ruka ---------- */
     { id: 'hand', group: 'hand', name: 'Ruka', emoji: '🖐️', cost: 0, desc: 'Klikni na panáčka, vesnici nebo krajinu a prohlédni si je.' },
 
     /* ---------- krajina ---------- */
     { id: 'water', group: 'land', name: 'Voda', emoji: '🌊', cost: 0, hold: true, tile: T.WATER, desc: 'Maluje moře a jezera. Kdo neumí plavat, utopí se.' },
     { id: 'sand', group: 'land', name: 'Písek', emoji: '🏜️', cost: 0, hold: true, tile: T.SAND, desc: 'Pláže a pouště.' },
     { id: 'grass', group: 'land', name: 'Louka', emoji: '🌿', cost: 0, hold: true, tile: T.GRASS, desc: 'Úrodná tráva – základ pro vesnice a stáda.' },
-    { id: 'forest', group: 'land', name: 'Les', emoji: '🌲', cost: 0, hold: true, tile: T.FOREST, desc: 'Les dává nejvíc jídla. Taky ale nejlíp hoří.' },
-    { id: 'hill', group: 'land', name: 'Kopce', emoji: '🌄', cost: 0, hold: true, tile: T.HILL, desc: 'Kopce – domov trpaslíků.' },
-    { id: 'mount', group: 'land', name: 'Hory', emoji: '⛰️', cost: 0, hold: true, tile: T.MOUNT, desc: 'Neprůchodné hory. Dají se z nich stavět hranice mezi říšemi.' },
+    { id: 'forest', group: 'land', name: 'Les', emoji: '🌲', cost: 0, hold: true, tile: T.FOREST, desc: 'Les dává nejvíc jídla a dřeva. Taky ale nejlíp hoří.' },
+    { id: 'hill', group: 'land', name: 'Kopce', emoji: '🌄', cost: 0, hold: true, tile: T.HILL, desc: 'Kopce – domov trpaslíků a místo pro doly.' },
+    { id: 'mount', group: 'land', name: 'Hory', emoji: '⛰️', cost: 0, hold: true, tile: T.MOUNT, desc: 'Neprůchodné hory. Dělají se z nich přirozené hranice.' },
     { id: 'snow', group: 'land', name: 'Sníh', emoji: '❄️', cost: 0, hold: true, tile: T.SNOW, desc: 'Ledová pustina.' },
+    { id: 'farmland', group: 'land', name: 'Pole', emoji: '🌾', cost: 0, hold: true, tile: T.FARM, desc: 'Nejvydatnější zdroj jídla. Vesnice si je normálně staví samy.' },
 
     /* ---------- život ---------- */
-    {
-        id: 'human', group: 'life', name: 'Lidé', emoji: '🧑', cost: 25, spawnRace: 'human',
-        desc: 'Založí nové království lidí. Šikovní stavitelé, rychle se množí.'
-    },
-    {
-        id: 'orc', group: 'life', name: 'Orkové', emoji: '👹', cost: 25, spawnRace: 'orc',
-        desc: 'Silní a hádaví. Válku vyhlásí skoro každému sousedovi.'
-    },
-    {
-        id: 'elf', group: 'life', name: 'Elfové', emoji: '🧝', cost: 25, spawnRace: 'elf',
-        desc: 'Žijí dlouho, množí se pomalu, milují lesy.'
-    },
-    {
-        id: 'dwarf', group: 'life', name: 'Trpaslíci', emoji: '🧔', cost: 25, spawnRace: 'dwarf',
-        desc: 'Houževnatí horalé. Snesou zimu i kámen.'
-    },
+    { id: 'human', group: 'life', name: 'Lidé', emoji: '🧑', cost: 25, spawnRace: 'human', desc: 'Založí království lidí. Šikovní stavitelé, rychle se množí.' },
+    { id: 'orc', group: 'life', name: 'Orkové', emoji: '👹', cost: 25, spawnRace: 'orc', desc: 'Silní a hádaví. Válku vyhlásí skoro každému sousedovi.' },
+    { id: 'elf', group: 'life', name: 'Elfové', emoji: '🧝', cost: 25, spawnRace: 'elf', desc: 'Žijí dlouho, množí se pomalu, milují lesy.' },
+    { id: 'dwarf', group: 'life', name: 'Trpaslíci', emoji: '🧔', cost: 25, spawnRace: 'dwarf', desc: 'Houževnatí horalé. Nejlepší dělníci, snesou zimu i kámen.' },
     { id: 'sheep', group: 'life', name: 'Ovce', emoji: '🐑', cost: 4, spawnAnimal: 'sheep', desc: 'Pasou se na trávě. Potrava pro vlky.' },
     { id: 'wolf', group: 'life', name: 'Vlci', emoji: '🐺', cost: 6, spawnAnimal: 'wolf', desc: 'Loví ovce i osamělé vesničany.' },
+    { id: 'dragon', group: 'life', name: 'Drak', emoji: '🐉', cost: 70, spawnAnimal: 'dragon', desc: 'Létá nad krajinou, zapaluje ji a požírá všechno živé. Zastaví ho jen armáda.' },
+    { id: 'zombie', group: 'life', name: 'Nemrtví', emoji: '🧟', cost: 45, desc: 'Nákaza, která mění mrtvé v nemrtvé. Ti pak loví další. Šíří se sama.' },
 
-    /* ---------- zázraky ---------- */
-    {
-        id: 'bless', group: 'bless', name: 'Požehnání', emoji: '✨', cost: 6, hold: true,
-        desc: 'Uzdraví a nasytí panáčky, zúrodní půdu. Kdo tě zažil, začne v tebe věřit – a víra je tvá mana.'
-    },
-    {
-        id: 'rain', group: 'bless', name: 'Déšť', emoji: '🌧️', cost: 5, hold: true,
-        desc: 'Uhasí požáry a zavlaží krajinu, takže rychleji zaroste.'
-    },
-    {
-        id: 'war', group: 'bless', name: 'Válka', emoji: '⚔️', cost: 20,
-        desc: 'Klikni na území království – vyhlásí válku nejbližšímu sousedovi.'
-    },
-    {
-        id: 'peace', group: 'bless', name: 'Mír', emoji: '🕊️', cost: 15,
-        desc: 'Klikni na území království – ukončí všechny jeho války.'
-    },
+    /* ---------- dary a zázraky ---------- */
+    { id: 'bless', group: 'bless', name: 'Požehnání', emoji: '✨', cost: 6, hold: true, desc: 'Uzdraví a nasytí panáčky, zúrodní půdu a udělá z nich věřící. Víra je tvá mana.' },
+    { id: 'rain', group: 'bless', name: 'Déšť', emoji: '🌧️', cost: 5, hold: true, desc: 'Uhasí požáry a zavlaží krajinu, takže rychleji zaroste.' },
+    { id: 'gold', group: 'bless', name: 'Zlato', emoji: '💰', cost: 20, desc: 'Naplní pokladnu království pod kurzorem. Zlato pohání vědu a obchod.' },
+    { id: 'foodgift', group: 'bless', name: 'Jídlo', emoji: '🍞', cost: 12, desc: 'Doplní sýpky nejbližší vesnice. Hladomor odvrácen.' },
+    { id: 'enlight', group: 'bless', name: 'Osvícení', emoji: '📜', cost: 60, desc: 'Posune království do další doby – lepší stavby, silnější vojáci, vyšší výnosy.' },
+    { id: 'colony', group: 'bless', name: 'Vesnice', emoji: '🏘️', cost: 40, desc: 'Založí království pod kurzorem novou vesnici přesně tam, kam klikneš.' },
+    { id: 'war', group: 'bless', name: 'Válka', emoji: '⚔️', cost: 20, desc: 'Klikni na území království – vyhlásí válku nejbližšímu sousedovi.' },
+    { id: 'peace', group: 'bless', name: 'Mír', emoji: '🕊️', cost: 15, desc: 'Klikni na území království – ukončí všechny jeho války.' },
 
     /* ---------- zkáza ---------- */
     { id: 'lightning', group: 'doom', name: 'Blesk', emoji: '⚡', cost: 4, desc: 'Zabije, koho trefí, a zapálí porost.' },
@@ -1614,63 +1982,78 @@ const TOOLS = [
     { id: 'meteor', group: 'doom', name: 'Meteorit', emoji: '☄️', cost: 45, desc: 'Padá z nebe. Po dopadu kráter, ohnivá bouře a jezero lávy.' },
     { id: 'volcano', group: 'doom', name: 'Sopka', emoji: '🌋', cost: 35, desc: 'Otevře sopouch, ze kterého teče láva po svahu dolů.' },
     { id: 'flood', group: 'doom', name: 'Povodeň', emoji: '💧', cost: 18, hold: true, desc: 'Vylije vodu, která teče podle terénu a topí, co jí stojí v cestě.' },
-    { id: 'plague', group: 'doom', name: 'Mor', emoji: '🦠', cost: 22, desc: 'Nemoc, která oslabí a postupně vybíjí obyvatele okolí.' },
+    { id: 'tornado', group: 'doom', name: 'Tornádo', emoji: '🌪️', cost: 30, desc: 'Smršť, která si sama bloudí krajinou, láme lesy a bourá domy.' },
+    { id: 'blizzard', group: 'doom', name: 'Vánice', emoji: '🌨️', cost: 25, desc: 'Ledová bouře. Zmrazí krajinu a vymrzne, kdo nemá kam utéct.' },
+    { id: 'plague', group: 'doom', name: 'Mor', emoji: '🦠', cost: 22, desc: 'Nemoc, která se sama šíří dotykem a postupně vybíjí okolí.' },
     { id: 'smite', group: 'doom', name: 'Boží hněv', emoji: '☠️', cost: 10, hold: true, desc: 'Přesná poprava všech v okruhu.' }
 ];
 
 const TOOL_MAP = {};
 for (const t of TOOLS) TOOL_MAP[t.id] = t;
 
-/* ------------------------------------------------------------------ */
+function realmAt(life, i) { return life.realmById(life.world.owner[i]); }
+
+function nearestVillage(life, x, y, maxD2 = 900) {
+    let best = null, bd = maxD2;
+    for (const v of life.villages) {
+        if (v.dead) continue;
+        const d = dist2(v.x, v.y, x, y);
+        if (d < bd) { bd = d; best = v; }
+    }
+    return best;
+}
 
 function applyTool(life, id, wx, wy, radius) {
     const tool = TOOL_MAP[id];
     if (!tool) return false;
-    if (tool.cost > life.faith) return 'faith';
+    const free = life.godMode;
+    if (!free && tool.cost > life.faith) return 'faith';
     const w = life.world;
     const rng = life.rng;
     const x = clamp(wx, 0, w.w - 1), y = clamp(wy, 0, w.h - 1);
     const i = life.tileAt(x, y);
+    const pay = () => { if (!free) life.faith -= tool.cost; };
 
     /* --- štětce na krajinu --- */
     if (tool.tile !== undefined) {
         w.forEachInRadius(x, y, radius, (j) => {
             if (w.build[j]) {
-                const b = life.buildings[w.build[j] - 1];
-                if (b && !b.dead && (tool.tile === T.WATER || tool.tile === T.MOUNT)) life.destroyBuilding(w.build[j] - 1);
+                if (tool.tile === T.WATER || tool.tile === T.MOUNT) life.destroyBuilding(w.build[j] - 1);
                 else return;
             }
             w.paint(j, tool.tile);
-            if (tool.tile === T.WATER) {
-                life.forEachNear(j % w.w + 0.5, ((j / w.w) | 0) + 0.5, 0.9, u => life.kill(u, 'voda'));
-            }
+            if (tool.tile === T.FARM) w.veg[j] = 0.9;
+            if (tool.tile === T.WATER) life.forEachNear(j % w.w + 0.5, ((j / w.w) | 0) + 0.5, 0.9, u => life.kill(u, 'voda'));
         });
         return true;
     }
 
-    /* --- nové národy a zvířata --- */
+    /* --- národy a zvířata --- */
     if (tool.spawnRace) {
         if (!w.walkable(i)) return 'blocked';
         const realm = life.seedTribe(x, y, tool.spawnRace, 6);
         if (!realm) return 'blocked';
         fx(life, { type: 'sparkle', x, y, r: 3, life: 26, max: 26, color: realm.color });
-        life.faith -= tool.cost;
+        pay();
         return true;
     }
     if (tool.spawnAnimal) {
+        const many = tool.spawnAnimal === 'dragon' ? 1 : 5;
         let placed = 0;
-        for (let k = 0; k < 20 && placed < 5; k++) {
+        for (let k = 0; k < 24 && placed < many; k++) {
             const a = rng() * Math.PI * 2, d = rng() * Math.max(1, radius * 0.6);
             const px = x + Math.cos(a) * d, py = y + Math.sin(a) * d;
-            if (!life.walkableAt(px, py)) continue;
+            if (tool.spawnAnimal !== 'dragon' && !life.walkableAt(px, py)) continue;
             if (life.spawnAnimal(px, py, tool.spawnAnimal)) placed++;
         }
-        life.faith -= tool.cost;
-        return placed > 0;
+        if (!placed) return 'blocked';
+        if (tool.spawnAnimal === 'dragon') life.log('🐉 Na obloze se objevil drak', 'bad');
+        pay();
+        return true;
     }
 
-    /* --- zázraky --- */
     switch (id) {
+        /* --- dary a zázraky --- */
         case 'bless': {
             w.forEachInRadius(x, y, radius, j => {
                 w.moist[j] = Math.min(1, w.moist[j] + 0.06);
@@ -1678,12 +2061,12 @@ function applyTool(life, id, wx, wy, radius) {
                 if (w.fire[j]) { w.fire[j] = 0; w.fireSet.delete(j); w.classify(j); }
             });
             life.forEachNear(x, y, radius, u => {
-                u.hp = u.maxHp; u.food = 1;
+                if (u.zombie) { life.kill(u, 'god'); return; }
+                u.hp = u.maxHp; u.food = 1; u.sick = 0;
                 if (u.kind === 'person') u.faith = Math.min(1, u.faith + 0.5);
             });
             fx(life, { type: 'sparkle', x, y, r: radius, life: 24, max: 24, color: '#ffe9a8' });
-            life.faith -= tool.cost;
-            return true;
+            pay(); return true;
         }
         case 'rain': {
             w.forEachInRadius(x, y, radius, j => {
@@ -1692,11 +2075,49 @@ function applyTool(life, id, wx, wy, radius) {
                 if (w.veg[j] < 1) { w.veg[j] = Math.min(1, w.veg[j] + 0.06); w.classify(j); }
             });
             fx(life, { type: 'rain', x, y, r: radius, life: 90, max: 90 });
-            life.faith -= tool.cost;
-            return true;
+            pay(); return true;
+        }
+        case 'gold': {
+            const realm = realmAt(life, i);
+            if (!realm) return 'nothing';
+            realm.gold += 250;
+            life.log(`💰 ${realm.name} obdrželi 250 zlaťáků z nebes`, 'good');
+            fx(life, { type: 'sparkle', x, y, r: Math.max(2, radius), life: 26, max: 26, color: '#ffd166' });
+            pay(); return true;
+        }
+        case 'foodgift': {
+            const v = nearestVillage(life, x, y, 400);
+            if (!v) return 'nothing';
+            v.food += 120; v.wood += 40;
+            life.log(`🍞 ${v.name} dostala zásoby na horší časy`, 'good');
+            fx(life, { type: 'sparkle', x: v.x, y: v.y, r: 3, life: 24, max: 24, color: '#9ee86a' });
+            pay(); return true;
+        }
+        case 'enlight': {
+            const realm = realmAt(life, i);
+            if (!realm) return 'nothing';
+            if (realm.era >= ERAS.length - 1) { realm.research += 500; return 'nothing'; }
+            realm.era++;
+            realm.research = ERA_COST[realm.era];
+            life.log(`📜 ${realm.name} byli osvíceni – nastala ${ERAS[realm.era]}`, 'good');
+            fx(life, { type: 'beam', x, y, r: 4, life: 26, max: 26, color: '#ffe9a8' });
+            pay(); return true;
+        }
+        case 'colony': {
+            const realm = realmAt(life, i) || (nearestVillage(life, x, y, 2500) && life.realmById(nearestVillage(life, x, y, 2500).realm));
+            if (!realm || !w.walkable(i) || w.build[i]) return 'nothing';
+            const v = life.foundVillage(x, y, realm);
+            if (!v) return 'nothing';
+            for (let k = 0; k < 4; k++) {
+                const u = life.spawnPerson(x + rng() - 0.5, y + rng() - 0.5, realm.race, realm, v);
+                if (u) { u.job = 'worker'; u.age = 300; }
+            }
+            life.territoryDirty = true;
+            life.log(`🏘️ ${realm.name}: z boží vůle vznikla vesnice ${v.name}`, 'good');
+            pay(); return true;
         }
         case 'war': {
-            const realm = life.realmById(w.owner[i]);
+            const realm = realmAt(life, i);
             if (!realm) return 'nothing';
             let target = null, bd = 1e9;
             for (const other of life.realms) {
@@ -1710,20 +2131,28 @@ function applyTool(life, id, wx, wy, radius) {
             }
             if (!target) return 'nothing';
             life.declareWar(realm, target);
-            life.faith -= tool.cost;
-            return true;
+            pay(); return true;
         }
         case 'peace': {
-            const realm = life.realmById(w.owner[i]);
+            const realm = realmAt(life, i);
             if (!realm || !realm.wars.size) return 'nothing';
             for (const id2 of [...realm.wars]) life.makePeace(realm, life.realmById(id2));
-            life.faith -= tool.cost;
-            return true;
+            pay(); return true;
         }
-    }
+        case 'zombie': {
+            let n = 0;
+            life.forEachNear(x, y, Math.max(2, radius), u => {
+                if (u.kind !== 'person' || u.zombie || n >= 4) return;
+                u.zombie = 1; u.job = 'zombie'; u.realm = 0; u.village = 0;
+                u.name = 'Nemrtvý ' + u.name; n++;
+            });
+            if (!n) return 'nothing';
+            life.log('🧟 Mrtví vstali z hrobů', 'bad');
+            fx(life, { type: 'sparkle', x, y, r: radius, life: 30, max: 30, color: '#8ad46a' });
+            pay(); return true;
+        }
 
-    /* --- katastrofy --- */
-    switch (id) {
+        /* --- katastrofy --- */
         case 'lightning': {
             life.forEachNear(x, y, Math.max(1, radius * 0.4), u => life.kill(u, 'god'));
             w.forEachInRadius(x, y, Math.max(1, radius * 0.4), j => { if (rng() < 0.6) w.ignite(j); });
@@ -1734,18 +2163,15 @@ function applyTool(life, id, wx, wy, radius) {
             w.forEachInRadius(x, y, radius, j => { if (rng() < 0.7) w.ignite(j); });
             break;
         }
-        case 'bomb': {
-            explode(life, x, y, radius, 1);
-            break;
-        }
+        case 'bomb': explode(life, x, y, radius, 1); break;
         case 'smite': {
             life.forEachNear(x, y, radius, u => life.kill(u, 'god'));
-            fx(life, { type: 'beam', x, y, r: radius, life: 18, max: 18 });
+            fx(life, { type: 'beam', x, y, r: radius, life: 18, max: 18, color: '#ff6b6b' });
             break;
         }
         case 'plague': {
             let n = 0;
-            life.forEachNear(x, y, radius, u => { if (u.kind === 'person') { u.sick = 500; n++; } });
+            life.forEachNear(x, y, radius, u => { if (u.kind === 'person' && !u.zombie) { u.sick = 500; n++; } });
             if (n) life.log(`🦠 V okolí vypukl mor – nakaženo ${n} obyvatel`, 'bad');
             fx(life, { type: 'sparkle', x, y, r: radius, life: 30, max: 30, color: '#9ee86a' });
             break;
@@ -1755,10 +2181,22 @@ function applyTool(life, id, wx, wy, radius) {
             fx(life, { type: 'splash', x, y, r: radius, life: 20, max: 20 });
             break;
         }
+        case 'tornado': {
+            life.tornados = life.tornados || [];
+            life.tornados.push({ x, y, dx: rng() - 0.5, dy: rng() - 0.5, r: Math.max(2.5, radius * 0.8), life: 500 });
+            life.log('🌪️ Krajinou se prohnalo tornádo', 'bad');
+            break;
+        }
+        case 'blizzard': {
+            life.storms = life.storms || [];
+            life.storms.push({ x, y, r: Math.max(4, radius * 1.4), life: 260 });
+            life.log('🌨️ Přišla ledová vánice', 'bad');
+            break;
+        }
         case 'volcano': {
             w.forEachInRadius(x, y, Math.max(1, radius * 0.35), j => w.addLava(j));
             life.volcanoes = life.volcanoes || [];
-            life.volcanoes.push({ x: x | 0, y: y | 0, life: 200 });
+            life.volcanoes.push({ x: x | 0, y: y | 0, life: 220 });
             life.log('🌋 Probudila se sopka', 'bad');
             break;
         }
@@ -1770,8 +2208,7 @@ function applyTool(life, id, wx, wy, radius) {
         }
         default: return false;
     }
-    life.faith -= tool.cost;
-    life.fearShown = true;
+    pay();
     return true;
 }
 
@@ -1788,16 +2225,17 @@ function explode(life, x, y, radius, power) {
     fx(life, { type: 'boom', x, y, r: radius * 1.4, life: 26, max: 26, power });
 }
 
-/* meteority a sopky dobíhají samy */
+/* dobíhající jevy: meteory, sopky, tornáda, vánice */
 function stepHazards(life) {
-    const w = life.world;
+    const w = life.world, rng = life.rng;
+
     if (life.meteors) {
         for (let k = life.meteors.length - 1; k >= 0; k--) {
             const m = life.meteors[k];
             if (--m.life <= 0) {
                 explode(life, m.x, m.y, m.r, 2);
                 w.forEachInRadius(m.x, m.y, m.r * 0.35, j => w.addLava(j));
-                w.forEachInRadius(m.x, m.y, m.r * 2, j => { if (life.rng() < 0.35) w.ignite(j); });
+                w.forEachInRadius(m.x, m.y, m.r * 2, j => { if (rng() < 0.35) w.ignite(j); });
                 fx(life, { type: 'shock', x: m.x, y: m.y, r: m.r * 3.5, life: 34, max: 34 });
                 life.log('☄️ Dopadl meteorit', 'bad');
                 life.meteors.splice(k, 1);
@@ -1808,8 +2246,8 @@ function stepHazards(life) {
         for (let k = life.volcanoes.length - 1; k >= 0; k--) {
             const v = life.volcanoes[k];
             v.life--;
-            if (life.rng() < 0.4) {
-                const a = life.rng() * Math.PI * 2, d = life.rng() * 2.5;
+            if (rng() < 0.4) {
+                const a = rng() * Math.PI * 2, d = rng() * 2.5;
                 const px = clamp((v.x + Math.cos(a) * d) | 0, 0, w.w - 1);
                 const py = clamp((v.y + Math.sin(a) * d) | 0, 0, w.h - 1);
                 w.addLava(py * w.w + px);
@@ -1817,14 +2255,49 @@ function stepHazards(life) {
             if (v.life <= 0) life.volcanoes.splice(k, 1);
         }
     }
-    // nemoc
-    if (life.tick % 8 === 0) {
-        for (const u of life.units) {
-            if (!u.alive || !u.sick) continue;
-            u.sick--;
-            u.hp -= 0.5;
-            if (life.rng() < 0.05) life.forEachNear(u.x, u.y, 1.6, o => { if (o.kind === 'person' && !o.sick && life.rng() < 0.3) o.sick = 400; });
-            if (u.hp <= 0) life.kill(u, 'mor');
+    if (life.tornados) {
+        for (let k = life.tornados.length - 1; k >= 0; k--) {
+            const t = life.tornados[k];
+            t.life--;
+            t.dx += (rng() - 0.5) * 0.3; t.dy += (rng() - 0.5) * 0.3;
+            const l = Math.hypot(t.dx, t.dy) || 1;
+            t.dx = t.dx / l * 0.35; t.dy = t.dy / l * 0.35;
+            t.x = clamp(t.x + t.dx, 0, w.w - 1); t.y = clamp(t.y + t.dy, 0, w.h - 1);
+            t.ang = (t.ang || 0) + 0.6;
+            w.forEachInRadius(t.x, t.y, t.r, j => {
+                if (rng() < 0.12) {
+                    if (w.type[j] === T.FOREST) w.paint(j, T.GRASS);
+                    else if (w.veg[j] > 0.2) { w.veg[j] *= 0.5; w.classify(j); }
+                }
+                if (w.build[j] && rng() < 0.05) life.destroyBuilding(w.build[j] - 1);
+            });
+            life.forEachNear(t.x, t.y, t.r, u => {
+                const a = rng() * Math.PI * 2;
+                u.x = clamp(u.x + Math.cos(a) * 1.4, 0, w.w - 1.2);
+                u.y = clamp(u.y + Math.sin(a) * 1.4, 0, w.h - 1.2);
+                u.hp -= 3;
+                if (u.hp <= 0) life.kill(u, 'god');
+            });
+            if (t.life <= 0) life.tornados.splice(k, 1);
+        }
+    }
+    if (life.storms) {
+        for (let k = life.storms.length - 1; k >= 0; k--) {
+            const s = life.storms[k];
+            s.life--;
+            s.x = clamp(s.x + (rng() - 0.5) * 0.3, 0, w.w - 1);
+            s.y = clamp(s.y + (rng() - 0.5) * 0.3, 0, w.h - 1);
+            w.forEachInRadius(s.x, s.y, s.r, j => {
+                if (w.fire[j]) { w.fire[j] = 0; w.fireSet.delete(j); w.classify(j); }
+                if (rng() < 0.03 && !w.isWater(j) && w.type[j] !== T.MOUNT && w.build[j] === 0) w.paint(j, T.SNOW);
+            });
+            life.forEachNear(s.x, s.y, s.r, u => {
+                const cold = u.race === 'dwarf' ? 0.4 : 1;
+                u.hp -= 0.7 * cold;
+                u.food = Math.max(0, u.food - 0.004);
+                if (u.hp <= 0) life.kill(u, 'god');
+            });
+            if (s.life <= 0) life.storms.splice(k, 1);
         }
     }
 }
@@ -1839,7 +2312,8 @@ if (typeof module !== 'undefined') {
 /* Vykreslování. Terén se kreslí do vyrovnávací plochy a překresluje se jen tam,
    kde se něco změnilo. Panáčci se mezi tiky plynule dopočítávají. */
 
-const TPX = 14;                      // velikost dlaždice ve vyrovnávací ploše (px)
+let TPX = 14;                        // velikost dlaždice ve vyrovnávací ploše (px)
+function setTilePx(worldW) { TPX = Math.round(clamp(2400 / worldW, 7, 14)); }
 
 const MAP_MODES = [
     { id: 'normal', name: 'Krajina', icon: '🗺️' },
@@ -1859,6 +2333,7 @@ class Renderer {
         this.life = life;
         this.mode = 'normal';
 
+        setTilePx(world.w);
         this.buf = document.createElement('canvas');
         this.buf.width = world.w * TPX; this.buf.height = world.h * TPX;
         this.bctx = this.buf.getContext('2d');
@@ -2144,6 +2619,7 @@ class Renderer {
         }
         ctx.imageSmoothingEnabled = true;
 
+        this.drawHazards();
         this.drawBuildings();
         this.drawUnits(alpha);
         this.drawLabels();
@@ -2169,6 +2645,44 @@ class Renderer {
         ctx.globalAlpha = 1;
     }
 
+    drawHazards() {
+        const ctx = this.ctx, z = this.cam.zoom, life = this.life;
+        for (const t of (life.tornados || [])) {
+            const sx = this.w2sx(t.x + 0.5), sy = this.w2sy(t.y + 0.5), r = t.r * z;
+            const g = ctx.createRadialGradient(sx, sy, r * 0.05, sx, sy, r);
+            g.addColorStop(0, 'rgba(40,42,55,0.85)');
+            g.addColorStop(0.3, 'rgba(215,218,232,0.75)');
+            g.addColorStop(1, 'rgba(120,124,150,0)');
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(sx, sy, r, 0, 6.3); ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+            ctx.lineWidth = 1.5;
+            for (let k = 0; k < 4; k++) {
+                ctx.beginPath();
+                const a0 = this.frame * 0.14 + k * 1.6;
+                for (let p = 0; p <= 14; p++) {
+                    const f = p / 14, ang = a0 + f * 7, rr = r * (0.12 + f * 0.88);
+                    const px = sx + Math.cos(ang) * rr, py = sy + Math.sin(ang) * rr * 0.6;
+                    p === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+        }
+        for (const s2 of (life.storms || [])) {
+            const sx = this.w2sx(s2.x + 0.5), sy = this.w2sy(s2.y + 0.5), r = s2.r * z;
+            const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+            g.addColorStop(0, 'rgba(225,240,255,0.42)');
+            g.addColorStop(1, 'rgba(200,225,255,0)');
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(sx, sy, r, 0, 6.3); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            for (let k = 0; k < 16; k++) {
+                const a = (this.frame * 0.02 + k) % 6.283, d = ((this.frame * 2 + k * 37) % (r || 1));
+                ctx.fillRect(sx + Math.cos(a) * d, sy + Math.sin(a) * d * 0.7, 2, 2);
+            }
+        }
+    }
+
     drawBuildings() {
         const ctx = this.ctx, z = this.cam.zoom, life = this.life;
         for (const b of life.buildings) {
@@ -2177,7 +2691,7 @@ class Renderer {
             if (sx < -20 || sy < -20 || sx > this.vw + 20 || sy > this.vh + 20) continue;
             const realm = life.realmById(b.realm);
             const col = realm ? realm.color : '#999';
-            const s = Math.max(3, z * (b.type === 'castle' ? 1.2 : 0.85));
+            const s = Math.max(3, z * (b.type === 'castle' ? 1.25 : b.type === 'temple' || b.type === 'barracks' ? 1.0 : 0.85));
 
             ctx.fillStyle = 'rgba(0,0,0,0.3)';
             ctx.beginPath(); ctx.ellipse(sx, sy + s * 0.45, s * 0.55, s * 0.22, 0, 0, 6.3); ctx.fill();
@@ -2191,6 +2705,49 @@ class Renderer {
                 ctx.fillRect(sx + s * 0.06, sy - s * 1.15, s * 0.07, s * 0.8);
                 ctx.fillStyle = col;
                 ctx.fillRect(sx + s * 0.12, sy - s * 1.12, s * 0.38, s * 0.3);
+            } else if (b.type === 'temple') {
+                ctx.fillStyle = '#e8e2d2';
+                ctx.fillRect(sx - s * 0.38, sy - s * 0.15, s * 0.76, s * 0.55);
+                ctx.fillStyle = '#f2d98a';
+                ctx.beginPath();
+                ctx.moveTo(sx - s * 0.46, sy - s * 0.12); ctx.lineTo(sx, sy - s * 0.7); ctx.lineTo(sx + s * 0.46, sy - s * 0.12);
+                ctx.closePath(); ctx.fill();
+                if (z > 9) { ctx.fillStyle = '#ffd24a'; ctx.fillRect(sx - s * 0.05, sy - s * 1.0, s * 0.1, s * 0.3); }
+            } else if (b.type === 'market') {
+                ctx.fillStyle = '#c9a06a';
+                ctx.fillRect(sx - s * 0.4, sy - s * 0.05, s * 0.8, s * 0.42);
+                for (let k = 0; k < 4; k++) {
+                    ctx.fillStyle = k % 2 ? '#e05555' : '#f4f0e6';
+                    ctx.fillRect(sx - s * 0.44 + k * s * 0.22, sy - s * 0.42, s * 0.22, s * 0.38);
+                }
+            } else if (b.type === 'mine') {
+                ctx.fillStyle = '#7c7772';
+                ctx.beginPath();
+                ctx.moveTo(sx - s * 0.42, sy + s * 0.34); ctx.lineTo(sx, sy - s * 0.5); ctx.lineTo(sx + s * 0.42, sy + s * 0.34);
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#2a2622';
+                ctx.beginPath(); ctx.arc(sx, sy + s * 0.2, s * 0.2, Math.PI, 0); ctx.fill();
+                ctx.fillRect(sx - s * 0.2, sy + s * 0.18, s * 0.4, s * 0.18);
+            } else if (b.type === 'sawmill') {
+                ctx.fillStyle = '#a9744a';
+                ctx.fillRect(sx - s * 0.38, sy - s * 0.18, s * 0.76, s * 0.55);
+                ctx.fillStyle = '#6b4a2c';
+                ctx.fillRect(sx - s * 0.42, sy - s * 0.3, s * 0.84, s * 0.14);
+                if (z > 9) {
+                    ctx.strokeStyle = '#d8d4cc'; ctx.lineWidth = Math.max(1, s * 0.07);
+                    ctx.beginPath(); ctx.arc(sx + s * 0.14, sy + s * 0.08, s * 0.17, 0, 6.3); ctx.stroke();
+                }
+            } else if (b.type === 'barracks') {
+                ctx.fillStyle = '#6f7480';
+                ctx.fillRect(sx - s * 0.42, sy - s * 0.25, s * 0.84, s * 0.62);
+                ctx.fillStyle = col;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy - s * 0.62); ctx.lineTo(sx + s * 0.26, sy - s * 0.3); ctx.lineTo(sx - s * 0.26, sy - s * 0.3);
+                ctx.closePath(); ctx.fill();
+                if (z > 9) {
+                    ctx.strokeStyle = '#e8eaf0'; ctx.lineWidth = Math.max(1, s * 0.08);
+                    ctx.beginPath(); ctx.moveTo(sx - s * 0.16, sy + s * 0.28); ctx.lineTo(sx + s * 0.16, sy - s * 0.1); ctx.stroke();
+                }
             } else {
                 ctx.fillStyle = '#c9a06a';
                 ctx.fillRect(sx - s * 0.35, sy - s * 0.1, s * 0.7, s * 0.5);
@@ -2202,8 +2759,7 @@ class Renderer {
                 ctx.closePath(); ctx.fill();
                 if (z > 10) { ctx.fillStyle = 'rgba(60,40,20,0.8)'; ctx.fillRect(sx - s * 0.08, sy + s * 0.12, s * 0.16, s * 0.28); }
             }
-            const full = b.type === 'castle' ? 120 : 45;
-            if (b.hp < full * 0.6) {
+            if (b.hp < (b.maxHp || 45) * 0.6) {
                 ctx.fillStyle = 'rgba(40,40,40,0.45)';
                 ctx.fillRect(sx - s * 0.4, sy - s * 0.5, s * 0.8, s * 0.4);
             }
@@ -2228,6 +2784,30 @@ class Renderer {
             if (u.kind === 'animal') {
                 const a = ANIMALS[u.race];
                 ctx.fillStyle = a.color;
+                if (u.race === 'dragon') {
+                    const ds = s * 1.9;
+                    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                    ctx.beginPath(); ctx.ellipse(sx, sy + ds * 0.5, ds * 0.5, ds * 0.18, 0, 0, 6.3); ctx.fill();
+                    const flap = Math.sin(this.frame * 0.25) * ds * 0.25;
+                    ctx.fillStyle = '#8e2f28';
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy - ds * 0.1);
+                    ctx.lineTo(sx - ds * 0.75, sy - ds * 0.4 - flap);
+                    ctx.lineTo(sx - ds * 0.2, sy + ds * 0.12);
+                    ctx.closePath(); ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy - ds * 0.1);
+                    ctx.lineTo(sx + ds * 0.75, sy - ds * 0.4 - flap);
+                    ctx.lineTo(sx + ds * 0.2, sy + ds * 0.12);
+                    ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = a.color;
+                    ctx.beginPath(); ctx.ellipse(sx, sy - ds * 0.05, ds * 0.32, ds * 0.2, 0, 0, 6.3); ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx + (u.dir || 1) * ds * 0.34, sy - ds * 0.16, ds * 0.14, 0, 6.3); ctx.fill();
+                    ctx.fillStyle = '#ffd24a';
+                    ctx.fillRect(sx + (u.dir || 1) * ds * 0.44, sy - ds * 0.18, ds * 0.12, ds * 0.06);
+                    if (sel === u) this.ring(sx, sy, ds);
+                    continue;
+                }
                 if (u.race === 'sheep') {
                     ctx.beginPath(); ctx.ellipse(sx, sy - s * 0.12 - bob, s * 0.32, s * 0.24, 0, 0, 6.3); ctx.fill();
                     ctx.fillStyle = '#3c3a38';
@@ -2246,7 +2826,8 @@ class Renderer {
 
             const race = RACES[u.race];
             const realm = u.realm ? life.realmById(u.realm) : null;
-            const cloth = realm ? realm.color : '#9aa3b5';
+            const cloth = u.zombie ? '#4d6b3a' : (realm ? realm.color : '#9aa3b5');
+            const skin = u.zombie ? '#8fb56a' : race.skin;
 
             if (z >= 5) {
                 ctx.strokeStyle = '#3b3227';
@@ -2259,8 +2840,9 @@ class Renderer {
             }
             ctx.fillStyle = cloth;
             ctx.fillRect(sx - s * 0.19, sy - s * 0.2 - bob, s * 0.38, s * 0.36);
-            ctx.fillStyle = race.skin;
+            ctx.fillStyle = skin;
             ctx.beginPath(); ctx.arc(sx, sy - s * 0.36 - bob, s * 0.2, 0, 6.3); ctx.fill();
+            if (u.zombie && z >= 6) { ctx.fillStyle = '#c8f06a'; ctx.fillRect(sx - s * 0.1, sy - s * 0.4 - bob, s * 0.06, s * 0.06); ctx.fillRect(sx + s * 0.05, sy - s * 0.4 - bob, s * 0.06, s * 0.06); }
 
             if (u.job === 'soldier' && z >= 6) {
                 ctx.strokeStyle = '#e8eaf0';
@@ -2525,16 +3107,21 @@ class Renderer {
 /* Propojení světa s rozhraním. Simulace běží v pevném tempu 8 tiků za vteřinu,
    snímky se mezi tiky dopočítávají – proto je obraz klidný. */
 
-const WORLD_W = 144, WORLD_H = 90;
+const MAP_SIZES = [
+    { id: 's', name: 'Malý', w: 128, h: 80 },
+    { id: 'm', name: 'Střední', w: 176, h: 110 },
+    { id: 'l', name: 'Velký', w: 240, h: 150 },
+    { id: 'xl', name: 'Obří', w: 320, h: 200 }
+];
 const TICK_MS = 125;
 const $ = id => document.getElementById(id);
 
-const JOBS = { child: 'dítě', worker: 'dělník', soldier: 'voják', wanderer: 'tulák', wild: 'divoké' };
-const STATES = { idle: 'rozmýšlí se', gather: 'sbírá jídlo', return: 'nese jídlo domů', build: 'staví' };
-const GROUP_TITLE = { hand: 'Ruka', land: 'Krajina', life: 'Život', bless: 'Zázraky', doom: 'Zkáza' };
+const JOBS = { child: 'dítě', worker: 'dělník', soldier: 'voják', wanderer: 'tulák', wild: 'divoké', zombie: 'nemrtvý' };
+const STATES = { idle: 'rozmýšlí se', gather: 'sbírá jídlo', chop: 'kácí dřevo', return: 'nese náklad domů', build: 'staví' };
+const GROUP_TITLE = { hand: 'Ruka', land: 'Krajina', life: 'Život', bless: 'Dary a zázraky', doom: 'Zkáza' };
 
 let world, life, renderer;
-let speed = 1, tool = 'hand', brushR = 4;
+let speed = 1, tool = 'hand', brushR = 4, mapSize = 'm';
 let held = false, panning = false, spaceDown = false;
 let lastPointer = { x: 0, y: 0 };
 let logIndex = 0, lastApply = 0;
@@ -2548,24 +3135,35 @@ const store = {
 /* ---------------- start ---------------- */
 
 function newWorld(seed, withLife = true) {
-    world = new World(WORLD_W, WORLD_H, seed >>> 0);
+    const size = MAP_SIZES.find(s => s.id === mapSize) || MAP_SIZES[1];
+    setWorldLimits(size.w, size.h);
+    const godMode = life ? life.godMode : false;
+    const laws = life ? { ...life.laws } : null;
+
+    world = new World(size.w, size.h, seed >>> 0);
     life = new Life(world, seed >>> 0);
-    const zoom = renderer ? renderer.cam.zoom : 0;
+    life.godMode = godMode;
+    if (laws) life.laws = laws;
+
     renderer = new Renderer($('world'), $('minimap'), world, life);
-    renderer.cam.zoom = zoom || Math.max(renderer.minZoom, 7);
+    renderer.cam.zoom = Math.max(renderer.minZoom, 7);
     renderer.clampCam();
     renderer.brush.r = brushR;
     logIndex = 0;
     $('log').innerHTML = '';
     $('card').hidden = true;
-    life.log('🌍 Zrodil se nový svět', 'good');
+    life.log(`🌍 Zrodil se nový svět (${size.name.toLowerCase()}, ${size.w}×${size.h})`, 'good');
+
     if (withLife) {
-        const races = ['human', 'orc', 'elf'];
-        for (const r of races) {
+        const races = ['human', 'orc', 'elf', 'dwarf'];
+        const n = size.w > 200 ? 5 : size.w > 150 ? 4 : 3;
+        for (let k = 0; k < n; k++) {
+            const r = races[k % races.length];
             const spot = life.homeSpot(r);
             if (spot) life.seedTribe(spot.x, spot.y, r, 6);
         }
-        for (let k = 0; k < 26; k++) {
+        const animals = Math.round(size.w * size.h / 700);
+        for (let k = 0; k < animals; k++) {
             const s = life.homeSpot('human');
             if (s) life.spawnAnimal(s.x, s.y, k % 9 === 0 ? 'wolf' : 'sheep');
         }
@@ -2573,15 +3171,17 @@ function newWorld(seed, withLife = true) {
         renderer.terrDirty = true;
     }
     selectTool(tool);
+    renderLaws();
 }
 
 function boot() {
     buildTools();
     buildModes();
+    buildSizes();
     bindUI();
     bindCanvas();
     newWorld(parseInt($('seed').value, 10) || 12345);
-    if (!store.get('bs2-help')) $('help').hidden = false;
+    if (!store.get('bs3-help')) $('help').hidden = false;
     requestAnimationFrame(loop);
 }
 
@@ -2642,6 +3242,42 @@ function buildModes() {
     }
 }
 
+function buildSizes() {
+    const sel = $('mapsize');
+    for (const s of MAP_SIZES) {
+        const o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = `${s.name} · ${s.w}×${s.h}`;
+        if (s.id === mapSize) o.selected = true;
+        sel.appendChild(o);
+    }
+}
+
+/* ---------------- zákony ---------------- */
+
+function renderLaws() {
+    const el = $('tab-laws');
+    let html = '<div class="laws-intro">Zákony platí pro celý svět. Můžeš je měnit kdykoli – království se přizpůsobí.</div>';
+    for (const l of LAWS) {
+        html += `<div class="law"><div class="law-head">${l.icon} <b>${l.name}</b></div>
+            <div class="law-opts" data-law="${l.id}">` +
+            l.opts.map((o, k) => `<button data-v="${k}" class="${life.laws[l.id] === k ? 'on' : ''}">${o}</button>`).join('') +
+            `</div><div class="law-desc">${l.desc}</div></div>`;
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('.law-opts').forEach(row => {
+        row.addEventListener('click', e => {
+            const b = e.target.closest('button');
+            if (!b) return;
+            const id = row.dataset.law, v = parseInt(b.dataset.v, 10);
+            life.laws[id] = v;
+            row.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+            const law = LAWS.find(x => x.id === id);
+            life.log(`📜 Vyhlášen zákon: ${law.name} – ${law.opts[v]}`, 'info');
+        });
+    });
+}
+
 /* ---------------- ovládací prvky ---------------- */
 
 function bindUI() {
@@ -2654,14 +3290,19 @@ function bindUI() {
         const b = e.target.closest('button[data-speed]');
         if (b) setSpeed(parseInt(b.dataset.speed, 10));
     });
+    $('godmode').addEventListener('click', () => {
+        life.godMode = !life.godMode;
+        $('godmode').classList.toggle('on', life.godMode);
+        toast(life.godMode ? '♾️ Nekonečná víra zapnuta – dělej si, co chceš' : 'Víra se zase počítá');
+    });
     $('climate').addEventListener('change', e => {
         world.climate = parseFloat(e.target.value);
-        $('climate-val').textContent = (world.climate > 0 ? '+' : '') + world.climate + ' °C';
         world.reclassifyAll();
     });
     $('climate').addEventListener('input', e => {
         $('climate-val').textContent = (parseFloat(e.target.value) > 0 ? '+' : '') + e.target.value + ' °C';
     });
+    $('mapsize').addEventListener('change', e => { mapSize = e.target.value; });
     $('btn-new').addEventListener('click', () => {
         newWorld(parseInt($('seed').value, 10) || (Date.now() & 0xffff));
         toast('🌍 Nový svět je hotový');
@@ -2677,19 +3318,21 @@ function bindUI() {
         toast('🗺️ Prázdný svět – národy si zasaď sám');
     });
     $('btn-help').addEventListener('click', () => { $('help').hidden = false; });
-    $('help-close').addEventListener('click', () => { $('help').hidden = true; store.set('bs2-help', '1'); });
+    $('help-close').addEventListener('click', () => { $('help').hidden = true; store.set('bs3-help', '1'); });
     $('tabs').addEventListener('click', e => {
         const b = e.target.closest('button');
         if (!b) return;
         $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
-        for (const t of ['realms', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
+        for (const t of ['realms', 'laws', 'charts', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
+        if (b.dataset.tab === 'charts') renderCharts();
     });
 
     window.addEventListener('resize', () => renderer.resize());
     window.addEventListener('keydown', e => {
-        if (e.target.tagName === 'INPUT') return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
         if (e.code === 'Space') { e.preventDefault(); spaceDown = true; setSpeed(speed === 0 ? 1 : 0); }
         if (e.key === 'h' || e.key === 'H') $('help').hidden = !$('help').hidden;
+        if (e.key === 'g' || e.key === 'G') $('godmode').click();
         const n = parseInt(e.key, 10);
         if (!isNaN(n) && e.key.length === 1) {
             const id = hotkeys[n === 0 ? 9 : n - 1];
@@ -2753,13 +3396,11 @@ function use(wx, wy) {
     }
     const res = applyTool(life, tool, Math.floor(wx), Math.floor(wy), brushR);
     if (res === 'faith') {
-        toast('🙏 Málo víry – požehnej lidem, ať v tebe věří');
+        toast('🙏 Málo víry – požehnej lidem, nebo zapni ♾️ nahoře');
         const bar = $('faith-bar');
-        bar.classList.remove('flash');
-        void bar.offsetWidth;
-        bar.classList.add('flash');
-    } else if (res === 'blocked') toast('Sem se národ usadit nemůže – zkus souš');
-    else if (res === 'nothing') toast('Klikni na území nějakého království');
+        bar.classList.remove('flash'); void bar.offsetWidth; bar.classList.add('flash');
+    } else if (res === 'blocked') toast('Sem to nejde – zkus jiné místo');
+    else if (res === 'nothing') toast('Klikni na území království nebo blízko vesnice');
 }
 
 let toastTimer = null;
@@ -2777,21 +3418,21 @@ function showTip(sx, sy, wx, wy) {
     const i = life.tileAt(wx, wy);
     const realm = life.realmById(world.owner[i]);
     let text = `${TILE_NAME[world.type[i]]}   ${world.tempAt(i).toFixed(0)} °C`;
-    if (realm) text += `\n👑 ${realm.name}`;
+    if (realm) text += `\n👑 ${realm.name} · ${ERAS[realm.era]}`;
     const u = renderer.pick(wx, wy);
     if (u) {
-        if (u.kind === 'village') text += `\n🏘️ ${u.v.name} – ${u.v.pop} obyvatel`;
-        else if (u.kind === 'person') text += `\n${RACES[u.race].emoji} ${u.name} · ${JOBS[u.job] || u.job}`;
+        if (u.kind === 'village') text += `\n🏘️ ${u.v.name} – ${u.v.pop} obyvatel, 🌾 ${u.v.food | 0} 🪵 ${u.v.wood | 0} 🪙 ${u.v.gold | 0}`;
+        else if (u.kind === 'person') text += `\n${u.zombie ? '🧟' : RACES[u.race].emoji} ${u.name} · ${JOBS[u.job] || u.job}`;
         else text += `\n${ANIMALS[u.race].emoji} ${ANIMALS[u.race].name}`;
     }
     tip.textContent = text;
     tip.style.display = 'block';
     const box = $('box').getBoundingClientRect();
-    tip.style.left = Math.min(sx + 16, box.width - 175) + 'px';
-    tip.style.top = Math.min(sy + 16, box.height - 80) + 'px';
+    tip.style.left = Math.min(sx + 16, box.width - 210) + 'px';
+    tip.style.top = Math.min(sy + 16, box.height - 90) + 'px';
 }
 
-/* ---------------- panely ---------------- */
+/* ---------------- karty a panely ---------------- */
 
 function renderCard() {
     const el = $('card');
@@ -2799,17 +3440,22 @@ function renderCard() {
     if (!s) { el.hidden = true; return; }
     if (s.kind === 'village') {
         const v = s.v, realm = life.realmById(v.realm);
+        const types = {};
+        for (const bi of v.houses) { const b = life.buildings[bi]; if (b && !b.dead) types[b.type] = (types[b.type] || 0) + 1; }
+        const list = Object.entries(types).map(([t, n]) => `${BUILDINGS[t].name} ×${n}`).join(', ') || '–';
         el.innerHTML = `<h5><span class="chip" style="background:${realm ? realm.color : '#888'}"></span>🏘️ ${v.name}
             <button class="close">✕</button></h5>
             <div class="row"><span>království</span><b>${realm ? realm.name : '–'}</b></div>
-            <div class="row"><span>obyvatel</span><b>${v.pop}</b></div>
-            <div class="row"><span>vojáků</span><b>${v.soldiers}</b></div>
-            <div class="row"><span>domů</span><b>${v.houses.length}</b></div>
-            <div class="row"><span>zásoby jídla</span><b>${v.food | 0}</b></div>
+            <div class="row"><span>obyvatel / vojáků</span><b>${v.pop} / ${v.soldiers}</b></div>
+            <div class="row"><span>🌾 jídlo</span><b>${v.food | 0}</b></div>
+            <div class="row"><span>🪵 dřevo</span><b>${v.wood | 0}</b></div>
+            <div class="row"><span>🪙 zlato</span><b>${v.gold | 0}</b></div>
+            <div class="bar-row"><span>nálada</span><div class="bar"><i style="width:${(v.happy * 100) | 0}%;background:${v.happy > 0.5 ? '#7cc46a' : v.happy > 0.25 ? '#e8b84a' : '#e05555'}"></i></div></div>
+            <div class="row"><span>stavby</span><b>${list}</b></div>
             <div class="row"><span>založena</span><b>${Math.floor(v.born / 60)}. rok</b></div>`;
     } else if (s.kind === 'person') {
         const realm = life.realmById(s.realm), v = life.villageById(s.village);
-        el.innerHTML = `<h5><span class="chip" style="background:${realm ? realm.color : '#888'}"></span>${RACES[s.race].emoji} ${s.name}
+        el.innerHTML = `<h5><span class="chip" style="background:${realm ? realm.color : '#888'}"></span>${s.zombie ? '🧟' : RACES[s.race].emoji} ${s.name}
             <button class="close">✕</button></h5>
             <div class="row"><span>rod</span><b>${RACES[s.race].name}</b></div>
             <div class="row"><span>království</span><b>${realm ? realm.name : 'bez domova'}</b></div>
@@ -2817,14 +3463,15 @@ function renderCard() {
             <div class="row"><span>povolání</span><b>${JOBS[s.job] || s.job}</b></div>
             <div class="row"><span>zrovna</span><b>${STATES[s.state] || '–'}</b></div>
             <div class="row"><span>věk</span><b>${Math.floor(s.age / 60)} let</b></div>
+            ${s.kills ? `<div class="row"><span>zabil</span><b>${s.kills}</b></div>` : ''}
             <div class="bar-row"><span>zdraví</span><div class="bar"><i style="width:${(100 * s.hp / s.maxHp) | 0}%;background:#e05555"></i></div></div>
             <div class="bar-row"><span>sytost</span><div class="bar"><i style="width:${(100 * s.food) | 0}%;background:#7cc46a"></i></div></div>
             <div class="bar-row"><span>víra</span><div class="bar"><i style="width:${(100 * s.faith) | 0}%;background:#ffd166"></i></div></div>`;
     } else {
         el.innerHTML = `<h5>${ANIMALS[s.race].emoji} ${ANIMALS[s.race].name}<button class="close">✕</button></h5>
             <div class="row"><span>věk</span><b>${Math.floor(s.age / 60)} let</b></div>
-            <div class="bar-row"><span>zdraví</span><div class="bar"><i style="width:${(100 * s.hp / s.maxHp) | 0}%;background:#e05555"></i></div></div>
-            <div class="bar-row"><span>sytost</span><div class="bar"><i style="width:${(100 * s.food) | 0}%;background:#7cc46a"></i></div></div>`;
+            ${s.kills ? `<div class="row"><span>ulovil</span><b>${s.kills}</b></div>` : ''}
+            <div class="bar-row"><span>zdraví</span><div class="bar"><i style="width:${(100 * s.hp / s.maxHp) | 0}%;background:#e05555"></i></div></div>`;
     }
     el.hidden = false;
     el.querySelector('.close').addEventListener('click', () => { renderer.select(null); el.hidden = true; });
@@ -2832,18 +3479,19 @@ function renderCard() {
 
 function renderHud() {
     const s = life.summary();
-    $('hud-year').textContent = Math.floor(life.tick / 60);
+    $('hud-year').textContent = life.year;
     $('hud-pop').textContent = s.people;
     $('hud-realms').textContent = s.realms.length;
     $('hud-villages').textContent = s.villages;
-    $('hud-animals').textContent = s.animals;
+    $('hud-gold').textContent = s.gold;
+    $('hud-wars').textContent = s.wars;
 
-    $('faith-fill').style.width = clamp(life.faith / life.faithMax, 0, 1) * 100 + '%';
-    $('faith-text').textContent = `${life.faith | 0} / ${life.faithMax | 0} víry`;
+    $('faith-fill').style.width = (life.godMode ? 100 : clamp(life.faith / life.faithMax, 0, 1) * 100) + '%';
+    $('faith-text').textContent = life.godMode ? '♾️ nekonečná víra' : `${life.faith | 0} / ${life.faithMax | 0} víry`;
     $('believers').textContent = life.believers;
 
     document.querySelectorAll('.tool').forEach(e => {
-        e.classList.toggle('locked', TOOL_MAP[e.dataset.id].cost > life.faith);
+        e.classList.toggle('locked', !life.godMode && TOOL_MAP[e.dataset.id].cost > life.faith);
     });
     if (!$('tab-realms').hidden) renderRealms(s);
 }
@@ -2853,23 +3501,36 @@ function renderRealms(s) {
     let html = '';
     if (!s.realms.length) html += '<div class="empty">Zatím tu není žádné království.<br>Vezmi 🧑 <b>Lidi</b> a klikni na souš.</div>';
     for (const r of s.realms.slice().sort((a, b) => b.villages.length - a.villages.length)) {
-        let pop = 0, soldiers = 0;
-        for (const u of life.units) if (u.alive && u.realm === r.id) { pop++; if (u.job === 'soldier') soldiers++; }
         const wars = [...r.wars].map(id => { const o = life.realmById(id); return o ? o.name : null; }).filter(Boolean);
+        const nextCost = ERA_COST[r.era + 1];
+        const prog = nextCost ? clamp((r.research - ERA_COST[r.era]) / (nextCost - ERA_COST[r.era]), 0, 1) : 1;
         html += `<div class="realm" data-realm="${r.id}">
             <div class="realm-head"><span class="chip" style="background:${r.color}"></span>
                 <b>${r.name}</b><em>${RACES[r.race].emoji}</em></div>
+            <div class="realm-sub">${r.ruler ? (r.ruler.female ? 'královna ' : 'král ') + r.ruler.name : ''} · ${ERAS[r.era]}</div>
             <div class="realm-meta">
-                <span>🏘️ ${r.villages.length}</span><span>🧑 ${pop}</span><span>⚔️ ${soldiers}</span>
-                <span>od ${Math.floor(r.born / 60)}. roku</span></div>
-            ${wars.length ? `<div class="war">⚔️ ve válce s: ${wars.join(', ')}</div>` : '<div class="peace">🕊️ mír</div>'}
+                <span>🏘️ ${r.villages.length}</span><span>🧑 ${r.pop || 0}</span>
+                <span>🪙 ${Math.round(r.gold)}</span><span>od ${Math.floor(r.born / 60)}. r.</span></div>
+            <div class="era-bar"><i style="width:${(prog * 100) | 0}%;background:${r.color}"></i></div>
+            ${wars.length ? `<div class="war">⚔️ válka: ${wars.join(', ')}</div>` : '<div class="peace">🕊️ mír</div>'}
         </div>`;
     }
     html += `<div class="side-stats">
+        <div><b>${s.people}</b><span>obyvatel</span></div>
+        <div><b>${s.soldiers}</b><span>vojáků</span></div>
         <div><b>${s.houses}</b><span>staveb</span></div>
+        <div><b>${s.animals}</b><span>zvířat</span></div>
+        <div><b>${s.food}</b><span>🌾 zásoby</span></div>
+        <div><b>${s.wood}</b><span>🪵 dřevo</span></div>
+        ${s.zombies ? `<div><b>${s.zombies}</b><span>🧟 nemrtvých</span></div>` : ''}
+        ${s.sick ? `<div><b>${s.sick}</b><span>🦠 nemocných</span></div>` : ''}
         <div><b>${life.stats.born}</b><span>narozených</span></div>
         <div><b>${life.stats.died}</b><span>mrtvých</span></div>
-        <div><b>${life.stats.peak}</b><span>vrchol populace</span></div></div>`;
+        <div><b>${life.stats.warDead}</b><span>padlých ve válce</span></div>
+        <div><b>${life.stats.godDead}</b><span>od tvé ruky</span></div>
+        <div><b>${life.stats.peak}</b><span>vrchol populace</span></div>
+        <div><b>${life.stats.wars}</b><span>válek celkem</span></div>
+    </div>`;
     el.innerHTML = html;
     el.querySelectorAll('.realm').forEach(row => row.addEventListener('click', () => {
         const r = life.realmById(parseInt(row.dataset.realm, 10));
@@ -2884,6 +3545,71 @@ function renderRealms(s) {
     }));
 }
 
+/* ---------------- grafy ---------------- */
+
+function drawChart(canvas, series, opts = {}) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.fillRect(0, 0, W, H);
+    let max = opts.min || 1;
+    for (const s of series) for (const v of s.data) if (v > max) max = v;
+    const n = Math.max(...series.map(s => s.data.length), 2);
+    // mřížka
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    for (let k = 1; k < 4; k++) {
+        const y = H * k / 4;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    for (const s of series) {
+        if (s.data.length < 2) continue;
+        ctx.beginPath();
+        for (let i = 0; i < s.data.length; i++) {
+            const x = (i / (n - 1)) * W, y = H - (s.data[i] / max) * (H - 6) - 3;
+            i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = s.width || 1.6;
+        ctx.stroke();
+        if (s.fill) {
+            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+            ctx.fillStyle = s.fill; ctx.fill();
+        }
+    }
+    ctx.fillStyle = 'rgba(223,230,247,0.55)';
+    ctx.font = '9px system-ui, sans-serif';
+    ctx.fillText('max ' + Math.round(max), 4, 11);
+}
+
+function renderCharts() {
+    if ($('tab-charts').hidden) return;
+    const h = life.hist;
+    if (!h.t.length) return;
+
+    const realmSeries = [];
+    for (const [id, s] of h.realms) {
+        if (s.data.every(v => v === 0)) continue;
+        realmSeries.push({ data: s.data, color: s.color, name: s.name });
+    }
+    drawChart($('chart-realms'), realmSeries.length ? realmSeries : [{ data: h.pop, color: '#6ee7a8' }]);
+    drawChart($('chart-pop'), [
+        { data: h.pop, color: '#6ee7a8', fill: 'rgba(110,231,168,0.14)' },
+        { data: h.villages.map(v => v * 5), color: '#7cc4ff' }
+    ]);
+    drawChart($('chart-eco'), [
+        { data: h.gold, color: '#ffd166' },
+        { data: h.food, color: '#8ac926' },
+        { data: h.wood, color: '#c98f5a' }
+    ]);
+    drawChart($('chart-wars'), [{ data: h.wars, color: '#ff7b7b', fill: 'rgba(255,123,123,0.15)' }], { min: 2 });
+
+    const legend = realmSeries.map(s => `<span><i style="background:${s.color}"></i>${s.name}</span>`).join('');
+    $('legend-realms').innerHTML = legend || '<span>zatím nikdo</span>';
+    $('charts-note').textContent = `${h.t.length} záznamů · poslední rok ${h.t[h.t.length - 1]}`;
+}
+
 function renderLog() {
     const el = $('log');
     while (logIndex < life.events.length) {
@@ -2892,7 +3618,7 @@ function renderLog() {
         d.className = 'ev ' + e.kind;
         d.innerHTML = `<time>${e.year}. rok</time>${e.text}`;
         el.appendChild(d);
-        if (el.children.length > 140) el.removeChild(el.firstChild);
+        if (el.children.length > 160) el.removeChild(el.firstChild);
     }
 }
 
@@ -2908,8 +3634,11 @@ function loop(now) {
     if (speed > 0) {
         acc += dt * speed;
         let steps = 0;
-        while (acc >= TICK_MS && steps < 6) { life.step(); acc -= TICK_MS; steps++; }
-        if (acc > TICK_MS * 3) acc = 0;
+        const budget = performance.now() + 14;
+        while (acc >= TICK_MS && steps < 24) {
+            life.step(); acc -= TICK_MS; steps++;
+            if (performance.now() > budget) { acc = 0; break; }
+        }
     } else acc = 0;
 
     if (held && TOOL_MAP[tool].hold && now - lastApply > 90) {
@@ -2921,6 +3650,7 @@ function loop(now) {
 
     if (frame % 12 === 0) renderHud();
     if (frame % 20 === 0 && renderer.selected) renderCard();
+    if (frame % 30 === 0) renderCharts();
     if (life.dirtyLog) { renderLog(); life.dirtyLog = false; }
 }
 

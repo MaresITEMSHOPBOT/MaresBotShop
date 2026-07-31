@@ -13,25 +13,28 @@
         <div class="brand"><span class="logo">🌍</span><span><b>BŮH SVĚTA</b><i>svět v krabici</i></span></div>
 
         <div class="hud">
-            <div class="hud-item"><span>📅</span><b id="hud-year">0</b><i>rok</i></div>
-            <div class="hud-item"><span>🧑</span><b id="hud-pop">0</b><i>obyvatel</i></div>
-            <div class="hud-item"><span>👑</span><b id="hud-realms">0</b><i>království</i></div>
-            <div class="hud-item"><span>🏘️</span><b id="hud-villages">0</b><i>vesnic</i></div>
-            <div class="hud-item"><span>🐑</span><b id="hud-animals">0</b><i>zvířat</i></div>
+            <div class="hud-item" title="Uplynulé roky"><span>📅</span><b id="hud-year">0</b><i>rok</i></div>
+            <div class="hud-item" title="Počet obyvatel"><span>🧑</span><b id="hud-pop">0</b><i>obyvatel</i></div>
+            <div class="hud-item" title="Žijící království"><span>👑</span><b id="hud-realms">0</b><i>království</i></div>
+            <div class="hud-item" title="Vesnice na mapě"><span>🏘️</span><b id="hud-villages">0</b><i>vesnic</i></div>
+            <div class="hud-item" title="Zlato ve světě"><span>🪙</span><b id="hud-gold">0</b><i>zlata</i></div>
+            <div class="hud-item" title="Probíhající války"><span>⚔️</span><b id="hud-wars">0</b><i>válek</i></div>
         </div>
 
         <div class="faith-block">
             <div class="faith-bar" id="faith-bar" title="Víra je tvá mana. Vyrábějí ji lidé, kteří v tebe věří.">
-                <i id="faith-fill"></i><span id="faith-text">60 / 200 víry</span>
+                <i id="faith-fill"></i><span id="faith-text">80 / 200 víry</span>
             </div>
             <div class="faith-note">🙏 věřících: <b id="believers">0</b></div>
         </div>
 
         <div class="speeds" id="speeds">
+            <button id="godmode" title="Nekonečná víra – všechno zdarma a bez omezení (G)">♾️</button>
             <button data-speed="0" title="Pauza (mezerník)">⏸</button>
             <button data-speed="1" class="active" title="Normální tempo">▶</button>
             <button data-speed="2" title="Dvakrát rychleji">▶▶</button>
             <button data-speed="4" title="Čtyřikrát rychleji">▶▶▶</button>
+            <button data-speed="10" title="Zrychlené dějiny">⏩</button>
             <button id="btn-help" title="Nápověda (H)">?</button>
         </div>
     </header>
@@ -41,7 +44,7 @@
             <div id="tools"></div>
             <div class="ctrl">
                 <label for="brush">Velikost štětce <output id="brush-val">4</output></label>
-                <input type="range" id="brush" min="1" max="16" value="4">
+                <input type="range" id="brush" min="1" max="24" value="4">
             </div>
             <div class="desc" id="tool-desc"></div>
         </aside>
@@ -62,23 +65,50 @@
 
         <aside id="right">
             <div class="tabs" id="tabs">
-                <button data-tab="realms" class="active">Království</button>
+                <button data-tab="realms" class="active">Říše</button>
+                <button data-tab="laws">Zákony</button>
+                <button data-tab="charts">Grafy</button>
                 <button data-tab="log">Kronika</button>
             </div>
             <div class="card" id="card" hidden></div>
+
             <div class="tab-body" id="tab-realms"></div>
+            <div class="tab-body" id="tab-laws" hidden></div>
+
+            <div class="tab-body" id="tab-charts" hidden>
+                <h4>Obyvatelstvo podle království</h4>
+                <canvas id="chart-realms" width="280" height="92"></canvas>
+                <div class="legend" id="legend-realms"></div>
+
+                <h4>Celkem obyvatel a vesnic</h4>
+                <canvas id="chart-pop" width="280" height="78"></canvas>
+                <div class="legend"><span><i style="background:#6ee7a8"></i>obyvatelé</span><span><i style="background:#7cc4ff"></i>vesnice ×5</span></div>
+
+                <h4>Hospodářství</h4>
+                <canvas id="chart-eco" width="280" height="78"></canvas>
+                <div class="legend"><span><i style="background:#ffd166"></i>zlato</span><span><i style="background:#8ac926"></i>jídlo</span><span><i style="background:#c98f5a"></i>dřevo</span></div>
+
+                <h4>Války</h4>
+                <canvas id="chart-wars" width="280" height="60"></canvas>
+                <div class="legend" id="charts-note"></div>
+            </div>
+
             <div class="tab-body" id="tab-log" hidden><div id="log"></div></div>
+
             <div class="bottom-controls">
                 <div class="ctrl">
                     <label for="climate">Klima <output id="climate-val">0 °C</output></label>
                     <input type="range" id="climate" min="-15" max="15" step="1" value="0">
                 </div>
                 <div class="newworld">
+                    <select id="mapsize" title="Velikost světa"></select>
                     <input type="number" id="seed" value="12345" title="Semínko světa">
-                    <button id="btn-new" title="Vytvoří svět podle semínka">🌱 Svět</button>
-                    <button id="btn-random" title="Náhodný svět">🎲</button>
                 </div>
-                <button id="btn-empty" class="wide">🗺️ Prázdný svět bez národů</button>
+                <div class="newworld">
+                    <button id="btn-new" title="Vytvoří svět podle semínka">🌱 Nový svět</button>
+                    <button id="btn-random" title="Náhodný svět">🎲</button>
+                    <button id="btn-empty" title="Svět bez národů">🗺️</button>
+                </div>
             </div>
         </aside>
     </main>
@@ -87,32 +117,37 @@
 <div class="modal" id="help" hidden>
     <div class="modal-box">
         <h2>🌍 Vítej, bože</h2>
-        <p>Ve skleněné krabici před tebou žijí panáčci. Sbírají jídlo, staví domy, zakládají vesnice a království,
-        hádají se a válčí. Ty do toho můžeš kdykoli sáhnout – nebo jen sledovat, co z toho vyroste.</p>
+        <p>Ve skleněné krabici žijí panáčci. Sbírají jídlo, kácí dřevo, staví domy, pole, doly a chrámy,
+        zakládají vesnice a království, obchodují, bouří se a válčí. Ty do toho můžeš kdykoli sáhnout –
+        nebo jen sledovat, jaké dějiny z toho vzniknou.</p>
         <div class="help-grid">
             <div>
                 <h4>Ovládání</h4>
                 <ul>
-                    <li><b>Levé tlačítko</b> – použije vybraný nástroj (štětce se dají držet a táhnout)</li>
-                    <li><b>Pravé tlačítko</b> nebo <b>mezerník + tah</b> – posun mapy</li>
-                    <li><b>Kolečko</b> – přiblížení (přibliž si vesnici, ať vidíš panáčky zblízka)</li>
-                    <li><b>🖐️ Ruka</b> – klikni na panáčka nebo vesnici a uvidíš, kdo to je a co dělá</li>
-                    <li><b>1–9, 0</b> – rychlá volba nástroje, <b>mezerník</b> – pauza, <b>H</b> – nápověda</li>
+                    <li><b>Levé tlačítko</b> – použije nástroj (štětce jdou držet a táhnout)</li>
+                    <li><b>Pravé tlačítko</b> / <b>mezerník + tah</b> – posun mapy</li>
+                    <li><b>Kolečko</b> – přiblížení; přibliž si vesnici, ať vidíš panáčky zblízka</li>
+                    <li><b>🖐️ Ruka</b> – klikni na panáčka nebo vesnici a uvidíš, kdo to je</li>
+                    <li><b>♾️ nahoře (G)</b> – nekonečná víra: všechno je zdarma a neomezeně</li>
+                    <li><b>1–9, 0</b> – nástroje, <b>mezerník</b> – pauza, <b>H</b> – nápověda</li>
                 </ul>
             </div>
             <div>
-                <h4>Jak to funguje</h4>
+                <h4>Co všechno se dá dělat</h4>
                 <ul>
-                    <li><b>Národ</b> zasadíš nástrojem 🧑 👹 🧝 🧔 – vznikne království s vlastním jménem a barvou.</li>
-                    <li><b>Vesnice</b> roste, staví domy a pole, a když je jí těsno, založí další vesnici opodál.</li>
-                    <li><b>Hranice</b> na mapě ukazují, kam které království dosáhne.</li>
-                    <li><b>Války</b> vznikají mezi sousedy samy (orkové hlavně). Můžeš je vyvolat ⚔️ nebo ukončit 🕊️.</li>
-                    <li><b>Víra</b> je tvá mana: ✨ požehnej lidem, začnou v tebe věřit a víra ti poroste.</li>
-                    <li><b>Krajinu</b> maluješ přímo – vodou, lesem, horami. Změny jsou trvalé.</li>
+                    <li><b>Národy</b>: lidé, orkové, elfové, trpaslíci – každý s jinou silou, plodností a domovem.</li>
+                    <li><b>Hospodářství</b>: jídlo, dřevo a zlato. Pily, doly, tržiště, chrámy a kasárna.</li>
+                    <li><b>Zákony</b> (karta vpravo): daně, branná povinnost, porodnost, kácení, obchod,
+                        povinná víra, zahraniční politika, věda. Mění chování celého světa.</li>
+                    <li><b>Doby</b>: od kamenné po renesanci. Věda zrychluje výnosy i vojsko.</li>
+                    <li><b>Povstání</b>: nespokojená vesnice se odtrhne a založí vlastní království.</li>
+                    <li><b>Katastrofy</b>: meteorit, sopka, tornádo, vánice, povodeň, mor, nemrtví, drak.</li>
+                    <li><b>Grafy</b>: populace každého království, hospodářství, války – celé dějiny světa.</li>
                 </ul>
             </div>
         </div>
-        <p class="tip-line">Tip: zapni ▶ a nech svět chvíli běžet. Pak si přibliž vesnici a sleduj, jak panáčci nosí jídlo domů.</p>
+        <p class="tip-line">Tip: zapni ♾️, dej ⏩ zrychlené dějiny a sleduj, jak se svět sám rozdělí na říše.
+        Pak do toho začni mluvit zákony a katastrofami.</p>
         <button id="help-close">Jdu na to</button>
     </div>
 </div>
