@@ -2,12 +2,12 @@
 /* Svět jako mapa dlaždic. Terén se mění jen když se opravdu něco stane –
    žádné překreslování každý snímek, žádné kmitání. */
 
-const T = { DEEP: 0, WATER: 1, SAND: 2, GRASS: 3, FOREST: 4, HILL: 5, MOUNT: 6, SNOW: 7, LAVA: 8, ASH: 9, FARM: 10 };
-const TILE_NAME = ['hlubina', 'mělčina', 'písek', 'louka', 'les', 'kopce', 'hory', 'sníh', 'láva', 'spáleniště', 'pole'];
-const WATER_TILE = [true, true, false, false, false, false, false, false, false, false, false];
-const WALK_COST = [99, 99, 1.3, 1, 1.25, 1.6, 2.6, 1.5, 99, 1.1, 1];
+const T = { DEEP: 0, WATER: 1, SAND: 2, GRASS: 3, FOREST: 4, HILL: 5, MOUNT: 6, SNOW: 7, LAVA: 8, ASH: 9, FARM: 10, CITY: 11, ROAD: 12 };
+const TILE_NAME = ['hlubina', 'mělčina', 'písek', 'louka', 'les', 'kopce', 'hory', 'sníh', 'láva', 'spáleniště', 'pole', 'město', 'cesta'];
+const WATER_TILE = [true, true, false, false, false, false, false, false, false, false, false, false, false];
+const WALK_COST = [99, 99, 1.3, 1, 1.25, 1.6, 2.6, 1.5, 99, 1.1, 1, 0.9, 0.6];
 /* kolik jídla se dá z dlaždice získat */
-const FOOD_TILE = [0, 0.4, 0, 0.5, 1, 0.3, 0, 0.1, 0, 0, 2.2];
+const FOOD_TILE = [0, 0.4, 0, 0.5, 1, 0.3, 0, 0.1, 0, 0, 2.2, 0, 0];
 
 class World {
     constructor(w, h, seed) {
@@ -21,6 +21,7 @@ class World {
         this.wet = new Float32Array(this.n);      // rozlitá voda z povodní
         this.fire = new Uint8Array(this.n);       // zbývající tiky hoření
         this.lava = new Uint8Array(this.n);
+        this.dens = new Uint8Array(this.n);       // hustota zástavby města (0–4)
         this.build = new Int16Array(this.n);      // index stavby + 1
         this.owner = new Int16Array(this.n);      // id říše, 0 = nikoho
 
@@ -80,7 +81,7 @@ class World {
                 this.height[i] = clamp(e, 0, 1);
                 this.moist[i] = clamp(0.5 + nMoist.fbm(nx * 4, ny * 4, 3) * 1.1, 0, 1);
                 this.wet[i] = 0; this.fire[i] = 0; this.lava[i] = 0;
-                this.build[i] = 0; this.owner[i] = 0;
+                this.build[i] = 0; this.owner[i] = 0; this.dens[i] = 0;
             }
         }
 
@@ -110,6 +111,9 @@ class World {
     /* podle výšky, teploty, vláhy a porostu určí, co na dlaždici je */
     classify(i) {
         const h = this.height[i];
+        const cur = this.type[i];
+        // města a cesty postavili lidé – příroda je nepřepisuje, jen voda a láva
+        if ((cur === T.CITY || cur === T.ROAD) && this.lava[i] === 0 && this.wet[i] <= 0.12 && h >= this.seaLevel) return false;
         let t;
         if (this.lava[i] > 0) t = T.LAVA;
         else if (h < this.seaLevel - 0.055) t = T.DEEP;
@@ -149,6 +153,7 @@ class World {
         if (t === T.SNOW) this.veg[i] = 0;
         this.lava[i] = 0; this.fire[i] = 0;
         this.lavaSet.delete(i); this.fireSet.delete(i);
+        if (t !== T.CITY) this.dens[i] = 0;
         this.setType(i, t);
     }
 

@@ -2,6 +2,7 @@
 /* Nástroje hráče: štětce na krajinu, sázení národů, dary, zázraky a katastrofy. */
 
 function fx(life, o) { life.fx.push(o); }
+function fmtNum(n) { return typeof fmt === 'function' ? fmt(n) : Math.round(n); }
 
 const TOOLS = [
     { id: 'hand', group: 'hand', name: 'Ruka', emoji: '🖐️', cost: 0, desc: 'Klikni na panáčka, vesnici nebo krajinu a prohlédni si je.' },
@@ -22,7 +23,9 @@ const TOOLS = [
     { id: 'elf', group: 'life', name: 'Elfové', emoji: '🧝', cost: 25, spawnRace: 'elf', desc: 'Žijí dlouho, množí se pomalu, milují lesy.' },
     { id: 'dwarf', group: 'life', name: 'Trpaslíci', emoji: '🧔', cost: 25, spawnRace: 'dwarf', desc: 'Houževnatí horalé. Nejlepší dělníci, snesou zimu i kámen.' },
     { id: 'sheep', group: 'life', name: 'Ovce', emoji: '🐑', cost: 4, spawnAnimal: 'sheep', desc: 'Pasou se na trávě. Potrava pro vlky.' },
+    { id: 'deer', group: 'life', name: 'Jeleni', emoji: '🦌', cost: 5, spawnAnimal: 'deer', desc: 'Rychlá lesní zvěř. Geny se dědí a mutují.' },
     { id: 'wolf', group: 'life', name: 'Vlci', emoji: '🐺', cost: 6, spawnAnimal: 'wolf', desc: 'Loví ovce i osamělé vesničany.' },
+    { id: 'bear', group: 'life', name: 'Medvědi', emoji: '🐻', cost: 10, spawnAnimal: 'bear', desc: 'Silná šelma, kterou jen tak něco nezastaví.' },
     { id: 'dragon', group: 'life', name: 'Drak', emoji: '🐉', cost: 70, spawnAnimal: 'dragon', desc: 'Létá nad krajinou, zapaluje ji a požírá všechno živé. Zastaví ho jen armáda.' },
     { id: 'zombie', group: 'life', name: 'Nemrtví', emoji: '🧟', cost: 45, desc: 'Nákaza, která mění mrtvé v nemrtvé. Ti pak loví další. Šíří se sama.' },
 
@@ -92,7 +95,7 @@ function applyTool(life, id, wx, wy, radius) {
     /* --- národy a zvířata --- */
     if (tool.spawnRace) {
         if (!w.walkable(i)) return 'blocked';
-        const realm = life.seedTribe(x, y, tool.spawnRace, 6);
+        const realm = life.seedTribe(x, y, tool.spawnRace, 60);
         if (!realm) return 'blocked';
         fx(life, { type: 'sparkle', x, y, r: 3, life: 26, max: 26, color: realm.color });
         pay();
@@ -202,6 +205,7 @@ function applyTool(life, id, wx, wy, radius) {
         }
         case 'zombie': {
             let n = 0;
+            life.harmArea(x, y, Math.max(3, radius), 0.05);
             life.forEachNear(x, y, Math.max(2, radius), u => {
                 if (u.kind !== 'person' || u.zombie || n >= 4) return;
                 u.zombie = 1; u.job = 'zombie'; u.realm = 0; u.village = 0;
@@ -216,6 +220,7 @@ function applyTool(life, id, wx, wy, radius) {
         /* --- katastrofy --- */
         case 'lightning': {
             life.forEachNear(x, y, Math.max(1, radius * 0.4), u => life.kill(u, 'god'));
+            life.harmArea(x, y, Math.max(1.5, radius * 0.4), 0.06);
             w.forEachInRadius(x, y, Math.max(1, radius * 0.4), j => { if (rng() < 0.6) w.ignite(j); });
             fx(life, { type: 'bolt', x, y, life: 14, max: 14 });
             break;
@@ -227,18 +232,21 @@ function applyTool(life, id, wx, wy, radius) {
         case 'bomb': explode(life, x, y, radius, 1); break;
         case 'smite': {
             life.forEachNear(x, y, radius, u => life.kill(u, 'god'));
+            life.harmArea(x, y, radius, 0.35);
             fx(life, { type: 'beam', x, y, r: radius, life: 18, max: 18, color: '#ff6b6b' });
             break;
         }
         case 'plague': {
             let n = 0;
             life.forEachNear(x, y, radius, u => { if (u.kind === 'person' && !u.zombie) { u.sick = 500; n++; } });
-            if (n) life.log(`🦠 V okolí vypukl mor – nakaženo ${n} obyvatel`, 'bad');
+            const dead = life.harmArea(x, y, radius * 1.5, 0.25);
+            life.log(`🦠 V okolí vypukl mor` + (dead > 1 ? ` – zemřelo ${fmtNum(dead)} lidí` : ''), 'bad');
             fx(life, { type: 'sparkle', x, y, r: radius, life: 30, max: 30, color: '#9ee86a' });
             break;
         }
         case 'flood': {
             w.forEachInRadius(x, y, radius, (j, jx, jy, t) => w.addWater(j, 0.5 * (1 - t * 0.6)));
+            life.harmArea(x, y, radius, 0.3);
             fx(life, { type: 'splash', x, y, r: radius, life: 20, max: 20 });
             break;
         }
@@ -283,6 +291,7 @@ function explode(life, x, y, radius, power) {
         } else if (life.rng() < 0.5) w.ignite(j);
     });
     life.forEachNear(x, y, radius * 1.1, u => life.kill(u, 'god'));
+    life.harmArea(x, y, radius * 1.3, 0.55 * power);
     fx(life, { type: 'boom', x, y, r: radius * 1.4, life: 26, max: 26, power });
 }
 
@@ -295,6 +304,7 @@ function stepHazards(life) {
             const m = life.meteors[k];
             if (--m.life <= 0) {
                 explode(life, m.x, m.y, m.r, 2);
+                life.harmArea(m.x, m.y, m.r * 2.5, 0.7);
                 w.forEachInRadius(m.x, m.y, m.r * 0.35, j => w.addLava(j));
                 w.forEachInRadius(m.x, m.y, m.r * 2, j => { if (rng() < 0.35) w.ignite(j); });
                 fx(life, { type: 'shock', x: m.x, y: m.y, r: m.r * 3.5, life: 34, max: 34 });
@@ -332,6 +342,7 @@ function stepHazards(life) {
                 }
                 if (w.build[j] && rng() < 0.05) life.destroyBuilding(w.build[j] - 1);
             });
+            if (life.tick % 10 === 0) life.harmArea(t.x, t.y, t.r + 1, 0.02);
             life.forEachNear(t.x, t.y, t.r, u => {
                 const a = rng() * Math.PI * 2;
                 u.x = clamp(u.x + Math.cos(a) * 1.4, 0, w.w - 1.2);
@@ -352,6 +363,7 @@ function stepHazards(life) {
                 if (w.fire[j]) { w.fire[j] = 0; w.fireSet.delete(j); w.classify(j); }
                 if (rng() < 0.03 && !w.isWater(j) && w.type[j] !== T.MOUNT && w.build[j] === 0) w.paint(j, T.SNOW);
             });
+            if (life.tick % 10 === 0) life.harmArea(s.x, s.y, s.r, 0.012);
             life.forEachNear(s.x, s.y, s.r, u => {
                 const cold = u.race === 'dwarf' ? 0.4 : 1;
                 u.hp -= 0.7 * cold;

@@ -37,39 +37,31 @@ pole, spáleniště, láva. Typ dlaždice se počítá z výšky, teploty a vlá
 porostu a nechává po sobě spáleniště, které časem zaroste. Láva teče z kopce a tuhne v novou
 skálu. Voda z povodně teče podle terénu a odtéká do moře.
 
-**Panáčci.** Čtyři rody – lidé, orkové, elfové a trpaslíci – se liší rychlostí, silou,
-plodností, délkou života a tím, kde se jim líbí. Každý má jméno, věk, zdraví, sytost a
-povolání (dítě, dělník, voják, tulák). Dělník chodí sbírat jídlo na les, louku nebo pole,
-nosí ho do vesnice a staví domy. K tomu po světě běhají ovce a vlci.
+**Města místo vesniček.** Sídlo má vlastní populaci jako číslo – od osady přes vesnici,
+městečko, město a velkoměsto až po metropoli a megapoli se statisíci obyvatel. Jak město roste,
+rozlévá se po mapě jako zástavba, staví pole kolem sebe a propojuje se cestami se sousedy.
+Po mapě chodí jen vzorek panáčků, zbytek lidí je v číslech.
 
-**Vesnice a království.** Vesnice má zásobu jídla, domy a obyvatele. Když je jí těsno,
-založí opodál novou vesnici – tak království roste. Hranice na mapě ukazují, kam které
-království dosáhne; hlavní město pozná podle hradu s vlajkou a značky ♛.
+**Deset dob až do vesmíru.** Kamenná → bronzová → železná → středověk → renesance →
+průmyslová revoluce → věk elektřiny → atomový věk → informační věk → kosmický věk.
+Věda běží z počtu obyvatel, univerzit a laboratoří. V kosmickém věku postaví říše
+**kosmodrom** a po čase odstartuje raketa – přistání na Měsíci je zapsáno mezi milníky.
 
-**Války.** Sousední království si mezi sebou občas vyhlásí válku (orkové výrazně častěji).
-Vesnice povolají vojáky, ti pochodují na nejbližší nepřátelskou vesnici, bijí se a bourají
-domy. Když vesnice přijde o všechny domy, padne; když království přijde o všechny vesnice,
-zaniká. Mír se dá uzavřít sám – nebo ho můžeš vnutit nástrojem 🕊️.
+**Stavby.** Pole, domy, pila, důl, tržiště, chrám, kasárna, hradby, univerzita, přístav,
+továrna, elektrárna, laboratoř, letiště a kosmodrom. Každá stavba vypadá na mapě jinak
+a něco přináší – jídlo, dřevo, zlato, vědu, obranu nebo víru.
 
-**Hospodářství.** Vesnice hospodaří se třemi surovinami: 🌾 jídlem, 🪵 dřevem a 🪙 zlatem.
-Dělníci sbírají jídlo a kácí dřevo, staví pole, domy, pily, doly, tržiště, chrámy a kasárna.
-Zlato plyne z dolů, tržišť a obchodu se sousedy, král z něj platí žold a vědu.
+**Války armád.** Města posílají armády s vlastní silou (vidíš je jako prapor s číslem).
+Armády se v poli střetávají, obléhají města, plení je a dobývají – dobyté město změní barvu
+i majitele. Hradby a kasárna obranu zesilují.
 
-**Zákony.** V kartě *Zákony* vyhlašuješ pravidla pro celý svět: daně, brannou povinnost,
-porodnost, kácení lesů, obchod, povinnou víru, zahraniční politiku a podporu vědy. Každý
-zákon mění chování všech království – i jejich náladu.
+**Zvířata a evoluce.** Ovce, jeleni, vlci a medvědi mají geny (velikost, rychlost, plodnost),
+které se dědí a mutují – po pár generacích se stádo vypadá jinak než na začátku. Karta zvířete
+geny ukazuje.
 
-**Doby.** Věda posouvá království z doby kamenné až do renesance. Každá doba znamená lepší
-stavby, silnější vojáky a vyšší výnosy.
-
-**Panovníci a povstání.** Každé království má krále nebo královnu, kteří stárnou a umírají.
-Když spokojenost vesnice klesne moc nízko, vesnice se vzbouří a založí vlastní království.
-
-**Víra.** Víra je tvá mana. ✨ Požehnání uzdraví a nasytí panáčky a udělá z nich věřící;
-věřící a chrámy ti víru doplňují. Katastrofy víru stojí, malování krajiny je zdarma.
-
-**Grafy.** Karta *Grafy* kreslí dějiny světa: populaci každého království vlastní barvou,
-celkový počet obyvatel a vesnic, hospodářství (zlato, jídlo, dřevo) a průběh válek.
+**Grafy a milníky.** Karta *Grafy* kreslí dějiny světa: populaci každé říše vlastní barvou,
+celkový počet obyvatel a sídel, hospodářství a války. Karta *Milníky* ukazuje, kdy svět vstoupil
+do které doby a kdy padly velké události – první město, univerzita, továrna, kosmodrom, Měsíc.
 
 ## Zdrojové soubory
 

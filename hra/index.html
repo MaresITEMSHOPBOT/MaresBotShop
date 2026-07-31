@@ -16,8 +16,9 @@
             <div class="hud-item" title="Uplynulé roky"><span>📅</span><b id="hud-year">0</b><i>rok</i></div>
             <div class="hud-item" title="Počet obyvatel"><span>🧑</span><b id="hud-pop">0</b><i>obyvatel</i></div>
             <div class="hud-item" title="Žijící království"><span>👑</span><b id="hud-realms">0</b><i>království</i></div>
-            <div class="hud-item" title="Vesnice na mapě"><span>🏘️</span><b id="hud-villages">0</b><i>vesnic</i></div>
-            <div class="hud-item" title="Zlato ve světě"><span>🪙</span><b id="hud-gold">0</b><i>zlata</i></div>
+            <div class="hud-item" title="Sídla na mapě"><span>🏘️</span><b id="hud-villages">0</b><i>sídel</i></div>
+            <div class="hud-item" title="Města nad 2 500 obyvatel"><span>🏙️</span><b id="hud-cities">0</b><i>měst</i></div>
+            <div class="hud-item" title="Nejvyspělejší doba světa"><span>📜</span><b id="hud-era">kamenná</b><i>doba</i></div>
             <div class="hud-item" title="Probíhající války"><span>⚔️</span><b id="hud-wars">0</b><i>válek</i></div>
         </div>
 
@@ -68,6 +69,7 @@
                 <button data-tab="realms" class="active">Říše</button>
                 <button data-tab="laws">Zákony</button>
                 <button data-tab="charts">Grafy</button>
+                <button data-tab="miles">Milníky</button>
                 <button data-tab="log">Kronika</button>
             </div>
             <div class="card" id="card" hidden></div>
@@ -93,6 +95,7 @@
                 <div class="legend" id="charts-note"></div>
             </div>
 
+            <div class="tab-body" id="tab-miles" hidden></div>
             <div class="tab-body" id="tab-log" hidden><div id="log"></div></div>
 
             <div class="bottom-controls">
@@ -142,7 +145,12 @@
                     <li><b>Doby</b>: od kamenné po renesanci. Věda zrychluje výnosy i vojsko.</li>
                     <li><b>Povstání</b>: nespokojená vesnice se odtrhne a založí vlastní království.</li>
                     <li><b>Katastrofy</b>: meteorit, sopka, tornádo, vánice, povodeň, mor, nemrtví, drak.</li>
-                    <li><b>Grafy</b>: populace každého království, hospodářství, války – celé dějiny světa.</li>
+                    <li><b>Města</b>: osada → vesnice → město → metropole → megapole. Města se rozlévají po mapě,
+                        propojují se cestami a mají statisíce obyvatel.</li>
+                    <li><b>Deset dob</b> od kamenné po kosmickou: univerzity, továrny, elektrárny, laboratoře,
+                        letiště a nakonec <b>kosmodrom a let na Měsíc</b> 🚀.</li>
+                    <li><b>Války</b>: města posílají armády s vlastní silou, dobývají a mění majitele.</li>
+                    <li><b>Grafy a milníky</b>: populace každé říše, hospodářství, války a dějinné události.</li>
                 </ul>
             </div>
         </div>

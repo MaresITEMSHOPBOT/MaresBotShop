@@ -202,6 +202,41 @@ class Renderer {
                 c.fillRect(x + r1 * (TPX - 4), y + r2 * (TPX - 4), 2.5, 2);
                 break;
             }
+            case T.CITY: {
+                const d = w.dens[i] || 1;
+                c.fillStyle = d >= 3 ? '#5f5b57' : '#7a736a';
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = 'rgba(0,0,0,0.18)';
+                c.fillRect(x, y + TPX * 0.82, TPX, TPX * 0.18);
+                const n = d + 1;
+                for (let k = 0; k < n; k++) {
+                    const hh = hash01(i * 31 + k * 17);
+                    const bw = TPX * (0.2 + hh * 0.16);
+                    const bx = x + 1 + hash01(i * 7 + k * 13) * (TPX - bw - 2);
+                    const bh = TPX * (0.22 + d * 0.14 + hh * 0.16);
+                    const by = y + TPX - bh - 1;
+                    c.fillStyle = d >= 4 ? '#b9c3d2' : d >= 3 ? '#c7bda9' : '#c9a06a';
+                    c.fillRect(bx, by, bw, bh);
+                    c.fillStyle = 'rgba(0,0,0,0.28)';
+                    c.fillRect(bx, by, bw, TPX * 0.06);
+                    if (d >= 3 && TPX >= 10) {
+                        c.fillStyle = 'rgba(255,225,140,0.85)';
+                        for (let wy2 = by + 2; wy2 < by + bh - 1.5; wy2 += 3) {
+                            for (let wx2 = bx + 1; wx2 < bx + bw - 1.5; wx2 += 3) {
+                                if (hash01((wx2 * 13 + wy2 * 7) | 0) > 0.45) c.fillRect(wx2, wy2, 1.2, 1.2);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case T.ROAD: {
+                c.fillStyle = '#8a8177';
+                c.fillRect(x, y, TPX, TPX);
+                c.fillStyle = 'rgba(60,54,48,0.5)';
+                c.fillRect(x, y + TPX * 0.42, TPX, TPX * 0.16);
+                break;
+            }
             case T.FARM: {
                 c.fillStyle = '#b98c4a';
                 c.fillRect(x, y, TPX, TPX);
@@ -312,6 +347,8 @@ class Renderer {
         this.drawHazards();
         this.drawBuildings();
         this.drawUnits(alpha);
+        this.drawArmies();
+        this.drawRockets();
         this.drawLabels();
         this.drawEffects(paused);
         this.drawBrush();
@@ -373,8 +410,67 @@ class Renderer {
         }
     }
 
+    drawArmies() {
+        const ctx = this.ctx, z = this.cam.zoom, life = this.life;
+        for (const a of life.armies) {
+            if (a.dead) continue;
+            const sx = this.w2sx(a.x + 0.5), sy = this.w2sy(a.y + 0.5);
+            if (sx < -30 || sy < -30 || sx > this.vw + 30 || sy > this.vh + 30) continue;
+            const s = Math.max(6, z * 0.9);
+            ctx.fillStyle = 'rgba(0,0,0,0.28)';
+            ctx.beginPath(); ctx.ellipse(sx, sy + s * 0.36, s * 0.5, s * 0.18, 0, 0, 6.3); ctx.fill();
+            ctx.fillStyle = '#5b5148';
+            ctx.fillRect(sx - s * 0.04, sy - s * 0.95, s * 0.08, s * 1.1);
+            ctx.fillStyle = a.color;
+            ctx.beginPath();
+            ctx.moveTo(sx + s * 0.04, sy - s * 0.95);
+            ctx.lineTo(sx + s * 0.6, sy - s * 0.75);
+            ctx.lineTo(sx + s * 0.04, sy - s * 0.55);
+            ctx.closePath(); ctx.fill();
+            if (z >= 6) {
+                const label = typeof fmt === 'function' ? fmt(a.strength) : Math.round(a.strength);
+                ctx.font = `700 ${clamp(z * 0.6, 9, 13)}px system-ui, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+                ctx.strokeText('⚔ ' + label, sx, sy + s * 0.95);
+                ctx.fillStyle = '#fff';
+                ctx.fillText('⚔ ' + label, sx, sy + s * 0.95);
+                ctx.textAlign = 'left';
+            }
+        }
+    }
+
+    drawRockets() {
+        const ctx = this.ctx, z = this.cam.zoom;
+        for (const r of this.life.rockets) {
+            const p = r.t / 150;
+            const sx = this.w2sx(r.x + 0.5);
+            const sy = this.w2sy(r.y + 0.5) - p * p * this.vh * 1.4;
+            const s = Math.max(10, z * 1.6);
+            ctx.fillStyle = 'rgba(255,220,150,' + (0.5 * (1 - p)) + ')';
+            ctx.beginPath();
+            ctx.moveTo(sx - s * 0.22, sy + s * 0.4);
+            ctx.lineTo(sx, sy + s * (1.2 + Math.random() * 0.9));
+            ctx.lineTo(sx + s * 0.22, sy + s * 0.4);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#e8ecf4';
+            ctx.beginPath();
+            ctx.moveTo(sx, sy - s * 0.7);
+            ctx.lineTo(sx + s * 0.22, sy + s * 0.4);
+            ctx.lineTo(sx - s * 0.22, sy + s * 0.4);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#c8453a';
+            ctx.fillRect(sx - s * 0.26, sy + s * 0.22, s * 0.52, s * 0.14);
+            if (r.t % 3 === 0) this.particles.push({
+                x: r.x + 0.5, y: r.y + 0.5 - (sy - this.w2sy(r.y + 0.5)) / z * -1,
+                vx: (Math.random() - 0.5) * 0.4, vy: 0.2, life: 26, max: 26, size: 3, color: 'rgba(220,220,230,0.7)', grav: 0
+            });
+        }
+    }
+
     drawBuildings() {
         const ctx = this.ctx, z = this.cam.zoom, life = this.life;
+        if (z < 7) return;   // z dálky město tvoří samotné dlaždice
         for (const b of life.buildings) {
             if (b.dead) continue;
             const sx = this.w2sx(b.x + 0.5), sy = this.w2sy(b.y + 0.5);
@@ -573,13 +669,14 @@ class Renderer {
     }
 
     drawLabels() {
-        if (!this.labels || this.cam.zoom < 5) return;
+        if (!this.labels || this.cam.zoom < 4) return;
         const ctx = this.ctx, life = this.life;
         ctx.textAlign = 'center';
         const fs = clamp(this.cam.zoom * 0.85, 9, 15);
         ctx.font = `600 ${fs}px system-ui, sans-serif`;
         for (const v of life.villages) {
             if (v.dead) continue;
+            if (this.cam.zoom < 6 && v.level < 2) continue;
             const sx = this.w2sx(v.x + 0.5), sy = this.w2sy(v.y + 0.5);
             if (sx < 0 || sy < 0 || sx > this.vw || sy > this.vh) continue;
             const realm = life.realmById(v.realm);
@@ -587,7 +684,8 @@ class Renderer {
             const ty = sy - this.cam.zoom * 1.15;
             ctx.lineWidth = 3;
             ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-            const label = (isCapital ? '♛ ' : '') + v.name;
+            const popTxt = typeof fmt === 'function' ? fmt(v.pop) : Math.round(v.pop);
+            const label = (isCapital ? '♛ ' : '') + v.name + (this.cam.zoom > 7 ? `  ${popTxt}` : '');
             ctx.strokeText(label, sx, ty);
             ctx.fillStyle = realm ? realm.color : '#ddd';
             ctx.fillText(label, sx, ty);

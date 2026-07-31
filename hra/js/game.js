@@ -218,8 +218,9 @@ function bindUI() {
         const b = e.target.closest('button');
         if (!b) return;
         $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
-        for (const t of ['realms', 'laws', 'charts', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
+        for (const t of ['realms', 'laws', 'charts', 'miles', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
         if (b.dataset.tab === 'charts') renderCharts();
+        if (b.dataset.tab === 'miles') renderMiles();
     });
 
     window.addEventListener('resize', () => renderer.resize());
@@ -313,10 +314,10 @@ function showTip(sx, sy, wx, wy) {
     const i = life.tileAt(wx, wy);
     const realm = life.realmById(world.owner[i]);
     let text = `${TILE_NAME[world.type[i]]}   ${world.tempAt(i).toFixed(0)} °C`;
-    if (realm) text += `\n👑 ${realm.name} · ${ERAS[realm.era]}`;
+    if (realm) text += `\n👑 ${realm.name} · ${ERAS[realm.era].name}`;
     const u = renderer.pick(wx, wy);
     if (u) {
-        if (u.kind === 'village') text += `\n🏘️ ${u.v.name} – ${u.v.pop} obyvatel, 🌾 ${u.v.food | 0} 🪵 ${u.v.wood | 0} 🪙 ${u.v.gold | 0}`;
+        if (u.kind === 'village') text += `\n🏘️ ${LEVELS[u.v.level].name} ${u.v.name} – ${fmt(u.v.pop)} obyvatel`;
         else if (u.kind === 'person') text += `\n${u.zombie ? '🧟' : RACES[u.race].emoji} ${u.name} · ${JOBS[u.job] || u.job}`;
         else text += `\n${ANIMALS[u.race].emoji} ${ANIMALS[u.race].name}`;
     }
@@ -337,17 +338,17 @@ function renderCard() {
         const v = s.v, realm = life.realmById(v.realm);
         const types = {};
         for (const bi of v.houses) { const b = life.buildings[bi]; if (b && !b.dead) types[b.type] = (types[b.type] || 0) + 1; }
-        const list = Object.entries(types).map(([t, n]) => `${BUILDINGS[t].name} ×${n}`).join(', ') || '–';
-        el.innerHTML = `<h5><span class="chip" style="background:${realm ? realm.color : '#888'}"></span>🏘️ ${v.name}
+        const list = Object.entries(types).map(([t, n]) => `${BUILDINGS[t].icon}${n}`).join(' ') || '–';
+        el.innerHTML = `<h5><span class="chip" style="background:${realm ? realm.color : '#888'}"></span>${LEVELS[v.level].name} ${v.name}
             <button class="close">✕</button></h5>
-            <div class="row"><span>království</span><b>${realm ? realm.name : '–'}</b></div>
-            <div class="row"><span>obyvatel / vojáků</span><b>${v.pop} / ${v.soldiers}</b></div>
-            <div class="row"><span>🌾 jídlo</span><b>${v.food | 0}</b></div>
-            <div class="row"><span>🪵 dřevo</span><b>${v.wood | 0}</b></div>
-            <div class="row"><span>🪙 zlato</span><b>${v.gold | 0}</b></div>
+            <div class="row"><span>říše</span><b>${realm ? realm.name : '–'}</b></div>
+            <div class="row"><span>obyvatel</span><b>${fmt(v.pop)}</b></div>
+            <div class="row"><span>🌾 jídlo / pole</span><b>${fmt(v.food)} / ${v.farms}</b></div>
+            <div class="row"><span>🪵 dřevo · 🪙 zlato</span><b>${fmt(v.wood)} · ${fmt(v.gold)}</b></div>
+            ${v.army > 1 ? `<div class="row"><span>⚔️ branná síla</span><b>${fmt(v.army)}</b></div>` : ''}
             <div class="bar-row"><span>nálada</span><div class="bar"><i style="width:${(v.happy * 100) | 0}%;background:${v.happy > 0.5 ? '#7cc46a' : v.happy > 0.25 ? '#e8b84a' : '#e05555'}"></i></div></div>
             <div class="row"><span>stavby</span><b>${list}</b></div>
-            <div class="row"><span>založena</span><b>${Math.floor(v.born / 60)}. rok</b></div>`;
+            <div class="row"><span>založeno</span><b>${Math.floor(v.born / 60)}. rok</b></div>`;
     } else if (s.kind === 'person') {
         const realm = life.realmById(s.realm), v = life.villageById(s.village);
         el.innerHTML = `<h5><span class="chip" style="background:${realm ? realm.color : '#888'}"></span>${s.zombie ? '🧟' : RACES[s.race].emoji} ${s.name}
@@ -363,9 +364,10 @@ function renderCard() {
             <div class="bar-row"><span>sytost</span><div class="bar"><i style="width:${(100 * s.food) | 0}%;background:#7cc46a"></i></div></div>
             <div class="bar-row"><span>víra</span><div class="bar"><i style="width:${(100 * s.faith) | 0}%;background:#ffd166"></i></div></div>`;
     } else {
+        const g = s.genes || { size: 1, speed: 1, fert: 1 };
         el.innerHTML = `<h5>${ANIMALS[s.race].emoji} ${ANIMALS[s.race].name}<button class="close">✕</button></h5>
             <div class="row"><span>věk</span><b>${Math.floor(s.age / 60)} let</b></div>
-            ${s.kills ? `<div class="row"><span>ulovil</span><b>${s.kills}</b></div>` : ''}
+            <div class="row"><span>🧬 geny</span><b>vel. ${(g.size * 100) | 0} % · rych. ${(g.speed * 100) | 0} % · plod. ${(g.fert * 100) | 0} %</b></div>
             <div class="bar-row"><span>zdraví</span><div class="bar"><i style="width:${(100 * s.hp / s.maxHp) | 0}%;background:#e05555"></i></div></div>`;
     }
     el.hidden = false;
@@ -375,10 +377,11 @@ function renderCard() {
 function renderHud() {
     const s = life.summary();
     $('hud-year').textContent = life.year;
-    $('hud-pop').textContent = s.people;
+    $('hud-pop').textContent = fmt(s.pop);
     $('hud-realms').textContent = s.realms.length;
     $('hud-villages').textContent = s.villages;
-    $('hud-gold').textContent = s.gold;
+    $('hud-cities').textContent = s.cities;
+    $('hud-era').textContent = ERAS[s.era].short;
     $('hud-wars').textContent = s.wars;
 
     $('faith-fill').style.width = (life.godMode ? 100 : clamp(life.faith / life.faithMax, 0, 1) * 100) + '%';
@@ -397,34 +400,34 @@ function renderRealms(s) {
     if (!s.realms.length) html += '<div class="empty">Zatím tu není žádné království.<br>Vezmi 🧑 <b>Lidi</b> a klikni na souš.</div>';
     for (const r of s.realms.slice().sort((a, b) => b.villages.length - a.villages.length)) {
         const wars = [...r.wars].map(id => { const o = life.realmById(id); return o ? o.name : null; }).filter(Boolean);
-        const nextCost = ERA_COST[r.era + 1];
-        const prog = nextCost ? clamp((r.research - ERA_COST[r.era]) / (nextCost - ERA_COST[r.era]), 0, 1) : 1;
+        const next = ERAS[r.era + 1];
+        const prog = next ? clamp((r.research - ERAS[r.era].cost) / (next.cost - ERAS[r.era].cost), 0, 1) : (r.moon ? 1 : clamp(r.space / 100, 0, 1));
         html += `<div class="realm" data-realm="${r.id}">
             <div class="realm-head"><span class="chip" style="background:${r.color}"></span>
-                <b>${r.name}</b><em>${RACES[r.race].emoji}</em></div>
-            <div class="realm-sub">${r.ruler ? (r.ruler.female ? 'královna ' : 'král ') + r.ruler.name : ''} · ${ERAS[r.era]}</div>
+                <b>${r.name}</b><em>${RACES[r.race].emoji}${r.moon ? ' 🚀' : ''}</em></div>
+            <div class="realm-sub">${r.ruler ? (r.ruler.female ? 'královna ' : 'král ') + r.ruler.name : ''} · ${ERAS[r.era].icon} ${ERAS[r.era].name}</div>
             <div class="realm-meta">
-                <span>🏘️ ${r.villages.length}</span><span>🧑 ${r.pop || 0}</span>
-                <span>🪙 ${Math.round(r.gold)}</span><span>od ${Math.floor(r.born / 60)}. r.</span></div>
+                <span>🏘️ ${r.villages.length}</span><span>🧑 ${fmt(r.pop || 0)}</span>
+                <span>🪙 ${fmt(r.gold)}</span><span>od ${Math.floor(r.born / 60)}. r.</span></div>
             <div class="era-bar"><i style="width:${(prog * 100) | 0}%;background:${r.color}"></i></div>
             ${wars.length ? `<div class="war">⚔️ válka: ${wars.join(', ')}</div>` : '<div class="peace">🕊️ mír</div>'}
         </div>`;
     }
     html += `<div class="side-stats">
-        <div><b>${s.people}</b><span>obyvatel</span></div>
-        <div><b>${s.soldiers}</b><span>vojáků</span></div>
+        <div><b>${fmt(s.pop)}</b><span>obyvatel</span></div>
+        <div><b>${fmt(s.army)}</b><span>⚔️ v poli</span></div>
         <div><b>${s.houses}</b><span>staveb</span></div>
+        <div><b>${s.farms}</b><span>🌾 polí</span></div>
+        <div><b>${fmt(s.gold)}</b><span>🪙 zlato</span></div>
+        <div><b>${fmt(s.wood)}</b><span>🪵 dřevo</span></div>
         <div><b>${s.animals}</b><span>zvířat</span></div>
-        <div><b>${s.food}</b><span>🌾 zásoby</span></div>
-        <div><b>${s.wood}</b><span>🪵 dřevo</span></div>
         ${s.zombies ? `<div><b>${s.zombies}</b><span>🧟 nemrtvých</span></div>` : ''}
-        ${s.sick ? `<div><b>${s.sick}</b><span>🦠 nemocných</span></div>` : ''}
-        <div><b>${life.stats.born}</b><span>narozených</span></div>
-        <div><b>${life.stats.died}</b><span>mrtvých</span></div>
-        <div><b>${life.stats.warDead}</b><span>padlých ve válce</span></div>
-        <div><b>${life.stats.godDead}</b><span>od tvé ruky</span></div>
-        <div><b>${life.stats.peak}</b><span>vrchol populace</span></div>
+        <div><b>${fmt(life.stats.peak)}</b><span>vrchol populace</span></div>
+        <div><b>${fmt(life.stats.warDead)}</b><span>padlých ve válce</span></div>
+        <div><b>${fmt(life.stats.godDead)}</b><span>od tvé ruky</span></div>
+        <div><b>${life.stats.captured}</b><span>dobytých měst</span></div>
         <div><b>${life.stats.wars}</b><span>válek celkem</span></div>
+        <div><b>${s.moon}</b><span>🚀 na Měsíci</span></div>
     </div>`;
     el.innerHTML = html;
     el.querySelectorAll('.realm').forEach(row => row.addEventListener('click', () => {
@@ -505,6 +508,31 @@ function renderCharts() {
     $('charts-note').textContent = `${h.t.length} záznamů · poslední rok ${h.t[h.t.length - 1]}`;
 }
 
+const MILE_ORDER = [
+    ['city', '🏙️ První velké město'], ['metro', '🌆 První metropole'], ['uni', '🎓 První univerzita'],
+    ['factory', '🏭 První továrna'], ['spaceport', '🚀 První kosmodrom'], ['moon', '🌕 Přistání na Měsíci']
+];
+
+function renderMiles() {
+    if ($('tab-miles').hidden) return;
+    let html = '<h4>Dějinné milníky</h4>';
+    for (let e = 0; e < ERAS.length; e++) {
+        const y = life.milestones['era' + e];
+        html += `<div class="mile ${y !== undefined || e === 0 ? 'done' : ''}">
+            <span>${ERAS[e].icon}</span><b>${ERAS[e].name}</b>
+            <em>${e === 0 ? 'od počátku' : (y !== undefined ? y + '. rok' : '–')}</em></div>`;
+    }
+    html += '<h4>Události</h4>';
+    for (const [key, label] of MILE_ORDER) {
+        const y = life.milestones[key];
+        html += `<div class="mile ${y !== undefined ? 'done' : ''}"><span></span><b>${label}</b>
+            <em>${y !== undefined ? y + '. rok' : '–'}</em></div>`;
+    }
+    const moonRealms = life.realms.filter(r => r.moon && !r.dead);
+    if (moonRealms.length) html += `<div class="mile done"><span>🌕</span><b>Na Měsíci byli:</b><em>${moonRealms.map(r => r.name).join(', ')}</em></div>`;
+    $('tab-miles').innerHTML = html;
+}
+
 function renderLog() {
     const el = $('log');
     while (logIndex < life.events.length) {
@@ -545,7 +573,7 @@ function loop(now) {
 
     if (frame % 12 === 0) renderHud();
     if (frame % 20 === 0 && renderer.selected) renderCard();
-    if (frame % 30 === 0) renderCharts();
+    if (frame % 30 === 0) { renderCharts(); renderMiles(); }
     if (life.dirtyLog) { renderLog(); life.dirtyLog = false; }
 }
 
