@@ -20,6 +20,7 @@
             <div class="hud-item" title="Města nad 2 500 obyvatel"><span>🏙️</span><b id="hud-cities">0</b><i>měst</i></div>
             <div class="hud-item" title="Nejvyspělejší doba světa"><span>📜</span><b id="hud-era">kamenná</b><i>doba</i></div>
             <div class="hud-item" title="Probíhající války"><span>⚔️</span><b id="hud-wars">0</b><i>válek</i></div>
+            <div class="hud-item" title="Lidé v koloniích na Měsíci a Marsu" style="display:none"><span>🌕</span><b id="hud-space">0</b><i>ve vesmíru</i></div>
         </div>
 
         <div class="faith-block">
@@ -27,6 +28,7 @@
                 <i id="faith-fill"></i><span id="faith-text">80 / 200 víry</span>
             </div>
             <div class="faith-note">🙏 věřících: <b id="believers">0</b></div>
+            <div class="alien-note" id="alien-note" style="display:none"></div>
         </div>
 
         <div class="speeds" id="speeds">
@@ -100,8 +102,16 @@
 
             <div class="bottom-controls">
                 <div class="ctrl">
-                    <label for="climate">Klima <output id="climate-val">0 °C</output></label>
+                    <label for="climate">🌡️ Klima <output id="climate-val">0 °C</output></label>
                     <input type="range" id="climate" min="-15" max="15" step="1" value="0">
+                </div>
+                <div class="ctrl">
+                    <label for="sun">☀️ Slunce <output id="sun-val">100 %</output></label>
+                    <input type="range" id="sun" min="50" max="160" step="5" value="100">
+                </div>
+                <div class="ctrl">
+                    <label for="humid">💧 Vlhkost vzduchu <output id="humid-val">50 %</output></label>
+                    <input type="range" id="humid" min="0" max="100" step="5" value="50">
                 </div>
                 <div class="newworld">
                     <select id="mapsize" title="Velikost světa"></select>

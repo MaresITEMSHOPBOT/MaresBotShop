@@ -72,6 +72,8 @@ const LAWS = [
     { id: 'health', name: 'Zdravotnictví', icon: '🏥', opts: ['Ne', 'Ano'], def: 0, desc: 'Stojí zlato, ale lidé žijí déle a města rostou rychleji.' }
 ];
 
+const WEAPONS = ['kyj', 'bronzový meč', 'železný meč', 'kuše', 'mušketa', 'puška', 'kulomet', 'tank', 'raketomet', 'laser'];
+
 const REALM_COLORS = ['#4f86e8', '#c8452f', '#2fae86', '#d79a2b', '#9b5de5', '#f15bb5', '#00bbf9', '#8ac926', '#ff924c', '#59c3c3', '#e56b6f', '#b8f2e6'];
 
 let MAX_UNITS = 900;
@@ -101,6 +103,8 @@ class Life {
         this.buildings = [];
         this.armies = [];
         this.rockets = [];
+        this.ships = [];
+        this.aliens = null;
         this.nextRealm = 1; this.nextVillage = 1; this.nextUnit = 1;
         this.tick = 0;
 
@@ -263,7 +267,8 @@ class Life {
             id, name: realmName(this.rng), race: raceId,
             color: REALM_COLORS[(id - 1) % REALM_COLORS.length],
             villages: [], wars: new Set(), born: this.tick, dead: false, capital: 0,
-            gold: 40, research: 0, era: 0, ruler: null, peak: 0, pop: 0, moon: false, space: 0
+            gold: 40, research: 0, era: 0, ruler: null, peak: 0, pop: 0, moon: false, space: 0,
+            moonBase: 0, moonPop: 0, marsBase: 0, marsPop: 0, mars: false, alienDeal: 0
         };
         this.newRuler(realm);
         this.realms.push(realm);
@@ -420,6 +425,8 @@ class Life {
         if (this.tick % 30 === 0) this.updateTerritory();
         if (this.tick % 240 === 0) this.diplomacy();
         if (this.tick % 20 === 0) this.record();
+        this.stepAliens();
+        this.stepShips();
         this.stepRockets();
 
         this.faithMax = 200 + believers * 2 + this.totalPop() * 0.002;
@@ -1060,6 +1067,31 @@ class Life {
                 this.milestone('era' + r.era, `${e.icon} Svět vstoupil do doby: ${e.name} (${r.name})`);
             }
 
+            // měsíční a marsovské kolonie
+            if (r.moon) {
+                const cost = 400 + r.moonBase * 250;
+                if (r.gold > cost && r.moonBase < 12 && this.rng() < 0.06) {
+                    r.gold -= cost; r.moonBase++;
+                    this.ships.push({ from: 'earth', to: 'moon', t: 0, realm: r.id, color: r.color });
+                    if (r.moonBase === 1) this.milestone('moonbase', '🌕 Na Měsíci vyrostla první základna');
+                    if (r.moonBase === 5) this.milestone('mooncity', '🏙️ Na Měsíci vzniklo první město');
+                }
+                if (r.moonBase > 0) r.moonPop = Math.min(r.moonBase * 4000, r.moonPop * 1.004 + r.moonBase * 1.5);
+                if (r.moonBase >= 4 && !r.mars && r.gold > 3000 && this.rng() < 0.05) {
+                    r.gold -= 3000; r.mars = true; r.marsBase = 1;
+                    this.ships.push({ from: 'earth', to: 'mars', t: 0, realm: r.id, color: r.color });
+                    this.log(`🔴 ${r.name} přistáli na Marsu!`, 'good');
+                    this.milestone('mars', '🔴 Lidé přistáli na Marsu');
+                }
+                if (r.mars) {
+                    const mc = 900 + r.marsBase * 500;
+                    if (r.gold > mc && r.marsBase < 10 && this.rng() < 0.04) {
+                        r.gold -= mc; r.marsBase++;
+                        this.ships.push({ from: 'earth', to: 'mars', t: 0, realm: r.id, color: r.color });
+                    }
+                    r.marsPop = Math.min(r.marsBase * 2500, r.marsPop * 1.003 + r.marsBase * 1.0);
+                }
+            }
             // vesmírný program
             if (r.era >= 9 && spaceports > 0) {
                 r.space += 0.25 + spaceports * 0.15 + labs * 0.05;
@@ -1076,6 +1108,96 @@ class Life {
                 r.ruler.age -= 10;
                 if (r.ruler.age <= 0) this.newRuler(r, true);
             }
+        }
+    }
+
+    /* mimozemšťané: přiletí za vyspělou civilizací a sami se rozhodnou, co s ní */
+    stepAliens() {
+        const live = this.realms.filter(r => !r.dead);
+        const topEra = live.length ? Math.max(...live.map(r => r.era)) : 0;
+        if (!this.aliens && topEra >= 8 && this.rng() < 0.0015) this.summonAliens();
+        const a = this.aliens;
+        if (!a) return;
+        a.t++;
+
+        if (a.state === 'approach') {
+            a.x += (a.tx - a.x) * 0.01; a.y += (a.ty - a.y) * 0.01;
+            if (a.t > 240) {
+                // rozhodnou se podle toho, jaká civilizace je přivítala
+                const wars = live.reduce((n, r) => n + r.wars.size, 0) / 2;
+                const tech = topEra;
+                const peace = 0.35 + tech * 0.05 - wars * 0.06 - clamp(this.stats.godDead / 50000, 0, 0.3);
+                a.friendly = this.rng() < peace;
+                a.state = a.friendly ? 'trade' : 'war';
+                a.t = 0;
+                this.log(a.friendly
+                    ? '👽 Mimozemšťané navázali spojení a nabízejí obchod'
+                    : '👽 Mimozemšťané vyhlásili útok na tento svět!', a.friendly ? 'good' : 'bad');
+                this.milestone('aliens', a.friendly ? '👽 První kontakt – mimozemšťané přišli v míru' : '👽 První kontakt – mimozemšťané zaútočili');
+            }
+            return;
+        }
+
+        // pohyb nad mapou
+        if (this.tick % 40 === 0) { a.tx = this.rng() * this.world.w; a.ty = this.rng() * this.world.h; }
+        a.x += (a.tx - a.x) * 0.02; a.y += (a.ty - a.y) * 0.02;
+
+        if (a.state === 'trade') {
+            if (this.tick % 60 === 0) {
+                for (const r of live) {
+                    if (r.era < 7) continue;
+                    r.gold += 400 + r.era * 60;
+                    r.research += 900 + r.era * 200;
+                    r.alienDeal++;
+                }
+                if (this.rng() < 0.15) this.log('👽 Mimozemský obchod přinesl zlato a nové technologie', 'good');
+            }
+            if (a.t > 4000 && this.rng() < 0.01) { this.aliens = null; this.log('👽 Mimozemská loď odletěla ke hvězdám', 'info'); }
+        } else if (a.state === 'war') {
+            if (this.tick % 12 === 0) {
+                const v = this.nearestVillage(a.x, a.y, 400);
+                if (v) {
+                    const dead = v.pop * 0.06;
+                    v.pop = Math.max(0, v.pop - dead);
+                    this.stats.warDead += dead;
+                    this.fx.push({ type: 'laser', x: a.x, y: a.y, tx: v.x, ty: v.y, life: 12, max: 12, color: '#7cffcf' });
+                    if (v.houses.length && this.rng() < 0.4) this.destroyBuilding(v.houses[(this.rng() * v.houses.length) | 0]);
+                    if (v.pop < 1) this.destroyVillage(v, false, 'war');
+                }
+            }
+            // obrana: vyspělé říše po nich střílejí
+            if (this.tick % 20 === 0) {
+                let dmg = 0;
+                for (const r of live) {
+                    if (r.era >= 7) dmg += (r.era - 6) * (1 + r.villages.length * 0.05);
+                }
+                a.hp -= dmg;
+                if (dmg > 0) this.fx.push({ type: 'laser', x: a.x + 2, y: a.y + 2, tx: a.x, ty: a.y, life: 8, max: 8, color: '#ff6b6b' });
+                if (a.hp <= 0) {
+                    this.log('💥 Mimozemská loď byla sestřelena! Z jejích trosek se rodí nové technologie.', 'good');
+                    this.milestone('ufokill', '💥 Lidstvo sestřelilo mimozemskou loď');
+                    for (const r of live) if (r.era >= 6) r.research += 5000;
+                    this.fx.push({ type: 'boom', x: a.x, y: a.y, r: 8, life: 40, max: 40, power: 2 });
+                    this.aliens = null;
+                }
+            }
+        }
+    }
+
+    summonAliens() {
+        this.aliens = {
+            state: 'approach', t: 0, hp: 400, friendly: null,
+            x: this.world.w * 0.5, y: -10,
+            tx: this.world.w * 0.5, ty: this.world.h * 0.5
+        };
+        this.log('🛸 Na obloze se objevil neznámý objekt…', 'bad');
+    }
+
+    stepShips() {
+        for (let k = this.ships.length - 1; k >= 0; k--) {
+            const s2 = this.ships[k];
+            s2.t += s2.to === 'mars' ? 0.004 : 0.008;
+            if (s2.t >= 1) this.ships.splice(k, 1);
         }
     }
 
@@ -1224,11 +1346,16 @@ class Life {
             wars: realms.reduce((n, r) => n + r.wars.size, 0) / 2,
             era: realms.length ? Math.max(...realms.map(r => r.era)) : 0,
             moon: realms.filter(r => r.moon).length,
+            moonPop: realms.reduce((n, r) => n + (r.moonPop || 0), 0),
+            marsPop: realms.reduce((n, r) => n + (r.marsPop || 0), 0),
+            moonBases: realms.reduce((n, r) => n + (r.moonBase || 0), 0),
+            marsBases: realms.reduce((n, r) => n + (r.marsBase || 0), 0),
+            aliens: this.aliens,
             gold: Math.round(gold), food: Math.round(food), wood: Math.round(wood)
         };
     }
 }
 
 if (typeof module !== 'undefined') {
-    module.exports = { Life, RACES, ANIMALS, LAWS, ERAS, LEVELS, BUILDINGS, setWorldLimits, fmt };
+    module.exports = { Life, RACES, ANIMALS, LAWS, ERAS, LEVELS, BUILDINGS, WEAPONS, setWorldLimits, fmt };
 }

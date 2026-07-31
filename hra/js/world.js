@@ -27,7 +27,16 @@ class World {
 
         this.seaLevel = 0.46;
         this.climate = 0;
+        this.sun = 1;                 // síla slunce (0.6 – 1.5)
         this.tick = 0;
+
+        // počasí: mraky, srážky a vítr na hrubé mřížce
+        this.cw = Math.ceil(w / 4); this.ch = Math.ceil(h / 4);
+        this.cloud = new Float32Array(this.cw * this.ch);
+        this.cloudTmp = new Float32Array(this.cw * this.ch);
+        this.rainfall = new Float32Array(this.cw * this.ch);
+        this.windX = 0.35; this.windY = 0.08;
+        this.humidity = 0.5;
 
         this.fireSet = new Set();
         this.lavaSet = new Set();
@@ -48,7 +57,73 @@ class World {
     tempAt(i) {
         const y = (i / this.w) | 0;
         const lat = (y / this.h) * 2 - 1;
-        return 30 - 58 * Math.pow(Math.abs(lat), 1.45) - Math.max(0, this.height[i] - this.seaLevel) * 46 + this.climate;
+        let t = 30 - 58 * Math.pow(Math.abs(lat), 1.45) - Math.max(0, this.height[i] - this.seaLevel) * 46 + this.climate;
+        t += (this.sun - 1) * 22;                       // silnější slunce hřeje
+        t -= this.cloudAt(i) * 4;                       // pod mrakem je chládek
+        return t;
+    }
+
+    cloudIdx(i) {
+        const x = (i % this.w) >> 2, y = ((i / this.w) | 0) >> 2;
+        return Math.min(this.cloud.length - 1, y * this.cw + x);
+    }
+    cloudAt(i) { return this.cloud[this.cloudIdx(i)]; }
+
+    addCloud(x, y, r, amount) {
+        const cx = x >> 2, cy = y >> 2, cr = Math.max(1, r >> 2);
+        for (let j = cy - cr; j <= cy + cr; j++) {
+            for (let i2 = cx - cr; i2 <= cx + cr; i2++) {
+                if (i2 < 0 || j < 0 || i2 >= this.cw || j >= this.ch) continue;
+                const d = Math.hypot(i2 - cx, j - cy) / cr;
+                if (d > 1) continue;
+                const k = j * this.cw + i2;
+                this.cloud[k] = clamp(this.cloud[k] + amount * (1 - d * 0.7), 0, 1.6);
+            }
+        }
+    }
+
+    /* mraky se posouvají větrem, srážejí se nad vodou a prší */
+    stepWeather(rng) {
+        const { cw, ch, cloud, cloudTmp } = this;
+        if (this.tick % 60 === 0) {
+            this.windX = clamp(this.windX + (rng() - 0.5) * 0.12, -0.6, 0.6);
+            this.windY = clamp(this.windY + (rng() - 0.5) * 0.08, -0.35, 0.35);
+        }
+        const wx = this.windX, wy = this.windY;
+        for (let y = 0; y < ch; y++) {
+            for (let x = 0; x < cw; x++) {
+                const k = y * cw + x;
+                const sx = clamp(Math.round(x - wx), 0, cw - 1);
+                const sy = clamp(Math.round(y - wy), 0, ch - 1);
+                let c = cloud[sy * cw + sx] * 0.972 + cloud[k] * 0.02;
+                // vypařování: nad vodou a v teple vznikají mraky
+                const i = Math.min(this.n - 1, (y * 4) * this.w + x * 4);
+                const water = this.isWater(i) ? 1 : this.moist[i];
+                const t = this.tempAt(i);
+                if (t > 4) c += water * 0.016 * this.humidity * this.sun;
+                cloudTmp[k] = clamp(c, 0, 1.6);
+            }
+        }
+        cloud.set(cloudTmp);
+        // srážky
+        const band = this.tick % 4;
+        for (let y = band; y < ch; y += 4) {
+            for (let x = 0; x < cw; x++) {
+                const k = y * cw + x;
+                if (cloud[k] < 0.62) { this.rainfall[k] *= 0.9; continue; }
+                const drop = (cloud[k] - 0.6) * 0.05;
+                cloud[k] -= drop;
+                this.rainfall[k] = Math.min(1, this.rainfall[k] + drop * 6);
+                for (let j = 0; j < 4; j++) {
+                    const tx = x * 4 + ((rng() * 4) | 0), ty = y * 4 + ((rng() * 4) | 0);
+                    if (tx >= this.w || ty >= this.h) continue;
+                    const i = ty * this.w + tx;
+                    this.moist[i] = Math.min(1, this.moist[i] + drop * 2.5);
+                    if (this.fire[i]) { this.fire[i] = 0; this.fireSet.delete(i); this.mark(i); }
+                    if (this.veg[i] < 1 && rng() < 0.3) { this.veg[i] = Math.min(1, this.veg[i] + drop); this.classify(i); }
+                }
+            }
+        }
     }
 
     /* ---------------- generování ---------------- */
@@ -206,6 +281,7 @@ class World {
 
     step(rng) {
         this.tick++;
+        this.stepWeather(rng);
         this.stepFire(rng);
         this.stepLava(rng);
         this.stepWater();

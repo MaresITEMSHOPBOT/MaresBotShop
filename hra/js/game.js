@@ -6,14 +6,16 @@ const MAP_SIZES = [
     { id: 's', name: 'Malý', w: 128, h: 80 },
     { id: 'm', name: 'Střední', w: 176, h: 110 },
     { id: 'l', name: 'Velký', w: 240, h: 150 },
-    { id: 'xl', name: 'Obří', w: 320, h: 200 }
+    { id: 'xl', name: 'Obří', w: 340, h: 212 },
+    { id: 'xxl', name: 'Kontinent', w: 440, h: 275 },
+    { id: 'planet', name: 'Planeta', w: 560, h: 350 }
 ];
 const TICK_MS = 125;
 const $ = id => document.getElementById(id);
 
 const JOBS = { child: 'dítě', worker: 'dělník', soldier: 'voják', wanderer: 'tulák', wild: 'divoké', zombie: 'nemrtvý' };
 const STATES = { idle: 'rozmýšlí se', gather: 'sbírá jídlo', chop: 'kácí dřevo', return: 'nese náklad domů', build: 'staví' };
-const GROUP_TITLE = { hand: 'Ruka', land: 'Krajina', life: 'Život', bless: 'Dary a zázraky', doom: 'Zkáza' };
+const GROUP_TITLE = { hand: 'Ruka', land: 'Krajina', life: 'Život', weather: 'Počasí', bless: 'Dary a zázraky', doom: 'Zkáza' };
 
 let world, life, renderer;
 let speed = 1, tool = 'hand', brushR = 4, mapSize = 'm';
@@ -51,7 +53,7 @@ function newWorld(seed, withLife = true) {
 
     if (withLife) {
         const races = ['human', 'orc', 'elf', 'dwarf'];
-        const n = size.w > 200 ? 5 : size.w > 150 ? 4 : 3;
+        const n = size.w > 420 ? 8 : size.w > 300 ? 6 : size.w > 200 ? 5 : size.w > 150 ? 4 : 3;
         for (let k = 0; k < n; k++) {
             const r = races[k % races.length];
             const spot = life.homeSpot(r);
@@ -118,7 +120,7 @@ function selectTool(id) {
     $('tool-desc').innerHTML = `<b>${t.emoji} ${t.name}${t.cost ? ` · ${t.cost} víry` : ''}</b>${t.desc}` +
         (t.hold ? '<i>Můžeš držet a táhnout.</i>' : '');
     renderer.brush.color = t.group === 'doom' ? '#ff9a9a' : t.group === 'land' ? '#a8e0ff'
-        : t.group === 'life' ? '#b6f5a0' : '#ffe6a0';
+        : t.group === 'life' ? '#b6f5a0' : t.group === 'weather' ? '#cfe8ff' : '#ffe6a0';
     renderer.brush.show = t.id !== 'hand';
     $('world').style.cursor = t.id === 'hand' ? 'default' : 'crosshair';
 }
@@ -198,6 +200,15 @@ function bindUI() {
         $('climate-val').textContent = (parseFloat(e.target.value) > 0 ? '+' : '') + e.target.value + ' °C';
     });
     $('mapsize').addEventListener('change', e => { mapSize = e.target.value; });
+    $('sun').addEventListener('input', e => {
+        world.sun = parseInt(e.target.value, 10) / 100;
+        $('sun-val').textContent = Math.round(world.sun * 100) + ' %';
+    });
+    $('sun').addEventListener('change', () => world.reclassifyAll());
+    $('humid').addEventListener('input', e => {
+        world.humidity = parseInt(e.target.value, 10) / 100;
+        $('humid-val').textContent = e.target.value + ' %';
+    });
     $('btn-new').addEventListener('click', () => {
         newWorld(parseInt($('seed').value, 10) || (Date.now() & 0xffff));
         toast('🌍 Nový svět je hotový');
@@ -284,6 +295,7 @@ function bindCanvas() {
 }
 
 function use(wx, wy) {
+    if (renderer.mode === 'space') { toast('Ve vesmírném pohledu se nedá zasahovat – přepni na 🗺️ Krajinu'); return; }
     if (wx < 0 || wy < 0 || wx >= world.w || wy >= world.h) return;
     if (tool === 'hand') {
         renderer.select(renderer.pick(wx, wy));
@@ -383,6 +395,18 @@ function renderHud() {
     $('hud-cities').textContent = s.cities;
     $('hud-era').textContent = ERAS[s.era].short;
     $('hud-wars').textContent = s.wars;
+    const spaceInfo = $('hud-space');
+    if (s.moonBases || s.marsBases) {
+        spaceInfo.parentElement.style.display = '';
+        spaceInfo.textContent = fmt(s.moonPop + s.marsPop);
+    } else spaceInfo.parentElement.style.display = 'none';
+    const al = $('alien-note');
+    if (s.aliens) {
+        al.style.display = '';
+        al.textContent = s.aliens.state === 'approach' ? '🛸 Něco se blíží…'
+            : s.aliens.friendly ? '🛸 Mimozemšťané obchodují' : '🛸 Mimozemský útok!';
+        al.className = 'alien-note ' + (s.aliens.friendly ? 'good' : 'bad');
+    } else al.style.display = 'none';
 
     $('faith-fill').style.width = (life.godMode ? 100 : clamp(life.faith / life.faithMax, 0, 1) * 100) + '%';
     $('faith-text').textContent = life.godMode ? '♾️ nekonečná víra' : `${life.faith | 0} / ${life.faithMax | 0} víry`;
@@ -408,7 +432,8 @@ function renderRealms(s) {
             <div class="realm-sub">${r.ruler ? (r.ruler.female ? 'královna ' : 'král ') + r.ruler.name : ''} · ${ERAS[r.era].icon} ${ERAS[r.era].name}</div>
             <div class="realm-meta">
                 <span>🏘️ ${r.villages.length}</span><span>🧑 ${fmt(r.pop || 0)}</span>
-                <span>🪙 ${fmt(r.gold)}</span><span>od ${Math.floor(r.born / 60)}. r.</span></div>
+                <span>🪙 ${fmt(r.gold)}</span><span>🔫 ${WEAPONS[r.era]}</span>
+                ${r.moonBase ? `<span>🌕 ${r.moonBase}</span>` : ''}${r.marsBase ? `<span>🔴 ${r.marsBase}</span>` : ''}</div>
             <div class="era-bar"><i style="width:${(prog * 100) | 0}%;background:${r.color}"></i></div>
             ${wars.length ? `<div class="war">⚔️ válka: ${wars.join(', ')}</div>` : '<div class="peace">🕊️ mír</div>'}
         </div>`;
@@ -427,7 +452,8 @@ function renderRealms(s) {
         <div><b>${fmt(life.stats.godDead)}</b><span>od tvé ruky</span></div>
         <div><b>${life.stats.captured}</b><span>dobytých měst</span></div>
         <div><b>${life.stats.wars}</b><span>válek celkem</span></div>
-        <div><b>${s.moon}</b><span>🚀 na Měsíci</span></div>
+        <div><b>${s.moon}</b><span>🚀 říší ve vesmíru</span></div>
+        <div><b>${fmt(s.moonPop + s.marsPop)}</b><span>🌕 lidí v koloniích</span></div>
     </div>`;
     el.innerHTML = html;
     el.querySelectorAll('.realm').forEach(row => row.addEventListener('click', () => {

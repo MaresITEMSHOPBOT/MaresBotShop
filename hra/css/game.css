@@ -286,3 +286,8 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
 .mile.done { opacity: 1; color: var(--text); border-color: rgba(255,209,102,.4); }
 .mile b { flex: 1; font-weight: 600; }
 .mile em { font-style: normal; font-size: .64rem; color: var(--gold); }
+
+.alien-note { font-size: .62rem; text-align: center; margin-top: 2px; font-weight: 700; }
+.alien-note.good { color: #8ef7d2; }
+.alien-note.bad { color: #ff9a9a; animation: pulse 1.5s infinite; }
+@keyframes pulse { 50% { opacity: .45; } }

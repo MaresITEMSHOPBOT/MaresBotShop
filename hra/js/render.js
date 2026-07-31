@@ -7,8 +7,9 @@ function setTilePx(worldW) { TPX = Math.round(clamp(2400 / worldW, 7, 14)); }
 
 const MAP_MODES = [
     { id: 'normal', name: 'Krajina', icon: '🗺️' },
-    { id: 'realms', name: 'Království', icon: '👑' },
-    { id: 'temp', name: 'Teplota', icon: '🌡️' }
+    { id: 'realms', name: 'Říše', icon: '👑' },
+    { id: 'temp', name: 'Teplota', icon: '🌡️' },
+    { id: 'space', name: 'Vesmír', icon: '🌌' }
 ];
 
 function hash01(i) { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); }
@@ -27,6 +28,11 @@ class Renderer {
         this.buf = document.createElement('canvas');
         this.buf.width = world.w * TPX; this.buf.height = world.h * TPX;
         this.bctx = this.buf.getContext('2d');
+
+        this.clouds = document.createElement('canvas');     // mraky na hrubé mřížce
+        this.clouds.width = world.cw; this.clouds.height = world.ch;
+        this.cctx = this.clouds.getContext('2d');
+        this.cimg = this.cctx.createImageData(world.cw, world.ch);
 
         this.terr = document.createElement('canvas');       // hranice království
         this.terr.width = world.w * TPX; this.terr.height = world.h * TPX;
@@ -324,6 +330,7 @@ class Renderer {
     draw(alpha, paused) {
         this.frame++;
         const ctx = this.ctx, cam = this.cam;
+        if (this.mode === 'space') { this.flushTiles(); this.drawSpace(); this.drawGlass(); return; }
         this.flushTiles();
         if (this.life.territoryDirty) { this.life.territoryDirty = false; this.terrDirty = true; }
         if (this.terrDirty) this.paintTerritory();
@@ -344,6 +351,7 @@ class Renderer {
         }
         ctx.imageSmoothingEnabled = true;
 
+        this.drawClouds();
         this.drawHazards();
         this.drawBuildings();
         this.drawUnits(alpha);
@@ -372,6 +380,153 @@ class Renderer {
         ctx.globalAlpha = 1;
     }
 
+    drawClouds() {
+        const w = this.world, img = this.cimg, d = img.data;
+        for (let i = 0; i < w.cloud.length; i++) {
+            const c = clamp(w.cloud[i], 0, 1.4);
+            const p = i * 4;
+            const rain = w.rainfall[i] > 0.2;
+            d[p] = rain ? 150 : 245; d[p + 1] = rain ? 158 : 248; d[p + 2] = rain ? 175 : 255;
+            d[p + 3] = Math.min(215, c * 165) | 0;
+        }
+        this.cctx.putImageData(img, 0, 0);
+        const ctx = this.ctx, z = this.cam.zoom;
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(this.clouds, this.w2sx(0), this.w2sy(0), w.w * z, w.h * z);
+        ctx.restore();
+    }
+
+    /* pohled do vesmíru: Země, Měsíc s koloniemi, Mars a lodě mezi nimi */
+    drawSpace() {
+        const ctx = this.ctx, life = this.life, W = this.vw, H = this.vh;
+        ctx.fillStyle = '#03040a';
+        ctx.fillRect(0, 0, W, H);
+        if (!this.stars) {
+            this.stars = [];
+            for (let k = 0; k < 260; k++) this.stars.push({ x: Math.random(), y: Math.random(), s: Math.random() * 1.6 + 0.3 });
+        }
+        ctx.fillStyle = '#fff';
+        for (const st of this.stars) {
+            ctx.globalAlpha = 0.35 + 0.5 * Math.abs(Math.sin(this.frame * 0.01 + st.x * 20));
+            ctx.fillRect(st.x * W, st.y * H, st.s, st.s);
+        }
+        ctx.globalAlpha = 1;
+
+        const s = life.summary();
+        const ex = W * 0.32, ey = H * 0.55, er = Math.min(W, H) * 0.19;
+        // Země – uvnitř koule je skutečná mapa světa
+        ctx.save();
+        ctx.beginPath(); ctx.arc(ex, ey, er, 0, 6.3); ctx.clip();
+        ctx.drawImage(this.buf, ex - er, ey - er * 0.62, er * 2, er * 1.24);
+        ctx.globalAlpha = 0.55;
+        ctx.drawImage(this.clouds, ex - er, ey - er * 0.62, er * 2, er * 1.24);
+        ctx.globalAlpha = 1;
+        const g = ctx.createRadialGradient(ex - er * 0.3, ey - er * 0.3, er * 0.1, ex, ey, er);
+        g.addColorStop(0, 'rgba(255,255,255,0.18)');
+        g.addColorStop(0.75, 'rgba(0,0,20,0.1)');
+        g.addColorStop(1, 'rgba(0,0,25,0.85)');
+        ctx.fillStyle = g; ctx.fillRect(ex - er, ey - er, er * 2, er * 2);
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(120,180,255,0.5)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(ex, ey, er, 0, 6.3); ctx.stroke();
+
+        const label = (x, y, t1, t2) => {
+            ctx.textAlign = 'center';
+            ctx.font = '700 14px system-ui, sans-serif';
+            ctx.fillStyle = '#fff'; ctx.fillText(t1, x, y);
+            ctx.font = '11px system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(200,215,240,0.85)'; ctx.fillText(t2, x, y + 15);
+            ctx.textAlign = 'left';
+        };
+        label(ex, ey + er + 24, '🌍 Země', `${fmt(s.pop)} obyvatel`);
+
+        // Měsíc
+        const mx = W * 0.63, my = H * 0.3, mr = Math.min(W, H) * 0.075;
+        ctx.fillStyle = '#c9c6c0';
+        ctx.beginPath(); ctx.arc(mx, my, mr, 0, 6.3); ctx.fill();
+        ctx.fillStyle = 'rgba(120,116,110,0.6)';
+        for (let k = 0; k < 7; k++) {
+            const a = k * 1.7, d = mr * (0.2 + (k % 3) * 0.25);
+            ctx.beginPath(); ctx.arc(mx + Math.cos(a) * d, my + Math.sin(a) * d, mr * (0.08 + (k % 4) * 0.04), 0, 6.3); ctx.fill();
+        }
+        let bi = 0;
+        for (const r of life.realms) {
+            if (r.dead || !r.moonBase) continue;
+            for (let k = 0; k < r.moonBase; k++) {
+                const a = -2.6 + bi * 0.28;
+                const bx = mx + Math.cos(a) * mr * 0.82, by = my + Math.sin(a) * mr * 0.82;
+                ctx.fillStyle = r.color;
+                ctx.beginPath(); ctx.arc(bx, by, 4, Math.PI, 0); ctx.fill();
+                ctx.fillRect(bx - 4, by, 8, 2);
+                bi++;
+            }
+        }
+        label(mx, my + mr + 22, '🌕 Měsíc', s.moonBases ? `${s.moonBases} základen · ${fmt(s.moonPop)} lidí` : 'zatím pustý');
+
+        // Mars
+        const rx = W * 0.82, ry = H * 0.56, rr = Math.min(W, H) * 0.09;
+        const rg = ctx.createRadialGradient(rx - rr * 0.3, ry - rr * 0.3, rr * 0.2, rx, ry, rr);
+        rg.addColorStop(0, '#e08b5a'); rg.addColorStop(1, '#8d3d24');
+        ctx.fillStyle = rg;
+        ctx.beginPath(); ctx.arc(rx, ry, rr, 0, 6.3); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath(); ctx.ellipse(rx, ry - rr * 0.8, rr * 0.35, rr * 0.15, 0, 0, 6.3); ctx.fill();
+        let mi = 0;
+        for (const r of life.realms) {
+            if (r.dead || !r.marsBase) continue;
+            for (let k = 0; k < r.marsBase; k++) {
+                const a = -2.2 + mi * 0.3;
+                const bx = rx + Math.cos(a) * rr * 0.85, by = ry + Math.sin(a) * rr * 0.85;
+                ctx.fillStyle = r.color;
+                ctx.beginPath(); ctx.arc(bx, by, 4, Math.PI, 0); ctx.fill();
+                mi++;
+            }
+        }
+        label(rx, ry + rr + 22, '🔴 Mars', s.marsBases ? `${s.marsBases} základen · ${fmt(s.marsPop)} lidí` : 'nedotčený');
+
+        // lodě mezi tělesy
+        for (const sh of life.ships) {
+            const tx = sh.to === 'mars' ? rx : mx, ty = sh.to === 'mars' ? ry : my;
+            const px = lerp(ex, tx, sh.t), py = lerp(ey, ty, sh.t) - Math.sin(sh.t * Math.PI) * 60;
+            ctx.strokeStyle = 'rgba(255,220,150,0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(px, py); ctx.stroke();
+            ctx.fillStyle = sh.color || '#fff';
+            ctx.beginPath(); ctx.arc(px, py, 4, 0, 6.3); ctx.fill();
+        }
+
+        // mimozemská loď
+        if (life.aliens) {
+            const a = life.aliens;
+            const ax = W * 0.5 + Math.cos(this.frame * 0.01) * W * 0.2;
+            const ay = H * 0.18 + Math.sin(this.frame * 0.013) * 30;
+            this.drawUfo(ax, ay, 22, a.friendly);
+            label(ax, ay + 40, '🛸 Mimozemská loď',
+                a.state === 'approach' ? 'blíží se…' : a.friendly ? 'obchoduje' : 'útočí');
+        }
+
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '12px system-ui, sans-serif';
+        ctx.fillText('Vesmírný pohled – přepni zpět na 🗺️ Krajina', 16, H - 16);
+    }
+
+    drawUfo(sx, sy, s, friendly) {
+        const ctx = this.ctx;
+        ctx.fillStyle = friendly === false ? 'rgba(255,110,110,0.25)' : 'rgba(140,255,210,0.22)';
+        ctx.beginPath(); ctx.ellipse(sx, sy, s * 1.6, s * 0.5, 0, 0, 6.3); ctx.fill();
+        ctx.fillStyle = '#9fb2c9';
+        ctx.beginPath(); ctx.ellipse(sx, sy, s, s * 0.32, 0, 0, 6.3); ctx.fill();
+        ctx.fillStyle = friendly === false ? '#ff8a8a' : '#8ef7d2';
+        ctx.beginPath(); ctx.ellipse(sx, sy - s * 0.22, s * 0.45, s * 0.3, 0, Math.PI, 0); ctx.fill();
+        for (let k = 0; k < 5; k++) {
+            const a = this.frame * 0.06 + k * 1.25;
+            ctx.fillStyle = `rgba(255,255,255,${0.4 + 0.5 * Math.sin(a)})`;
+            ctx.fillRect(sx + Math.cos(a) * s * 0.8 - 1.5, sy + s * 0.12, 3, 3);
+        }
+    }
+
     drawHazards() {
         const ctx = this.ctx, z = this.cam.zoom, life = this.life;
         for (const t of (life.tornados || [])) {
@@ -394,6 +549,13 @@ class Renderer {
                 }
                 ctx.stroke();
             }
+        }
+        if (life.aliens && life.aliens.state !== 'approach') {
+            const a = life.aliens;
+            this.drawUfo(this.w2sx(a.x + 0.5), this.w2sy(a.y + 0.5), Math.max(10, z * 1.4), a.friendly);
+        } else if (life.aliens) {
+            const a = life.aliens;
+            this.drawUfo(this.w2sx(a.x + 0.5), this.w2sy(Math.max(-2, a.y)), Math.max(8, z), a.friendly);
         }
         for (const s2 of (life.storms || [])) {
             const sx = this.w2sx(s2.x + 0.5), sy = this.w2sy(s2.y + 0.5), r = s2.r * z;
@@ -631,7 +793,8 @@ class Renderer {
             if (u.zombie && z >= 6) { ctx.fillStyle = '#c8f06a'; ctx.fillRect(sx - s * 0.1, sy - s * 0.4 - bob, s * 0.06, s * 0.06); ctx.fillRect(sx + s * 0.05, sy - s * 0.4 - bob, s * 0.06, s * 0.06); }
 
             if (u.job === 'soldier' && z >= 6) {
-                ctx.strokeStyle = '#e8eaf0';
+                const era = realm ? realm.era : 0;
+                ctx.strokeStyle = era >= 9 ? '#7cffcf' : era >= 5 ? '#3f4650' : '#e8eaf0';
                 ctx.lineWidth = Math.max(1, s * 0.09);
                 ctx.beginPath();
                 ctx.moveTo(sx + (u.dir || 1) * s * 0.24, sy + s * 0.04);
@@ -788,6 +951,29 @@ class Renderer {
                         ctx.beginPath(); ctx.moveTo(lx, sy - f.r * z); ctx.lineTo(lx - 7, sy + f.r * z); ctx.stroke();
                     }
                     ctx.restore();
+                    break;
+                }
+                case 'laser': {
+                    ctx.strokeStyle = f.color || '#7cffcf';
+                    ctx.lineWidth = 3 + (1 - p) * 4;
+                    ctx.globalAlpha = 1 - p;
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy);
+                    ctx.lineTo(this.w2sx(f.tx + 0.5), this.w2sy(f.ty + 0.5));
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                    break;
+                }
+                case 'clash': {
+                    ctx.strokeStyle = `rgba(255,220,120,${1 - p})`;
+                    ctx.lineWidth = 2;
+                    for (let k = 0; k < 4; k++) {
+                        const a = Math.random() * 6.3, d2 = (0.3 + Math.random()) * z;
+                        ctx.beginPath();
+                        ctx.moveTo(sx, sy);
+                        ctx.lineTo(sx + Math.cos(a) * d2 * 2, sy + Math.sin(a) * d2 * 2);
+                        ctx.stroke();
+                    }
                     break;
                 }
                 case 'meteor': {

@@ -27,11 +27,19 @@ const TOOLS = [
     { id: 'wolf', group: 'life', name: 'Vlci', emoji: '🐺', cost: 6, spawnAnimal: 'wolf', desc: 'Loví ovce i osamělé vesničany.' },
     { id: 'bear', group: 'life', name: 'Medvědi', emoji: '🐻', cost: 10, spawnAnimal: 'bear', desc: 'Silná šelma, kterou jen tak něco nezastaví.' },
     { id: 'dragon', group: 'life', name: 'Drak', emoji: '🐉', cost: 70, spawnAnimal: 'dragon', desc: 'Létá nad krajinou, zapaluje ji a požírá všechno živé. Zastaví ho jen armáda.' },
+    { id: 'ufo', group: 'life', name: 'Mimozemšťané', emoji: '🛸', cost: 80, desc: 'Přivolá mimozemskou loď. Sami se rozhodnou, jestli budou obchodovat, nebo pálit lasery do měst – podle toho, jak mírumilovný svět najdou.' },
     { id: 'zombie', group: 'life', name: 'Nemrtví', emoji: '🧟', cost: 45, desc: 'Nákaza, která mění mrtvé v nemrtvé. Ti pak loví další. Šíří se sama.' },
+
+    /* ---------- počasí ---------- */
+    { id: 'sun', group: 'weather', name: 'Slunce', emoji: '☀️', cost: 4, hold: true, desc: 'Rozežene mraky a vysuší krajinu. Přidej k tomu posuvník Slunce a udělej ze světa poušť.' },
+    { id: 'clouds', group: 'weather', name: 'Mraky', emoji: '☁️', cost: 3, hold: true, desc: 'Nažene mraky. Ty se pohybují větrem, stíní krajinu a samy pak prší.' },
+    { id: 'rain', group: 'weather', name: 'Déšť', emoji: '🌧️', cost: 5, hold: true, desc: 'Hustý déšť: uhasí požáry, zavlaží půdu a rozjede růst.' },
+    { id: 'storm', group: 'weather', name: 'Bouřka', emoji: '⛈️', cost: 16, desc: 'Bouřkový mrak, ze kterého bijí blesky a zapalují krajinu.' },
+    { id: 'heat', group: 'weather', name: 'Vedro', emoji: '🔥', cost: 10, hold: true, desc: 'Vlna veder: vysuší půdu, spálí úrodu a začne hořet.' },
+    { id: 'wind', group: 'weather', name: 'Vítr', emoji: '🌬️', cost: 6, desc: 'Nastaví směr větru podle toho, kam klikneš – mraky poletí tam.' },
 
     /* ---------- dary a zázraky ---------- */
     { id: 'bless', group: 'bless', name: 'Požehnání', emoji: '✨', cost: 6, hold: true, desc: 'Uzdraví a nasytí panáčky, zúrodní půdu a udělá z nich věřící. Víra je tvá mana.' },
-    { id: 'rain', group: 'bless', name: 'Déšť', emoji: '🌧️', cost: 5, hold: true, desc: 'Uhasí požáry a zavlaží krajinu, takže rychleji zaroste.' },
     { id: 'gold', group: 'bless', name: 'Zlato', emoji: '💰', cost: 20, desc: 'Naplní pokladnu království pod kurzorem. Zlato pohání vědu a obchod.' },
     { id: 'foodgift', group: 'bless', name: 'Jídlo', emoji: '🍞', cost: 12, desc: 'Doplní sýpky nejbližší vesnice. Hladomor odvrácen.' },
     { id: 'enlight', group: 'bless', name: 'Osvícení', emoji: '📜', cost: 60, desc: 'Posune království do další doby – lepší stavby, silnější vojáci, vyšší výnosy.' },
@@ -133,6 +141,7 @@ function applyTool(life, id, wx, wy, radius) {
             pay(); return true;
         }
         case 'rain': {
+            w.addCloud(x | 0, y | 0, Math.max(2, radius) | 0, 0.5);
             w.forEachInRadius(x, y, radius, j => {
                 w.moist[j] = Math.min(1, w.moist[j] + 0.14);
                 if (w.fire[j]) { w.fire[j] = 0; w.fireSet.delete(j); w.classify(j); }
@@ -214,6 +223,47 @@ function applyTool(life, id, wx, wy, radius) {
             if (!n) return 'nothing';
             life.log('🧟 Mrtví vstali z hrobů', 'bad');
             fx(life, { type: 'sparkle', x, y, r: radius, life: 30, max: 30, color: '#8ad46a' });
+            pay(); return true;
+        }
+
+        /* --- počasí --- */
+        case 'sun': {
+            const cr = Math.max(1, radius);
+            w.addCloud(x | 0, y | 0, cr | 0, -0.5);
+            w.forEachInRadius(x, y, cr, j => { w.moist[j] = Math.max(0, w.moist[j] - 0.05); });
+            pay(); return true;
+        }
+        case 'clouds': {
+            w.addCloud(x | 0, y | 0, Math.max(2, radius) | 0, 0.35);
+            pay(); return true;
+        }
+        case 'storm': {
+            w.addCloud(x | 0, y | 0, Math.max(3, radius) | 0, 1.2);
+            life.storms2 = life.storms2 || [];
+            life.storms2.push({ x, y, r: Math.max(3, radius), life: 260 });
+            life.log('⛈️ Přihnala se bouřka', 'info');
+            pay(); return true;
+        }
+        case 'heat': {
+            w.addCloud(x | 0, y | 0, Math.max(2, radius) | 0, -0.8);
+            w.forEachInRadius(x, y, radius, j => {
+                w.moist[j] = Math.max(0, w.moist[j] - 0.18);
+                w.veg[j] = Math.max(0, w.veg[j] - 0.12);
+                if (rng() < 0.03) w.ignite(j);
+                w.classify(j);
+            });
+            pay(); return true;
+        }
+        case 'wind': {
+            const cx = w.w / 2, cy = w.h / 2;
+            const dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy) || 1;
+            w.windX = dx / d * 0.5; w.windY = dy / d * 0.35;
+            life.log('🌬️ Vítr se obrátil', 'info');
+            pay(); return true;
+        }
+        case 'ufo': {
+            if (life.aliens) return 'nothing';
+            life.summonAliens();
             pay(); return true;
         }
 
@@ -351,6 +401,23 @@ function stepHazards(life) {
                 if (u.hp <= 0) life.kill(u, 'god');
             });
             if (t.life <= 0) life.tornados.splice(k, 1);
+        }
+    }
+    if (life.storms2) {
+        for (let k = life.storms2.length - 1; k >= 0; k--) {
+            const st = life.storms2[k];
+            st.life--;
+            st.x = clamp(st.x + w.windX * 0.5, 0, w.w - 1);
+            st.y = clamp(st.y + w.windY * 0.5, 0, w.h - 1);
+            w.addCloud(st.x | 0, st.y | 0, Math.max(2, st.r) | 0, 0.06);
+            if (rng() < 0.08) {
+                const a2 = rng() * Math.PI * 2, d2 = rng() * st.r;
+                const lx = clamp(st.x + Math.cos(a2) * d2, 0, w.w - 1), ly = clamp(st.y + Math.sin(a2) * d2, 0, w.h - 1);
+                life.forEachNear(lx, ly, 1.2, u => life.kill(u, 'god'));
+                w.forEachInRadius(lx, ly, 1.5, j => { if (rng() < 0.5) w.ignite(j); });
+                fx(life, { type: 'bolt', x: lx, y: ly, life: 12, max: 12 });
+            }
+            if (st.life <= 0) life.storms2.splice(k, 1);
         }
     }
     if (life.storms) {

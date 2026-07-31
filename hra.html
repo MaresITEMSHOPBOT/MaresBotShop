@@ -295,6 +295,11 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
 .mile b { flex: 1; font-weight: 600; }
 .mile em { font-style: normal; font-size: .64rem; color: var(--gold); }
 
+.alien-note { font-size: .62rem; text-align: center; margin-top: 2px; font-weight: 700; }
+.alien-note.good { color: #8ef7d2; }
+.alien-note.bad { color: #ff9a9a; animation: pulse 1.5s infinite; }
+@keyframes pulse { 50% { opacity: .45; } }
+
 </style>
 </head>
 <body>
@@ -311,6 +316,7 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
             <div class="hud-item" title="Města nad 2 500 obyvatel"><span>🏙️</span><b id="hud-cities">0</b><i>měst</i></div>
             <div class="hud-item" title="Nejvyspělejší doba světa"><span>📜</span><b id="hud-era">kamenná</b><i>doba</i></div>
             <div class="hud-item" title="Probíhající války"><span>⚔️</span><b id="hud-wars">0</b><i>válek</i></div>
+            <div class="hud-item" title="Lidé v koloniích na Měsíci a Marsu" style="display:none"><span>🌕</span><b id="hud-space">0</b><i>ve vesmíru</i></div>
         </div>
 
         <div class="faith-block">
@@ -318,6 +324,7 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
                 <i id="faith-fill"></i><span id="faith-text">80 / 200 víry</span>
             </div>
             <div class="faith-note">🙏 věřících: <b id="believers">0</b></div>
+            <div class="alien-note" id="alien-note" style="display:none"></div>
         </div>
 
         <div class="speeds" id="speeds">
@@ -391,8 +398,16 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
 
             <div class="bottom-controls">
                 <div class="ctrl">
-                    <label for="climate">Klima <output id="climate-val">0 °C</output></label>
+                    <label for="climate">🌡️ Klima <output id="climate-val">0 °C</output></label>
                     <input type="range" id="climate" min="-15" max="15" step="1" value="0">
+                </div>
+                <div class="ctrl">
+                    <label for="sun">☀️ Slunce <output id="sun-val">100 %</output></label>
+                    <input type="range" id="sun" min="50" max="160" step="5" value="100">
+                </div>
+                <div class="ctrl">
+                    <label for="humid">💧 Vlhkost vzduchu <output id="humid-val">50 %</output></label>
+                    <input type="range" id="humid" min="0" max="100" step="5" value="50">
                 </div>
                 <div class="newworld">
                     <select id="mapsize" title="Velikost světa"></select>
@@ -582,7 +597,16 @@ class World {
 
         this.seaLevel = 0.46;
         this.climate = 0;
+        this.sun = 1;                 // síla slunce (0.6 – 1.5)
         this.tick = 0;
+
+        // počasí: mraky, srážky a vítr na hrubé mřížce
+        this.cw = Math.ceil(w / 4); this.ch = Math.ceil(h / 4);
+        this.cloud = new Float32Array(this.cw * this.ch);
+        this.cloudTmp = new Float32Array(this.cw * this.ch);
+        this.rainfall = new Float32Array(this.cw * this.ch);
+        this.windX = 0.35; this.windY = 0.08;
+        this.humidity = 0.5;
 
         this.fireSet = new Set();
         this.lavaSet = new Set();
@@ -603,7 +627,73 @@ class World {
     tempAt(i) {
         const y = (i / this.w) | 0;
         const lat = (y / this.h) * 2 - 1;
-        return 30 - 58 * Math.pow(Math.abs(lat), 1.45) - Math.max(0, this.height[i] - this.seaLevel) * 46 + this.climate;
+        let t = 30 - 58 * Math.pow(Math.abs(lat), 1.45) - Math.max(0, this.height[i] - this.seaLevel) * 46 + this.climate;
+        t += (this.sun - 1) * 22;                       // silnější slunce hřeje
+        t -= this.cloudAt(i) * 4;                       // pod mrakem je chládek
+        return t;
+    }
+
+    cloudIdx(i) {
+        const x = (i % this.w) >> 2, y = ((i / this.w) | 0) >> 2;
+        return Math.min(this.cloud.length - 1, y * this.cw + x);
+    }
+    cloudAt(i) { return this.cloud[this.cloudIdx(i)]; }
+
+    addCloud(x, y, r, amount) {
+        const cx = x >> 2, cy = y >> 2, cr = Math.max(1, r >> 2);
+        for (let j = cy - cr; j <= cy + cr; j++) {
+            for (let i2 = cx - cr; i2 <= cx + cr; i2++) {
+                if (i2 < 0 || j < 0 || i2 >= this.cw || j >= this.ch) continue;
+                const d = Math.hypot(i2 - cx, j - cy) / cr;
+                if (d > 1) continue;
+                const k = j * this.cw + i2;
+                this.cloud[k] = clamp(this.cloud[k] + amount * (1 - d * 0.7), 0, 1.6);
+            }
+        }
+    }
+
+    /* mraky se posouvají větrem, srážejí se nad vodou a prší */
+    stepWeather(rng) {
+        const { cw, ch, cloud, cloudTmp } = this;
+        if (this.tick % 60 === 0) {
+            this.windX = clamp(this.windX + (rng() - 0.5) * 0.12, -0.6, 0.6);
+            this.windY = clamp(this.windY + (rng() - 0.5) * 0.08, -0.35, 0.35);
+        }
+        const wx = this.windX, wy = this.windY;
+        for (let y = 0; y < ch; y++) {
+            for (let x = 0; x < cw; x++) {
+                const k = y * cw + x;
+                const sx = clamp(Math.round(x - wx), 0, cw - 1);
+                const sy = clamp(Math.round(y - wy), 0, ch - 1);
+                let c = cloud[sy * cw + sx] * 0.972 + cloud[k] * 0.02;
+                // vypařování: nad vodou a v teple vznikají mraky
+                const i = Math.min(this.n - 1, (y * 4) * this.w + x * 4);
+                const water = this.isWater(i) ? 1 : this.moist[i];
+                const t = this.tempAt(i);
+                if (t > 4) c += water * 0.016 * this.humidity * this.sun;
+                cloudTmp[k] = clamp(c, 0, 1.6);
+            }
+        }
+        cloud.set(cloudTmp);
+        // srážky
+        const band = this.tick % 4;
+        for (let y = band; y < ch; y += 4) {
+            for (let x = 0; x < cw; x++) {
+                const k = y * cw + x;
+                if (cloud[k] < 0.62) { this.rainfall[k] *= 0.9; continue; }
+                const drop = (cloud[k] - 0.6) * 0.05;
+                cloud[k] -= drop;
+                this.rainfall[k] = Math.min(1, this.rainfall[k] + drop * 6);
+                for (let j = 0; j < 4; j++) {
+                    const tx = x * 4 + ((rng() * 4) | 0), ty = y * 4 + ((rng() * 4) | 0);
+                    if (tx >= this.w || ty >= this.h) continue;
+                    const i = ty * this.w + tx;
+                    this.moist[i] = Math.min(1, this.moist[i] + drop * 2.5);
+                    if (this.fire[i]) { this.fire[i] = 0; this.fireSet.delete(i); this.mark(i); }
+                    if (this.veg[i] < 1 && rng() < 0.3) { this.veg[i] = Math.min(1, this.veg[i] + drop); this.classify(i); }
+                }
+            }
+        }
     }
 
     /* ---------------- generování ---------------- */
@@ -761,6 +851,7 @@ class World {
 
     step(rng) {
         this.tick++;
+        this.stepWeather(rng);
         this.stepFire(rng);
         this.stepLava(rng);
         this.stepWater();
@@ -934,6 +1025,8 @@ const LAWS = [
     { id: 'health', name: 'Zdravotnictví', icon: '🏥', opts: ['Ne', 'Ano'], def: 0, desc: 'Stojí zlato, ale lidé žijí déle a města rostou rychleji.' }
 ];
 
+const WEAPONS = ['kyj', 'bronzový meč', 'železný meč', 'kuše', 'mušketa', 'puška', 'kulomet', 'tank', 'raketomet', 'laser'];
+
 const REALM_COLORS = ['#4f86e8', '#c8452f', '#2fae86', '#d79a2b', '#9b5de5', '#f15bb5', '#00bbf9', '#8ac926', '#ff924c', '#59c3c3', '#e56b6f', '#b8f2e6'];
 
 let MAX_UNITS = 900;
@@ -963,6 +1056,8 @@ class Life {
         this.buildings = [];
         this.armies = [];
         this.rockets = [];
+        this.ships = [];
+        this.aliens = null;
         this.nextRealm = 1; this.nextVillage = 1; this.nextUnit = 1;
         this.tick = 0;
 
@@ -1125,7 +1220,8 @@ class Life {
             id, name: realmName(this.rng), race: raceId,
             color: REALM_COLORS[(id - 1) % REALM_COLORS.length],
             villages: [], wars: new Set(), born: this.tick, dead: false, capital: 0,
-            gold: 40, research: 0, era: 0, ruler: null, peak: 0, pop: 0, moon: false, space: 0
+            gold: 40, research: 0, era: 0, ruler: null, peak: 0, pop: 0, moon: false, space: 0,
+            moonBase: 0, moonPop: 0, marsBase: 0, marsPop: 0, mars: false, alienDeal: 0
         };
         this.newRuler(realm);
         this.realms.push(realm);
@@ -1282,6 +1378,8 @@ class Life {
         if (this.tick % 30 === 0) this.updateTerritory();
         if (this.tick % 240 === 0) this.diplomacy();
         if (this.tick % 20 === 0) this.record();
+        this.stepAliens();
+        this.stepShips();
         this.stepRockets();
 
         this.faithMax = 200 + believers * 2 + this.totalPop() * 0.002;
@@ -1922,6 +2020,31 @@ class Life {
                 this.milestone('era' + r.era, `${e.icon} Svět vstoupil do doby: ${e.name} (${r.name})`);
             }
 
+            // měsíční a marsovské kolonie
+            if (r.moon) {
+                const cost = 400 + r.moonBase * 250;
+                if (r.gold > cost && r.moonBase < 12 && this.rng() < 0.06) {
+                    r.gold -= cost; r.moonBase++;
+                    this.ships.push({ from: 'earth', to: 'moon', t: 0, realm: r.id, color: r.color });
+                    if (r.moonBase === 1) this.milestone('moonbase', '🌕 Na Měsíci vyrostla první základna');
+                    if (r.moonBase === 5) this.milestone('mooncity', '🏙️ Na Měsíci vzniklo první město');
+                }
+                if (r.moonBase > 0) r.moonPop = Math.min(r.moonBase * 4000, r.moonPop * 1.004 + r.moonBase * 1.5);
+                if (r.moonBase >= 4 && !r.mars && r.gold > 3000 && this.rng() < 0.05) {
+                    r.gold -= 3000; r.mars = true; r.marsBase = 1;
+                    this.ships.push({ from: 'earth', to: 'mars', t: 0, realm: r.id, color: r.color });
+                    this.log(`🔴 ${r.name} přistáli na Marsu!`, 'good');
+                    this.milestone('mars', '🔴 Lidé přistáli na Marsu');
+                }
+                if (r.mars) {
+                    const mc = 900 + r.marsBase * 500;
+                    if (r.gold > mc && r.marsBase < 10 && this.rng() < 0.04) {
+                        r.gold -= mc; r.marsBase++;
+                        this.ships.push({ from: 'earth', to: 'mars', t: 0, realm: r.id, color: r.color });
+                    }
+                    r.marsPop = Math.min(r.marsBase * 2500, r.marsPop * 1.003 + r.marsBase * 1.0);
+                }
+            }
             // vesmírný program
             if (r.era >= 9 && spaceports > 0) {
                 r.space += 0.25 + spaceports * 0.15 + labs * 0.05;
@@ -1938,6 +2061,96 @@ class Life {
                 r.ruler.age -= 10;
                 if (r.ruler.age <= 0) this.newRuler(r, true);
             }
+        }
+    }
+
+    /* mimozemšťané: přiletí za vyspělou civilizací a sami se rozhodnou, co s ní */
+    stepAliens() {
+        const live = this.realms.filter(r => !r.dead);
+        const topEra = live.length ? Math.max(...live.map(r => r.era)) : 0;
+        if (!this.aliens && topEra >= 8 && this.rng() < 0.0015) this.summonAliens();
+        const a = this.aliens;
+        if (!a) return;
+        a.t++;
+
+        if (a.state === 'approach') {
+            a.x += (a.tx - a.x) * 0.01; a.y += (a.ty - a.y) * 0.01;
+            if (a.t > 240) {
+                // rozhodnou se podle toho, jaká civilizace je přivítala
+                const wars = live.reduce((n, r) => n + r.wars.size, 0) / 2;
+                const tech = topEra;
+                const peace = 0.35 + tech * 0.05 - wars * 0.06 - clamp(this.stats.godDead / 50000, 0, 0.3);
+                a.friendly = this.rng() < peace;
+                a.state = a.friendly ? 'trade' : 'war';
+                a.t = 0;
+                this.log(a.friendly
+                    ? '👽 Mimozemšťané navázali spojení a nabízejí obchod'
+                    : '👽 Mimozemšťané vyhlásili útok na tento svět!', a.friendly ? 'good' : 'bad');
+                this.milestone('aliens', a.friendly ? '👽 První kontakt – mimozemšťané přišli v míru' : '👽 První kontakt – mimozemšťané zaútočili');
+            }
+            return;
+        }
+
+        // pohyb nad mapou
+        if (this.tick % 40 === 0) { a.tx = this.rng() * this.world.w; a.ty = this.rng() * this.world.h; }
+        a.x += (a.tx - a.x) * 0.02; a.y += (a.ty - a.y) * 0.02;
+
+        if (a.state === 'trade') {
+            if (this.tick % 60 === 0) {
+                for (const r of live) {
+                    if (r.era < 7) continue;
+                    r.gold += 400 + r.era * 60;
+                    r.research += 900 + r.era * 200;
+                    r.alienDeal++;
+                }
+                if (this.rng() < 0.15) this.log('👽 Mimozemský obchod přinesl zlato a nové technologie', 'good');
+            }
+            if (a.t > 4000 && this.rng() < 0.01) { this.aliens = null; this.log('👽 Mimozemská loď odletěla ke hvězdám', 'info'); }
+        } else if (a.state === 'war') {
+            if (this.tick % 12 === 0) {
+                const v = this.nearestVillage(a.x, a.y, 400);
+                if (v) {
+                    const dead = v.pop * 0.06;
+                    v.pop = Math.max(0, v.pop - dead);
+                    this.stats.warDead += dead;
+                    this.fx.push({ type: 'laser', x: a.x, y: a.y, tx: v.x, ty: v.y, life: 12, max: 12, color: '#7cffcf' });
+                    if (v.houses.length && this.rng() < 0.4) this.destroyBuilding(v.houses[(this.rng() * v.houses.length) | 0]);
+                    if (v.pop < 1) this.destroyVillage(v, false, 'war');
+                }
+            }
+            // obrana: vyspělé říše po nich střílejí
+            if (this.tick % 20 === 0) {
+                let dmg = 0;
+                for (const r of live) {
+                    if (r.era >= 7) dmg += (r.era - 6) * (1 + r.villages.length * 0.05);
+                }
+                a.hp -= dmg;
+                if (dmg > 0) this.fx.push({ type: 'laser', x: a.x + 2, y: a.y + 2, tx: a.x, ty: a.y, life: 8, max: 8, color: '#ff6b6b' });
+                if (a.hp <= 0) {
+                    this.log('💥 Mimozemská loď byla sestřelena! Z jejích trosek se rodí nové technologie.', 'good');
+                    this.milestone('ufokill', '💥 Lidstvo sestřelilo mimozemskou loď');
+                    for (const r of live) if (r.era >= 6) r.research += 5000;
+                    this.fx.push({ type: 'boom', x: a.x, y: a.y, r: 8, life: 40, max: 40, power: 2 });
+                    this.aliens = null;
+                }
+            }
+        }
+    }
+
+    summonAliens() {
+        this.aliens = {
+            state: 'approach', t: 0, hp: 400, friendly: null,
+            x: this.world.w * 0.5, y: -10,
+            tx: this.world.w * 0.5, ty: this.world.h * 0.5
+        };
+        this.log('🛸 Na obloze se objevil neznámý objekt…', 'bad');
+    }
+
+    stepShips() {
+        for (let k = this.ships.length - 1; k >= 0; k--) {
+            const s2 = this.ships[k];
+            s2.t += s2.to === 'mars' ? 0.004 : 0.008;
+            if (s2.t >= 1) this.ships.splice(k, 1);
         }
     }
 
@@ -2086,13 +2299,18 @@ class Life {
             wars: realms.reduce((n, r) => n + r.wars.size, 0) / 2,
             era: realms.length ? Math.max(...realms.map(r => r.era)) : 0,
             moon: realms.filter(r => r.moon).length,
+            moonPop: realms.reduce((n, r) => n + (r.moonPop || 0), 0),
+            marsPop: realms.reduce((n, r) => n + (r.marsPop || 0), 0),
+            moonBases: realms.reduce((n, r) => n + (r.moonBase || 0), 0),
+            marsBases: realms.reduce((n, r) => n + (r.marsBase || 0), 0),
+            aliens: this.aliens,
             gold: Math.round(gold), food: Math.round(food), wood: Math.round(wood)
         };
     }
 }
 
 if (typeof module !== 'undefined') {
-    module.exports = { Life, RACES, ANIMALS, LAWS, ERAS, LEVELS, BUILDINGS, setWorldLimits, fmt };
+    module.exports = { Life, RACES, ANIMALS, LAWS, ERAS, LEVELS, BUILDINGS, WEAPONS, setWorldLimits, fmt };
 }
 
 </script>
@@ -2126,11 +2344,19 @@ const TOOLS = [
     { id: 'wolf', group: 'life', name: 'Vlci', emoji: '🐺', cost: 6, spawnAnimal: 'wolf', desc: 'Loví ovce i osamělé vesničany.' },
     { id: 'bear', group: 'life', name: 'Medvědi', emoji: '🐻', cost: 10, spawnAnimal: 'bear', desc: 'Silná šelma, kterou jen tak něco nezastaví.' },
     { id: 'dragon', group: 'life', name: 'Drak', emoji: '🐉', cost: 70, spawnAnimal: 'dragon', desc: 'Létá nad krajinou, zapaluje ji a požírá všechno živé. Zastaví ho jen armáda.' },
+    { id: 'ufo', group: 'life', name: 'Mimozemšťané', emoji: '🛸', cost: 80, desc: 'Přivolá mimozemskou loď. Sami se rozhodnou, jestli budou obchodovat, nebo pálit lasery do měst – podle toho, jak mírumilovný svět najdou.' },
     { id: 'zombie', group: 'life', name: 'Nemrtví', emoji: '🧟', cost: 45, desc: 'Nákaza, která mění mrtvé v nemrtvé. Ti pak loví další. Šíří se sama.' },
+
+    /* ---------- počasí ---------- */
+    { id: 'sun', group: 'weather', name: 'Slunce', emoji: '☀️', cost: 4, hold: true, desc: 'Rozežene mraky a vysuší krajinu. Přidej k tomu posuvník Slunce a udělej ze světa poušť.' },
+    { id: 'clouds', group: 'weather', name: 'Mraky', emoji: '☁️', cost: 3, hold: true, desc: 'Nažene mraky. Ty se pohybují větrem, stíní krajinu a samy pak prší.' },
+    { id: 'rain', group: 'weather', name: 'Déšť', emoji: '🌧️', cost: 5, hold: true, desc: 'Hustý déšť: uhasí požáry, zavlaží půdu a rozjede růst.' },
+    { id: 'storm', group: 'weather', name: 'Bouřka', emoji: '⛈️', cost: 16, desc: 'Bouřkový mrak, ze kterého bijí blesky a zapalují krajinu.' },
+    { id: 'heat', group: 'weather', name: 'Vedro', emoji: '🔥', cost: 10, hold: true, desc: 'Vlna veder: vysuší půdu, spálí úrodu a začne hořet.' },
+    { id: 'wind', group: 'weather', name: 'Vítr', emoji: '🌬️', cost: 6, desc: 'Nastaví směr větru podle toho, kam klikneš – mraky poletí tam.' },
 
     /* ---------- dary a zázraky ---------- */
     { id: 'bless', group: 'bless', name: 'Požehnání', emoji: '✨', cost: 6, hold: true, desc: 'Uzdraví a nasytí panáčky, zúrodní půdu a udělá z nich věřící. Víra je tvá mana.' },
-    { id: 'rain', group: 'bless', name: 'Déšť', emoji: '🌧️', cost: 5, hold: true, desc: 'Uhasí požáry a zavlaží krajinu, takže rychleji zaroste.' },
     { id: 'gold', group: 'bless', name: 'Zlato', emoji: '💰', cost: 20, desc: 'Naplní pokladnu království pod kurzorem. Zlato pohání vědu a obchod.' },
     { id: 'foodgift', group: 'bless', name: 'Jídlo', emoji: '🍞', cost: 12, desc: 'Doplní sýpky nejbližší vesnice. Hladomor odvrácen.' },
     { id: 'enlight', group: 'bless', name: 'Osvícení', emoji: '📜', cost: 60, desc: 'Posune království do další doby – lepší stavby, silnější vojáci, vyšší výnosy.' },
@@ -2232,6 +2458,7 @@ function applyTool(life, id, wx, wy, radius) {
             pay(); return true;
         }
         case 'rain': {
+            w.addCloud(x | 0, y | 0, Math.max(2, radius) | 0, 0.5);
             w.forEachInRadius(x, y, radius, j => {
                 w.moist[j] = Math.min(1, w.moist[j] + 0.14);
                 if (w.fire[j]) { w.fire[j] = 0; w.fireSet.delete(j); w.classify(j); }
@@ -2313,6 +2540,47 @@ function applyTool(life, id, wx, wy, radius) {
             if (!n) return 'nothing';
             life.log('🧟 Mrtví vstali z hrobů', 'bad');
             fx(life, { type: 'sparkle', x, y, r: radius, life: 30, max: 30, color: '#8ad46a' });
+            pay(); return true;
+        }
+
+        /* --- počasí --- */
+        case 'sun': {
+            const cr = Math.max(1, radius);
+            w.addCloud(x | 0, y | 0, cr | 0, -0.5);
+            w.forEachInRadius(x, y, cr, j => { w.moist[j] = Math.max(0, w.moist[j] - 0.05); });
+            pay(); return true;
+        }
+        case 'clouds': {
+            w.addCloud(x | 0, y | 0, Math.max(2, radius) | 0, 0.35);
+            pay(); return true;
+        }
+        case 'storm': {
+            w.addCloud(x | 0, y | 0, Math.max(3, radius) | 0, 1.2);
+            life.storms2 = life.storms2 || [];
+            life.storms2.push({ x, y, r: Math.max(3, radius), life: 260 });
+            life.log('⛈️ Přihnala se bouřka', 'info');
+            pay(); return true;
+        }
+        case 'heat': {
+            w.addCloud(x | 0, y | 0, Math.max(2, radius) | 0, -0.8);
+            w.forEachInRadius(x, y, radius, j => {
+                w.moist[j] = Math.max(0, w.moist[j] - 0.18);
+                w.veg[j] = Math.max(0, w.veg[j] - 0.12);
+                if (rng() < 0.03) w.ignite(j);
+                w.classify(j);
+            });
+            pay(); return true;
+        }
+        case 'wind': {
+            const cx = w.w / 2, cy = w.h / 2;
+            const dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy) || 1;
+            w.windX = dx / d * 0.5; w.windY = dy / d * 0.35;
+            life.log('🌬️ Vítr se obrátil', 'info');
+            pay(); return true;
+        }
+        case 'ufo': {
+            if (life.aliens) return 'nothing';
+            life.summonAliens();
             pay(); return true;
         }
 
@@ -2452,6 +2720,23 @@ function stepHazards(life) {
             if (t.life <= 0) life.tornados.splice(k, 1);
         }
     }
+    if (life.storms2) {
+        for (let k = life.storms2.length - 1; k >= 0; k--) {
+            const st = life.storms2[k];
+            st.life--;
+            st.x = clamp(st.x + w.windX * 0.5, 0, w.w - 1);
+            st.y = clamp(st.y + w.windY * 0.5, 0, w.h - 1);
+            w.addCloud(st.x | 0, st.y | 0, Math.max(2, st.r) | 0, 0.06);
+            if (rng() < 0.08) {
+                const a2 = rng() * Math.PI * 2, d2 = rng() * st.r;
+                const lx = clamp(st.x + Math.cos(a2) * d2, 0, w.w - 1), ly = clamp(st.y + Math.sin(a2) * d2, 0, w.h - 1);
+                life.forEachNear(lx, ly, 1.2, u => life.kill(u, 'god'));
+                w.forEachInRadius(lx, ly, 1.5, j => { if (rng() < 0.5) w.ignite(j); });
+                fx(life, { type: 'bolt', x: lx, y: ly, life: 12, max: 12 });
+            }
+            if (st.life <= 0) life.storms2.splice(k, 1);
+        }
+    }
     if (life.storms) {
         for (let k = life.storms.length - 1; k >= 0; k--) {
             const s = life.storms[k];
@@ -2489,8 +2774,9 @@ function setTilePx(worldW) { TPX = Math.round(clamp(2400 / worldW, 7, 14)); }
 
 const MAP_MODES = [
     { id: 'normal', name: 'Krajina', icon: '🗺️' },
-    { id: 'realms', name: 'Království', icon: '👑' },
-    { id: 'temp', name: 'Teplota', icon: '🌡️' }
+    { id: 'realms', name: 'Říše', icon: '👑' },
+    { id: 'temp', name: 'Teplota', icon: '🌡️' },
+    { id: 'space', name: 'Vesmír', icon: '🌌' }
 ];
 
 function hash01(i) { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); }
@@ -2509,6 +2795,11 @@ class Renderer {
         this.buf = document.createElement('canvas');
         this.buf.width = world.w * TPX; this.buf.height = world.h * TPX;
         this.bctx = this.buf.getContext('2d');
+
+        this.clouds = document.createElement('canvas');     // mraky na hrubé mřížce
+        this.clouds.width = world.cw; this.clouds.height = world.ch;
+        this.cctx = this.clouds.getContext('2d');
+        this.cimg = this.cctx.createImageData(world.cw, world.ch);
 
         this.terr = document.createElement('canvas');       // hranice království
         this.terr.width = world.w * TPX; this.terr.height = world.h * TPX;
@@ -2806,6 +3097,7 @@ class Renderer {
     draw(alpha, paused) {
         this.frame++;
         const ctx = this.ctx, cam = this.cam;
+        if (this.mode === 'space') { this.flushTiles(); this.drawSpace(); this.drawGlass(); return; }
         this.flushTiles();
         if (this.life.territoryDirty) { this.life.territoryDirty = false; this.terrDirty = true; }
         if (this.terrDirty) this.paintTerritory();
@@ -2826,6 +3118,7 @@ class Renderer {
         }
         ctx.imageSmoothingEnabled = true;
 
+        this.drawClouds();
         this.drawHazards();
         this.drawBuildings();
         this.drawUnits(alpha);
@@ -2854,6 +3147,153 @@ class Renderer {
         ctx.globalAlpha = 1;
     }
 
+    drawClouds() {
+        const w = this.world, img = this.cimg, d = img.data;
+        for (let i = 0; i < w.cloud.length; i++) {
+            const c = clamp(w.cloud[i], 0, 1.4);
+            const p = i * 4;
+            const rain = w.rainfall[i] > 0.2;
+            d[p] = rain ? 150 : 245; d[p + 1] = rain ? 158 : 248; d[p + 2] = rain ? 175 : 255;
+            d[p + 3] = Math.min(215, c * 165) | 0;
+        }
+        this.cctx.putImageData(img, 0, 0);
+        const ctx = this.ctx, z = this.cam.zoom;
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(this.clouds, this.w2sx(0), this.w2sy(0), w.w * z, w.h * z);
+        ctx.restore();
+    }
+
+    /* pohled do vesmíru: Země, Měsíc s koloniemi, Mars a lodě mezi nimi */
+    drawSpace() {
+        const ctx = this.ctx, life = this.life, W = this.vw, H = this.vh;
+        ctx.fillStyle = '#03040a';
+        ctx.fillRect(0, 0, W, H);
+        if (!this.stars) {
+            this.stars = [];
+            for (let k = 0; k < 260; k++) this.stars.push({ x: Math.random(), y: Math.random(), s: Math.random() * 1.6 + 0.3 });
+        }
+        ctx.fillStyle = '#fff';
+        for (const st of this.stars) {
+            ctx.globalAlpha = 0.35 + 0.5 * Math.abs(Math.sin(this.frame * 0.01 + st.x * 20));
+            ctx.fillRect(st.x * W, st.y * H, st.s, st.s);
+        }
+        ctx.globalAlpha = 1;
+
+        const s = life.summary();
+        const ex = W * 0.32, ey = H * 0.55, er = Math.min(W, H) * 0.19;
+        // Země – uvnitř koule je skutečná mapa světa
+        ctx.save();
+        ctx.beginPath(); ctx.arc(ex, ey, er, 0, 6.3); ctx.clip();
+        ctx.drawImage(this.buf, ex - er, ey - er * 0.62, er * 2, er * 1.24);
+        ctx.globalAlpha = 0.55;
+        ctx.drawImage(this.clouds, ex - er, ey - er * 0.62, er * 2, er * 1.24);
+        ctx.globalAlpha = 1;
+        const g = ctx.createRadialGradient(ex - er * 0.3, ey - er * 0.3, er * 0.1, ex, ey, er);
+        g.addColorStop(0, 'rgba(255,255,255,0.18)');
+        g.addColorStop(0.75, 'rgba(0,0,20,0.1)');
+        g.addColorStop(1, 'rgba(0,0,25,0.85)');
+        ctx.fillStyle = g; ctx.fillRect(ex - er, ey - er, er * 2, er * 2);
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(120,180,255,0.5)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(ex, ey, er, 0, 6.3); ctx.stroke();
+
+        const label = (x, y, t1, t2) => {
+            ctx.textAlign = 'center';
+            ctx.font = '700 14px system-ui, sans-serif';
+            ctx.fillStyle = '#fff'; ctx.fillText(t1, x, y);
+            ctx.font = '11px system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(200,215,240,0.85)'; ctx.fillText(t2, x, y + 15);
+            ctx.textAlign = 'left';
+        };
+        label(ex, ey + er + 24, '🌍 Země', `${fmt(s.pop)} obyvatel`);
+
+        // Měsíc
+        const mx = W * 0.63, my = H * 0.3, mr = Math.min(W, H) * 0.075;
+        ctx.fillStyle = '#c9c6c0';
+        ctx.beginPath(); ctx.arc(mx, my, mr, 0, 6.3); ctx.fill();
+        ctx.fillStyle = 'rgba(120,116,110,0.6)';
+        for (let k = 0; k < 7; k++) {
+            const a = k * 1.7, d = mr * (0.2 + (k % 3) * 0.25);
+            ctx.beginPath(); ctx.arc(mx + Math.cos(a) * d, my + Math.sin(a) * d, mr * (0.08 + (k % 4) * 0.04), 0, 6.3); ctx.fill();
+        }
+        let bi = 0;
+        for (const r of life.realms) {
+            if (r.dead || !r.moonBase) continue;
+            for (let k = 0; k < r.moonBase; k++) {
+                const a = -2.6 + bi * 0.28;
+                const bx = mx + Math.cos(a) * mr * 0.82, by = my + Math.sin(a) * mr * 0.82;
+                ctx.fillStyle = r.color;
+                ctx.beginPath(); ctx.arc(bx, by, 4, Math.PI, 0); ctx.fill();
+                ctx.fillRect(bx - 4, by, 8, 2);
+                bi++;
+            }
+        }
+        label(mx, my + mr + 22, '🌕 Měsíc', s.moonBases ? `${s.moonBases} základen · ${fmt(s.moonPop)} lidí` : 'zatím pustý');
+
+        // Mars
+        const rx = W * 0.82, ry = H * 0.56, rr = Math.min(W, H) * 0.09;
+        const rg = ctx.createRadialGradient(rx - rr * 0.3, ry - rr * 0.3, rr * 0.2, rx, ry, rr);
+        rg.addColorStop(0, '#e08b5a'); rg.addColorStop(1, '#8d3d24');
+        ctx.fillStyle = rg;
+        ctx.beginPath(); ctx.arc(rx, ry, rr, 0, 6.3); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath(); ctx.ellipse(rx, ry - rr * 0.8, rr * 0.35, rr * 0.15, 0, 0, 6.3); ctx.fill();
+        let mi = 0;
+        for (const r of life.realms) {
+            if (r.dead || !r.marsBase) continue;
+            for (let k = 0; k < r.marsBase; k++) {
+                const a = -2.2 + mi * 0.3;
+                const bx = rx + Math.cos(a) * rr * 0.85, by = ry + Math.sin(a) * rr * 0.85;
+                ctx.fillStyle = r.color;
+                ctx.beginPath(); ctx.arc(bx, by, 4, Math.PI, 0); ctx.fill();
+                mi++;
+            }
+        }
+        label(rx, ry + rr + 22, '🔴 Mars', s.marsBases ? `${s.marsBases} základen · ${fmt(s.marsPop)} lidí` : 'nedotčený');
+
+        // lodě mezi tělesy
+        for (const sh of life.ships) {
+            const tx = sh.to === 'mars' ? rx : mx, ty = sh.to === 'mars' ? ry : my;
+            const px = lerp(ex, tx, sh.t), py = lerp(ey, ty, sh.t) - Math.sin(sh.t * Math.PI) * 60;
+            ctx.strokeStyle = 'rgba(255,220,150,0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(px, py); ctx.stroke();
+            ctx.fillStyle = sh.color || '#fff';
+            ctx.beginPath(); ctx.arc(px, py, 4, 0, 6.3); ctx.fill();
+        }
+
+        // mimozemská loď
+        if (life.aliens) {
+            const a = life.aliens;
+            const ax = W * 0.5 + Math.cos(this.frame * 0.01) * W * 0.2;
+            const ay = H * 0.18 + Math.sin(this.frame * 0.013) * 30;
+            this.drawUfo(ax, ay, 22, a.friendly);
+            label(ax, ay + 40, '🛸 Mimozemská loď',
+                a.state === 'approach' ? 'blíží se…' : a.friendly ? 'obchoduje' : 'útočí');
+        }
+
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '12px system-ui, sans-serif';
+        ctx.fillText('Vesmírný pohled – přepni zpět na 🗺️ Krajina', 16, H - 16);
+    }
+
+    drawUfo(sx, sy, s, friendly) {
+        const ctx = this.ctx;
+        ctx.fillStyle = friendly === false ? 'rgba(255,110,110,0.25)' : 'rgba(140,255,210,0.22)';
+        ctx.beginPath(); ctx.ellipse(sx, sy, s * 1.6, s * 0.5, 0, 0, 6.3); ctx.fill();
+        ctx.fillStyle = '#9fb2c9';
+        ctx.beginPath(); ctx.ellipse(sx, sy, s, s * 0.32, 0, 0, 6.3); ctx.fill();
+        ctx.fillStyle = friendly === false ? '#ff8a8a' : '#8ef7d2';
+        ctx.beginPath(); ctx.ellipse(sx, sy - s * 0.22, s * 0.45, s * 0.3, 0, Math.PI, 0); ctx.fill();
+        for (let k = 0; k < 5; k++) {
+            const a = this.frame * 0.06 + k * 1.25;
+            ctx.fillStyle = `rgba(255,255,255,${0.4 + 0.5 * Math.sin(a)})`;
+            ctx.fillRect(sx + Math.cos(a) * s * 0.8 - 1.5, sy + s * 0.12, 3, 3);
+        }
+    }
+
     drawHazards() {
         const ctx = this.ctx, z = this.cam.zoom, life = this.life;
         for (const t of (life.tornados || [])) {
@@ -2876,6 +3316,13 @@ class Renderer {
                 }
                 ctx.stroke();
             }
+        }
+        if (life.aliens && life.aliens.state !== 'approach') {
+            const a = life.aliens;
+            this.drawUfo(this.w2sx(a.x + 0.5), this.w2sy(a.y + 0.5), Math.max(10, z * 1.4), a.friendly);
+        } else if (life.aliens) {
+            const a = life.aliens;
+            this.drawUfo(this.w2sx(a.x + 0.5), this.w2sy(Math.max(-2, a.y)), Math.max(8, z), a.friendly);
         }
         for (const s2 of (life.storms || [])) {
             const sx = this.w2sx(s2.x + 0.5), sy = this.w2sy(s2.y + 0.5), r = s2.r * z;
@@ -3113,7 +3560,8 @@ class Renderer {
             if (u.zombie && z >= 6) { ctx.fillStyle = '#c8f06a'; ctx.fillRect(sx - s * 0.1, sy - s * 0.4 - bob, s * 0.06, s * 0.06); ctx.fillRect(sx + s * 0.05, sy - s * 0.4 - bob, s * 0.06, s * 0.06); }
 
             if (u.job === 'soldier' && z >= 6) {
-                ctx.strokeStyle = '#e8eaf0';
+                const era = realm ? realm.era : 0;
+                ctx.strokeStyle = era >= 9 ? '#7cffcf' : era >= 5 ? '#3f4650' : '#e8eaf0';
                 ctx.lineWidth = Math.max(1, s * 0.09);
                 ctx.beginPath();
                 ctx.moveTo(sx + (u.dir || 1) * s * 0.24, sy + s * 0.04);
@@ -3272,6 +3720,29 @@ class Renderer {
                     ctx.restore();
                     break;
                 }
+                case 'laser': {
+                    ctx.strokeStyle = f.color || '#7cffcf';
+                    ctx.lineWidth = 3 + (1 - p) * 4;
+                    ctx.globalAlpha = 1 - p;
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy);
+                    ctx.lineTo(this.w2sx(f.tx + 0.5), this.w2sy(f.ty + 0.5));
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                    break;
+                }
+                case 'clash': {
+                    ctx.strokeStyle = `rgba(255,220,120,${1 - p})`;
+                    ctx.lineWidth = 2;
+                    for (let k = 0; k < 4; k++) {
+                        const a = Math.random() * 6.3, d2 = (0.3 + Math.random()) * z;
+                        ctx.beginPath();
+                        ctx.moveTo(sx, sy);
+                        ctx.lineTo(sx + Math.cos(a) * d2 * 2, sy + Math.sin(a) * d2 * 2);
+                        ctx.stroke();
+                    }
+                    break;
+                }
                 case 'meteor': {
                     const d = (f.life / f.max) * Math.max(this.vw, this.vh);
                     const px = sx - d * 0.75, py = sy - d;
@@ -3381,14 +3852,16 @@ const MAP_SIZES = [
     { id: 's', name: 'Malý', w: 128, h: 80 },
     { id: 'm', name: 'Střední', w: 176, h: 110 },
     { id: 'l', name: 'Velký', w: 240, h: 150 },
-    { id: 'xl', name: 'Obří', w: 320, h: 200 }
+    { id: 'xl', name: 'Obří', w: 340, h: 212 },
+    { id: 'xxl', name: 'Kontinent', w: 440, h: 275 },
+    { id: 'planet', name: 'Planeta', w: 560, h: 350 }
 ];
 const TICK_MS = 125;
 const $ = id => document.getElementById(id);
 
 const JOBS = { child: 'dítě', worker: 'dělník', soldier: 'voják', wanderer: 'tulák', wild: 'divoké', zombie: 'nemrtvý' };
 const STATES = { idle: 'rozmýšlí se', gather: 'sbírá jídlo', chop: 'kácí dřevo', return: 'nese náklad domů', build: 'staví' };
-const GROUP_TITLE = { hand: 'Ruka', land: 'Krajina', life: 'Život', bless: 'Dary a zázraky', doom: 'Zkáza' };
+const GROUP_TITLE = { hand: 'Ruka', land: 'Krajina', life: 'Život', weather: 'Počasí', bless: 'Dary a zázraky', doom: 'Zkáza' };
 
 let world, life, renderer;
 let speed = 1, tool = 'hand', brushR = 4, mapSize = 'm';
@@ -3426,7 +3899,7 @@ function newWorld(seed, withLife = true) {
 
     if (withLife) {
         const races = ['human', 'orc', 'elf', 'dwarf'];
-        const n = size.w > 200 ? 5 : size.w > 150 ? 4 : 3;
+        const n = size.w > 420 ? 8 : size.w > 300 ? 6 : size.w > 200 ? 5 : size.w > 150 ? 4 : 3;
         for (let k = 0; k < n; k++) {
             const r = races[k % races.length];
             const spot = life.homeSpot(r);
@@ -3493,7 +3966,7 @@ function selectTool(id) {
     $('tool-desc').innerHTML = `<b>${t.emoji} ${t.name}${t.cost ? ` · ${t.cost} víry` : ''}</b>${t.desc}` +
         (t.hold ? '<i>Můžeš držet a táhnout.</i>' : '');
     renderer.brush.color = t.group === 'doom' ? '#ff9a9a' : t.group === 'land' ? '#a8e0ff'
-        : t.group === 'life' ? '#b6f5a0' : '#ffe6a0';
+        : t.group === 'life' ? '#b6f5a0' : t.group === 'weather' ? '#cfe8ff' : '#ffe6a0';
     renderer.brush.show = t.id !== 'hand';
     $('world').style.cursor = t.id === 'hand' ? 'default' : 'crosshair';
 }
@@ -3573,6 +4046,15 @@ function bindUI() {
         $('climate-val').textContent = (parseFloat(e.target.value) > 0 ? '+' : '') + e.target.value + ' °C';
     });
     $('mapsize').addEventListener('change', e => { mapSize = e.target.value; });
+    $('sun').addEventListener('input', e => {
+        world.sun = parseInt(e.target.value, 10) / 100;
+        $('sun-val').textContent = Math.round(world.sun * 100) + ' %';
+    });
+    $('sun').addEventListener('change', () => world.reclassifyAll());
+    $('humid').addEventListener('input', e => {
+        world.humidity = parseInt(e.target.value, 10) / 100;
+        $('humid-val').textContent = e.target.value + ' %';
+    });
     $('btn-new').addEventListener('click', () => {
         newWorld(parseInt($('seed').value, 10) || (Date.now() & 0xffff));
         toast('🌍 Nový svět je hotový');
@@ -3659,6 +4141,7 @@ function bindCanvas() {
 }
 
 function use(wx, wy) {
+    if (renderer.mode === 'space') { toast('Ve vesmírném pohledu se nedá zasahovat – přepni na 🗺️ Krajinu'); return; }
     if (wx < 0 || wy < 0 || wx >= world.w || wy >= world.h) return;
     if (tool === 'hand') {
         renderer.select(renderer.pick(wx, wy));
@@ -3758,6 +4241,18 @@ function renderHud() {
     $('hud-cities').textContent = s.cities;
     $('hud-era').textContent = ERAS[s.era].short;
     $('hud-wars').textContent = s.wars;
+    const spaceInfo = $('hud-space');
+    if (s.moonBases || s.marsBases) {
+        spaceInfo.parentElement.style.display = '';
+        spaceInfo.textContent = fmt(s.moonPop + s.marsPop);
+    } else spaceInfo.parentElement.style.display = 'none';
+    const al = $('alien-note');
+    if (s.aliens) {
+        al.style.display = '';
+        al.textContent = s.aliens.state === 'approach' ? '🛸 Něco se blíží…'
+            : s.aliens.friendly ? '🛸 Mimozemšťané obchodují' : '🛸 Mimozemský útok!';
+        al.className = 'alien-note ' + (s.aliens.friendly ? 'good' : 'bad');
+    } else al.style.display = 'none';
 
     $('faith-fill').style.width = (life.godMode ? 100 : clamp(life.faith / life.faithMax, 0, 1) * 100) + '%';
     $('faith-text').textContent = life.godMode ? '♾️ nekonečná víra' : `${life.faith | 0} / ${life.faithMax | 0} víry`;
@@ -3783,7 +4278,8 @@ function renderRealms(s) {
             <div class="realm-sub">${r.ruler ? (r.ruler.female ? 'královna ' : 'král ') + r.ruler.name : ''} · ${ERAS[r.era].icon} ${ERAS[r.era].name}</div>
             <div class="realm-meta">
                 <span>🏘️ ${r.villages.length}</span><span>🧑 ${fmt(r.pop || 0)}</span>
-                <span>🪙 ${fmt(r.gold)}</span><span>od ${Math.floor(r.born / 60)}. r.</span></div>
+                <span>🪙 ${fmt(r.gold)}</span><span>🔫 ${WEAPONS[r.era]}</span>
+                ${r.moonBase ? `<span>🌕 ${r.moonBase}</span>` : ''}${r.marsBase ? `<span>🔴 ${r.marsBase}</span>` : ''}</div>
             <div class="era-bar"><i style="width:${(prog * 100) | 0}%;background:${r.color}"></i></div>
             ${wars.length ? `<div class="war">⚔️ válka: ${wars.join(', ')}</div>` : '<div class="peace">🕊️ mír</div>'}
         </div>`;
@@ -3802,7 +4298,8 @@ function renderRealms(s) {
         <div><b>${fmt(life.stats.godDead)}</b><span>od tvé ruky</span></div>
         <div><b>${life.stats.captured}</b><span>dobytých měst</span></div>
         <div><b>${life.stats.wars}</b><span>válek celkem</span></div>
-        <div><b>${s.moon}</b><span>🚀 na Měsíci</span></div>
+        <div><b>${s.moon}</b><span>🚀 říší ve vesmíru</span></div>
+        <div><b>${fmt(s.moonPop + s.marsPop)}</b><span>🌕 lidí v koloniích</span></div>
     </div>`;
     el.innerHTML = html;
     el.querySelectorAll('.realm').forEach(row => row.addEventListener('click', () => {

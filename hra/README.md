@@ -59,6 +59,21 @@ i majitele. Hradby a kasárna obranu zesilují.
 které se dědí a mutují – po pár generacích se stádo vypadá jinak než na začátku. Karta zvířete
 geny ukazuje.
 
+**Počasí.** Nad mapou plují mraky hnané větrem, stíní krajinu a samy prší. Ovládáš ☀️ slunce,
+☁️ mraky, 🌧️ déšť, ⛈️ bouřku s blesky, 🔥 vlnu veder a 🌬️ směr větru; posuvníky mění sílu slunce,
+vlhkost vzduchu a klima celé planety.
+
+**Vesmír.** Přepínačem 🌌 se podíváš z oběžné dráhy: Země s živou mapou a mraky, Měsíc s
+koloniemi jednotlivých říší, Mars a rakety létající mezi nimi. Říše ve vesmírném věku staví
+základny, které mají vlastní obyvatele.
+
+**Mimozemšťané.** Když civilizace dosáhne informačního věku, přiletí cizí loď. Sama se rozhodne
+podle toho, jaký svět najde – buď obchoduje (zlato a technologie zdarma), nebo pálí lasery do měst.
+Vyspělé říše ji můžou sestřelit a získat z trosek technologie. Přivolat ji můžeš i sám nástrojem 🛸.
+
+**Zbraně podle doby.** Kyj → bronzový meč → železný meč → kuše → mušketa → puška → kulomet →
+tank → raketomet → laser. V pozdních dobách vojáci střílí barevnými paprsky.
+
 **Grafy a milníky.** Karta *Grafy* kreslí dějiny světa: populaci každé říše vlastní barvou,
 celkový počet obyvatel a sídel, hospodářství a války. Karta *Milníky* ukazuje, kdy svět vstoupil
 do které doby a kdy padly velké události – první město, univerzita, továrna, kosmodrom, Měsíc.
