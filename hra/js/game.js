@@ -229,9 +229,10 @@ function bindUI() {
         const b = e.target.closest('button');
         if (!b) return;
         $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
-        for (const t of ['realms', 'laws', 'charts', 'miles', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
+        for (const t of ['state', 'realms', 'laws', 'charts', 'miles', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
         if (b.dataset.tab === 'charts') renderCharts();
         if (b.dataset.tab === 'miles') renderMiles();
+        if (b.dataset.tab === 'state') renderState();
     });
 
     window.addEventListener('resize', () => renderer.resize());
@@ -416,6 +417,70 @@ function renderHud() {
         e.classList.toggle('locked', !life.godMode && TOOL_MAP[e.dataset.id].cost > life.faith);
     });
     if (!$('tab-realms').hidden) renderRealms(s);
+    if (!$('tab-state').hidden) renderState();
+}
+
+function renderState() {
+    const el = $('tab-state');
+    const r = life.player;
+    if (!r) {
+        el.innerHTML = `<div class="empty"><b>Zatím nemáš vlastní stát.</b><br><br>
+            Vezmi nástroj 🏳️ <b>Můj stát</b> a klikni na cizí říši (převezmeš vládu),
+            nebo na prázdnou souš (založíš vlastní).<br><br>
+            Pak si tady stavíš armádu a nástrojem 🎯 <b>Útok</b> ji posíláš na nepřátele.</div>`;
+        return;
+    }
+    let cities = 0, pop = 0;
+    for (const vid of r.villages) { const v = life.villageById(vid); if (v) { cities++; pop += v.pop; } }
+    let myArmies = 0, myPower = 0;
+    for (const a of life.armies) if (!a.dead && a.realm === r.id) { myArmies++; myPower += a.strength; }
+
+    let html = `<div class="mystate" style="border-color:${r.color}">
+        <div class="realm-head"><span class="chip" style="background:${r.color}"></span><b>${r.name}</b><em>${RACES[r.race].emoji}</em></div>
+        <div class="realm-sub">${r.ruler ? (r.ruler.female ? 'královna ' : 'král ') + r.ruler.name : ''} · ${ERAS[r.era].icon} ${ERAS[r.era].name}</div>
+        <div class="stats-row">
+            <div><b>${fmt(pop)}</b><span>obyvatel</span></div>
+            <div><b>${cities}</b><span>měst</span></div>
+            <div><b>${fmt(r.gold)}</b><span>🪙 zlato</span></div>
+            <div><b>${fmt(myPower)}</b><span>⚔️ síla (${myArmies})</span></div>
+        </div></div>`;
+
+    html += '<h4>Výroba jednotek</h4><div class="units">';
+    for (const [k, u] of Object.entries(UNIT_KINDS)) {
+        const locked = r.era < u.era;
+        const poor = !life.godMode && r.gold < u.gold;
+        html += `<button class="unit ${locked ? 'locked' : poor ? 'poor' : ''}" data-unit="${k}"
+            title="${locked ? 'Odemkne se v době: ' + ERAS[u.era].name : 'Síla ' + u.pow + '×'}">
+            <i>${u.icon}</i><span>${u.name}</span><b>${fmt(u.gold)} 🪙</b></button>`;
+    }
+    html += '</div>';
+
+    const enemies = life.realms.filter(x => !x.dead && x.id !== r.id);
+    html += '<h4>Diplomacie</h4>';
+    if (!enemies.length) html += '<div class="empty">Nikdo jiný na světě není.</div>';
+    for (const e of enemies.slice(0, 10)) {
+        const war = r.wars.has(e.id);
+        html += `<div class="diplo"><span class="chip" style="background:${e.color}"></span>
+            <b>${e.name}</b><em>${fmt(e.pop || 0)}</em>
+            <button data-diplo="${e.id}" class="${war ? 'war' : ''}">${war ? '🕊️ mír' : '⚔️ válku'}</button></div>`;
+    }
+    html += `<button class="wide" id="btn-gift">💰 Vzít si 5 000 zlata (boží dar)</button>`;
+    el.innerHTML = html;
+
+    el.querySelectorAll('.unit').forEach(b => b.addEventListener('click', () => {
+        const res = life.produceUnit(b.dataset.unit);
+        if (res === 'era') toast('Tuhle techniku tvá říše ještě neumí – potřebuješ vyšší dobu');
+        else if (res === 'gold') toast('Málo zlata v pokladně');
+        else if (res === 'norealm') toast('Nemáš vlastní stát');
+        else { toast('Jednotka postavena – pošli ji nástrojem 🎯 Útok'); renderState(); }
+    }));
+    el.querySelectorAll('[data-diplo]').forEach(b => b.addEventListener('click', () => {
+        const e = life.realmById(parseInt(b.dataset.diplo, 10));
+        if (!e) return;
+        if (r.wars.has(e.id)) life.makePeace(r, e); else life.declareWar(r, e);
+        renderState();
+    }));
+    $('btn-gift').addEventListener('click', () => { r.gold += 5000; renderState(); toast('💰 Pokladna posílena'); });
 }
 
 function renderRealms(s) {
@@ -428,7 +493,7 @@ function renderRealms(s) {
         const prog = next ? clamp((r.research - ERAS[r.era].cost) / (next.cost - ERAS[r.era].cost), 0, 1) : (r.moon ? 1 : clamp(r.space / 100, 0, 1));
         html += `<div class="realm" data-realm="${r.id}">
             <div class="realm-head"><span class="chip" style="background:${r.color}"></span>
-                <b>${r.name}</b><em>${RACES[r.race].emoji}${r.moon ? ' 🚀' : ''}</em></div>
+                <b>${r.player ? '⭐ ' : ''}${r.name}</b><em>${RACES[r.race].emoji}${r.moon ? ' 🚀' : ''}</em></div>
             <div class="realm-sub">${r.ruler ? (r.ruler.female ? 'královna ' : 'král ') + r.ruler.name : ''} · ${ERAS[r.era].icon} ${ERAS[r.era].name}</div>
             <div class="realm-meta">
                 <span>🏘️ ${r.villages.length}</span><span>🧑 ${fmt(r.pop || 0)}</span>

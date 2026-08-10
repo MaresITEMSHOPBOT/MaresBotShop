@@ -5,7 +5,9 @@ function fx(life, o) { life.fx.push(o); }
 function fmtNum(n) { return typeof fmt === 'function' ? fmt(n) : Math.round(n); }
 
 const TOOLS = [
-    { id: 'hand', group: 'hand', name: 'Ruka', emoji: '🖐️', cost: 0, desc: 'Klikni na panáčka, vesnici nebo krajinu a prohlédni si je.' },
+    { id: 'hand', group: 'hand', name: 'Ruka', emoji: '🖐️', cost: 0, desc: 'Klikni na panáčka, město nebo krajinu a prohlédni si je.' },
+    { id: 'claim', group: 'hand', name: 'Můj stát', emoji: '🏳️', cost: 0, desc: 'Klikni na cizí říši a převezmi nad ní vládu – nebo na prázdnou souš a založ vlastní stát. Pak můžeš stavět armádu a válčit proti botům.' },
+    { id: 'attack', group: 'hand', name: 'Útok', emoji: '🎯', cost: 0, desc: 'Pošle všechny tvé jednotky na místo, kam klikneš. Když je tam nepřátelské město, zaútočí na něj.' },
 
     /* ---------- krajina ---------- */
     { id: 'water', group: 'land', name: 'Voda', emoji: '🌊', cost: 0, hold: true, tile: T.WATER, desc: 'Maluje moře a jezera. Kdo neumí plavat, utopí se.' },
@@ -78,6 +80,23 @@ function nearestVillage(life, x, y, maxD2 = 900) {
 function applyTool(life, id, wx, wy, radius) {
     const tool = TOOL_MAP[id];
     if (!tool) return false;
+    if (id === 'claim') {
+        const w0 = life.world;
+        const i0 = life.tileAt(clamp(wx, 0, w0.w - 1), clamp(wy, 0, w0.h - 1));
+        const r0 = life.realmById(w0.owner[i0]);
+        if (r0) { life.claimRealm(r0.id); return true; }
+        if (!w0.walkable(i0)) return 'blocked';
+        const nr = life.seedTribe(clamp(wx, 0, w0.w - 1), clamp(wy, 0, w0.h - 1), 'human', 120);
+        if (!nr) return 'blocked';
+        nr.name = 'Tvá říše';
+        nr.gold = 1500;
+        life.claimRealm(nr.id);
+        return true;
+    }
+    if (id === 'attack') {
+        const n = life.orderAttack(wx, wy);
+        return n ? true : 'nothing';
+    }
     const free = life.godMode;
     if (!free && tool.cost > life.faith) return 'faith';
     const w = life.world;

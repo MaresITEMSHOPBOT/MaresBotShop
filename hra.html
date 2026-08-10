@@ -300,6 +300,29 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
 .alien-note.bad { color: #ff9a9a; animation: pulse 1.5s infinite; }
 @keyframes pulse { 50% { opacity: .45; } }
 
+/* ---------------- můj stát ---------------- */
+.mystate { background: rgba(0,0,0,.3); border: 1px solid var(--line); border-left-width: 3px; border-radius: 10px; padding: .5rem; margin-bottom: .6rem; }
+.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: .4rem; }
+.stats-row div { background: rgba(0,0,0,.25); border-radius: 7px; padding: .25rem .4rem; }
+.stats-row b { display: block; color: #fff; font-size: .8rem; }
+.stats-row span { color: var(--dim); font-size: .6rem; }
+.units { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.unit { display: flex; flex-direction: column; align-items: center; gap: 1px; cursor: pointer;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; padding: .35rem .2rem; }
+.unit i { font-style: normal; font-size: 1.2rem; }
+.unit span { font-size: .58rem; color: var(--dim); text-align: center; }
+.unit b { font-size: .58rem; color: var(--gold); }
+.unit:hover { background: rgba(90,120,200,.3); }
+.unit.locked { opacity: .35; filter: grayscale(1); cursor: not-allowed; }
+.unit.poor { opacity: .6; }
+.diplo { display: flex; align-items: center; gap: .4rem; font-size: .72rem; background: rgba(0,0,0,.25);
+    border: 1px solid var(--line); border-radius: 8px; padding: .28rem .4rem; margin-bottom: 4px; }
+.diplo b { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.diplo em { font-style: normal; color: var(--dim); font-size: .62rem; }
+.diplo button { background: rgba(255,120,120,.15); border: 1px solid rgba(255,140,140,.4); color: #ffb4b4;
+    border-radius: 6px; padding: .15rem .4rem; font-size: .62rem; cursor: pointer; }
+.diplo button.war { background: rgba(120,255,180,.12); border-color: rgba(140,255,190,.4); color: #a8f5cd; }
+
 </style>
 </head>
 <body>
@@ -364,7 +387,8 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
 
         <aside id="right">
             <div class="tabs" id="tabs">
-                <button data-tab="realms" class="active">Říše</button>
+                <button data-tab="state" class="active">Můj stát</button>
+                <button data-tab="realms">Říše</button>
                 <button data-tab="laws">Zákony</button>
                 <button data-tab="charts">Grafy</button>
                 <button data-tab="miles">Milníky</button>
@@ -372,7 +396,8 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
             </div>
             <div class="card" id="card" hidden></div>
 
-            <div class="tab-body" id="tab-realms"></div>
+            <div class="tab-body" id="tab-state"></div>
+            <div class="tab-body" id="tab-realms" hidden></div>
             <div class="tab-body" id="tab-laws" hidden></div>
 
             <div class="tab-body" id="tab-charts" hidden>
@@ -1025,6 +1050,15 @@ const LAWS = [
     { id: 'health', name: 'Zdravotnictví', icon: '🏥', opts: ['Ne', 'Ano'], def: 0, desc: 'Stojí zlato, ale lidé žijí déle a města rostou rychleji.' }
 ];
 
+const UNIT_KINDS = {
+    army:  { name: 'Vojsko',   icon: '⚔️', era: 0, gold: 120, pow: 1.0, speed: 1.0 },
+    knight:{ name: 'Rytíři',   icon: '🐴', era: 3, gold: 260, pow: 2.2, speed: 1.5 },
+    cannon:{ name: 'Dělostřelba', icon: '💥', era: 5, gold: 500, pow: 4.0, speed: 0.8 },
+    tank:  { name: 'Tanky',    icon: '🛡️', era: 7, gold: 1200, pow: 9.0, speed: 1.4 },
+    jet:   { name: 'Stíhačky', icon: '✈️', era: 8, gold: 2600, pow: 16, speed: 3.2, fly: true },
+    mech:  { name: 'Laserové mechy', icon: '🤖', era: 9, gold: 6000, pow: 34, speed: 1.6 }
+};
+
 const WEAPONS = ['kyj', 'bronzový meč', 'železný meč', 'kuše', 'mušketa', 'puška', 'kulomet', 'tank', 'raketomet', 'laser'];
 
 const REALM_COLORS = ['#4f86e8', '#c8452f', '#2fae86', '#d79a2b', '#9b5de5', '#f15bb5', '#00bbf9', '#8ac926', '#ff924c', '#59c3c3', '#e56b6f', '#b8f2e6'];
@@ -1068,6 +1102,8 @@ class Life {
         this.milestones = {};
         this.faith = 80; this.faithMax = 200; this.believers = 0;
         this.godMode = false;
+        this.playerRealm = 0;
+        this.traffic = [];
 
         this.laws = {};
         for (const l of LAWS) this.laws[l.id] = l.def;
@@ -1090,6 +1126,55 @@ class Life {
         if (this.milestones[key]) return;
         this.milestones[key] = this.year;
         this.log(text, 'good');
+    }
+
+    get player() { return this.realmById(this.playerRealm); }
+
+    claimRealm(id) {
+        const r = this.realmById(id);
+        if (!r) return null;
+        const old = this.player;
+        if (old) old.player = false;
+        r.player = true;
+        this.playerRealm = r.id;
+        this.log(`🏳️ Ujal ses vlády nad říší ${r.name}`, 'good');
+        return r;
+    }
+
+    /* hráč postaví jednotku ve svém hlavním městě */
+    produceUnit(kind) {
+        const r = this.player;
+        if (!r) return 'norealm';
+        const def = UNIT_KINDS[kind];
+        if (!def || r.era < def.era) return 'era';
+        if (r.gold < def.gold && !this.godMode) return 'gold';
+        const v = this.villageById(r.capital) || this.villageById(r.villages[0]);
+        if (!v) return 'norealm';
+        if (!this.godMode) r.gold -= def.gold;
+        const strength = 80 * def.pow * (1 + r.era * 0.2);
+        const army = {
+            id: ++this.nextUnit, x: v.x + 0.5, y: v.y + 0.5, dx: 0, dy: 0,
+            realm: r.id, color: r.color, from: v.id, target: 0, kind,
+            strength, dead: false, sprites: [], player: true, fly: !!def.fly
+        };
+        this.armies.push(army);
+        this.log(`${def.icon} ${r.name}: postaveno ${def.name.toLowerCase()}`, 'good');
+        return army;
+    }
+
+    /* hráč pošle všechny své armády na cíl */
+    orderAttack(x, y) {
+        const r = this.player;
+        if (!r) return 0;
+        const target = this.nearestVillage(x, y, 900);
+        let n = 0;
+        for (const a of this.armies) {
+            if (a.dead || a.realm !== r.id) continue;
+            if (target) { a.target = target.id; a.ordered = true; }
+            else { a.goX = x; a.goY = y; a.target = 0; a.ordered = true; }
+            n++;
+        }
+        return n;
     }
 
     realmById(id) { for (const r of this.realms) if (r.id === id && !r.dead) return r; return null; }
@@ -1378,6 +1463,7 @@ class Life {
         if (this.tick % 30 === 0) this.updateTerritory();
         if (this.tick % 240 === 0) this.diplomacy();
         if (this.tick % 20 === 0) this.record();
+        this.stepTraffic();
         this.stepAliens();
         this.stepShips();
         this.stepRockets();
@@ -1724,6 +1810,20 @@ class Life {
 
             /* --- viditelní panáčci --- */
             this.syncSprites(v, realm);
+
+            // doprava mezi městy podle doby
+            if (realm.era >= 5 && v.level >= 2 && this.traffic.length < 90 && this.rng() < 0.25) {
+                const to = this.nearestVillage(v.x + (this.rng() - 0.5) * 60, v.y + (this.rng() - 0.5) * 60, 3600, o => o.id !== v.id && o.realm === v.realm);
+                if (to) {
+                    const kind = realm.era >= 8 && this.rng() < 0.3 ? 'plane'
+                        : realm.era >= 6 && this.rng() < 0.35 ? 'train' : 'car';
+                    this.traffic.push({
+                        x: v.x + 0.5, y: v.y + 0.5, tx: to.x + 0.5, ty: to.y + 0.5,
+                        kind, color: realm.color, t: 0,
+                        speed: kind === 'plane' ? 0.35 : kind === 'train' ? 0.2 : 0.14
+                    });
+                }
+            }
         }
     }
 
@@ -1906,7 +2006,19 @@ class Life {
             const a = this.armies[k];
             const realm = this.realmById(a.realm);
             const target = this.villageById(a.target);
-            if (a.dead || !realm || !target || a.strength <= 0) { this.disbandArmy(k); continue; }
+            if (a.dead || !realm || a.strength <= 0) { this.disbandArmy(k); continue; }
+            if (!target) {
+                if (a.player) {
+                    // čeká na rozkaz, případně jde na určené místo
+                    if (a.goX !== undefined) {
+                        const dd = Math.hypot(a.goX - a.x, a.goY - a.y);
+                        if (dd > 0.6) { a.x += (a.goX - a.x) / dd * 0.12; a.y += (a.goY - a.y) / dd * 0.12; }
+                    }
+                    this.syncArmySprites(a, realm);
+                    continue;
+                }
+                this.disbandArmy(k); continue;
+            }
 
             // bitva s nepřátelskou armádou v cestě
             for (const b of this.armies) {
@@ -1930,9 +2042,21 @@ class Life {
                 this.disbandArmy(this.armies.indexOf(a));
                 continue;
             }
-            const sp = 0.10 + realm.era * 0.012;
+            const sp = (0.10 + realm.era * 0.012) * (a.kind ? UNIT_KINDS[a.kind].speed : 1);
             a.dx = (target.x - a.x) / d; a.dy = (target.y - a.y) / d;
             a.x += a.dx * sp; a.y += a.dy * sp;
+        }
+    }
+
+    syncArmySprites(a, realm) {
+        a.sprites = a.sprites.filter(u => u.alive);
+        const want = clamp(Math.round(Math.log10(a.strength + 10) * 2), 1, 5);
+        while (a.sprites.length < want && this.count < MAX_UNITS) {
+            const u = this.spawnPerson(a.x, a.y, realm.race, realm, null, 'soldier');
+            if (!u) break;
+            u.army = a;
+            u.off = { x: (this.rng() - 0.5) * 1.4, y: (this.rng() - 0.5) * 1.4 };
+            a.sprites.push(u);
         }
     }
 
@@ -2146,6 +2270,18 @@ class Life {
         this.log('🛸 Na obloze se objevil neznámý objekt…', 'bad');
     }
 
+    stepTraffic() {
+        for (let k = this.traffic.length - 1; k >= 0; k--) {
+            const c = this.traffic[k];
+            const dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy);
+            if (d < 0.7) { this.traffic.splice(k, 1); continue; }
+            c.dirx = dx / d;
+            c.x += dx / d * c.speed; c.y += dy / d * c.speed;
+            c.t++;
+            if (c.t > 1200) this.traffic.splice(k, 1);
+        }
+    }
+
     stepShips() {
         for (let k = this.ships.length - 1; k >= 0; k--) {
             const s2 = this.ships[k];
@@ -2310,7 +2446,7 @@ class Life {
 }
 
 if (typeof module !== 'undefined') {
-    module.exports = { Life, RACES, ANIMALS, LAWS, ERAS, LEVELS, BUILDINGS, WEAPONS, setWorldLimits, fmt };
+    module.exports = { Life, RACES, ANIMALS, LAWS, ERAS, LEVELS, BUILDINGS, WEAPONS, UNIT_KINDS, setWorldLimits, fmt };
 }
 
 </script>
@@ -2322,7 +2458,9 @@ function fx(life, o) { life.fx.push(o); }
 function fmtNum(n) { return typeof fmt === 'function' ? fmt(n) : Math.round(n); }
 
 const TOOLS = [
-    { id: 'hand', group: 'hand', name: 'Ruka', emoji: '🖐️', cost: 0, desc: 'Klikni na panáčka, vesnici nebo krajinu a prohlédni si je.' },
+    { id: 'hand', group: 'hand', name: 'Ruka', emoji: '🖐️', cost: 0, desc: 'Klikni na panáčka, město nebo krajinu a prohlédni si je.' },
+    { id: 'claim', group: 'hand', name: 'Můj stát', emoji: '🏳️', cost: 0, desc: 'Klikni na cizí říši a převezmi nad ní vládu – nebo na prázdnou souš a založ vlastní stát. Pak můžeš stavět armádu a válčit proti botům.' },
+    { id: 'attack', group: 'hand', name: 'Útok', emoji: '🎯', cost: 0, desc: 'Pošle všechny tvé jednotky na místo, kam klikneš. Když je tam nepřátelské město, zaútočí na něj.' },
 
     /* ---------- krajina ---------- */
     { id: 'water', group: 'land', name: 'Voda', emoji: '🌊', cost: 0, hold: true, tile: T.WATER, desc: 'Maluje moře a jezera. Kdo neumí plavat, utopí se.' },
@@ -2395,6 +2533,23 @@ function nearestVillage(life, x, y, maxD2 = 900) {
 function applyTool(life, id, wx, wy, radius) {
     const tool = TOOL_MAP[id];
     if (!tool) return false;
+    if (id === 'claim') {
+        const w0 = life.world;
+        const i0 = life.tileAt(clamp(wx, 0, w0.w - 1), clamp(wy, 0, w0.h - 1));
+        const r0 = life.realmById(w0.owner[i0]);
+        if (r0) { life.claimRealm(r0.id); return true; }
+        if (!w0.walkable(i0)) return 'blocked';
+        const nr = life.seedTribe(clamp(wx, 0, w0.w - 1), clamp(wy, 0, w0.h - 1), 'human', 120);
+        if (!nr) return 'blocked';
+        nr.name = 'Tvá říše';
+        nr.gold = 1500;
+        life.claimRealm(nr.id);
+        return true;
+    }
+    if (id === 'attack') {
+        const n = life.orderAttack(wx, wy);
+        return n ? true : 'nothing';
+    }
     const free = life.godMode;
     if (!free && tool.cost > life.faith) return 'faith';
     const w = life.world;
@@ -3122,6 +3277,7 @@ class Renderer {
         this.drawHazards();
         this.drawBuildings();
         this.drawUnits(alpha);
+        this.drawTraffic();
         this.drawArmies();
         this.drawRockets();
         this.drawLabels();
@@ -3339,6 +3495,39 @@ class Renderer {
         }
     }
 
+    drawTraffic() {
+        const ctx = this.ctx, z = this.cam.zoom, life = this.life;
+        if (z < 4) return;
+        for (const c of life.traffic) {
+            const sx = this.w2sx(c.x), sy = this.w2sy(c.y);
+            if (sx < -20 || sy < -20 || sx > this.vw + 20 || sy > this.vh + 20) continue;
+            const s = Math.max(3, z * 0.45);
+            const dir = c.dirx < 0 ? -1 : 1;
+            if (c.kind === 'plane') {
+                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                ctx.beginPath(); ctx.ellipse(sx, sy + s * 1.6, s * 0.8, s * 0.3, 0, 0, 6.3); ctx.fill();
+                ctx.fillStyle = '#e6ecf5';
+                ctx.beginPath();
+                ctx.moveTo(sx + dir * s * 1.4, sy); ctx.lineTo(sx - dir * s * 0.8, sy - s * 0.45);
+                ctx.lineTo(sx - dir * s * 0.5, sy); ctx.lineTo(sx - dir * s * 0.8, sy + s * 0.45);
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = c.color;
+                ctx.fillRect(sx - dir * s * 0.3, sy - s * 0.16, s * 0.5, s * 0.32);
+            } else if (c.kind === 'train') {
+                ctx.fillStyle = '#3d434f';
+                for (let k = 0; k < 3; k++) ctx.fillRect(sx - dir * k * s * 1.1 - s * 0.5, sy - s * 0.28, s, s * 0.56);
+                ctx.fillStyle = c.color;
+                ctx.fillRect(sx + dir * s * 0.2 - s * 0.5, sy - s * 0.3, s * 0.7, s * 0.6);
+                if (z > 9) { ctx.fillStyle = 'rgba(230,235,245,0.7)'; ctx.fillRect(sx + dir * s * 0.9, sy - s * 0.7, s * 0.3, s * 0.3); }
+            } else {
+                ctx.fillStyle = c.color;
+                ctx.fillRect(sx - s * 0.5, sy - s * 0.28, s, s * 0.56);
+                ctx.fillStyle = 'rgba(255,245,200,0.9)';
+                ctx.fillRect(sx + dir * s * 0.45, sy - s * 0.12, s * 0.2, s * 0.24);
+            }
+        }
+    }
+
     drawArmies() {
         const ctx = this.ctx, z = this.cam.zoom, life = this.life;
         for (const a of life.armies) {
@@ -3348,6 +3537,28 @@ class Renderer {
             const s = Math.max(6, z * 0.9);
             ctx.fillStyle = 'rgba(0,0,0,0.28)';
             ctx.beginPath(); ctx.ellipse(sx, sy + s * 0.36, s * 0.5, s * 0.18, 0, 0, 6.3); ctx.fill();
+            const kd = a.kind || 'army';
+            if (kd === 'tank' || kd === 'cannon' || kd === 'mech') {
+                ctx.fillStyle = kd === 'mech' ? '#7c8496' : '#4d5a3f';
+                ctx.fillRect(sx - s * 0.5, sy - s * 0.2, s, s * 0.42);
+                ctx.fillStyle = a.color;
+                ctx.fillRect(sx - s * 0.25, sy - s * 0.42, s * 0.5, s * 0.28);
+                ctx.fillStyle = kd === 'mech' ? '#7cffcf' : '#333a2c';
+                ctx.fillRect(sx + s * 0.2, sy - s * 0.34, s * 0.7, s * 0.1);
+            } else if (kd === 'jet') {
+                ctx.fillStyle = '#dfe6f0';
+                ctx.beginPath();
+                ctx.moveTo(sx + s * 0.9, sy); ctx.lineTo(sx - s * 0.5, sy - s * 0.4);
+                ctx.lineTo(sx - s * 0.2, sy); ctx.lineTo(sx - s * 0.5, sy + s * 0.4);
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = a.color;
+                ctx.fillRect(sx - s * 0.1, sy - s * 0.12, s * 0.4, s * 0.24);
+            } else if (kd === 'knight') {
+                ctx.fillStyle = '#6b5a3f';
+                ctx.fillRect(sx - s * 0.4, sy - s * 0.1, s * 0.8, s * 0.34);
+                ctx.fillStyle = a.color;
+                ctx.fillRect(sx - s * 0.12, sy - s * 0.5, s * 0.26, s * 0.42);
+            }
             ctx.fillStyle = '#5b5148';
             ctx.fillRect(sx - s * 0.04, sy - s * 0.95, s * 0.08, s * 1.1);
             ctx.fillStyle = a.color;
@@ -4075,9 +4286,10 @@ function bindUI() {
         const b = e.target.closest('button');
         if (!b) return;
         $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
-        for (const t of ['realms', 'laws', 'charts', 'miles', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
+        for (const t of ['state', 'realms', 'laws', 'charts', 'miles', 'log']) $('tab-' + t).hidden = t !== b.dataset.tab;
         if (b.dataset.tab === 'charts') renderCharts();
         if (b.dataset.tab === 'miles') renderMiles();
+        if (b.dataset.tab === 'state') renderState();
     });
 
     window.addEventListener('resize', () => renderer.resize());
@@ -4262,6 +4474,70 @@ function renderHud() {
         e.classList.toggle('locked', !life.godMode && TOOL_MAP[e.dataset.id].cost > life.faith);
     });
     if (!$('tab-realms').hidden) renderRealms(s);
+    if (!$('tab-state').hidden) renderState();
+}
+
+function renderState() {
+    const el = $('tab-state');
+    const r = life.player;
+    if (!r) {
+        el.innerHTML = `<div class="empty"><b>Zatím nemáš vlastní stát.</b><br><br>
+            Vezmi nástroj 🏳️ <b>Můj stát</b> a klikni na cizí říši (převezmeš vládu),
+            nebo na prázdnou souš (založíš vlastní).<br><br>
+            Pak si tady stavíš armádu a nástrojem 🎯 <b>Útok</b> ji posíláš na nepřátele.</div>`;
+        return;
+    }
+    let cities = 0, pop = 0;
+    for (const vid of r.villages) { const v = life.villageById(vid); if (v) { cities++; pop += v.pop; } }
+    let myArmies = 0, myPower = 0;
+    for (const a of life.armies) if (!a.dead && a.realm === r.id) { myArmies++; myPower += a.strength; }
+
+    let html = `<div class="mystate" style="border-color:${r.color}">
+        <div class="realm-head"><span class="chip" style="background:${r.color}"></span><b>${r.name}</b><em>${RACES[r.race].emoji}</em></div>
+        <div class="realm-sub">${r.ruler ? (r.ruler.female ? 'královna ' : 'král ') + r.ruler.name : ''} · ${ERAS[r.era].icon} ${ERAS[r.era].name}</div>
+        <div class="stats-row">
+            <div><b>${fmt(pop)}</b><span>obyvatel</span></div>
+            <div><b>${cities}</b><span>měst</span></div>
+            <div><b>${fmt(r.gold)}</b><span>🪙 zlato</span></div>
+            <div><b>${fmt(myPower)}</b><span>⚔️ síla (${myArmies})</span></div>
+        </div></div>`;
+
+    html += '<h4>Výroba jednotek</h4><div class="units">';
+    for (const [k, u] of Object.entries(UNIT_KINDS)) {
+        const locked = r.era < u.era;
+        const poor = !life.godMode && r.gold < u.gold;
+        html += `<button class="unit ${locked ? 'locked' : poor ? 'poor' : ''}" data-unit="${k}"
+            title="${locked ? 'Odemkne se v době: ' + ERAS[u.era].name : 'Síla ' + u.pow + '×'}">
+            <i>${u.icon}</i><span>${u.name}</span><b>${fmt(u.gold)} 🪙</b></button>`;
+    }
+    html += '</div>';
+
+    const enemies = life.realms.filter(x => !x.dead && x.id !== r.id);
+    html += '<h4>Diplomacie</h4>';
+    if (!enemies.length) html += '<div class="empty">Nikdo jiný na světě není.</div>';
+    for (const e of enemies.slice(0, 10)) {
+        const war = r.wars.has(e.id);
+        html += `<div class="diplo"><span class="chip" style="background:${e.color}"></span>
+            <b>${e.name}</b><em>${fmt(e.pop || 0)}</em>
+            <button data-diplo="${e.id}" class="${war ? 'war' : ''}">${war ? '🕊️ mír' : '⚔️ válku'}</button></div>`;
+    }
+    html += `<button class="wide" id="btn-gift">💰 Vzít si 5 000 zlata (boží dar)</button>`;
+    el.innerHTML = html;
+
+    el.querySelectorAll('.unit').forEach(b => b.addEventListener('click', () => {
+        const res = life.produceUnit(b.dataset.unit);
+        if (res === 'era') toast('Tuhle techniku tvá říše ještě neumí – potřebuješ vyšší dobu');
+        else if (res === 'gold') toast('Málo zlata v pokladně');
+        else if (res === 'norealm') toast('Nemáš vlastní stát');
+        else { toast('Jednotka postavena – pošli ji nástrojem 🎯 Útok'); renderState(); }
+    }));
+    el.querySelectorAll('[data-diplo]').forEach(b => b.addEventListener('click', () => {
+        const e = life.realmById(parseInt(b.dataset.diplo, 10));
+        if (!e) return;
+        if (r.wars.has(e.id)) life.makePeace(r, e); else life.declareWar(r, e);
+        renderState();
+    }));
+    $('btn-gift').addEventListener('click', () => { r.gold += 5000; renderState(); toast('💰 Pokladna posílena'); });
 }
 
 function renderRealms(s) {
@@ -4274,7 +4550,7 @@ function renderRealms(s) {
         const prog = next ? clamp((r.research - ERAS[r.era].cost) / (next.cost - ERAS[r.era].cost), 0, 1) : (r.moon ? 1 : clamp(r.space / 100, 0, 1));
         html += `<div class="realm" data-realm="${r.id}">
             <div class="realm-head"><span class="chip" style="background:${r.color}"></span>
-                <b>${r.name}</b><em>${RACES[r.race].emoji}${r.moon ? ' 🚀' : ''}</em></div>
+                <b>${r.player ? '⭐ ' : ''}${r.name}</b><em>${RACES[r.race].emoji}${r.moon ? ' 🚀' : ''}</em></div>
             <div class="realm-sub">${r.ruler ? (r.ruler.female ? 'královna ' : 'král ') + r.ruler.name : ''} · ${ERAS[r.era].icon} ${ERAS[r.era].name}</div>
             <div class="realm-meta">
                 <span>🏘️ ${r.villages.length}</span><span>🧑 ${fmt(r.pop || 0)}</span>

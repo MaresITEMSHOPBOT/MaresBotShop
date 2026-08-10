@@ -355,6 +355,7 @@ class Renderer {
         this.drawHazards();
         this.drawBuildings();
         this.drawUnits(alpha);
+        this.drawTraffic();
         this.drawArmies();
         this.drawRockets();
         this.drawLabels();
@@ -572,6 +573,39 @@ class Renderer {
         }
     }
 
+    drawTraffic() {
+        const ctx = this.ctx, z = this.cam.zoom, life = this.life;
+        if (z < 4) return;
+        for (const c of life.traffic) {
+            const sx = this.w2sx(c.x), sy = this.w2sy(c.y);
+            if (sx < -20 || sy < -20 || sx > this.vw + 20 || sy > this.vh + 20) continue;
+            const s = Math.max(3, z * 0.45);
+            const dir = c.dirx < 0 ? -1 : 1;
+            if (c.kind === 'plane') {
+                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                ctx.beginPath(); ctx.ellipse(sx, sy + s * 1.6, s * 0.8, s * 0.3, 0, 0, 6.3); ctx.fill();
+                ctx.fillStyle = '#e6ecf5';
+                ctx.beginPath();
+                ctx.moveTo(sx + dir * s * 1.4, sy); ctx.lineTo(sx - dir * s * 0.8, sy - s * 0.45);
+                ctx.lineTo(sx - dir * s * 0.5, sy); ctx.lineTo(sx - dir * s * 0.8, sy + s * 0.45);
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = c.color;
+                ctx.fillRect(sx - dir * s * 0.3, sy - s * 0.16, s * 0.5, s * 0.32);
+            } else if (c.kind === 'train') {
+                ctx.fillStyle = '#3d434f';
+                for (let k = 0; k < 3; k++) ctx.fillRect(sx - dir * k * s * 1.1 - s * 0.5, sy - s * 0.28, s, s * 0.56);
+                ctx.fillStyle = c.color;
+                ctx.fillRect(sx + dir * s * 0.2 - s * 0.5, sy - s * 0.3, s * 0.7, s * 0.6);
+                if (z > 9) { ctx.fillStyle = 'rgba(230,235,245,0.7)'; ctx.fillRect(sx + dir * s * 0.9, sy - s * 0.7, s * 0.3, s * 0.3); }
+            } else {
+                ctx.fillStyle = c.color;
+                ctx.fillRect(sx - s * 0.5, sy - s * 0.28, s, s * 0.56);
+                ctx.fillStyle = 'rgba(255,245,200,0.9)';
+                ctx.fillRect(sx + dir * s * 0.45, sy - s * 0.12, s * 0.2, s * 0.24);
+            }
+        }
+    }
+
     drawArmies() {
         const ctx = this.ctx, z = this.cam.zoom, life = this.life;
         for (const a of life.armies) {
@@ -581,6 +615,28 @@ class Renderer {
             const s = Math.max(6, z * 0.9);
             ctx.fillStyle = 'rgba(0,0,0,0.28)';
             ctx.beginPath(); ctx.ellipse(sx, sy + s * 0.36, s * 0.5, s * 0.18, 0, 0, 6.3); ctx.fill();
+            const kd = a.kind || 'army';
+            if (kd === 'tank' || kd === 'cannon' || kd === 'mech') {
+                ctx.fillStyle = kd === 'mech' ? '#7c8496' : '#4d5a3f';
+                ctx.fillRect(sx - s * 0.5, sy - s * 0.2, s, s * 0.42);
+                ctx.fillStyle = a.color;
+                ctx.fillRect(sx - s * 0.25, sy - s * 0.42, s * 0.5, s * 0.28);
+                ctx.fillStyle = kd === 'mech' ? '#7cffcf' : '#333a2c';
+                ctx.fillRect(sx + s * 0.2, sy - s * 0.34, s * 0.7, s * 0.1);
+            } else if (kd === 'jet') {
+                ctx.fillStyle = '#dfe6f0';
+                ctx.beginPath();
+                ctx.moveTo(sx + s * 0.9, sy); ctx.lineTo(sx - s * 0.5, sy - s * 0.4);
+                ctx.lineTo(sx - s * 0.2, sy); ctx.lineTo(sx - s * 0.5, sy + s * 0.4);
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = a.color;
+                ctx.fillRect(sx - s * 0.1, sy - s * 0.12, s * 0.4, s * 0.24);
+            } else if (kd === 'knight') {
+                ctx.fillStyle = '#6b5a3f';
+                ctx.fillRect(sx - s * 0.4, sy - s * 0.1, s * 0.8, s * 0.34);
+                ctx.fillStyle = a.color;
+                ctx.fillRect(sx - s * 0.12, sy - s * 0.5, s * 0.26, s * 0.42);
+            }
             ctx.fillStyle = '#5b5148';
             ctx.fillRect(sx - s * 0.04, sy - s * 0.95, s * 0.08, s * 1.1);
             ctx.fillStyle = a.color;

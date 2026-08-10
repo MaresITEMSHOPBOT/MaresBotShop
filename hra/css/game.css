@@ -291,3 +291,26 @@ button.wide:hover, .newworld button:hover { filter: brightness(1.15); }
 .alien-note.good { color: #8ef7d2; }
 .alien-note.bad { color: #ff9a9a; animation: pulse 1.5s infinite; }
 @keyframes pulse { 50% { opacity: .45; } }
+
+/* ---------------- můj stát ---------------- */
+.mystate { background: rgba(0,0,0,.3); border: 1px solid var(--line); border-left-width: 3px; border-radius: 10px; padding: .5rem; margin-bottom: .6rem; }
+.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: .4rem; }
+.stats-row div { background: rgba(0,0,0,.25); border-radius: 7px; padding: .25rem .4rem; }
+.stats-row b { display: block; color: #fff; font-size: .8rem; }
+.stats-row span { color: var(--dim); font-size: .6rem; }
+.units { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.unit { display: flex; flex-direction: column; align-items: center; gap: 1px; cursor: pointer;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; padding: .35rem .2rem; }
+.unit i { font-style: normal; font-size: 1.2rem; }
+.unit span { font-size: .58rem; color: var(--dim); text-align: center; }
+.unit b { font-size: .58rem; color: var(--gold); }
+.unit:hover { background: rgba(90,120,200,.3); }
+.unit.locked { opacity: .35; filter: grayscale(1); cursor: not-allowed; }
+.unit.poor { opacity: .6; }
+.diplo { display: flex; align-items: center; gap: .4rem; font-size: .72rem; background: rgba(0,0,0,.25);
+    border: 1px solid var(--line); border-radius: 8px; padding: .28rem .4rem; margin-bottom: 4px; }
+.diplo b { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.diplo em { font-style: normal; color: var(--dim); font-size: .62rem; }
+.diplo button { background: rgba(255,120,120,.15); border: 1px solid rgba(255,140,140,.4); color: #ffb4b4;
+    border-radius: 6px; padding: .15rem .4rem; font-size: .62rem; cursor: pointer; }
+.diplo button.war { background: rgba(120,255,180,.12); border-color: rgba(140,255,190,.4); color: #a8f5cd; }
