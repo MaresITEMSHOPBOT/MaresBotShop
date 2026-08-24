@@ -1573,7 +1573,8 @@ function boot(){
   setInterval(()=>{ refreshMarkets(); }, 60000);
   setInterval(()=>{ if(!MK.anyLive){ simTick(); computeSentiment(); renderMarkets(); } }, 5000);
 }
-document.addEventListener('DOMContentLoaded',boot);
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+else boot();
 </script>
 </body>
 </html>
