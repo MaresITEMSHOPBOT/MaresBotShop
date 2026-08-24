@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guvernér – hra na centrální banku</title>
+<style>
+:root{
+  --bg:#080d17; --bg2:#0d1523; --panel:#111c2e; --panel2:#16233a;
+  --txt:#e6edf7; --txt2:#95a6c0; --txt3:#63748f;
+  --cyan:#38bdf8; --green:#34d399; --red:#f87171; --amber:#fbbf24;
+  --purple:#a78bfa; --pink:#f472b6; --orange:#fb923c;
+  --mono:'SF Mono',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, #142744 0%, transparent 60%),
+    radial-gradient(900px 500px at 90% 0%, #1a1436 0%, transparent 55%),
+    var(--bg);
+  color:var(--txt); line-height:1.5; overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;width:100%}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--cyan) var(--pct,50%),#233450 var(--pct,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-6px;border-radius:50%;background:#fff;border:3px solid var(--cyan);box-shadow:0 2px 6px rgba(0,0,0,.6);cursor:grab}
+input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:#233450}
+input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:var(--cyan)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--cyan)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- topbar ---------- */
+#topbar{
+  position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);
+  background:rgba(8,13,23,.86);border-bottom:1px solid var(--line);
+}
+.tb-row{display:flex;align-items:center;gap:14px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;font-size:1.02rem;white-space:nowrap}
+.brand .logo{
+  width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-size:17px;
+  border:1px solid #2b456b;box-shadow:0 0 18px rgba(56,189,248,.25)
+}
+.date-chip{
+  font-family:var(--mono);font-size:.8rem;color:var(--txt2);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 10px;white-space:nowrap
+}
+.tb-spacer{flex:1}
+.btn{
+  border:1px solid var(--line);background:var(--panel);color:var(--txt);
+  padding:8px 14px;border-radius:9px;font-size:.85rem;font-weight:600;
+  transition:.15s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap
+}
+.btn:hover{background:var(--panel2);border-color:#39527a;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:linear-gradient(135deg,#0ea5e9,#2563eb);border-color:#3b82f6;color:#fff;box-shadow:0 4px 16px rgba(37,99,235,.35)}
+.btn.primary:hover{filter:brightness(1.12)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 10px;font-size:.76rem;border-radius:7px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ---------- KPI strip ---------- */
+#kpis{display:flex;gap:8px;padding:0 16px 10px;overflow-x:auto;scrollbar-width:thin}
+#kpis::-webkit-scrollbar{height:5px}
+#kpis::-webkit-scrollbar-thumb{background:#25344f;border-radius:9px}
+.kpi{
+  flex:1 0 128px;background:linear-gradient(160deg,var(--panel),var(--bg2));
+  border:1px solid var(--line);border-radius:11px;padding:8px 11px;position:relative;overflow:hidden
+}
+.kpi .k-l{font-size:.63rem;text-transform:uppercase;letter-spacing:.09em;color:var(--txt3);font-weight:700}
+.kpi .k-v{font-family:var(--mono);font-size:1.22rem;font-weight:700;line-height:1.25;margin-top:1px}
+.kpi .k-d{font-family:var(--mono);font-size:.68rem;color:var(--txt2)}
+.kpi .k-spark{position:absolute;right:0;bottom:0;opacity:.5}
+.kpi.good .k-v{color:var(--green)} .kpi.warn .k-v{color:var(--amber)} .kpi.bad .k-v{color:var(--red)}
+.kpi.flash{animation:flash .7s ease}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(56,189,248,.55)}100%{box-shadow:0 0 0 14px rgba(56,189,248,0)}}
+
+/* ---------- layout ---------- */
+#game{display:grid;grid-template-columns:308px minmax(0,1fr) 322px;gap:12px;padding:12px 16px 40px;max-width:1900px;margin:0 auto;align-items:start}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:linear-gradient(170deg,var(--panel) 0%,var(--bg2) 100%);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card-h{display:flex;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.015)}
+.card-h h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--txt2);font-weight:800}
+.card-b{padding:13px}
+.hint{font-size:.72rem;color:var(--txt3);line-height:1.45}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:4px;padding:8px 8px 0}
+.tab{flex:1;padding:8px 6px;font-size:.78rem;font-weight:700;color:var(--txt3);border-radius:9px 9px 0 0;border:1px solid transparent;border-bottom:none;transition:.15s}
+.tab:hover{color:var(--txt2)}
+.tab.on{color:var(--cyan);background:var(--panel2);border-color:var(--line)}
+
+/* ---------- controls ---------- */
+.ctl{margin-bottom:15px}
+.ctl-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px}
+.ctl-h label{font-size:.79rem;font-weight:600;color:var(--txt)}
+.ctl-h .val{font-family:var(--mono);font-size:.86rem;font-weight:700;color:var(--cyan)}
+.ctl-sub{display:flex;justify-content:space-between;font-size:.66rem;color:var(--txt3);margin-top:3px;font-family:var(--mono)}
+.seg{display:flex;gap:5px;flex-wrap:wrap}
+.seg.speed{flex-wrap:nowrap;width:auto}
+.seg.speed button{min-width:38px;padding:6px 8px}
+.seg button{flex:1;min-width:52px;padding:7px 4px;font-size:.73rem;font-weight:700;border:1px solid var(--line);border-radius:8px;background:var(--bg2);color:var(--txt2);transition:.15s}
+.seg button:hover{border-color:#3d5b87;color:var(--txt)}
+.seg button.on{background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;border-color:#3b82f6}
+.budget-row{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.budget-row .bn{flex:1;font-size:.77rem;display:flex;align-items:center;gap:6px}
+.budget-row .bv{font-family:var(--mono);font-size:.79rem;color:var(--cyan);min-width:52px;text-align:right;font-weight:700}
+.stepper{display:flex;gap:3px}
+.stepper button{width:23px;height:23px;border-radius:6px;border:1px solid var(--line);background:var(--bg2);font-weight:800;font-size:.78rem;color:var(--txt2);display:grid;place-items:center}
+.stepper button:hover{background:var(--panel2);color:var(--cyan)}
+.bal{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;background:var(--bg2);border:1px solid var(--line);font-family:var(--mono);font-size:.75rem;margin-top:4px}
+.bal>span:last-child{white-space:nowrap;text-align:right}
+
+/* ---------- charts ---------- */
+.chart-wrap{position:relative}
+canvas{display:block;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:5px;padding:9px 13px 0}
+.lg{display:flex;align-items:center;gap:5px;font-size:.71rem;padding:3px 8px;border-radius:99px;border:1px solid var(--line);background:var(--bg2);color:var(--txt2);transition:.15s;font-weight:600}
+.lg:hover{border-color:#3d5b87}
+.lg.off{opacity:.35}
+.lg .dot{width:9px;height:9px;border-radius:3px}
+#tooltip{
+  position:fixed;pointer-events:none;z-index:200;opacity:0;transition:opacity .12s;
+  background:rgba(8,13,23,.96);border:1px solid #33507a;border-radius:9px;padding:8px 10px;
+  font-family:var(--mono);font-size:.72rem;box-shadow:0 10px 30px rgba(0,0,0,.6);white-space:nowrap
+}
+#tooltip .tt-t{color:var(--txt3);margin-bottom:4px;font-size:.68rem}
+#tooltip .tt-r{display:flex;justify-content:space-between;gap:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ---------- news ---------- */
+#news{max-height:290px;overflow-y:auto;padding:9px 11px;display:flex;flex-direction:column;gap:7px;scrollbar-width:thin}
+#news::-webkit-scrollbar{width:5px}
+#news::-webkit-scrollbar-thumb{background:#25344f;border-radius:9px}
+.nw{border-left:3px solid var(--line);padding:5px 9px;font-size:.76rem;color:var(--txt2);background:rgba(255,255,255,.02);border-radius:0 8px 8px 0;animation:slideIn .35s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.nw b{color:var(--txt);font-weight:700}
+.nw .nw-t{font-family:var(--mono);font-size:.63rem;color:var(--txt3)}
+.nw.good{border-color:var(--green)} .nw.bad{border-color:var(--red)}
+.nw.warn{border-color:var(--amber)} .nw.info{border-color:var(--cyan)}
+
+/* ---------- markets ---------- */
+.mk{display:flex;align-items:center;gap:9px;padding:7px 11px;border-bottom:1px solid rgba(35,52,80,.55)}
+.mk:last-child{border-bottom:none}
+.mk .m-sym{font-family:var(--mono);font-size:.76rem;font-weight:700;width:60px;flex-shrink:0}
+.mk .m-spark{flex:1;min-width:0;height:26px}
+.mk .m-px{font-family:var(--mono);font-size:.75rem;text-align:right;min-width:78px}
+.mk .m-ch{font-family:var(--mono);font-size:.69rem;font-weight:700;min-width:56px;text-align:right}
+.up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--txt2)}
+.badge{font-size:.6rem;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:99px;text-transform:uppercase}
+.badge.live{background:rgba(52,211,153,.15);color:var(--green);border:1px solid rgba(52,211,153,.4)}
+.badge.sim{background:rgba(251,191,36,.13);color:var(--amber);border:1px solid rgba(251,191,36,.35)}
+.badge.load{background:rgba(56,189,248,.13);color:var(--cyan);border:1px solid rgba(56,189,248,.35)}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.9s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ---------- reserve fund ---------- */
+.alloc-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.alloc-row .a-n{width:78px;font-size:.71rem;font-weight:600;line-height:1.25}
+.alloc-row input{flex:1}
+.alloc-row .a-v{font-family:var(--mono);font-size:.73rem;width:38px;text-align:right;color:var(--cyan)}
+
+/* ---------- modal ---------- */
+.overlay{position:fixed;inset:0;z-index:300;background:rgba(4,8,15,.82);backdrop-filter:blur(7px);display:grid;place-items:center;padding:18px;animation:fade .25s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{
+  width:min(660px,100%);max-height:88vh;overflow-y:auto;border-radius:18px;
+  border:1px solid #2c4468;box-shadow:0 30px 90px rgba(0,0,0,.75);animation:pop .3s cubic-bezier(.2,.9,.3,1.3)
+}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(14px)}to{opacity:1;transform:none}}
+.modal-h{padding:18px 22px 12px;border-bottom:1px solid var(--line)}
+.modal-h .ev-tag{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
+.modal-h h2{font-size:1.2rem;margin-top:5px;letter-spacing:-.02em}
+.modal-b{padding:18px 22px 22px}
+.modal-b p{color:var(--txt2);font-size:.9rem;margin-bottom:14px}
+.choice{
+  width:100%;text-align:left;padding:13px 15px;border:1px solid var(--line);border-radius:12px;
+  background:var(--panel);margin-bottom:9px;transition:.15s
+}
+.choice:hover{border-color:var(--cyan);background:var(--panel2);transform:translateX(3px)}
+.choice .c-t{font-weight:700;font-size:.9rem;margin-bottom:3px}
+.choice .c-d{font-size:.76rem;color:var(--txt2)}
+.choice .c-tags{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap}
+.tg{font-size:.64rem;font-family:var(--mono);padding:2px 7px;border-radius:5px;background:var(--bg2);border:1px solid var(--line);color:var(--txt2)}
+h4.sec{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--txt3);margin:16px 0 7px;font-weight:800}
+.modal-b ul{margin:0 0 12px 18px;color:var(--txt2);font-size:.83rem}
+.modal-b li{margin-bottom:5px}
+.modal-b table{width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:12px}
+.modal-b td{padding:6px 4px;border-bottom:1px solid var(--line);color:var(--txt2)}
+.modal-b td:last-child{text-align:right;font-family:var(--mono);color:var(--txt);font-weight:700}
+.score-big{font-family:var(--mono);font-size:3.2rem;font-weight:800;text-align:center;letter-spacing:-.03em}
+.grade{text-align:center;font-size:1.05rem;font-weight:700;margin-bottom:14px}
+
+/* ---------- misc ---------- */
+.meter{height:7px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);overflow:hidden;margin-top:5px}
+.meter i{display:block;height:100%;border-radius:99px;transition:width .5s ease,background .4s}
+.mand{display:flex;justify-content:space-between;align-items:center;font-size:.76rem;padding:5px 0}
+.mand .m-s{font-family:var(--mono);font-weight:700;font-size:.78rem}
+.toast-wrap{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:250;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none}
+.toast{background:rgba(13,21,35,.96);border:1px solid #33507a;border-radius:10px;padding:9px 16px;font-size:.83rem;box-shadow:0 10px 30px rgba(0,0,0,.6);animation:toastIn .3s}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(max-width:1240px){
+  #game{grid-template-columns:1fr;padding:10px}
+  .col.right{order:3}
+}
+@media(max-width:560px){
+  .grid2{grid-template-columns:1fr}
+  .brand span.t{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="tb-row">
+    <div class="brand"><div class="logo">🏛️</div><span class="t">Guvernér</span></div>
+    <div class="date-chip" id="dateChip">Q1 2026 · mandát 1/32</div>
+    <div class="tb-spacer"></div>
+    <button class="btn" id="btnPlay">▶ Spustit čas</button>
+    <div class="seg speed">
+      <button class="sm on" data-speed="2600">1×</button>
+      <button class="sm" data-speed="1300">2×</button>
+      <button class="sm" data-speed="600">4×</button>
+    </div>
+    <button class="btn primary" id="btnStep">Další čtvrtletí ⏭</button>
+    <button class="btn ghost sm" id="btnHelp" title="Nápověda">❓</button>
+    <button class="btn ghost sm" id="btnReset" title="Nová hra">↺</button>
+  </div>
+  <div id="kpis"></div>
+</div>
+
+<div id="game">
+  <!-- ============ LEFT: controls ============ -->
+  <div class="col left">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab on" data-tab="mon">💰 Monetární</button>
+        <button class="tab" data-tab="fis">🏦 Rozpočet</button>
+      </div>
+
+      <div class="card-b" id="tab-mon">
+        <div class="ctl">
+          <div class="ctl-h"><label>Základní úroková sazba (2T repo)</label><span class="val" id="vRate">4.00 %</span></div>
+          <input type="range" id="sRate" min="0" max="18" step="0.25" value="4">
+          <div class="ctl-sub"><span>0 %</span><span id="rateDelta">beze změny</span><span>18 %</span></div>
+          <div class="hint" style="margin-top:6px" id="rateHint"></div>
+        </div>
+
+        <div class="ctl">
+          <div class="ctl-h"><label>Bilance ČNB (QE / QT)</label><span class="val" id="vQe">0</span></div>
+          <input type="range" id="sQe" min="-4" max="4" step="0.5" value="0">
+          <div class="ctl-sub"><span>QT prodej</span><span>neutrál</span><span>QE nákup</span></div>
+        </div>
+
+        <div class="ctl">
+          <div class="ctl-h"><label>Devizová intervence (na 1 čtvrtletí)</label><span class="val" id="vFx">0</span></div>
+          <input type="range" id="sFx" min="-5" max="5" step="0.5" value="0">
+          <div class="ctl-sub"><span>slabší CZK</span><span id="reservesLbl">rezervy –</span><span>silnější CZK</span></div>
+        </div>
+
+        <div class="ctl" style="margin-bottom:8px">
+          <div class="ctl-h"><label>Komunikace trhu (forward guidance)</label></div>
+          <div class="seg" id="segGuide">
+            <button data-g="dovish">🕊️ Holubičí</button>
+            <button data-g="neutral" class="on">⚖️ Neutrální</button>
+            <button data-g="hawkish">🦅 Jestřábí</button>
+          </div>
+          <div class="hint" style="margin-top:6px">Slib do budoucna hýbe očekáváním inflace – ale jen dokud vám trh věří.</div>
+        </div>
+      </div>
+
+      <div class="card-b" id="tab-fis" style="display:none">
+        <div class="ctl">
+          <div class="ctl-h"><label>Efektivní daňová sazba</label><span class="val" id="vTax">36.0 %</span></div>
+          <input type="range" id="sTax" min="25" max="52" step="0.5" value="36">
+          <div class="ctl-sub"><span>25 %</span><span>daňová kvóta</span><span>52 %</span></div>
+        </div>
+        <h4 class="sec" style="margin-top:4px">Výdajové kapitoly (% HDP)</h4>
+        <div id="budgetRows"></div>
+        <div class="bal"><span>Příjmy</span><span id="bRev">–</span></div>
+        <div class="bal"><span>Výdaje + úroky</span><span id="bExp">–</span></div>
+        <div class="bal" style="border-color:#3d5b87"><span><b>Saldo rozpočtu</b></span><span id="bBal">–</span></div>
+        <div class="hint" style="margin-top:8px">Investice mají nejvyšší multiplikátor a zvedají potenciál růstu. Sociální výdaje zvedají popularitu, ale i poptávku (a tím inflaci).</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>🎯 Plnění mandátu</h3></div>
+      <div class="card-b" id="mandate"></div>
+    </div>
+  </div>
+
+  <!-- ============ CENTER: charts ============ -->
+  <div class="col center">
+    <div class="card">
+      <div class="card-h">
+        <h3>📈 Makroekonomický dashboard</h3>
+        <div class="tb-spacer"></div>
+        <span class="mono" style="font-size:.7rem;color:var(--txt3)" id="chartRange">posledních 32 Q</span>
+      </div>
+      <div class="legend" id="legendMain"></div>
+      <div class="chart-wrap"><canvas id="chartMain" height="330"></canvas></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h"><h3>💱 Kurz CZK/EUR</h3><div class="tb-spacer"></div><span class="mono" id="fxNow" style="font-size:.76rem"></span></div>
+        <div class="chart-wrap"><canvas id="chartFx" height="150"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>🏛️ Dluh &amp; saldo (% HDP)</h3><div class="tb-spacer"></div><span class="mono" id="debtNow" style="font-size:.76rem"></span></div>
+        <div class="chart-wrap"><canvas id="chartDebt" height="150"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>📉 Výnosová křivka &amp; sazba</h3><div class="tb-spacer"></div><span class="mono" id="yieldNow" style="font-size:.76rem"></span></div>
+        <div class="chart-wrap"><canvas id="chartYield" height="150"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>😊 Popularita &amp; kredibilita</h3><div class="tb-spacer"></div><span class="mono" id="popNow" style="font-size:.76rem"></span></div>
+        <div class="chart-wrap"><canvas id="chartPop" height="150"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ RIGHT: news + markets ============ -->
+  <div class="col right">
+    <div class="card">
+      <div class="card-h">
+        <h3>🌍 Světové trhy</h3><div class="tb-spacer"></div>
+        <span class="badge load" id="mkBadge">načítám…</span>
+      </div>
+      <div id="marketList"></div>
+      <div class="card-b" style="border-top:1px solid var(--line);padding:10px 13px">
+        <div class="hint" id="mkNote">Živá data z veřejných burzovních API. Nálada světových trhů ovlivňuje vaši ekonomiku – rizikový sentiment, ceny komodit i poptávku po exportu.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>🪙 Devizové rezervy</h3><div class="tb-spacer"></div><span class="mono" id="fundVal" style="font-size:.76rem"></span></div>
+      <div class="card-b">
+        <div class="hint" style="margin-bottom:10px">Rozdělte rezervy centrální banky. Výnos se počítá z <b>reálných</b> pohybů trhů (nebo ze simulace, pokud data nejdou načíst).</div>
+        <div id="allocRows"></div>
+        <div class="bal"><span>Výnos za čtvrtletí</span><span id="fundRet">–</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>📰 Zpravodajství</h3><div class="tb-spacer"></div><span class="dot-live"></span></div>
+      <div id="news"></div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+<div class="toast-wrap" id="toasts"></div>
+<div id="modalRoot"></div>
+
+<script>
+/* =======================================================================
+   GUVERNÉR – hra na centrální banku
+   Ekonomický model: IS křivka + Phillipsova křivka s očekáváním,
+   Okunův zákon, UIP kurz, dynamika dluhu, kredibilita a popularita.
+   ======================================================================= */
+'use strict';
+
+const TARGET = 2.0;          // inflační cíl
+const BAND   = 1.0;          // toleranční pásmo
+const TERM   = 32;           // délka mandátu ve čtvrtletích (8 let)
+const NAIRU0 = 4.4;
+const POT0   = 2.0;          // potenciální růst
+const FOREIGN_RATE = 2.5;    // zahraniční (ECB) sazba
+const SAVE_KEY = 'cnb-game-v1';
+
+/* ---------- utils ---------- */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function gauss(mu=0,sd=1){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();
+  return mu+sd*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const f1=v=>(v>=0?'':'')+v.toFixed(1);
+const pct=v=>v.toFixed(1)+' %';
+const sgn=v=>(v>0?'+':'')+v.toFixed(1);
+const lerp=(a,b,t)=>a+(b-a)*t;
+
+/* ---------- výdajové kapitoly ---------- */
+const CHAPTERS=[
+  {id:'social', name:'Sociální a důchody', icon:'👵', mult:0.65, pop:1.25, pot:0.00, def:14.0, min:8,  max:22},
+  {id:'health', name:'Zdravotnictví',      icon:'🏥', mult:0.75, pop:0.95, pot:0.06, def:8.5,  min:5,  max:14},
+  {id:'edu',    name:'Školství a věda',    icon:'🎓', mult:0.70, pop:0.55, pot:0.16, def:5.5,  min:2,  max:10},
+  {id:'invest', name:'Investice a infra',  icon:'🏗️', mult:1.25, pop:0.45, pot:0.20, def:4.5,  min:1,  max:10},
+  {id:'defense',name:'Obrana a bezpečnost',icon:'🛡️', mult:0.55, pop:0.10, pot:0.02, def:2.2,  min:1,  max:6},
+  {id:'admin',  name:'Státní správa',      icon:'📋', mult:0.50, pop:-0.25,pot:0.00, def:3.5,  min:2,  max:8},
+];
+
+/* ---------- stav ---------- */
+let S, running=false, speed=2600, timer=null, gameOver=false;
+
+function newState(){
+  const spend={}; CHAPTERS.forEach(c=>spend[c.id]=c.def);
+  return {
+    t:0, year:2026, q:1,
+    rate:4.0, prevRate:4.0, qe:0, fxInt:0, guidance:'neutral',
+    tax:36.0, prevTax:36.0, spend, prevStance:null,
+    infl:5.4, inflExp:3.6, gap:0.6, u:4.2, gdp:2.4,
+    fx:25.30, debt:46.0, deficit:3.4, y10:4.6, coupon:3.9,
+    cred:0.55, pop:52, reserves:140, stress:18,
+    nairu:NAIRU0, pot:POT0, energy:100, globalDemand:0.2, globalRisk:0,
+    fund:{eur:45, usd:20, gold:15, stocks:15, btc:5}, fundPnl:0, fundRet:0,
+    hist:[], news:[], flags:{}, streakBad:0, streakPop:0, score:0,
+    lastEffects:null,
+  };
+}
+
+/* ---------- fiskální propočty ---------- */
+function fiscalStance(st){
+  let w=0, popPush=0, potPush=0, total=0;
+  CHAPTERS.forEach(c=>{ const v=st.spend[c.id]; total+=v; w+=v*c.mult; popPush+=v*c.pop; potPush+=v*c.pot; });
+  return {total, weighted:w, popPush, potPush};
+}
+function budget(st){
+  const fs=fiscalStance(st);
+  // daňová základna reaguje na cyklus a na Lafferův efekt při extrémních sazbách
+  const laffer = 1 - Math.pow(Math.max(0,st.tax-42)/26, 2)*0.55;
+  const revenue = st.tax*(1+0.045*st.gap)*laffer;
+  const interest = st.debt*st.coupon/100;
+  const expend = fs.total + interest;
+  return {revenue, interest, expend, balance:revenue-expend, total:fs.total, fs};
+}
+
+/* ---------- jeden krok modelu (jedno čtvrtletí) ---------- */
+function step(){
+  const s=S;
+  const prev={infl:s.infl,gap:s.gap,u:s.u,fx:s.fx,pop:s.pop,debt:s.debt,rate:s.rate};
+  const eff = {};
+
+  /* --- 0. svět --- */
+  const mkRisk = clamp(MK.sentiment, -1.2, 1.2);          // z reálných trhů
+  s.globalRisk = 0.6*s.globalRisk + 0.4*mkRisk;
+  s.globalDemand = clamp(0.8*s.globalDemand + 0.2*(s.globalRisk*1.1) + gauss(0,0.4), -4, 4);
+  s.energy = clamp(s.energy*(1 + gauss(0,0.05)*1 - 0.06*(s.energy-100)/100 + s.globalRisk*0.012), 45, 340);
+
+  /* --- 1. finanční podmínky (transmise s jednočtvrtletním zpožděním) --- */
+  const effRate = 0.55*s.rate + 0.45*s.prevRate;
+  const realRate = effRate - s.inflExp;
+  const neutral = 0.9 + 0.25*(s.pot-POT0);
+  const fin = (realRate - neutral) - 0.45*s.qe + 0.20*(s.y10 - s.rate);
+
+  /* --- 2. fiskální impuls --- */
+  const fs = fiscalStance(s);
+  const stance = fs.weighted - 0.85*s.tax;
+  if(s.prevStance===null) s.prevStance=stance;
+  const fiscalImpulse = (stance - s.prevStance);
+  s.prevStance = stance;
+
+  /* --- 3. mezera výstupu (IS) --- */
+  const fxAppr = (prev.fx - s.fx)/s.fx*100;      // kladné = posílení
+  const gapNew = clamp(
+      0.72*s.gap
+    - 0.50*fin
+    + 0.62*fiscalImpulse
+    + 0.22*s.globalDemand
+    - 0.14*fxAppr
+    - 0.010*(s.energy-100)
+    - 0.030*Math.max(0, s.stress-55)
+    + gauss(0,0.34), -9, 9);
+
+  /* --- 4. inflace (Phillips s očekáváním) --- */
+  const fxDepr = -fxAppr;
+  const importInfl = 0.20*fxDepr + 0.026*(s.energy-100);
+  // hybridní Phillipsova křivka: část dopředu hledící (očekávání), část setrvačná
+  const inflNew = clamp(
+      0.62*s.inflExp
+    + 0.38*s.infl
+    + 0.36*gapNew
+    + 0.40*importInfl
+    + gauss(0,0.34), -8, 70);
+
+  /* --- 5. očekávání + kredibilita --- */
+  const guide = s.guidance==='hawkish' ? -0.45 : s.guidance==='dovish' ? +0.45 : 0;
+  s.inflExp = clamp(
+      s.cred*(TARGET + guide*0.7)
+    + (1-s.cred)*(0.55*inflNew + 0.45*s.inflExp + guide*0.25), -3, 32);
+
+  const miss=Math.abs(inflNew-TARGET);
+  const jump=Math.abs(s.rate-s.prevRate);
+  let dCred = miss<BAND ? 0.020 : miss<2.5 ? 0.003 : -0.028*(miss-1.4);
+  dCred -= 0.022*Math.max(0,jump-2);                 // divoké skoky sazeb
+  dCred -= 0.035*Math.max(0,s.debt-90)/10;           // fiskální dominance
+  dCred -= 0.010*Math.max(0,s.qe-2);                 // nadužívání tiskárny
+  if(s.guidance==='hawkish' && inflNew>s.infl) dCred-=0.025;  // sliby, které nedržíte
+  if(s.guidance==='dovish' && inflNew>TARGET+BAND) dCred-=0.015;
+  s.cred = clamp(s.cred+dCred, 0.05, 0.95);
+
+  /* --- 6. trh práce (Okun + hystereze) --- */
+  s.nairu = clamp(s.nairu + (gapNew<-3 ? 0.05 : -0.012*(s.nairu-NAIRU0)), 3.6, 7.5);
+  s.u = clamp(s.u - 0.42*(gapNew-s.gap) + 0.14*(s.nairu-s.u) + gauss(0,0.14), 1.6, 22);
+
+  /* --- 7. růst a potenciál --- */
+  s.pot = clamp(0.97*s.pot + 0.03*(1.1 + 0.12*fs.potPush) - (gapNew<-3?0.02:0), 0.2, 4.2);
+  s.gdp = clamp(s.pot + (gapNew-s.gap)*1.05 + gauss(0,0.25), -12, 12);
+
+  /* --- 8. kurz (UIP + riziková prémie) --- */
+  const riskPrem = 0.030*Math.max(0,s.debt-65) + 1.5*(1-s.cred) - 0.55*s.globalRisk + 0.02*Math.max(0,s.stress-50);
+  let fxCh = 0.30*(s.inflExp-2.0) - 0.34*(effRate-FOREIGN_RATE) + riskPrem - 1.05*s.fxInt + gauss(0,0.60);
+  fxCh = clamp(fxCh, -9, 12);
+  s.fx = clamp(s.fx*(1+fxCh/100), 12, 90);
+  if(s.fxInt>0) s.reserves -= s.fxInt*4.2;           // posilování = prodej rezerv
+  else if(s.fxInt<0) s.reserves += -s.fxInt*3.4;
+  s.reserves = clamp(s.reserves, 0, 600);
+
+  /* --- 9. výnosy a dluhová služba --- */
+  const term = 0.45 + 0.040*Math.max(0,s.debt-60) + 1.6*(1-s.cred) - 0.30*s.qe - 0.25*s.globalRisk;
+  s.y10 = clamp(0.5*s.rate + 0.5*(s.inflExp+1.0) + term + gauss(0,0.28), 0, 34);
+  s.coupon = 0.86*s.coupon + 0.14*s.y10;
+
+  /* --- 10. rozpočet a dluh --- */
+  s.infl = inflNew; s.gap = gapNew;
+  const b = budget(s);
+  s.deficit = -b.balance;
+  const nomGrowth = s.gdp + s.infl;
+  s.debt = clamp(s.debt + s.deficit/4 - s.debt*(nomGrowth/100)/4, 0, 320);
+
+  /* --- 11. bankovní stres --- */
+  s.stress = clamp(
+      0.80*s.stress
+    + 7.5*Math.max(0, s.rate-s.prevRate)
+    + 1.1*Math.max(0, s.y10-6)
+    + 1.3*Math.max(0, -gapNew)
+    + 0.9*Math.max(0, s.infl-8)
+    + 1.4*(s.flags.housing?1:0)
+    - 3.0, 0, 100);
+
+  /* --- 12. popularita --- */
+  let dPop =
+      - 1.45*Math.max(0, s.infl-3.2)
+      - 0.9*Math.max(0, TARGET-1 - s.infl)          // deflace lidi taky děsí
+      - 2.10*Math.max(0, s.u-5.0)
+      + 1.40*(s.gdp-1.4)
+      - 1.60*(s.tax-s.prevTax)
+      + 0.55*(fs.popPush-38)/10
+      - 1.15*Math.max(0, s.rate-s.prevRate)         // hypotéky
+      - 0.030*Math.max(0, s.stress-60)
+      + 0.14*(50-s.pop);
+  s.pop = clamp(s.pop + clamp(dPop,-16,16), 0, 100);
+  s.prevTax = s.tax;
+  s.prevRate = s.rate;
+
+  /* --- 13. rezervní fond na reálných trzích --- */
+  applyFundReturn();
+
+  /* --- 13b. intervence je jednorázová akce, stanovisko slábne --- */
+  s.fxInt = Math.abs(s.fxInt)<0.5 ? 0 : +(s.fxInt*0.5).toFixed(2);
+
+  /* --- 14. čas --- */
+  s.t++; s.q++; if(s.q>4){s.q=1;s.year++;}
+  s.hist.push(snapshot());
+
+  /* --- 15. sledování selhání mandátu --- */
+  s.streakBad = Math.abs(s.infl-TARGET)>7 ? s.streakBad+1 : 0;
+  s.streakPop = s.pop<12 ? s.streakPop+1 : 0;
+
+  eff.fxCh=fxCh; eff.dPop=dPop; eff.dCred=dCred; eff.fin=fin; eff.fiscalImpulse=fiscalImpulse;
+  s.lastEffects=eff;
+  return {prev, eff};
+}
+
+function snapshot(){
+  const b=budget(S);
+  return {t:S.t, label:'Q'+S.q+'/'+String(S.year).slice(2),
+    infl:S.infl, inflExp:S.inflExp, gdp:S.gdp, u:S.u, rate:S.rate, fx:S.fx,
+    debt:S.debt, deficit:S.deficit, y10:S.y10, pop:S.pop, cred:S.cred*100,
+    gap:S.gap, stress:S.stress, reserves:S.reserves, balance:b.balance};
+}
+
+/* =======================================================================
+   UDÁLOSTI – rozhodovací karty
+   ======================================================================= */
+const EVENTS=[
+ {id:'energy', tag:'Šok nabídky', w:10, title:'Energetická krize: plyn +180 %',
+  text:'Přerušení dodávek zvedlo velkoobchodní ceny energií na trojnásobek. Vláda chce zastropovat ceny, průmysl žádá kompenzace. Inflace poroste tak jako tak – otázka je, kdo to zaplatí.',
+  choices:[
+   {t:'Nedělat nic, je to jednorázový šok',d:'Klasická poučka: přes nabídkový šok se má centrální banka „podívat“. Pokud vám lidé věří.',
+    tags:['inflace ↑↑','kredibilita = test'], apply:s=>{s.energy*=1.45; s.inflExp+=0.6*(1-s.cred)*3;}},
+   {t:'Podpořit zastropování cen (2 % HDP)',d:'Krátkodobě srazí inflaci, ale roztočí deficit a poptávku.',
+    tags:['deficit +2 %','inflace ↓ teď, ↑ potom','popularita ↑'], apply:s=>{s.energy*=1.18; s.infl-=1.6; s.spend.social+=2.0; s.pop+=7;}},
+   {t:'Preventivně zvýšit sazby o 1 p.b.',d:'Ubráníte očekávání, zaplatíte růstem a hypotékami.',
+    tags:['sazba +1','růst ↓','stres bank ↑'], apply:s=>{s.energy*=1.45; s.rate=clamp(s.rate+1,0,18); s.cred+=0.05; s.pop-=4;}},
+  ]},
+
+ {id:'wagespiral', tag:'Trh práce', w:9, cond:s=>s.infl>5&&s.u<5,
+  title:'Odbory žádají +15 % mzdy',
+  text:'Napjatý trh práce a vysoká inflace roztáčejí mzdové vyjednávání. Pokud se očekávání odkotví, dostat inflaci zpět bude stát roky.',
+  choices:[
+   {t:'Tvrdý jestřábí projev na tiskovce',d:'„Uděláme, co bude nutné.“ Trh vám uvěří jen tehdy, když to potvrdíte sazbami.',
+    tags:['očekávání ↓','musíte to dodržet'], apply:s=>{s.inflExp-=0.9*s.cred; s.guidance='hawkish'; s.cred+=0.02;}},
+   {t:'Tripartitní dohoda o mzdové umírněnosti',d:'Výměnou za nižší zdanění práce.',
+    tags:['daně −1','inflace ↓','deficit ↑'], apply:s=>{s.tax=clamp(s.tax-1,25,52); s.inflExp-=0.6; s.pop+=3;}},
+   {t:'Nechat to na trhu',d:'Mzdy jsou věc firem, ne guvernéra.',
+    tags:['inflace ↑','popularita ↑'], apply:s=>{s.inflExp+=0.8; s.pop+=2; s.gap+=0.4;}},
+  ]},
+
+ {id:'bankrun', tag:'Finanční stabilita', w:0, cond:s=>s.stress>78,
+  title:'Runs na banku: Moravská spořitelna padá',
+  text:'Rychlé zvyšování sazeb podřízlo bankám portfolia dluhopisů. Vkladatelé stojí frontu. Máte hodiny na rozhodnutí.',
+  choices:[
+   {t:'Neomezená likvidita + garance vkladů',d:'Zachráníte systém, ale vytisknete peníze a vytvoříte morální hazard.',
+    tags:['stres ↓↓','inflace ↑','dluh +3'], apply:s=>{s.stress-=45; s.qe=clamp(s.qe+1.5,-4,4); s.debt+=3; s.inflExp+=0.4; s.pop+=2;}},
+   {t:'Řízený pád, chráníme jen pojištěné vklady',d:'Disciplína trhu. A možná řetězová reakce.',
+    tags:['kredibilita ↑','recese ↑','popularita ↓'], apply:s=>{s.stress-=18; s.gap-=1.6; s.cred+=0.05; s.pop-=9; s.u+=0.6;}},
+   {t:'Nucená fúze s velkou bankou',d:'Rychlé, tiché, koncentruje riziko.',
+    tags:['stres ↓','riziko do budoucna'], apply:s=>{s.stress-=30; s.flags.tooBigToFail=true; s.pop-=2;}},
+  ]},
+
+ {id:'election', tag:'Politika', w:0,
+  title:'Volby: nová vláda chce „přátelštější“ centrální banku',
+  text:'Vítěz voleb slibuje investiční balíček a veřejně vás vyzývá ke snížení sazeb. Novela zákona o ČNB je připravena v šuplíku.',
+  choices:[
+   {t:'Hájit nezávislost, sazby neměnit',d:'Ústavní spor, ale trhy vás ocení.',
+    tags:['kredibilita ↑↑','popularita ↓'], apply:s=>{s.cred+=0.10; s.pop-=8; s.fx*=0.985;}},
+   {t:'Vyjít vstříc: −0,5 p.b.',d:'Klid na práci výměnou za kus důvěryhodnosti.',
+    tags:['sazba −0,5','kredibilita ↓','popularita ↑'], apply:s=>{s.rate=clamp(s.rate-0.5,0,18); s.cred-=0.10; s.pop+=6;}},
+   {t:'Dohoda: nezávislost za fiskální pravidlo',d:'Vláda přijme dluhovou brzdu, vy zůstanete v klidu.',
+    tags:['strop deficitu','kredibilita ↑'], apply:s=>{s.flags.fiscalRule=true; s.cred+=0.06; s.pop+=1;}},
+  ]},
+
+ {id:'cryptoboom', tag:'Trhy', w:8,
+  title:'Krypto mánie zasáhla domácnosti',
+  text:'Retailoví investoři přelévají úspory do digitálních aktiv, část si na to bere spotřebitelské úvěry. Poslanci navrhují národní bitcoinovou rezervu.',
+  choices:[
+   {t:'Varovat a zpřísnit úvěrové limity',d:'Makroobezřetnostní opatření (LTV/DSTI).',
+    tags:['stres ↓','poptávka ↓','popularita ↓'], apply:s=>{s.stress-=10; s.gap-=0.4; s.pop-=4; s.cred+=0.03;}},
+   {t:'Dát 5 % rezerv do bitcoinu',d:'Odvážné. Výnos i ztráta se počítají z reálného trhu.',
+    tags:['fond: BTC +5 %','volatilita'], apply:s=>{s.fund.btc=clamp(s.fund.btc+5,0,60); s.fund.eur=clamp(s.fund.eur-5,0,100); s.pop+=3;}},
+   {t:'Ignorovat, není to naše starost',d:'',tags:['bez efektu','riziko bubliny'], apply:s=>{s.flags.bubble=true;}},
+  ]},
+
+ {id:'exportboom', tag:'Vnější prostředí', w:8,
+  title:'Německo spustilo obří investiční program',
+  text:'Hlavní obchodní partner otevírá kohouty. Objednávky v průmyslu rostou nejrychleji za 10 let.',
+  choices:[
+   {t:'Využít a nechat ekonomiku běžet',d:'',tags:['růst ↑↑','inflace ↑'], apply:s=>{s.globalDemand+=1.6; s.gap+=0.5;}},
+   {t:'Přebytek uložit do rezerv (slabší koruna)',d:'Nakoupíte devizy, exportérům pomůžete.',
+    tags:['rezervy ↑','kurz slabší','inflace ↑'], apply:s=>{s.globalDemand+=1.2; s.reserves+=18; s.fx*=1.02;}},
+   {t:'Zvýšit daně z mimořádných zisků',d:'Windfall tax na exportéry.',
+    tags:['daně +1','deficit ↓','investice ↓'], apply:s=>{s.tax=clamp(s.tax+1,25,52); s.pot-=0.1; s.pop+=2;}},
+  ]},
+
+ {id:'recession', tag:'Šok poptávky', w:9, cond:s=>s.gap<0.5,
+  title:'Světová recese klepe na dveře',
+  text:'Přední indikátory se hroutí, zahraniční objednávky padají. Máte prostor jednat dřív, než se to projeví v datech.',
+  choices:[
+   {t:'Rychlý řez sazeb o 1,5 p.b.',d:'Preemptivní uvolnění.',
+    tags:['sazba −1,5','inflace ↑ později'], apply:s=>{s.rate=clamp(s.rate-1.5,0,18); s.pop+=4;}},
+   {t:'Fiskální balíček: +2 % HDP do investic',d:'Nejvyšší multiplikátor, ale i deficit.',
+    tags:['investice +2','dluh ↑'], apply:s=>{s.spend.invest=clamp(s.spend.invest+2,1,10); s.pop+=3;}},
+   {t:'Počkat na tvrdá data',d:'Nedělat zbrklá rozhodnutí.',
+    tags:['riziko: pozdě'], apply:s=>{s.globalDemand-=1.4;}},
+  ]},
+
+ {id:'imf', tag:'Dluhová krize', w:0, cond:s=>s.debt>105,
+  title:'Ratingové agentury: hrozí snížení do junk pásma',
+  text:'Investoři odmítli část emise státních dluhopisů. Výnosy vystřelily, ministerstvo financí žádá centrální banku o „pomoc s odbytem“.',
+  choices:[
+   {t:'Odmítnout monetizaci dluhu',d:'Zákaz financování státu je zákaz. Bude to bolet.',
+    tags:['výnosy ↑','kredibilita ↑↑','popularita ↓↓'], apply:s=>{s.y10+=2.0; s.cred+=0.12; s.pop-=10;}},
+   {t:'Nakoupit dluhopisy na sekundárním trhu',d:'Formálně QE, fakticky fiskální dominance.',
+    tags:['výnosy ↓','inflace ↑↑','kredibilita ↓↓'], apply:s=>{s.qe=clamp(s.qe+2.5,-4,4); s.y10-=1.5; s.cred-=0.18; s.inflExp+=1.2;}},
+   {t:'Konsolidační balíček: daně +2, výdaje −2',d:'Bolestivé, ale uklidní trh.',
+    tags:['recese ↑','dluh ↓','popularita ↓'], apply:s=>{s.tax=clamp(s.tax+2,25,52); s.spend.social=clamp(s.spend.social-1,8,22); s.spend.admin=clamp(s.spend.admin-1,2,8); s.pop-=7; s.cred+=0.08;}},
+  ]},
+
+ {id:'pandemic', tag:'Černá labuť', w:5,
+  title:'Nová pandemie: lockdowny v Asii',
+  text:'Dodavatelské řetězce se trhají, poptávka po službách padá. Nabídkový i poptávkový šok naráz.',
+  choices:[
+   {t:'Sazby na nulu + QE',d:'Bazuka jako v roce 2020.',
+    tags:['sazba 0','QE ↑↑','inflace ↑ za rok'], apply:s=>{s.rate=0.25; s.qe=3; s.gap-=1.2; s.pop+=4;}},
+   {t:'Cílená podpora firem, sazby beze změny',d:'Úvěrové garance místo plošného tisku.',
+    tags:['dluh +2','stres ↓'], apply:s=>{s.debt+=2; s.gap-=1.8; s.stress-=8; s.pop+=2;}},
+   {t:'Minimální zásah',d:'Ekonomika se očistí sama.',
+    tags:['hluboká recese','inflace ↓'], apply:s=>{s.gap-=3.0; s.u+=1.0; s.pop-=6; s.cred+=0.03;}},
+  ]},
+
+ {id:'housing', tag:'Makroobezřetnost', w:7, cond:s=>s.rate<3.5,
+  title:'Ceny bytů +22 % za rok',
+  text:'Levné hypotéky nafoukly trh s bydlením. Mladí nedosáhnou na vlastní bydlení, banky mají v hypotékách polovinu bilance.',
+  choices:[
+   {t:'Zpřísnit LTV/DSTI limity',d:'Přesně nástroj na tohle.',tags:['stres ↓','popularita ↓'],
+    apply:s=>{s.stress-=12; s.gap-=0.3; s.pop-=3; s.cred+=0.04;}},
+   {t:'Zvýšit sazby o 0,75 p.b.',d:'Tlouct kladivem do mouchy.',tags:['sazba +0,75','růst ↓'],
+    apply:s=>{s.rate=clamp(s.rate+0.75,0,18); s.pop-=5;}},
+   {t:'Nic – je to problém stavebních povolení',d:'Věcně pravda, politicky sebevražda.',
+    tags:['bublina ↑'], apply:s=>{s.stress+=8; s.flags.housing=true;}},
+  ]},
+
+ {id:'cyber', tag:'Provoz', w:5,
+  title:'Kybernetický útok na platební systém CERTIS',
+  text:'Mezibankovní platby stojí šestou hodinu. Média spekulují o státním aktérovi.',
+  choices:[
+   {t:'Okamžitě informovat veřejnost',d:'Transparentnost dnes, důvěra zítra.',
+    tags:['kredibilita ↑','krátká panika'], apply:s=>{s.cred+=0.04; s.stress+=6; s.pop-=2;}},
+   {t:'Tiše opravit, komunikovat až po',d:'',tags:['riziko úniku'], apply:s=>{
+     if(Math.random()<0.5){s.cred-=0.10; s.pop-=6; addNews('Únik: ČNB tajila výpadek plateb','bad');}
+     else {s.stress+=2;}}},
+   {t:'Investovat 0,3 % HDP do kyberobrany',d:'',tags:['výdaje ↑','stres ↓'],
+    apply:s=>{s.spend.admin=clamp(s.spend.admin+0.3,2,8); s.stress-=6; s.cred+=0.02;}},
+  ]},
+
+ {id:'digital', tag:'Inovace', w:6,
+  title:'Zavést digitální korunu (CBDC)?',
+  text:'ECB tlačí digitální euro. Banky se bojí odlivu vkladů, občané ochrany soukromí.',
+  choices:[
+   {t:'Spustit pilot digitální koruny',d:'Modernizace, ale riziko odlivu vkladů z bank.',
+    tags:['potenciál ↑','stres ↑'], apply:s=>{s.pot+=0.15; s.stress+=8; s.flags.cbdc=true;}},
+   {t:'Jen výzkum, žádné spuštění',d:'',tags:['neutrální'], apply:s=>{s.cred+=0.01;}},
+   {t:'Odmítnout a posílit hotovost',d:'Populární u části voličů.',tags:['popularita ↑'], apply:s=>{s.pop+=3; s.pot-=0.05;}},
+  ]},
+
+ {id:'migration', tag:'Nabídka práce', w:6, cond:s=>s.u<4.2,
+  title:'Nedostatek pracovníků brzdí výrobu',
+  text:'Firmy hlásí 300 tisíc neobsazených míst. Vláda váhá nad pracovní migrací.',
+  choices:[
+   {t:'Podpořit pracovní migraci',d:'Sníží mzdové tlaky, zvedne potenciál.',
+    tags:['inflace ↓','potenciál ↑','popularita ↓'], apply:s=>{s.nairu-=0.3; s.pot+=0.2; s.inflExp-=0.3; s.pop-=5;}},
+   {t:'Rekvalifikace a školství (+1 % HDP)',d:'Pomalé, ale trvalé.',
+    tags:['školství +1','potenciál ↑'], apply:s=>{s.spend.edu=clamp(s.spend.edu+1,2,10); s.pop+=2;}},
+   {t:'Nechat mzdy růst',d:'',tags:['inflace ↑','popularita ↑'], apply:s=>{s.inflExp+=0.5; s.pop+=4;}},
+  ]},
+
+ {id:'fxattack', tag:'Kurz', w:6, cond:s=>s.cred<0.5,
+  title:'Spekulativní útok na korunu',
+  text:'Hedgeové fondy sázejí na oslabení koruny. Za den odteklo 6 mld. EUR.',
+  choices:[
+   {t:'Bránit kurz intervencemi',d:'Spálíte rezervy, možná zbytečně.',
+    tags:['rezervy −25','kurz ↓'], apply:s=>{s.reserves-=25; s.fx*=0.97; s.fxInt=Math.max(s.fxInt,2);}},
+   {t:'Nouzové zvýšení sazeb o 2 p.b.',d:'Klasická obrana. Ekonomika to schytá.',
+    tags:['sazba +2','recese ↑','stres ↑'], apply:s=>{s.rate=clamp(s.rate+2,0,18); s.stress+=12; s.pop-=6;}},
+   {t:'Nechat kurz plavat',d:'Plovoucí kurz je tlumič šoků, ne cíl.',
+    tags:['kurz ↑↑','inflace ↑'], apply:s=>{s.fx*=1.05; s.cred+=0.02;}},
+  ]},
+
+ {id:'green', tag:'Regulace', w:5,
+  title:'Zelené kapitálové požadavky',
+  text:'Brusel chce, aby banky držely víc kapitálu proti uhlíkovým expozicím. Průmysl varuje před úvěrovým utažením.',
+  choices:[
+   {t:'Zavést v plném rozsahu',d:'',tags:['úvěry ↓','stres ↓','růst ↓'], apply:s=>{s.gap-=0.4; s.stress-=8; s.pot+=0.05;}},
+   {t:'Odložit o dva roky',d:'',tags:['růst ↑','stres ↑'], apply:s=>{s.gap+=0.2; s.stress+=5;}},
+   {t:'Kompromis: pomalý náběh',d:'',tags:['neutrální'], apply:s=>{s.stress-=3;}},
+  ]},
+
+ {id:'techboom', tag:'Nabídka', w:6,
+  title:'AI zvedla produktivitu v průmyslu',
+  text:'Firmy hlásí skokový růst produktivity. Dezinflační vítr do plachet – pokud ho nezadusíte.',
+  choices:[
+   {t:'Nechat ekonomiku růst rychleji',d:'Vyšší potenciál znamená, že růst nemusí být inflační.',
+    tags:['potenciál ↑↑','inflace ↓'], apply:s=>{s.pot+=0.4; s.inflExp-=0.3;}},
+   {t:'Zdanit digitální zisky',d:'',tags:['daně +0,5','potenciál ↓'], apply:s=>{s.tax=clamp(s.tax+0.5,25,52); s.pot+=0.1; s.pop+=2;}},
+   {t:'Podpořit investice odpisy',d:'',tags:['deficit ↑','potenciál ↑'], apply:s=>{s.spend.invest=clamp(s.spend.invest+1,1,10); s.pot+=0.25;}},
+  ]},
+
+ {id:'deflation', tag:'Past likvidity', w:0, cond:s=>s.infl<0.2&&s.rate<1,
+  title:'Deflace: ceny klesají třetí čtvrtletí',
+  text:'Domácnosti odkládají nákupy, reálná hodnota dluhů roste. Sazby už máte skoro na nule.',
+  choices:[
+   {t:'Masivní QE + slabší koruna',d:'Nekonvenční nástroje.',
+    tags:['QE ↑↑','kurz ↑'], apply:s=>{s.qe=4; s.fxInt=-3; s.inflExp+=0.5;}},
+   {t:'Zvýšit inflační cíl na 3 %',d:'Kontroverzní, ale odkotví očekávání směrem nahoru.',
+    tags:['očekávání ↑','kredibilita ↓'], apply:s=>{s.inflExp+=0.8; s.cred-=0.08;}},
+   {t:'Helikoptérové peníze: 20 tis. Kč každému',d:'Přímý fiskálně-monetární impuls.',
+    tags:['dluh +4','poptávka ↑↑','popularita ↑↑'], apply:s=>{s.debt+=4; s.gap+=1.4; s.pop+=10; s.cred-=0.06;}},
+  ]},
+
+ {id:'scandal', tag:'Reputace', w:4,
+  title:'Člen bankovní rady obchodoval s akciemi',
+  text:'Investigativní server zveřejnil, že člen rady nakupoval akcie den před rozhodnutím o sazbách.',
+  choices:[
+   {t:'Okamžitá rezignace a nová pravidla',d:'',tags:['kredibilita ↑','krátkodobě ostuda'], apply:s=>{s.cred+=0.05; s.pop-=3;}},
+   {t:'Interní prošetření',d:'',tags:['kredibilita ↓'], apply:s=>{s.cred-=0.06; s.pop-=5;}},
+   {t:'Bránit kolegu',d:'',tags:['kredibilita ↓↓','popularita ↓↓'], apply:s=>{s.cred-=0.12; s.pop-=9;}},
+  ]},
+];
+
+/* výběr události pro dané čtvrtletí */
+function pickEvent(){
+  const s=S;
+  // vynucené krizové události
+  if(s.stress>78 && !s.flags.bankrunDone){ s.flags.bankrunDone=true; return EVENTS.find(e=>e.id==='bankrun'); }
+  if(s.debt>105 && !s.flags.imfDone){ s.flags.imfDone=true; return EVENTS.find(e=>e.id==='imf'); }
+  if(s.infl<0.2 && s.rate<1 && !s.flags.deflDone){ s.flags.deflDone=true; return EVENTS.find(e=>e.id==='deflation'); }
+  if((s.t===16||s.t===31) && !s.flags['elec'+s.t]){ s.flags['elec'+s.t]=true; return EVENTS.find(e=>e.id==='election'); }
+  if(Math.random()>0.42) return null;
+  const pool=EVENTS.filter(e=>e.w>0 && (!e.cond||e.cond(s)) && !s.flags['ev_'+e.id]);
+  if(!pool.length) return null;
+  const tot=pool.reduce((a,e)=>a+e.w,0); let r=Math.random()*tot;
+  for(const e of pool){ r-=e.w; if(r<=0){ s.flags['ev_'+e.id]=true; return e; } }
+  return pool[0];
+}
+
+/* =======================================================================
+   GRAFY – vlastní canvas renderer (bez knihoven)
+   ======================================================================= */
+const CH={};                 // registry grafů kvůli hoveru
+const CSSV=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function fitCanvas(cv){
+  const dpr=window.devicePixelRatio||1;
+  const w=cv.clientWidth||cv.parentElement.clientWidth;
+  const h=parseInt(cv.getAttribute('height'),10);
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){
+    cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); cv.style.height=h+'px';
+  }
+  const ctx=cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  return {ctx,w,h};
+}
+
+function niceTicks(min,max,n=5){
+  if(!isFinite(min)||!isFinite(max)){min=0;max=1;}
+  if(min===max){min-=1;max+=1;}
+  const span=max-min, raw=span/n, mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const norm=raw/mag; const stepN=norm<1.5?1:norm<3?2:norm<7?5:10;
+  const step=stepN*mag;
+  const lo=Math.floor(min/step)*step, hi=Math.ceil(max/step)*step;
+  const out=[]; for(let v=lo;v<=hi+step*0.001;v+=step) out.push(+v.toFixed(6));
+  return out;
+}
+
+function drawChart(id,cfg){
+  const cv=document.getElementById(id); if(!cv) return;
+  const {ctx,w,h}=fitCanvas(cv);
+  const data=cfg.data||[]; const pad={l:38,r:cfg.rightAxis?42:12,t:12,b:20};
+  const iw=w-pad.l-pad.r, ih=h-pad.t-pad.b;
+  const vis=cfg.series.filter(s=>!s.hidden);
+
+  // rozsah os
+  const collect=(axis)=>{const a=[];vis.filter(s=>(s.axis||'l')===axis).forEach(s=>data.forEach(d=>{
+    const v=d[s.key]; if(typeof v==='number'&&isFinite(v)) a.push(v);}));return a;};
+  const build=(arr,forceZero)=>{
+    if(!arr.length) return {min:0,max:1,ticks:[0,1]};
+    let mn=Math.min(...arr), mx=Math.max(...arr);
+    if(forceZero){mn=Math.min(mn,0);mx=Math.max(mx,0);}
+    const p=(mx-mn)*0.16||1; mn-=p; mx+=p;
+    const tk=niceTicks(mn,mx,4);
+    return {min:tk[0],max:tk[tk.length-1],ticks:tk};
+  };
+  const L=build(collect('l'),cfg.zeroL), R=cfg.rightAxis?build(collect('r'),cfg.zeroR):null;
+  const decL=tickDec(L.ticks), decR=R?tickDec(R.ticks):0;
+  const X=i=>pad.l+(data.length<2?iw/2:(i/(data.length-1))*iw);
+  const Y=(v,ax)=>{const A=(ax==='r'&&R)?R:L; return pad.t+ih-((v-A.min)/(A.max-A.min))*ih;};
+
+  // pozadí
+  ctx.fillStyle='rgba(255,255,255,.012)'; ctx.fillRect(pad.l,pad.t,iw,ih);
+
+  // toleranční pásmo
+  if(cfg.band){
+    const y1=Y(cfg.band.to,'l'), y2=Y(cfg.band.from,'l');
+    ctx.fillStyle=cfg.band.color||'rgba(52,211,153,.10)';
+    ctx.fillRect(pad.l,Math.min(y1,y2),iw,Math.abs(y2-y1));
+    if(cfg.band.mid!==undefined){
+      ctx.strokeStyle='rgba(52,211,153,.55)'; ctx.setLineDash([4,4]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.l,Y(cfg.band.mid,'l')); ctx.lineTo(pad.l+iw,Y(cfg.band.mid,'l')); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // mřížka + osa Y
+  ctx.font='10px ui-monospace,monospace'; ctx.textBaseline='middle';
+  L.ticks.forEach(t=>{
+    const y=Y(t,'l'); if(y<pad.t-1||y>pad.t+ih+1) return;
+    ctx.strokeStyle='rgba(35,52,80,.65)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y+.5); ctx.lineTo(pad.l+iw,y+.5); ctx.stroke();
+    ctx.fillStyle='#63748f'; ctx.textAlign='right'; ctx.fillText(fmtTick(t,decL),pad.l-6,y);
+  });
+  if(R) R.ticks.forEach(t=>{
+    const y=Y(t,'r'); if(y<pad.t-1||y>pad.t+ih+1) return;
+    ctx.fillStyle='#5d6f8c'; ctx.textAlign='left'; ctx.fillText(fmtTick(t,decR),pad.l+iw+6,y);
+  });
+
+  // nulová linka
+  if(L.min<0&&L.max>0){ const y=Y(0,'l');
+    ctx.strokeStyle='rgba(149,166,192,.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y+.5); ctx.lineTo(pad.l+iw,y+.5); ctx.stroke(); }
+
+  // osa X
+  const stepX=Math.max(1,Math.ceil(data.length/7));
+  ctx.fillStyle='#4d5c75';
+  data.forEach((d,i)=>{
+    if(!(i%stepX===0||i===data.length-1)) return;
+    ctx.textAlign = i===data.length-1 ? 'right' : i===0 ? 'left' : 'center';
+    ctx.fillText(d.label, X(i), pad.t+ih+11);
+  });
+
+  // sloupce
+  vis.filter(s=>s.type==='bar').forEach(s=>{
+    const bw=Math.max(2,Math.min(16,iw/Math.max(1,data.length)*0.55));
+    data.forEach((d,i)=>{ const v=d[s.key]; if(typeof v!=='number') return;
+      const y0=Y(0,s.axis||'l'), y1=Y(v,s.axis||'l');
+      ctx.fillStyle=v>=0?(s.colorPos||s.color):(s.colorNeg||s.color);
+      ctx.globalAlpha=.75; ctx.fillRect(X(i)-bw/2,Math.min(y0,y1),bw,Math.max(1,Math.abs(y1-y0))); ctx.globalAlpha=1;
+    });
+  });
+
+  // plochy + čáry
+  vis.filter(s=>s.type!=='bar').forEach(s=>{
+    const pts=data.map((d,i)=>({x:X(i),y:Y(d[s.key],s.axis||'l'),v:d[s.key]})).filter(p=>isFinite(p.y));
+    if(!pts.length) return;
+    if(s.type==='area'){
+      const g=ctx.createLinearGradient(0,pad.t,0,pad.t+ih);
+      g.addColorStop(0,s.fill||'rgba(56,189,248,.28)'); g.addColorStop(1,'rgba(56,189,248,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(pts[0].x,pad.t+ih);
+      pts.forEach(p=>ctx.lineTo(p.x,p.y)); ctx.lineTo(pts[pts.length-1].x,pad.t+ih); ctx.closePath(); ctx.fill();
+    }
+    ctx.strokeStyle=s.color; ctx.lineWidth=s.lw||2; ctx.lineJoin='round'; ctx.lineCap='round';
+    if(s.dash) ctx.setLineDash(s.dash);
+    ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+    ctx.setLineDash([]);
+    // poslední bod + záře
+    const last=pts[pts.length-1];
+    ctx.fillStyle=s.color; ctx.shadowColor=s.color; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.arc(last.x,last.y,3.2,0,7); ctx.fill(); ctx.shadowBlur=0;
+  });
+
+  // crosshair
+  const st=CH[id];
+  if(st&&st.hover!=null&&st.hover<data.length){
+    const x=X(st.hover);
+    ctx.strokeStyle='rgba(149,166,192,.45)'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,pad.t+ih); ctx.stroke(); ctx.setLineDash([]);
+    vis.filter(s=>s.type!=='bar').forEach(s=>{
+      const v=data[st.hover][s.key]; if(typeof v!=='number') return;
+      ctx.fillStyle=s.color; ctx.strokeStyle='#0b1424'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(x,Y(v,s.axis||'l'),4,0,7); ctx.fill(); ctx.stroke();
+    });
+  }
+  CH[id]=Object.assign(CH[id]||{},{cfg,geom:{pad,iw,ih,n:data.length},X});
+}
+function tickDec(tk){
+  const step=tk.length>1?Math.abs(tk[1]-tk[0]):1;
+  return step>=10?0:step>=1?(Math.abs(tk[tk.length-1])>=100?0:1):step>=0.1?2:3;
+}
+function fmtTick(t,dec=1){ return Math.abs(t)>=10000? (t/1000).toFixed(0)+'k' : t.toFixed(dec); }
+
+/* sparkline (KPI a trhy) */
+function sparkline(cv,arr,color,fillIt){
+  if(!cv||!arr||arr.length<2) return;
+  const {ctx,w,h}=fitCanvas(cv);
+  const mn=Math.min(...arr), mx=Math.max(...arr), sp=(mx-mn)||1;
+  const X=i=>(i/(arr.length-1))*(w-2)+1, Y=v=>h-2-((v-mn)/sp)*(h-4);
+  if(fillIt){
+    const g=ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,color.replace('rgb','rgba').replace(')',',.35)')); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(X(0),h);
+    arr.forEach((v,i)=>ctx.lineTo(X(i),Y(v))); ctx.lineTo(X(arr.length-1),h); ctx.closePath(); ctx.fill();
+  }
+  ctx.strokeStyle=color; ctx.lineWidth=1.6; ctx.lineJoin='round';
+  ctx.beginPath(); arr.forEach((v,i)=>i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v))); ctx.stroke();
+}
+
+/* hover / tooltip */
+function bindHover(id,fmt){
+  const cv=document.getElementById(id); if(!cv) return;
+  const tip=document.getElementById('tooltip');
+  cv.addEventListener('mousemove',e=>{
+    const st=CH[id]; if(!st||!st.geom||!st.geom.n) return;
+    const r=cv.getBoundingClientRect(); const {pad,iw,n}=st.geom;
+    const rel=clamp((e.clientX-r.left-pad.l)/iw,0,1);
+    const i=Math.round(rel*(n-1));
+    if(st.hover!==i){ st.hover=i; drawChart(id,st.cfg); }
+    const d=st.cfg.data[i]; if(!d) return;
+    tip.innerHTML='<div class="tt-t">'+d.label+'</div>'+
+      st.cfg.series.filter(s=>!s.hidden).map(s=>
+        '<div class="tt-r"><span style="color:'+s.color+'">'+s.name+'</span><b>'+
+        (typeof d[s.key]==='number'? d[s.key].toFixed(s.dec!=null?s.dec:1)+(s.unit||'') : '–')+'</b></div>').join('');
+    tip.style.opacity=1;
+    tip.style.left=Math.min(window.innerWidth-190,e.clientX+14)+'px';
+    tip.style.top=Math.max(8,e.clientY-14)+'px';
+  });
+  cv.addEventListener('mouseleave',()=>{
+    const st=CH[id]; if(st){st.hover=null; drawChart(id,st.cfg);}
+    document.getElementById('tooltip').style.opacity=0;
+  });
+}
+
+/* =======================================================================
+   ŽIVÉ TRHY – reálná data z veřejných API, s bezpečným fallbackem
+   ======================================================================= */
+const MK={
+  sentiment:0, anyLive:false, updated:null,
+  items:[
+    {sym:'BTC',   name:'Bitcoin',      kind:'crypto', cg:'bitcoin',  bn:'BTCUSDT',  unit:'$', px:96500, ch:0, hist:[], live:false},
+    {sym:'ETH',   name:'Ethereum',     kind:'crypto', cg:'ethereum', bn:'ETHUSDT',  unit:'$', px:3200,  ch:0, hist:[], live:false},
+    {sym:'ZLATO', name:'Zlato (PAXG)', kind:'crypto', cg:'pax-gold', bn:'PAXGUSDT', unit:'$', px:2650,  ch:0, hist:[], live:false},
+    {sym:'S&P500',name:'S&P 500',      kind:'stock',  st:'^spx',     unit:'',  px:5900, ch:0, hist:[], live:false},
+    {sym:'NDX',   name:'Nasdaq 100',   kind:'stock',  st:'^ndx',     unit:'',  px:21000,ch:0, hist:[], live:false},
+    {sym:'DAX',   name:'DAX',          kind:'stock',  st:'^dax',     unit:'',  px:20000,ch:0, hist:[], live:false},
+    {sym:'USDCZK',name:'USD/CZK',      kind:'fx',     unit:'Kč', px:23.4, ch:0, hist:[], live:false},
+  ],
+};
+const byS=s=>MK.items.find(i=>i.sym===s);
+
+function jfetch(url,ms=8000){
+  const c=new AbortController(); const t=setTimeout(()=>c.abort(),ms);
+  return fetch(url,{signal:c.signal,cache:'no-store'})
+    .then(r=>{ if(!r.ok) throw new Error(r.status); return r; })
+    .finally(()=>clearTimeout(t));
+}
+const PROXIES=[u=>u, u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u), u=>'https://corsproxy.io/?'+encodeURIComponent(u)];
+async function textVia(url,ms=8000){
+  let err;
+  for(const p of PROXIES){ try{ return await (await jfetch(p(url),ms)).text(); }catch(e){ err=e; } }
+  throw err;
+}
+
+/* --- krypto + zlato --- */
+async function loadCrypto(){
+  const ids=MK.items.filter(i=>i.kind==='crypto');
+  try{
+    const j=await (await jfetch('https://api.coingecko.com/api/v3/simple/price?ids='+
+      ids.map(i=>i.cg).join(',')+'&vs_currencies=usd&include_24hr_change=true')).json();
+    let ok=false;
+    ids.forEach(i=>{ const d=j[i.cg]; if(d&&d.usd){ setPx(i,d.usd,d.usd_24h_change||0,true); ok=true; }});
+    if(ok) return true;
+  }catch(e){}
+  try{ // fallback: Binance
+    const syms=JSON.stringify(ids.map(i=>i.bn));
+    const j=await (await jfetch('https://api.binance.com/api/v3/ticker/24hr?symbols='+encodeURIComponent(syms))).json();
+    let ok=false;
+    (Array.isArray(j)?j:[]).forEach(r=>{ const i=ids.find(x=>x.bn===r.symbol);
+      if(i){ setPx(i,parseFloat(r.lastPrice),parseFloat(r.priceChangePercent),true); ok=true; }});
+    return ok;
+  }catch(e){ return false; }
+}
+async function loadCryptoHist(){
+  for(const i of MK.items.filter(x=>x.kind==='crypto')){
+    try{
+      const j=await (await jfetch('https://api.binance.com/api/v3/klines?symbol='+i.bn+'&interval=1h&limit=48',7000)).json();
+      if(Array.isArray(j)&&j.length){ i.hist=j.map(k=>parseFloat(k[4])); i.realHist=true; }
+    }catch(e){}
+  }
+}
+/* --- akciové indexy (Stooq CSV) --- */
+async function loadStocks(){
+  const st=MK.items.filter(i=>i.kind==='stock');
+  try{
+    const csv=await textVia('https://stooq.com/q/l/?s='+st.map(i=>i.st).join(',')+'&f=sd2t2ohlc&h&e=csv',9000);
+    const rows=csv.trim().split('\n').slice(1); let ok=false;
+    rows.forEach(r=>{
+      const c=r.split(','); const sym=(c[0]||'').toLowerCase();
+      const i=st.find(x=>x.st.toLowerCase()===sym); if(!i) return;
+      const open=parseFloat(c[4]), close=parseFloat(c[7]);
+      if(isFinite(close)&&close>0){ setPx(i,close,isFinite(open)&&open>0?(close-open)/open*100:0,true); ok=true; }
+    });
+    return ok;
+  }catch(e){ return false; }
+}
+async function loadStockHist(){
+  for(const i of MK.items.filter(x=>x.kind==='stock')){
+    try{
+      const csv=await textVia('https://stooq.com/q/d/l/?s='+i.st+'&i=d',9000);
+      const rows=csv.trim().split('\n').slice(1).slice(-45);
+      const vals=rows.map(r=>parseFloat(r.split(',')[4])).filter(v=>isFinite(v));
+      if(vals.length>4){ i.hist=vals; i.realHist=true; }
+    }catch(e){}
+  }
+}
+/* --- kurz USD/CZK --- */
+async function loadFx(){
+  const i=byS('USDCZK');
+  for(const url of ['https://open.er-api.com/v6/latest/USD','https://api.frankfurter.app/latest?from=USD&to=CZK']){
+    try{
+      const j=await (await jfetch(url,7000)).json();
+      const v=j&&j.rates&&j.rates.CZK;
+      if(v){ setPx(i,v,i.px?((v-i.px)/i.px*100):0,true); return true; }
+    }catch(e){}
+  }
+  return false;
+}
+
+function setPx(i,px,ch,live){
+  i.px=px; i.ch=ch; i.live=live;
+  if(!i.realHist){ i.hist.push(px); if(i.hist.length>48) i.hist.shift(); }
+  else { i.hist.push(px); if(i.hist.length>60) i.hist.shift(); }
+}
+function simTick(){
+  MK.items.forEach(i=>{ if(i.live) return;
+    const vol=i.kind==='crypto'?(i.sym==='ZLATO'?0.5:2.6):i.kind==='fx'?0.35:0.9;
+    const ch=gauss(0,vol);
+    i.px=Math.max(0.0001,i.px*(1+ch/100)); i.ch=0.7*i.ch+ch;
+    i.hist.push(i.px); if(i.hist.length>48) i.hist.shift();
+  });
+}
+function computeSentiment(){
+  const risky=MK.items.filter(i=>i.kind!=='fx'&&i.sym!=='ZLATO');
+  const avg=risky.reduce((a,i)=>a+clamp(i.ch/2.5,-1.5,1.5),0)/Math.max(1,risky.length);
+  MK.sentiment=clamp(avg,-1.2,1.2);
+}
+
+let mkFirst=true;
+async function refreshMarkets(){
+  const badge=document.getElementById('mkBadge');
+  if(mkFirst){ badge.className='badge load'; badge.textContent='načítám…'; }
+  const res=await Promise.allSettled([loadCrypto(),loadStocks(),loadFx()]);
+  const anyOk=res.some(r=>r.status==='fulfilled'&&r.value===true);
+  if(mkFirst&&anyOk){ await Promise.allSettled([loadCryptoHist(),loadStockHist()]); }
+  MK.anyLive=MK.items.some(i=>i.live);
+  simTick();                     // dopočítá to, co se nenačetlo
+  computeSentiment();
+  MK.updated=new Date();
+  badge.className='badge '+(MK.anyLive?'live':'sim');
+  badge.textContent=MK.anyLive?('živě · '+MK.updated.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'})):'simulace';
+  document.getElementById('mkNote').innerHTML = MK.anyLive
+    ? 'Ceny označené <b>živě</b> jsou reálné (CoinGecko / Binance / Stooq / ER-API). Nálada trhů se přes rizikový sentiment propisuje do vaší ekonomiky i do výnosu rezerv. Vnitrodenní křivka je u některých titulů orientační.'
+    : 'Reálná data se nepodařilo načíst (offline nebo blokované API) – běží realistická <b>simulace</b> trhů. Hra funguje stejně.';
+  renderMarkets();
+  if(mkFirst){ mkFirst=false;
+    addNews(MK.anyLive?'Napojeno na živé trhy: '+MK.items.filter(i=>i.live).map(i=>i.sym).join(', '):'Trhy běží v simulačním režimu','info');
+  }
+}
+
+/* --- devizový fond: výnos z reálných pohybů --- */
+const FUND=[
+  {id:'eur', n:'EUR hotov.', sym:null,      color:'#38bdf8'},
+  {id:'usd', n:'USD dluhop.', sym:'USDCZK',  color:'#a78bfa'},
+  {id:'gold',n:'Zlato',        sym:'ZLATO',   color:'#fbbf24'},
+  {id:'stocks',n:'Akcie S&P', sym:'S&P500',  color:'#34d399'},
+  {id:'btc', n:'Bitcoin',      sym:'BTC',     color:'#fb923c'},
+];
+function applyFundReturn(){
+  const tot=FUND.reduce((a,f)=>a+S.fund[f.id],0)||1;
+  let ret=0;
+  FUND.forEach(f=>{
+    const wgt=S.fund[f.id]/tot;
+    let r;
+    if(f.id==='eur') r=FOREIGN_RATE/4;
+    else{
+      const it=byS(f.sym); const base=it?it.ch:0;
+      r=base*1.7 + gauss(0, f.id==='btc'?7:f.id==='stocks'?3.2:2.2);
+      if(f.id==='usd') r=r*0.3 + 1.1;                       // kupón + kurzový pohyb
+    }
+    ret+=wgt*r;
+  });
+  ret=clamp(ret,-35,45);
+  S.fundRet=ret;
+  const before=S.reserves;
+  S.reserves=clamp(S.reserves*(1+ret/100),0,900);
+  S.fundPnl=S.reserves-before;
+}
+
+/* =======================================================================
+   UI – KPI, grafy, rozpočet, mandát, zprávy
+   ======================================================================= */
+const KPI=[
+ {k:'infl', l:'Inflace y/y', hk:'infl', f:v=>v.toFixed(1)+' %',
+  st:v=>Math.abs(v-TARGET)<=BAND?'good':Math.abs(v-TARGET)<=3?'warn':'bad',
+  d:()=>'cíl '+TARGET.toFixed(1)+' % ±1'},
+ {k:'rate', l:'Repo sazba', hk:'rate', f:v=>v.toFixed(2)+' %', st:()=>'',
+  d:()=>{const d=S.rate-S.prevRate; return d===0?'beze změny':(d>0?'+':'')+d.toFixed(2)+' p.b.';}},
+ {k:'gdp',  l:'Růst HDP', hk:'gdp', f:v=>sgn(v)+' %',
+  st:v=>v>1.5?'good':v>0?'warn':'bad', d:()=>'mezera '+sgn(S.gap)+' %'},
+ {k:'u',    l:'Nezaměstnanost', hk:'u', f:v=>v.toFixed(1)+' %',
+  st:v=>v<5?'good':v<7?'warn':'bad', d:()=>'NAIRU '+S.nairu.toFixed(1)+' %'},
+ {k:'fx',   l:'CZK/EUR', hk:'fx', f:v=>v.toFixed(2), st:()=>'',
+  d:()=>'rezervy '+S.reserves.toFixed(0)+' mld €'},
+ {k:'debt', l:'Dluh / HDP', hk:'debt', f:v=>v.toFixed(1)+' %',
+  st:v=>v<60?'good':v<90?'warn':'bad', d:()=>'saldo '+sgn(-S.deficit)+' %'},
+ {k:'pop',  l:'Popularita', hk:'pop', f:v=>v.toFixed(0)+' %',
+  st:v=>v>55?'good':v>30?'warn':'bad', d:()=>'stres bank '+S.stress.toFixed(0)},
+ {k:'cred', l:'Kredibilita', hk:'cred', f:v=>(v*100).toFixed(0)+' %',
+  st:v=>v>0.7?'good':v>0.4?'warn':'bad', d:()=>'očekáv. infl. '+S.inflExp.toFixed(1)+' %'},
+];
+let prevKpi={};
+
+function renderKPIs(){
+  const box=document.getElementById('kpis');
+  if(!box.children.length){
+    box.innerHTML=KPI.map(k=>
+      '<div class="kpi" id="kpi-'+k.k+'"><div class="k-l">'+k.l+'</div>'+
+      '<div class="k-v" id="kv-'+k.k+'">–</div><div class="k-d" id="kd-'+k.k+'">–</div>'+
+      '<canvas class="k-spark" id="ks-'+k.k+'" width="70" height="24" style="width:70px"></canvas></div>').join('');
+  }
+  KPI.forEach(k=>{
+    const v=S[k.k], el=document.getElementById('kpi-'+k.k);
+    document.getElementById('kv-'+k.k).textContent=k.f(v);
+    document.getElementById('kd-'+k.k).textContent=k.d();
+    el.className='kpi '+(k.st(v)||'');
+    if(prevKpi[k.k]!==undefined&&Math.abs(prevKpi[k.k]-v)>1e-9){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+    prevKpi[k.k]=v;
+    const arr=S.hist.slice(-16).map(h=>h[k.hk]==null?0:(k.k==='cred'?h.cred:h[k.hk]));
+    const c=document.getElementById('ks-'+k.k); c.style.height='24px'; c.setAttribute('height','24');
+    if(arr.length>1) sparkline(c,arr,k.st(v)==='bad'?'rgb(248,113,113)':k.st(v)==='good'?'rgb(52,211,153)':'rgb(56,189,248)',false);
+  });
+}
+
+/* ---------- konfigurace grafů ---------- */
+const mainSeries=[
+ {key:'infl',   name:'Inflace',        color:'#f87171', type:'area', fill:'rgba(248,113,113,.22)', unit:' %'},
+ {key:'inflExp',name:'Očekávaná infl.',color:'#fb923c', dash:[4,3], lw:1.6, unit:' %'},
+ {key:'rate',   name:'Repo sazba',     color:'#38bdf8', unit:' %'},
+ {key:'gdp',    name:'Růst HDP',       color:'#34d399', unit:' %'},
+ {key:'u',      name:'Nezaměstnanost', color:'#a78bfa', unit:' %'},
+ {key:'y10',    name:'Výnos 10Y',      color:'#f472b6', hidden:true, unit:' %'},
+];
+function renderLegend(){
+  const el=document.getElementById('legendMain');
+  el.innerHTML=mainSeries.map((s,i)=>
+    '<button class="lg'+(s.hidden?' off':'')+'" data-i="'+i+'"><span class="dot" style="background:'+s.color+'"></span>'+s.name+'</button>').join('');
+  el.querySelectorAll('.lg').forEach(b=>b.onclick=()=>{
+    const s=mainSeries[+b.dataset.i]; s.hidden=!s.hidden; b.classList.toggle('off',!!s.hidden); renderCharts();
+  });
+}
+function renderCharts(){
+  const d=S.hist.slice(-TERM);
+  drawChart('chartMain',{data:d, series:mainSeries, band:{from:TARGET-BAND,to:TARGET+BAND,mid:TARGET}});
+  drawChart('chartFx',{data:d, series:[
+    {key:'fx',name:'CZK/EUR',color:'#38bdf8',type:'area',fill:'rgba(56,189,248,.25)',unit:'',dec:2}]});
+  drawChart('chartDebt',{data:d, rightAxis:true, zeroR:true, series:[
+    {key:'balance',name:'Saldo',color:'#94a3b8',colorPos:'#34d399',colorNeg:'#f87171',type:'bar',axis:'r',unit:' %'},
+    {key:'debt',name:'Dluh/HDP',color:'#fbbf24',lw:2.2,unit:' %'}]});
+  drawChart('chartYield',{data:d, series:[
+    {key:'y10',name:'Výnos 10Y',color:'#f472b6',type:'area',fill:'rgba(244,114,182,.2)',unit:' %'},
+    {key:'rate',name:'Repo',color:'#38bdf8',unit:' %'}]});
+  drawChart('chartPop',{data:d, series:[
+    {key:'pop',name:'Popularita',color:'#34d399',type:'area',fill:'rgba(52,211,153,.2)',unit:' %',dec:0},
+    {key:'cred',name:'Kredibilita',color:'#38bdf8',unit:' %',dec:0},
+    {key:'stress',name:'Stres bank',color:'#f87171',dash:[3,3],lw:1.5,unit:'',dec:0}]});
+  document.getElementById('fxNow').textContent=S.fx.toFixed(2)+' Kč';
+  document.getElementById('debtNow').textContent=S.debt.toFixed(1)+' % / '+sgn(-S.deficit)+' %';
+  document.getElementById('yieldNow').textContent=S.y10.toFixed(2)+' %';
+  document.getElementById('popNow').textContent=S.pop.toFixed(0)+' / '+(S.cred*100).toFixed(0);
+  document.getElementById('chartRange').textContent=S.hist.length+' čtvrtletí';
+}
+
+/* ---------- rozpočet ---------- */
+function renderBudgetRows(){
+  const box=document.getElementById('budgetRows');
+  if(!box.children.length){
+    box.innerHTML=CHAPTERS.map(c=>
+      '<div class="budget-row"><span class="bn">'+c.icon+' '+c.name+'</span>'+
+      '<span class="bv" id="bv-'+c.id+'">–</span>'+
+      '<span class="stepper"><button data-ch="'+c.id+'" data-d="-0.5">−</button>'+
+      '<button data-ch="'+c.id+'" data-d="0.5">+</button></span></div>').join('');
+    box.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      const c=CHAPTERS.find(x=>x.id===b.dataset.ch);
+      S.spend[c.id]=clamp(+(S.spend[c.id]+parseFloat(b.dataset.d)).toFixed(1),c.min,c.max);
+      renderBudget(); renderMandate();
+    });
+  }
+  CHAPTERS.forEach(c=>document.getElementById('bv-'+c.id).textContent=S.spend[c.id].toFixed(1));
+}
+function renderBudget(){
+  renderBudgetRows();
+  const b=budget(S);
+  document.getElementById('bRev').textContent=b.revenue.toFixed(1)+' %';
+  document.getElementById('bExp').textContent=b.expend.toFixed(1)+' % (úroky '+b.interest.toFixed(1)+')';
+  const bal=document.getElementById('bBal');
+  bal.innerHTML='<b style="color:'+(b.balance>=0?'var(--green)':b.balance>-3?'var(--amber)':'var(--red)')+'">'+sgn(b.balance)+' % HDP</b>';
+}
+
+/* ---------- mandát ---------- */
+function renderMandate(){
+  const goals=[
+    {n:'Inflace v pásmu 1–3 %', v:clamp(100-Math.abs(S.infl-TARGET)*28,0,100), t:S.infl.toFixed(1)+' %'},
+    {n:'Nezaměstnanost < 5 %',  v:clamp(100-(S.u-4)*22,0,100), t:S.u.toFixed(1)+' %'},
+    {n:'Dluh pod 60 % HDP',     v:clamp(100-(S.debt-45)*2.2,0,100), t:S.debt.toFixed(0)+' %'},
+    {n:'Finanční stabilita',    v:clamp(100-S.stress,0,100), t:(100-S.stress).toFixed(0)+' %'},
+    {n:'Důvěra veřejnosti',     v:S.pop, t:S.pop.toFixed(0)+' %'},
+  ];
+  document.getElementById('mandate').innerHTML=goals.map(g=>{
+    const col=g.v>66?'var(--green)':g.v>38?'var(--amber)':'var(--red)';
+    return '<div class="mand"><span>'+g.n+'</span><span class="m-s" style="color:'+col+'">'+g.t+'</span></div>'+
+           '<div class="meter"><i style="width:'+g.v.toFixed(0)+'%;background:'+col+'"></i></div>';
+  }).join('')+'<div class="hint" style="margin-top:10px">Skóre mandátu: <b class="mono">'+
+    (goals.reduce((a,g)=>a+g.v,0)/goals.length).toFixed(0)+'/100</b></div>';
+}
+
+/* ---------- trhy ---------- */
+function renderMarkets(){
+  const box=document.getElementById('marketList');
+  if(box.children.length!==MK.items.length){
+    box.innerHTML=MK.items.map(i=>
+      '<div class="mk"><span class="m-sym">'+i.sym+'</span>'+
+      '<canvas class="m-spark" id="msp-'+i.sym.replace(/[^A-Za-z0-9]/g,'')+'" height="26"></canvas>'+
+      '<span class="m-px" id="mpx-'+i.sym.replace(/[^A-Za-z0-9]/g,'')+'"></span>'+
+      '<span class="m-ch" id="mch-'+i.sym.replace(/[^A-Za-z0-9]/g,'')+'"></span></div>').join('');
+  }
+  MK.items.forEach(i=>{
+    const id=i.sym.replace(/[^A-Za-z0-9]/g,'');
+    const px=i.px>=1000?i.px.toLocaleString('cs-CZ',{maximumFractionDigits:0}):i.px.toFixed(2);
+    document.getElementById('mpx-'+id).innerHTML=(i.unit==='$'?'$':'')+px+(i.unit==='Kč'?' Kč':'')+
+      (i.live?'':' <span style="color:var(--txt3);font-size:.62rem">sim</span>');
+    const ch=document.getElementById('mch-'+id);
+    ch.textContent=(i.ch>0?'+':'')+i.ch.toFixed(2)+'%';
+    ch.className='m-ch '+(i.ch>0.02?'up':i.ch<-0.02?'down':'flat');
+    sparkline(document.getElementById('msp-'+id),i.hist,i.ch>=0?'rgb(52,211,153)':'rgb(248,113,113)',true);
+  });
+  // fond
+  const tot=FUND.reduce((a,f)=>a+S.fund[f.id],0)||1;
+  const ab=document.getElementById('allocRows');
+  if(!ab.children.length){
+    ab.innerHTML=FUND.map(f=>'<div class="alloc-row"><span class="a-n" style="color:'+f.color+'">'+f.n+'</span>'+
+      '<input type="range" id="al-'+f.id+'" min="0" max="100" step="5" value="'+S.fund[f.id]+'">'+
+      '<span class="a-v" id="alv-'+f.id+'"></span></div>').join('');
+    FUND.forEach(f=>{
+      const inp=document.getElementById('al-'+f.id);
+      inp.oninput=()=>{ S.fund[f.id]=+inp.value; renderMarkets(); };
+    });
+  }
+  FUND.forEach(f=>{
+    const share=S.fund[f.id]/tot*100;
+    document.getElementById('alv-'+f.id).textContent=share.toFixed(0)+'%';
+    const inp=document.getElementById('al-'+f.id);
+    inp.style.setProperty('--pct',(+inp.value)+'%');
+    if(+inp.value!==S.fund[f.id]) inp.value=S.fund[f.id];
+  });
+  document.getElementById('fundVal').textContent=S.reserves.toFixed(0)+' mld €';
+  const fr=document.getElementById('fundRet');
+  fr.innerHTML='<b style="color:'+(S.fundRet>=0?'var(--green)':'var(--red)')+'">'+sgn(S.fundRet)+' % · '+sgn(S.fundPnl)+' mld €</b>';
+}
+
+/* ---------- zprávy ---------- */
+function addNews(txt,kind='info'){
+  const box=document.getElementById('news');
+  const el=document.createElement('div');
+  el.className='nw '+kind;
+  el.innerHTML='<div class="nw-t">Q'+S.q+'/'+S.year+'</div>'+txt;
+  box.prepend(el);
+  while(box.children.length>40) box.lastChild.remove();
+}
+function quarterNews(prev){
+  const s=S;
+  const dI=s.infl-prev.infl;
+  addNews('<b>ČSÚ:</b> inflace '+s.infl.toFixed(1)+' % ('+(dI>=0?'+':'')+dI.toFixed(1)+' p.b.)'+
+    (Math.abs(s.infl-TARGET)<=BAND?' – v cíli 🎯':s.infl>TARGET+BAND?' – nad cílem':' – pod cílem'),
+    Math.abs(s.infl-TARGET)<=BAND?'good':Math.abs(s.infl-TARGET)>3?'bad':'warn');
+  if(Math.abs(s.rate-prev.rate)>0.01)
+    addNews('<b>Bankovní rada</b> '+(s.rate>prev.rate?'zvýšila':'snížila')+' sazbu na '+s.rate.toFixed(2)+' %','info');
+  if(s.gdp<0) addNews('<b>Ekonomika klesá:</b> HDP '+s.gdp.toFixed(1)+' %, nezaměstnanost '+s.u.toFixed(1)+' %','bad');
+  else if(s.gdp>3.5) addNews('<b>Boom:</b> HDP roste o '+s.gdp.toFixed(1)+' %','good');
+  if(Math.abs((s.fx-prev.fx)/prev.fx*100)>2.5)
+    addNews('<b>Koruna</b> '+(s.fx>prev.fx?'oslabila':'posílila')+' na '+s.fx.toFixed(2)+' Kč/€','warn');
+  if(s.debt>90&&s.debt>prev.debt) addNews('<b>Rating:</b> agentury varují před dluhem '+s.debt.toFixed(0)+' % HDP','bad');
+  if(s.stress>70) addNews('<b>Stres v bankách</b> na '+s.stress.toFixed(0)+' – roste riziko krize','bad');
+  if(s.pop<20) addNews('<b>Průzkum:</b> důvěra ve vaše vedení jen '+s.pop.toFixed(0)+' %','bad');
+  if(MK.anyLive){
+    const btc=byS('BTC');
+    if(Math.abs(btc.ch)>3) addNews('<b>Trhy:</b> Bitcoin '+sgn(btc.ch)+' % za 24 h – '+
+      (btc.ch>0?'rizikový apetit roste':'útěk do bezpečí'), btc.ch>0?'good':'warn');
+  }
+  if(Math.abs(S.fundRet)>4) addNews('<b>Rezervy:</b> fond '+(S.fundRet>0?'vydělal':'ztratil')+' '+
+    Math.abs(S.fundPnl).toFixed(1)+' mld € ('+sgn(S.fundRet)+' %)',S.fundRet>0?'good':'bad');
+}
+function toast(msg){
+  const w=document.getElementById('toasts'); const t=document.createElement('div');
+  t.className='toast'; t.textContent=msg; w.appendChild(t);
+  setTimeout(()=>{t.style.opacity=0;t.style.transition='opacity .4s';setTimeout(()=>t.remove(),400);},2600);
+}
+
+/* =======================================================================
+   MODALY
+   ======================================================================= */
+function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+function showModal(html,dismissable=true){
+  const r=document.getElementById('modalRoot');
+  r.innerHTML='<div class="overlay" id="ovl"><div class="modal">'+html+'</div></div>';
+  if(dismissable) document.getElementById('ovl').onclick=e=>{ if(e.target.id==='ovl') closeModal(); };
+}
+
+function showEvent(ev){
+  pause();
+  showModal(
+   '<div class="modal-h"><div class="ev-tag">⚡ '+ev.tag+'</div><h2>'+ev.title+'</h2></div>'+
+   '<div class="modal-b"><p>'+ev.text+'</p>'+
+   ev.choices.map((c,i)=>
+     '<button class="choice" data-i="'+i+'"><div class="c-t">'+c.t+'</div>'+
+     (c.d?'<div class="c-d">'+c.d+'</div>':'')+
+     '<div class="c-tags">'+(c.tags||[]).map(t=>'<span class="tg">'+t+'</span>').join('')+'</div></button>').join('')+
+   '</div>', false);
+  document.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{
+    const c=ev.choices[+b.dataset.i];
+    c.apply(S);
+    normalize();
+    addNews('<b>'+ev.title+'</b> → '+c.t,'warn');
+    closeModal(); syncControls(); renderAll(); save();
+    toast('Rozhodnutí přijato: '+c.t);
+  });
+}
+function normalize(){
+  S.rate=clamp(S.rate,0,18); S.tax=clamp(S.tax,25,52);
+  S.cred=clamp(S.cred,0.05,0.99); S.pop=clamp(S.pop,0,100);
+  S.stress=clamp(S.stress,0,100); S.reserves=clamp(S.reserves,0,900);
+  CHAPTERS.forEach(c=>S.spend[c.id]=clamp(S.spend[c.id],c.min,c.max));
+}
+
+function showHelp(){
+  showModal(
+  '<div class="modal-h"><div class="ev-tag">📘 Manuál guvernéra</div><h2>Jak se hraje</h2></div><div class="modal-b">'+
+  '<p>Jste guvernér centrální banky a zároveň předsedáte rozpočtové radě. Máte <b>8 let (32 čtvrtletí)</b> na to, '+
+  'udržet inflaci u cíle <b>2 % ±1</b>, nezaměstnanost nízko, dluh pod kontrolou – a přežít v úřadu.</p>'+
+  '<h4 class="sec">Vaše páky</h4><ul>'+
+  '<li><b>Repo sazba</b> – hlavní nástroj. Působí se zpožděním (cca 2 čtvrtletí). Vyšší sazba → dražší úvěry → nižší poptávka → nižší inflace, ale vyšší nezaměstnanost, silnější koruna a stres v bankách.</li>'+
+  '<li><b>QE / QT</b> – nákup dluhopisů srazí dlouhé výnosy a uvolní podmínky; QT opačně. Nadužívání ničí kredibilitu.</li>'+
+  '<li><b>Devizové intervence</b> – posílení koruny tlumí dovozní inflaci, ale spaluje rezervy.</li>'+
+  '<li><b>Forward guidance</b> – slovní intervence hýbe očekáváním, ale funguje jen podle vaší kredibility. Sliby, které nedodržíte, ji ničí.</li>'+
+  '<li><b>Rozpočet</b> – daně a šest výdajových kapitol. Investice mají největší multiplikátor a zvedají potenciál růstu; sociální výdaje zvedají popularitu i poptávku.</li></ul>'+
+  '<h4 class="sec">Co vás může potopit</h4><ul>'+
+  '<li><b>Odkotvená očekávání</b> – když lidé přestanou věřit cíli, inflace se drží sama od sebe a srazit ji stojí recesi.</li>'+
+  '<li><b>Dluhová spirála</b> – vysoký dluh zvedá rizikovou prémii → vyšší výnosy → vyšší úroky → vyšší dluh.</li>'+
+  '<li><b>Bankovní stres</b> – rychlé skoky sazeb ničí dluhopisová portfolia bank. Nad 78 přijde run na banku.</li>'+
+  '<li><b>Odvolání</b> – inflace mimo cíl o víc než 7 p.b. pět čtvrtletí v řadě, nebo popularita pod 12 % šest čtvrtletí.</li></ul>'+
+  '<h4 class="sec">Reálné trhy</h4>'+
+  '<p>Panel „Světové trhy“ se pokouší tahat <b>skutečné ceny</b> (Bitcoin, Ethereum, zlato, S&amp;P 500, Nasdaq, DAX, USD/CZK) '+
+  'z veřejných API. Nálada trhů ovlivňuje rizikovou prémii, poptávku po exportu i výnos vašich devizových rezerv, '+
+  'které můžete alokovat mezi hotovost, dluhopisy, zlato, akcie a bitcoin. Když data nejdou načíst, hra plynule '+
+  'přepne na simulaci.</p>'+
+  '<h4 class="sec">Klávesy</h4><p><b>mezerník</b> = pauza/běh · <b>N</b> = další čtvrtletí · <b>↑/↓</b> = sazba ±0,25 p.b. · <b>H</b> = nápověda</p>'+
+  '<button class="btn primary" style="width:100%;margin-top:8px" onclick="closeModal()">Rozumím, jdu na to</button></div>');
+}
+
+function endGame(reason){
+  gameOver=true; pause();
+  const h=S.hist;
+  const avgMiss=h.reduce((a,x)=>a+Math.abs(x.infl-TARGET),0)/Math.max(1,h.length);
+  const avgU=h.reduce((a,x)=>a+x.u,0)/Math.max(1,h.length);
+  const avgG=h.reduce((a,x)=>a+x.gdp,0)/Math.max(1,h.length);
+  const parts=[
+    {n:'Cenová stabilita (prům. odchylka '+avgMiss.toFixed(2)+' p.b.)', v:clamp(40-10*avgMiss,0,40), max:40},
+    {n:'Trh práce (prům. nezam. '+avgU.toFixed(1)+' %)',                v:clamp(20-3.5*(avgU-4.5),0,20), max:20},
+    {n:'Růst (prům. '+avgG.toFixed(1)+' % ročně)',                      v:clamp(avgG/2.5*15,0,15), max:15},
+    {n:'Veřejné finance (dluh '+S.debt.toFixed(0)+' % HDP)',            v:clamp(15-0.35*(S.debt-55),0,15), max:15},
+    {n:'Důvěra (kredibilita '+(S.cred*100).toFixed(0)+' %, popularita '+S.pop.toFixed(0)+' %)',
+                                                                        v:clamp(10*(0.6*S.cred+0.4*S.pop/100),0,10), max:10},
+  ];
+  let score=parts.reduce((a,p)=>a+p.v,0);
+  if(reason!=='term') score*=0.55;
+  const grade = score>=85?['🏆 Legenda centrálního bankovnictví','var(--green)']
+    : score>=70?['🎖️ Respektovaný guvernér','var(--green)']
+    : score>=55?['👍 Solidní mandát','var(--cyan)']
+    : score>=40?['😬 Rozporuplné období','var(--amber)']
+    : ['💀 Ekonomická katastrofa','var(--red)'];
+  const rTxt = reason==='term'?'Mandát dovršen po 8 letech.'
+    : reason==='infl'?'ODVOLÁN: inflace se vymkla kontrole a parlament vás odvolal.'
+    : 'ODVOLÁN: ztratil jste důvěru veřejnosti i vlády.';
+  showModal(
+   '<div class="modal-h"><div class="ev-tag">Konec mandátu</div><h2>'+rTxt+'</h2></div><div class="modal-b">'+
+   '<div class="score-big" style="color:'+grade[1]+'">'+score.toFixed(0)+'</div>'+
+   '<div class="grade" style="color:'+grade[1]+'">'+grade[0]+'</div>'+
+   '<table>'+parts.map(p=>'<tr><td>'+p.n+'</td><td>'+p.v.toFixed(1)+' / '+p.max+'</td></tr>').join('')+
+   '<tr><td><b>Finální inflace</b></td><td>'+S.infl.toFixed(1)+' %</td></tr>'+
+   '<tr><td><b>Finální nezaměstnanost</b></td><td>'+S.u.toFixed(1)+' %</td></tr>'+
+   '<tr><td><b>Dluh / HDP</b></td><td>'+S.debt.toFixed(1)+' %</td></tr>'+
+   '<tr><td><b>Devizové rezervy</b></td><td>'+S.reserves.toFixed(0)+' mld €</td></tr></table>'+
+   '<button class="btn primary" style="width:100%" onclick="resetGame()">↺ Nový mandát</button></div>',false);
+  localStorage.removeItem(SAVE_KEY);
+}
+
+/* =======================================================================
+   HERNÍ SMYČKA
+   ======================================================================= */
+function doStep(){
+  if(gameOver) return;
+  const {prev}=step();
+  normalize();
+  quarterNews(prev);
+  syncControls(); renderAll(); save();
+
+  if(S.t>=TERM){ endGame('term'); return; }
+  if(S.streakBad>=5){ endGame('infl'); return; }
+  if(S.streakPop>=6){ endGame('pop'); return; }
+  const ev=pickEvent();
+  if(ev) setTimeout(()=>showEvent(ev),320);
+}
+function play(){ if(gameOver) return; running=true; document.getElementById('btnPlay').textContent='⏸ Pauza'; loop(); }
+function pause(){ running=false; clearTimeout(timer); document.getElementById('btnPlay').textContent='▶ Spustit čas'; }
+function loop(){ clearTimeout(timer); if(!running) return;
+  timer=setTimeout(()=>{ if(!running) return; doStep(); loop(); }, speed); }
+
+/* =======================================================================
+   OVLÁDACÍ PRVKY
+   ======================================================================= */
+function setSliderFill(inp){
+  const p=(inp.value-inp.min)/(inp.max-inp.min)*100;
+  inp.style.setProperty('--pct',p+'%');
+}
+function syncControls(){
+  const r=document.getElementById('sRate'); r.value=S.rate; setSliderFill(r);
+  document.getElementById('vRate').textContent=S.rate.toFixed(2)+' %';
+  const d=S.rate-S.prevRate;
+  document.getElementById('rateDelta').textContent=Math.abs(d)<0.01?'beze změny':(d>0?'+':'')+d.toFixed(2)+' p.b.';
+  const real=S.rate-S.inflExp;
+  document.getElementById('rateHint').innerHTML='Reálná sazba <b class="mono" style="color:'+
+    (real>1.5?'var(--red)':real<0?'var(--green)':'var(--cyan)')+'">'+real.toFixed(2)+' %</b> '+
+    (real>1.5?'– výrazně restriktivní':real<0?'– stále uvolněná politika':'– zhruba neutrální')+
+    (Math.abs(d)>1.5?' · <span style="color:var(--amber)">velký skok poškodí banky i kredibilitu</span>':'');
+
+  const q=document.getElementById('sQe'); q.value=S.qe; setSliderFill(q);
+  document.getElementById('vQe').textContent=(S.qe>0?'QE +':S.qe<0?'QT ':'')+S.qe.toFixed(1);
+  const f=document.getElementById('sFx'); f.value=S.fxInt; setSliderFill(f);
+  document.getElementById('vFx').textContent=S.fxInt===0?'žádná':(S.fxInt>0?'posiluji ':'oslabuji ')+Math.abs(S.fxInt).toFixed(1);
+  document.getElementById('reservesLbl').textContent='rezervy '+S.reserves.toFixed(0)+' mld €';
+  const t=document.getElementById('sTax'); t.value=S.tax; setSliderFill(t);
+  document.getElementById('vTax').textContent=S.tax.toFixed(1)+' %';
+  document.querySelectorAll('#segGuide button').forEach(b=>b.classList.toggle('on',b.dataset.g===S.guidance));
+  document.getElementById('dateChip').textContent='Q'+S.q+' '+S.year+' · mandát '+(S.t+1)+'/'+TERM;
+}
+function renderAll(){ renderKPIs(); renderCharts(); renderBudget(); renderMandate(); renderMarkets(); }
+
+function bindControls(){
+  const bind=(id,fn)=>{ const el=document.getElementById(id);
+    el.addEventListener('input',()=>{ fn(parseFloat(el.value)); setSliderFill(el); syncControls(); renderMandate(); renderBudget(); }); };
+  bind('sRate',v=>S.rate=v);
+  bind('sQe',  v=>S.qe=v);
+  bind('sFx',  v=>S.fxInt=v);
+  bind('sTax', v=>S.tax=v);
+  document.querySelectorAll('#segGuide button').forEach(b=>b.onclick=()=>{ S.guidance=b.dataset.g; syncControls(); });
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));
+    document.getElementById('tab-mon').style.display=b.dataset.tab==='mon'?'':'none';
+    document.getElementById('tab-fis').style.display=b.dataset.tab==='fis'?'':'none';
+  });
+  document.getElementById('btnStep').onclick=()=>doStep();
+  document.getElementById('btnPlay').onclick=()=>running?pause():play();
+  document.getElementById('btnHelp').onclick=showHelp;
+  document.getElementById('btnReset').onclick=()=>{
+    if(confirm('Opravdu začít nový mandát? Aktuální průběh se smaže.')) resetGame();
+  };
+  document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{
+    speed=+b.dataset.speed;
+    document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('on',x===b));
+    if(running) loop();
+  });
+  document.addEventListener('keydown',e=>{
+    if(document.getElementById('ovl')&&e.key!=='Escape') return;
+    if(e.key===' '){e.preventDefault(); running?pause():play();}
+    else if(e.key==='n'||e.key==='N') doStep();
+    else if(e.key==='h'||e.key==='H') showHelp();
+    else if(e.key==='Escape') closeModal();
+    else if(e.key==='ArrowUp'){e.preventDefault(); S.rate=clamp(S.rate+0.25,0,18); syncControls();}
+    else if(e.key==='ArrowDown'){e.preventDefault(); S.rate=clamp(S.rate-0.25,0,18); syncControls();}
+  });
+  window.addEventListener('resize',()=>{ renderCharts(); renderKPIs(); renderMarkets(); });
+  ['chartMain','chartFx','chartDebt','chartYield','chartPop'].forEach(id=>bindHover(id));
+}
+
+/* =======================================================================
+   ULOŽENÍ / START
+   ======================================================================= */
+function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
+function load(){ try{ const j=localStorage.getItem(SAVE_KEY); return j?JSON.parse(j):null; }catch(e){ return null; } }
+function resetGame(){
+  localStorage.removeItem(SAVE_KEY);
+  gameOver=false; closeModal(); pause();
+  S=newState(); S.hist.push(snapshot());
+  document.getElementById('news').innerHTML='';
+  prevKpi={};
+  addNews('<b>Jmenování:</b> přebíráte úřad guvernéra. Inflace '+S.infl.toFixed(1)+' %, sazba '+S.rate.toFixed(2)+' %.','info');
+  syncControls(); renderAll(); showHelp();
+}
+function boot(){
+  const saved=load();
+  S = saved || newState();
+  if(!saved){ S.hist.push(snapshot()); }
+  if(!S.fund) S.fund={eur:45,usd:20,gold:15,stocks:15,btc:5};
+  bindControls(); renderLegend(); syncControls(); renderAll();
+  if(saved){
+    addNews('<b>Pokračujete</b> v mandátu – Q'+S.q+'/'+S.year,'info');
+    toast('Načten uložený mandát (Q'+S.q+'/'+S.year+')');
+  }else{
+    addNews('<b>Jmenování:</b> přebíráte úřad guvernéra. Inflace '+S.infl.toFixed(1)+' %, sazba '+S.rate.toFixed(2)+' %.','info');
+    showHelp();
+  }
+  refreshMarkets();
+  setInterval(()=>{ refreshMarkets(); }, 60000);
+  setInterval(()=>{ if(!MK.anyLive){ simTick(); computeSentiment(); renderMarkets(); } }, 5000);
+}
+document.addEventListener('DOMContentLoaded',boot);
+</script>
+</body>
+</html>
