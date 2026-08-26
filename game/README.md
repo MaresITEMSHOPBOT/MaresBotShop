@@ -11,7 +11,9 @@ Chat se čte přímo z Kicku přes WebSocket.
 
 ## Rychlý start
 
-1. Otevři `game/index.html` v prohlížeči (stačí dvojklik na soubor).
+1. Otevři hru v prohlížeči – buď `game/index.html`, nebo jednosouborovou
+   verzi `game/mares-drop.html` (to je celá hra v jednom souboru, hodí se,
+   když si ji chceš jen stáhnout a hodit do OBS).
 2. Otevře se **Nastavení**. Vyplň **Chatroom ID** svého kanálu:
    - klikni na **Zjistit** – když to Kick z prohlížeče povolí, ID se doplní samo;
    - když ne, otevři v prohlížeči `https://kick.com/api/v2/channels/justmares`,
@@ -21,15 +23,17 @@ Chat se čte přímo z Kicku přes WebSocket.
 
 Chatroom ID se uloží, takže tohle děláš jen jednou.
 
-> Než jdeš živě, zapni si v nastavení **Simulaci chatu** – hra se sama zaplní
-> falešnými diváky a uvidíš, jak to vypadá v plném provozu.
+> Dokud není vyplněné Chatroom ID, běží hra v **ukázkovém režimu** – sama si
+> vyrobí falešné diváky, ať je vidět, jak to vypadá v provozu. Body z ukázky
+> se nikam neukládají a po připojení chatu zmizí. Přepnout to jde i ručně
+> přepínačem **Simulace chatu** v nastavení.
 
 ---
 
 ## Nastavení v OBS
 
 1. Přidej zdroj **Prohlížeč (Browser)**.
-2. Zaškrtni **Místní soubor** a vyber `game/index.html`.
+2. Zaškrtni **Místní soubor** a vyber `game/index.html` (nebo `game/mares-drop.html`).
 3. Rozlišení nastav na **1920 × 1080** (funguje i 1280 × 720).
 4. Chceš-li hru jako overlay přes gameplay, zapni v nastavení hry
    **Průhledné pozadí** – zmizí pozadí stránky a zůstanou jen tmavé panely.
@@ -130,6 +134,11 @@ To je normální, Kick dotazy z prohlížeče často blokuje. Zadej ID ručně.
 | `style.css` | vzhled |
 | `kick-chat.js` | čtení chatu z Kicku (Pusher WebSocket, bez knihoven) |
 | `game.js` | fyzika kuliček, vykreslování, body, příkazy |
+| `mares-drop.html` | všechno slepené do jednoho souboru (generované) |
+| `build-standalone.py` | slepí jednosouborovou verzi: `python3 build-standalone.py` |
+
+`mares-drop.html` se negeneruje sám – když upravíš zdroje, pusť
+`python3 build-standalone.py`, jinak zůstane starý.
 
 Chat jede přes veřejný Pusher kanál Kicku (`chatrooms.<ID>.v2`) – ten samý,
 co používá web Kicku. Proto nepotřebuje token ani přihlášení; hra jen
