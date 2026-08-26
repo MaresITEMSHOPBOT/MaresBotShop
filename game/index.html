@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MARES DROP – hra ovládaná Kick chatem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ══════════ HORNÍ LIŠTA ══════════ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <div class="brand-txt">
+        <h1>MARES <span>DROP</span></h1>
+        <p class="brand-sub">hra ovládaná chatem &middot; <b id="channel-label">justmares</b></p>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="stat-val" id="stat-players">0</span><span class="stat-lbl">hráčů</span></div>
+      <div class="stat"><span class="stat-val" id="stat-drops">0</span><span class="stat-lbl">hodů</span></div>
+      <div class="stat"><span class="stat-val" id="stat-best">0</span><span class="stat-lbl">rekord</span></div>
+      <div class="stat"><span class="stat-val" id="stat-live">0</span><span class="stat-lbl">ve hře</span></div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="conn" id="conn"><span class="dot"></span><span id="conn-txt">odpojeno</span></div>
+      <button class="icon-btn" id="btn-sound" title="Zvuky">🔊</button>
+      <button class="icon-btn" id="btn-settings" title="Nastavení">⚙️</button>
+    </div>
+  </header>
+
+  <!-- ══════════ SCÉNA ══════════ -->
+  <main class="stage">
+
+    <aside class="side side-left">
+
+      <div class="panel">
+        <h2 class="panel-title">🎮 Jak hrát</h2>
+        <ol class="howto">
+          <li><b>1</b><span>Napiš do chatu <code>!hraj</code></span></li>
+          <li><b>2</b><span>Spadne ti kulička se tvým jménem</span></li>
+          <li><b>3</b><span>Kam dopadne, tolik dostaneš bodů</span></li>
+        </ol>
+        <ul class="cmds">
+          <li><code>!hraj</code><span>hodíš kuličku</span></li>
+          <li><code>!barva red</code><span>změníš barvu</span></li>
+          <li><code>!body</code><span>tvoje statistiky</span></li>
+          <li><code>!top</code><span>zvýrazní žebříček</span></li>
+        </ul>
+        <p class="cooldown-note">Cooldown mezi hody: <b id="cd-label">20</b> s</p>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">👑 Stupně vítězů</h2>
+        <div class="podium" id="podium"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">💎 Poslední jackpot</h2>
+        <div class="jackpot" id="jackpot"><span class="jp-none">zatím nikdo…</span></div>
+      </div>
+
+      <div class="panel grow">
+        <h2 class="panel-title">⚡ Poslední hody</h2>
+        <ul class="feed" id="feed"></ul>
+      </div>
+
+    </aside>
+
+    <section class="board-wrap">
+      <div class="board-inner">
+        <canvas id="board" width="900" height="1010"></canvas>
+        <canvas id="fx" width="900" height="1010"></canvas>
+
+        <div class="banner" id="banner"><div class="banner-in"><span id="banner-txt"></span></div></div>
+
+        <div class="bonus-flag" id="bonus-flag">
+          <span class="bonus-star">★</span> BONUS KOLO – DVOJITÉ BODY
+          <span class="bonus-timer" id="bonus-timer">0</span>
+        </div>
+
+        <div class="playercard" id="playercard">
+          <div class="pc-head"><span class="pc-avatar" id="pc-avatar">?</span><span class="pc-name" id="pc-name"></span></div>
+          <div class="pc-grid">
+            <div><b id="pc-score">0</b><i>bodů</i></div>
+            <div><b id="pc-rank">–</b><i>pořadí</i></div>
+            <div><b id="pc-drops">0</b><i>hodů</i></div>
+            <div><b id="pc-best">0</b><i>nejlepší hod</i></div>
+          </div>
+        </div>
+
+        <div class="paused-veil" id="paused-veil"><div>⏸ POZASTAVENO</div></div>
+      </div>
+    </section>
+
+    <aside class="side">
+
+      <div class="panel panel-cta">
+        <div class="cta-cmd">!hraj</div>
+        <div class="cta-sub">napiš do chatu a hoď si kuličkou</div>
+      </div>
+
+      <div class="panel grow">
+        <h2 class="panel-title">🏆 Žebříček</h2>
+        <ol class="board-list" id="leaderboard"></ol>
+        <p class="empty-hint" id="lb-empty">Zatím nikdo nehrál.<br>Buď první – napiš <b>!hraj</b></p>
+      </div>
+
+      <div class="panel panel-hint">
+        <span class="hint-k">Zkratky:</span> <b>D</b> hod · <b>B</b> bonus · <b>P</b> pauza · <b>S</b> nastavení
+      </div>
+
+    </aside>
+  </main>
+</div>
+
+<!-- ══════════ NASTAVENÍ ══════════ -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <button class="modal-x" id="modal-x">✕</button>
+    <h2>⚙️ Nastavení</h2>
+
+    <div class="field">
+      <label for="in-slug">Kanál na Kicku</label>
+      <input id="in-slug" type="text" placeholder="justmares" autocomplete="off">
+      <small>Jen jméno kanálu z adresy kick.com/<b>justmares</b></small>
+    </div>
+
+    <div class="field">
+      <label for="in-room">Chatroom ID <span class="req">povinné</span></label>
+      <div class="room-row">
+        <input id="in-room" type="text" inputmode="numeric" placeholder="např. 1234567" autocomplete="off">
+        <button class="btn btn-ghost" id="btn-lookup" type="button">Zjistit</button>
+      </div>
+      <small>
+        Zkus <b>Zjistit</b> – když to Kick nepovolí, najdeš ID ručně:
+        Otevři v prohlížeči <a id="api-link" href="https://kick.com/api/v2/channels/justmares" target="_blank" rel="noopener">kick.com/api/v2/channels/justmares</a>,
+        najdi <code>"chatroom"</code> a zkopíruj jeho <code>"id"</code>. Stačí jednou – uloží se.
+      </small>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="in-cd">Cooldown (s)</label>
+        <input id="in-cd" type="number" min="0" max="600" value="20">
+      </div>
+      <div class="field">
+        <label for="in-bonus">Bonus kolo po (min)</label>
+        <input id="in-bonus" type="number" min="0" max="120" value="5">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="check"><input type="checkbox" id="in-transparent"> Průhledné pozadí (pro OBS overlay)</label>
+      <label class="check"><input type="checkbox" id="in-sim"> Simulace chatu (test bez připojení)</label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="btn-connect">Připojit chat</button>
+      <button class="btn" id="btn-disconnect">Odpojit</button>
+      <button class="btn btn-ghost" id="btn-testdrop">Zkušební hod</button>
+      <button class="btn btn-danger" id="btn-reset">Vynulovat žebříček</button>
+    </div>
+
+    <div class="modal-note" id="modal-note"></div>
+
+    <details class="help">
+      <summary>Jak to rozjet na streamu (OBS)</summary>
+      <ol>
+        <li>Vlož <b>Chatroom ID</b> a klikni na <b>Připojit chat</b>.</li>
+        <li>V OBS přidej zdroj <b>Prohlížeč</b> → zaškrtni <b>Místní soubor</b> → vyber <code>game/index.html</code>.</li>
+        <li>Rozlišení nastav na <b>1920 × 1080</b>.</li>
+        <li>Chceš-li hru jen jako overlay přes gameplay, zapni <b>Průhledné pozadí</b>.</li>
+        <li>Diváci píší do chatu <code>!hraj</code>. Ty jako broadcaster/mod máš navíc
+            <code>!bonus</code>, <code>!pauza</code>, <code>!start</code>, <code>!vynuluj</code>.</li>
+      </ol>
+    </details>
+  </div>
+</div>
+
+<script src="kick-chat.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
