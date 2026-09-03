@@ -87,6 +87,27 @@ const DEFAULT_CHECKLISTS = {
     ]
 };
 
+const MAP_SEED = 2;
+
+const MAP_TYPES = [
+    { id: 'regal',        name: 'Regál – suché zboží',      icon: '📦', fill: '#c6cbd2', stroke: '#5c6673', text: '#16202c' },
+    { id: 'pokladna',     name: 'Pokladna',                 icon: '🧾', fill: '#ffdf1b', stroke: '#a08600', text: '#16202c' },
+    { id: 'samoobsluzna', name: 'Samoobslužná pokladna',    icon: '🖥️', fill: '#ffe97a', stroke: '#a08600', text: '#16202c' },
+    { id: 'akce',         name: 'Akce',                     icon: '🏷️', fill: '#ff8a1e', stroke: '#a85200', text: '#301400' },
+    { id: 'gondola',      name: 'Gondola',                  icon: '⭐', fill: '#ffe9e7', stroke: '#e01b1b', text: '#b01410' },
+    { id: 'zelenina',     name: 'Ovoce, zelenina, květiny', icon: '🥦', fill: '#8fd130', stroke: '#4d7a10', text: '#16300a' },
+    { id: 'pekarna',      name: 'Pekárna',                  icon: '🥐', fill: '#9b3fbf', stroke: '#5f1f78', text: '#ffffff' },
+    { id: 'chlazene',     name: 'Chlazené výrobky',         icon: '🧀', fill: '#3b48c4', stroke: '#232c85', text: '#ffffff' },
+    { id: 'mrazene',      name: 'Mražené výrobky',          icon: '🧊', fill: '#7d9ed4', stroke: '#42618f', text: '#0d1c33' },
+    { id: 'lednicka',     name: 'Lednička',                 icon: '🥤', fill: '#a9dff0', stroke: '#3f8ba5', text: '#0d2b33' },
+    { id: 'kava',         name: 'Káva',                     icon: '☕', fill: '#2b2b2b', stroke: '#000000', text: '#ffffff' },
+    { id: 'nonfood',      name: 'Nonfood / textil',         icon: '👕', fill: '#f7b6cd', stroke: '#b25e7d', text: '#3a1122' },
+    { id: 'vystavka',     name: 'Výstavka / stojan',        icon: '🛠️', fill: '#28a745', stroke: '#136226', text: '#ffffff' },
+    { id: 'ostatni',      name: 'Ostatní zboží',            icon: '🍯', fill: '#8a8a8a', stroke: '#4d4d4d', text: '#ffffff' },
+    { id: 'dvere',        name: 'Dveře / vstup',            icon: '🚪', fill: '#e01b1b', stroke: '#8c0f0f', text: '#ffffff' },
+    { id: 'popisek',      name: 'Popisek (jen text)',       icon: '',   fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
+];
+
 /* --- Pomocné funkce ------------------------------------------------------- */
 
 function uid() {
@@ -262,6 +283,12 @@ function normalize(data) {
         n.date = n.date || todayISO();
     });
 
+    /* Starší, ručně obkreslený plán nahradíme srovnaným – ale jen dokud si do něj
+       nikdo nezapsal artikly. Kdo už v plánu pracuje, o svou verzi nepřijde. */
+    const untouched = db.map.elements.every(element => !(element.articles || []).length);
+    if ((Number(db.map.seed) || 1) < MAP_SEED && untouched) db.map = defaultMap();
+
+    db.map.seed = Number(db.map.seed) || MAP_SEED;
     db.map.width = Number(db.map.width) || 1100;
     db.map.height = Number(db.map.height) || 1180;
     db.map.elements.forEach(element => {
@@ -270,7 +297,11 @@ function normalize(data) {
         element.name = element.name || '';
         element.note = element.note || '';
         element.articles = Array.isArray(element.articles) ? element.articles : [];
-        element.articles.forEach(article => { article.id = article.id || uid(); });
+        element.articles.forEach(article => {
+            article.id = article.id || uid();
+            article.name = article.name || '';
+            ['code', 'ean', 'shelf', 'note'].forEach(key => { article[key] = article[key] || ''; });
+        });
         ['x', 'y', 'w', 'h'].forEach(key => { element[key] = Math.round(Number(element[key]) || 0); });
     });
 
@@ -308,7 +339,7 @@ function save() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
         return true;
     } catch (err) {
-        alert('Data se nepodařilo uložit do prohlížeče. Zkontroluj volné místo nebo režim anonymního prohlížení.');
+        alert('Data se nepodařilo uložit – paměť prohlížeče je plná (nejspíš kvůli fotkám). Stáhni si zálohu v Nastavení a část fotek smaž.');
         return false;
     }
 }
@@ -412,113 +443,92 @@ function checklistProgress(iso) {
     const done = all.filter(item => day.checks[item.id]).length;
     return { done, total: all.length };
 }
-
 /* ==========================================================================
    Plán prodejny
-   Souřadnice jsou v jednotkách plánu (zhruba pixely původního nákresu),
-   vykreslení si je přepočítá podle velikosti obrazovky.
+   Souřadnice jsou v jednotkách plánu (mřížka po 10), vykreslení si je
+   přepočítá podle velikosti obrazovky. Prodejna je 1100 × 1180 jednotek.
    ========================================================================== */
 
-const MAP_TYPES = [
-    { id: 'regal',        name: 'Regál – suché zboží',   fill: '#c9ccd1', stroke: '#111111', text: '#16202c' },
-    { id: 'pokladna',     name: 'Pokladna',              fill: '#ffe400', stroke: '#111111', text: '#16202c' },
-    { id: 'samoobsluzna', name: 'Samoobslužná pokladna', fill: '#ffe400', stroke: '#111111', text: '#16202c' },
-    { id: 'akce',         name: 'Akce',                  fill: '#ff8a1e', stroke: '#111111', text: '#16202c' },
-    { id: 'gondola',      name: 'Gondola',               fill: '#ffffff', stroke: '#e01b1b', text: '#c01510' },
-    { id: 'zelenina',     name: 'Ovoce, zelenina, květiny', fill: '#8fd130', stroke: '#111111', text: '#16202c' },
-    { id: 'pekarna',      name: 'Pekárna',               fill: '#9b3fbf', stroke: '#111111', text: '#ffffff' },
-    { id: 'chlazene',     name: 'Chlazené výrobky',      fill: '#3b48c4', stroke: '#111111', text: '#ffffff' },
-    { id: 'mrazene',      name: 'Mražené výrobky',       fill: '#7d9ed4', stroke: '#111111', text: '#16202c' },
-    { id: 'lednicka',     name: 'Lednička',              fill: '#a9dff0', stroke: '#111111', text: '#16202c' },
-    { id: 'kava',         name: 'Káva',                  fill: '#1b1b1b', stroke: '#111111', text: '#ffffff' },
-    { id: 'nonfood',      name: 'Nonfood / textil',      fill: '#f7b6cd', stroke: '#111111', text: '#16202c' },
-    { id: 'vystavka',     name: 'Výstavka / stojan',     fill: '#28a745', stroke: '#111111', text: '#ffffff' },
-    { id: 'ostatni',      name: 'Ostatní zboží',         fill: '#8a8a8a', stroke: '#111111', text: '#ffffff' },
-    { id: 'dvere',        name: 'Dveře / vstup',         fill: '#e01b1b', stroke: '#111111', text: '#ffffff' },
-    { id: 'popisek',      name: 'Popisek (jen text)',    fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
-];
-
 function mapTypeById(id) {
-    return MAP_TYPES.find(t => t.id === id) || MAP_TYPES[MAP_TYPES.length - 3];
+    return MAP_TYPES.find(t => t.id === id) || MAP_TYPES[13];
 }
 
-/* Výchozí plán podle ručního nákresu prodejny. */
+/* Výchozí plán prodejny.
+   Sloupce a řady jsou zarovnané na mřížku, ať plán působí souměrně:
+   čtyři vnitřní sloupce na x = 250 / 410 / 570 / 730, obvodové stěny na 40 a 1000. */
 function defaultMap() {
     const make = (type, name, x, y, w, h) => ({ id: uid(), type, name, x, y, w, h, note: '', articles: [] });
+    const COL = [250, 410, 570, 730];
 
     return {
+        seed: MAP_SEED,
         width: 1100,
         height: 1180,
         elements: [
-            /* Chlazení a mražení po obvodu */
-            make('chlazene', 'Chlazené výrobky – zadní stěna', 18, 18, 1030, 32),
-            make('chlazene', 'Chlazené výrobky', 18, 72, 52, 160),
-            make('mrazene', 'Mražené výrobky', 18, 232, 52, 136),
-            make('chlazene', 'Chlazené výrobky', 990, 72, 65, 100),
-            make('chlazene', 'Chlazené výrobky', 990, 185, 62, 115),
-            make('mrazene', 'Mražené výrobky – ostrov', 245, 255, 70, 95),
+            /* Obvodové stěny */
+            make('chlazene', 'Chlazené výrobky – zadní stěna', 40, 40, 1020, 36),
+            make('chlazene', 'Chlazené výrobky', 40, 100, 60, 180),
+            make('mrazene', 'Mražené výrobky', 40, 300, 60, 150),
+            make('chlazene', 'Chlazené výrobky', 1000, 100, 60, 170),
+            make('chlazene', 'Chlazené výrobky', 1000, 290, 60, 160),
+            make('pekarna', 'Pekárna', 1000, 480, 60, 140),
+            make('dvere', 'Dveře do Tomry (vratné lahve)', 1000, 820, 60, 80),
 
-            /* Akce a výstavky */
-            make('vystavka', 'Parkside', 250, 82, 62, 118),
-            make('akce', 'Akce', 375, 88, 70, 110),
-            make('akce', 'Akce', 532, 80, 78, 118),
-            make('akce', 'Akce', 375, 232, 68, 100),
-            make('akce', 'Akce', 532, 232, 75, 105),
-            make('nonfood', 'Nonfood', 755, 72, 75, 168),
-            make('nonfood', 'Nonfood', 755, 295, 68, 55),
+            /* Přední řada – výstavky, akce, nonfood */
+            make('vystavka', 'Parkside', COL[0], 100, 90, 140),
+            make('akce', 'Akce 1', COL[1], 100, 90, 140),
+            make('akce', 'Akce 2', COL[2], 100, 90, 140),
+            make('nonfood', 'Nonfood', COL[3], 100, 90, 140),
 
-            /* Gondoly – mění se podle plánu gondol */
-            make('gondola', 'Gondola A', 368, 337, 72, 22),
-            make('gondola', 'Gondola B', 528, 345, 85, 24),
-            make('gondola', 'Gondola C', 750, 352, 72, 24),
-            make('gondola', 'Gondola D', 748, 400, 70, 42),
-            make('gondola', 'Gondola – čelo uličky 2', 516, 394, 100, 18),
+            /* Druhá řada */
+            make('mrazene', 'Mražené výrobky – ostrov', COL[0], 280, 90, 120),
+            make('akce', 'Akce 3', COL[1], 280, 90, 120),
+            make('akce', 'Akce 4', COL[2], 280, 90, 120),
+            make('nonfood', 'Nonfood', COL[3], 280, 90, 120),
 
-            /* Regály se suchým zbožím */
-            make('regal', 'Regál – ulička 5', 18, 415, 52, 265),
-            make('regal', 'Regál mezi uličkami 4 a 5', 245, 397, 60, 400),
-            make('regal', 'Regál mezi uličkami 3 a 4', 380, 400, 42, 395),
-            make('regal', 'Regál mezi uličkami 2 a 3', 515, 405, 100, 390),
+            /* Gondoly nad uličkami – mění se podle plánu gondol */
+            make('gondola', 'Gondola A', COL[0], 420, 90, 26),
+            make('gondola', 'Gondola B', COL[1], 420, 90, 26),
+            make('gondola', 'Gondola C', COL[2], 420, 90, 26),
+            make('gondola', 'Gondola D', COL[3], 420, 90, 26),
+
+            /* Regály a úseky */
+            make('regal', 'Regál u stěny – ulička 5', 40, 480, 60, 280),
+            make('regal', 'Regál mezi uličkami 4 a 5', COL[0], 480, 90, 360),
+            make('regal', 'Regál mezi uličkami 3 a 4', COL[1], 480, 90, 360),
+            make('regal', 'Regál mezi uličkami 2 a 3', COL[2], 480, 90, 360),
+            make('zelenina', 'Ovoce a zelenina', COL[3], 480, 90, 300),
+            make('ostatni', 'Čaje, med, marmelády', 890, 560, 90, 200),
+            make('kava', 'Káva', 890, 880, 90, 140),
 
             /* Čela uliček */
-            make('gondola', 'Čelo uličky 5', 234, 796, 72, 20),
-            make('gondola', 'Čelo uličky 5 – spodní', 222, 824, 72, 18),
-            make('gondola', 'Čelo uličky 4', 380, 796, 44, 18),
-            make('gondola', 'Čelo uličky 4 – spodní', 358, 826, 64, 18),
-            make('gondola', 'Čelo uličky 3', 514, 796, 102, 20),
-            make('gondola', 'Čelo uličky 3 – spodní', 470, 822, 82, 18),
-
-            /* Ovoce, zelenina, květiny */
-            make('zelenina', 'Ovoce a zelenina', 755, 478, 52, 262),
-            make('zelenina', 'Ovoce a zelenina', 655, 872, 38, 125),
-            make('zelenina', 'Melouny', 738, 880, 90, 55),
-            make('zelenina', 'Květiny', 738, 1025, 75, 90),
-
-            /* Pravá strana */
-            make('pekarna', 'Pekárna', 990, 415, 48, 120),
-            make('ostatni', 'Čaje, med, marmelády', 932, 542, 58, 200),
-            make('dvere', 'Dveře do Tomry (vratné lahve)', 992, 778, 45, 68),
-            make('kava', 'Káva', 918, 870, 62, 125),
+            make('gondola', 'Čelo uličky 4/5', COL[0], 850, 90, 26),
+            make('gondola', 'Čelo uličky 3/4', COL[1], 850, 90, 26),
+            make('gondola', 'Čelo uličky 2/3', COL[2], 850, 90, 26),
 
             /* Pokladní zóna */
-            make('lednicka', 'Lednička u samoobslužných pokladen', 25, 730, 38, 70),
-            make('samoobsluzna', 'SB 1', 25, 838, 46, 40),
-            make('samoobsluzna', 'SB 2', 158, 830, 38, 44),
-            make('samoobsluzna', 'SB 3', 25, 912, 60, 62),
-            make('samoobsluzna', 'SB 4', 155, 918, 72, 56),
-            make('samoobsluzna', 'SB 5', 25, 1002, 60, 54),
-            make('samoobsluzna', 'SB 6', 155, 1008, 68, 56),
-            make('pokladna', 'Pokladna 1', 282, 824, 45, 326),
-            make('pokladna', 'Pokladna 2', 368, 838, 48, 312),
-            make('pokladna', 'Pokladna 3', 470, 830, 75, 320),
-            make('pokladna', 'Pokladna 4', 592, 870, 32, 282),
+            make('lednicka', 'Lednička u samoobslužných pokladen', 40, 800, 90, 60),
+            make('samoobsluzna', 'SB 1', 40, 900, 90, 70),
+            make('samoobsluzna', 'SB 2', 150, 900, 90, 70),
+            make('samoobsluzna', 'SB 3', 40, 1000, 90, 70),
+            make('samoobsluzna', 'SB 4', 150, 1000, 90, 70),
+            make('samoobsluzna', 'SB 5', 40, 1100, 90, 70),
+            make('samoobsluzna', 'SB 6', 150, 1100, 90, 70),
+            make('pokladna', 'Pokladna 1', 280, 900, 70, 250),
+            make('pokladna', 'Pokladna 2', 420, 900, 70, 250),
+            make('pokladna', 'Pokladna 3', 560, 900, 70, 250),
+            make('pokladna', 'Pokladna 4', 700, 900, 70, 250),
+
+            /* Ovoce a květiny u vchodu */
+            make('zelenina', 'Melouny', 800, 900, 80, 70),
+            make('zelenina', 'Květiny', 800, 1010, 80, 90),
 
             /* Popisky uliček */
-            make('popisek', 'Ulička 5', 108, 520, 70, 40),
-            make('popisek', 'Ulička 4', 322, 545, 70, 40),
-            make('popisek', 'Ulička 3', 435, 550, 70, 40),
-            make('popisek', 'Ulička 2', 630, 560, 70, 40),
-            make('popisek', 'Ulička 1', 846, 605, 70, 40)
+            make('popisek', 'Ulička 5', 130, 600, 90, 30),
+            make('popisek', 'Ulička 4', 330, 600, 90, 30),
+            make('popisek', 'Ulička 3', 490, 600, 90, 30),
+            make('popisek', 'Ulička 2', 650, 600, 90, 30),
+            make('popisek', 'Ulička 1', 810, 620, 90, 30)
         ]
     };
 }
@@ -527,20 +537,48 @@ function mapElementById(id) {
     return DB.map.elements.find(e => e.id === id) || null;
 }
 
-/* Vyhledá artikl napříč celým plánem. */
+/* Vyhledá artikl napříč celým plánem – podle názvu, čísla, EAN i poznámky. */
 function findArticles(query) {
     const text = query.trim().toLowerCase();
     if (!text) return [];
     const hits = [];
     DB.map.elements.forEach(element => {
         element.articles.forEach(article => {
-            const haystack = `${article.name} ${article.code || ''} ${article.note || ''}`.toLowerCase();
+            const haystack = [article.name, article.code, article.ean, article.shelf, article.note]
+                .filter(Boolean).join(' ').toLowerCase();
             if (haystack.includes(text)) hits.push({ element, article });
         });
     });
     return hits.sort((a, b) => a.article.name.localeCompare(b.article.name, 'cs'));
 }
 
+function allArticles() {
+    const rows = [];
+    DB.map.elements.forEach(element =>
+        element.articles.forEach(article => rows.push({ element, article })));
+    return rows.sort((a, b) => a.article.name.localeCompare(b.article.name, 'cs'));
+}
+
 function articleCount() {
     return DB.map.elements.reduce((sum, element) => sum + element.articles.length, 0);
+}
+
+function photoCount() {
+    return DB.map.elements.reduce((sum, element) =>
+        sum + element.articles.filter(article => article.photo).length, 0);
+}
+
+/* Kolik místa data zabírají – fotky se do prohlížeče vejdou jen v omezeném počtu. */
+function storageBytes() {
+    try {
+        return new Blob([JSON.stringify(DB)]).size;
+    } catch {
+        return JSON.stringify(DB).length;
+    }
+}
+
+function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} kB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }

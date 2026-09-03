@@ -44,9 +44,16 @@ Typy prvků odpovídají barvám z původního nákresu: šedá regál, žlutá 
 červený obrys gondola, zelená ovoce/zelenina a květiny, fialová pekárna, modrá chlazené,
 světlejší modrá mražené a lednička u samoobslužných pokladen.
 
-**Digitální obchod:** ke každému prvku se přidávají artikly (název, číslo, police, poznámka).
-Do políčka *Kde je artikl?* pak stačí napsat část názvu – místo v plánu se červeně rozbliká
+**Digitální obchod:** klikni na prvek a otevře se jeho detail – co v něm leží. Ke každému
+artiklu patří název, **EAN**, číslo artiklu, police a **fotka**. Vyfotit se dá i celé místo
+(*Fotka místa*), ať je vidět, jak má být regál naskládaný. V režimu prohlížení stačí na prvek
+klepnout, v režimu úprav slouží k otevření tlačítko *Detail* nebo dvojklik.
+
+Do políčka *Kde je artikl?* napiš část názvu nebo EAN – místo v plánu se červeně rozbliká
 a pod hledáním se vypíše, ve kterém regálu to je. Tlačítko *Seznam artiklů* ukáže vše najednou.
+
+Fotky se před uložením zmenší na 900 px a uloží jako JPEG (zhruba 60 kB na kus). Prohlížeč jich
+pobere řádově stovky – kolik je zabráno, ukazuje pruh v *Nastavení*.
 
 Plán jde vytisknout (tlačítko **Tisk**) a tlačítko **Výchozí plán** vrátí původní podobu.
 

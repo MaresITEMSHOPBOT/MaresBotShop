@@ -469,16 +469,28 @@ table.data td.num, table.data th.num { text-align: right; }
 .map-canvas {
     position: relative;
     margin: 0 auto;
+    background-color: var(--bg-card);
     background-image:
-        linear-gradient(to right, rgba(128, 145, 165, 0.16) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(128, 145, 165, 0.16) 1px, transparent 1px);
-    background-size: 25px 25px;
+        linear-gradient(to right, rgba(128, 145, 165, 0.12) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(128, 145, 165, 0.12) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Obvodová zeď prodejny */
+.map-canvas::before {
+    content: '';
+    position: absolute;
+    inset: 1.6%;
+    border: 3px solid var(--text-secondary);
+    border-radius: 6px;
+    opacity: 0.45;
+    pointer-events: none;
 }
 
 .map-el {
     position: absolute;
     border: 2px solid #111;
-    border-radius: 3px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -486,8 +498,15 @@ table.data td.num, table.data th.num { text-align: right; }
     text-align: center;
     line-height: 1.15;
     font-weight: 600;
-    padding: 1px;
+    padding: 2px;
+    box-shadow: 0 1px 2px rgba(16, 32, 48, 0.18);
+    transition: box-shadow 0.15s, transform 0.15s;
 }
+.map-el:hover { box-shadow: 0 3px 8px rgba(16, 32, 48, 0.28); z-index: 3; }
+
+.map-icon { display: block; font-size: 1.25em; line-height: 1.1; }
+.map-label.tiny { font-size: 1.1em; }
+.map-photo-dot { font-size: 0.85em; margin-left: 0.15em; }
 .map-wrap.editing .map-el { cursor: grab; touch-action: none; }
 .map-wrap.editing .map-el.selected { cursor: move; }
 
@@ -506,7 +525,11 @@ table.data td.num, table.data th.num { text-align: right; }
     50% { outline-color: rgba(255, 59, 48, 0.25); }
 }
 
-.map-el.t-gondola { border-width: 3px; }
+.map-el.t-gondola {
+    border-width: 3px;
+    background-image: repeating-linear-gradient(45deg,
+        rgba(224, 27, 27, 0.14) 0 5px, transparent 5px 10px);
+}
 .map-el.t-popisek {
     border-style: dashed;
     border-color: transparent;
@@ -517,7 +540,15 @@ table.data td.num, table.data th.num { text-align: right; }
     white-space: nowrap;
 }
 .map-wrap.editing .map-el.t-popisek { border-color: var(--border); }
-.map-el.t-popisek .map-label { overflow: visible; max-width: none; max-height: none; }
+.map-el.t-popisek .map-label {
+    overflow: visible;
+    max-width: none;
+    max-height: none;
+    background: var(--bg-card);
+    box-shadow: 0 0 0 1px var(--border);
+    border-radius: 4px;
+    padding: 0 3px;
+}
 
 .map-label {
     display: inline-block;
@@ -530,11 +561,13 @@ table.data td.num, table.data th.num { text-align: right; }
 
 .map-count {
     display: inline-block;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.45);
     color: #fff;
     border-radius: 999px;
-    padding: 0 0.3em;
+    padding: 0 0.35em;
+    margin-left: 0.25em;
     font-size: 0.85em;
+    font-weight: 700;
 }
 
 .map-handle {
@@ -552,6 +585,59 @@ table.data td.num, table.data th.num { text-align: right; }
 
 @media print {
     .map-wrap { max-height: none; overflow: visible; border: none; }
+}
+
+/* --- Fotky a detail prvku --------------------------------------------------- */
+
+.photo-field { display: flex; gap: 0.7rem; align-items: center; }
+.photo-buttons { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.photo-preview {
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: var(--bg-soft);
+}
+.photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.photo-preview.empty span { font-size: 0.78rem; color: var(--text-secondary); }
+
+.article-thumb {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    object-fit: cover;
+    background: var(--bg-soft);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+.article-thumb.empty { font-size: 1.1rem; cursor: default; }
+
+.detail-head { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+
+.detail-photo {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-top: 0.7rem;
+    cursor: pointer;
+    border: 1px solid var(--border);
+}
+
+.photo-full {
+    width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 10px;
+    background: var(--bg-soft);
 }
 
 </style>
@@ -663,6 +749,27 @@ const DEFAULT_CHECKLISTS = {
         'Zapnout alarm, zamknout, zapsat předání směny'
     ]
 };
+
+const MAP_SEED = 2;
+
+const MAP_TYPES = [
+    { id: 'regal',        name: 'Regál – suché zboží',      icon: '📦', fill: '#c6cbd2', stroke: '#5c6673', text: '#16202c' },
+    { id: 'pokladna',     name: 'Pokladna',                 icon: '🧾', fill: '#ffdf1b', stroke: '#a08600', text: '#16202c' },
+    { id: 'samoobsluzna', name: 'Samoobslužná pokladna',    icon: '🖥️', fill: '#ffe97a', stroke: '#a08600', text: '#16202c' },
+    { id: 'akce',         name: 'Akce',                     icon: '🏷️', fill: '#ff8a1e', stroke: '#a85200', text: '#301400' },
+    { id: 'gondola',      name: 'Gondola',                  icon: '⭐', fill: '#ffe9e7', stroke: '#e01b1b', text: '#b01410' },
+    { id: 'zelenina',     name: 'Ovoce, zelenina, květiny', icon: '🥦', fill: '#8fd130', stroke: '#4d7a10', text: '#16300a' },
+    { id: 'pekarna',      name: 'Pekárna',                  icon: '🥐', fill: '#9b3fbf', stroke: '#5f1f78', text: '#ffffff' },
+    { id: 'chlazene',     name: 'Chlazené výrobky',         icon: '🧀', fill: '#3b48c4', stroke: '#232c85', text: '#ffffff' },
+    { id: 'mrazene',      name: 'Mražené výrobky',          icon: '🧊', fill: '#7d9ed4', stroke: '#42618f', text: '#0d1c33' },
+    { id: 'lednicka',     name: 'Lednička',                 icon: '🥤', fill: '#a9dff0', stroke: '#3f8ba5', text: '#0d2b33' },
+    { id: 'kava',         name: 'Káva',                     icon: '☕', fill: '#2b2b2b', stroke: '#000000', text: '#ffffff' },
+    { id: 'nonfood',      name: 'Nonfood / textil',         icon: '👕', fill: '#f7b6cd', stroke: '#b25e7d', text: '#3a1122' },
+    { id: 'vystavka',     name: 'Výstavka / stojan',        icon: '🛠️', fill: '#28a745', stroke: '#136226', text: '#ffffff' },
+    { id: 'ostatni',      name: 'Ostatní zboží',            icon: '🍯', fill: '#8a8a8a', stroke: '#4d4d4d', text: '#ffffff' },
+    { id: 'dvere',        name: 'Dveře / vstup',            icon: '🚪', fill: '#e01b1b', stroke: '#8c0f0f', text: '#ffffff' },
+    { id: 'popisek',      name: 'Popisek (jen text)',       icon: '',   fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
+];
 
 /* --- Pomocné funkce ------------------------------------------------------- */
 
@@ -839,6 +946,12 @@ function normalize(data) {
         n.date = n.date || todayISO();
     });
 
+    /* Starší, ručně obkreslený plán nahradíme srovnaným – ale jen dokud si do něj
+       nikdo nezapsal artikly. Kdo už v plánu pracuje, o svou verzi nepřijde. */
+    const untouched = db.map.elements.every(element => !(element.articles || []).length);
+    if ((Number(db.map.seed) || 1) < MAP_SEED && untouched) db.map = defaultMap();
+
+    db.map.seed = Number(db.map.seed) || MAP_SEED;
     db.map.width = Number(db.map.width) || 1100;
     db.map.height = Number(db.map.height) || 1180;
     db.map.elements.forEach(element => {
@@ -847,7 +960,11 @@ function normalize(data) {
         element.name = element.name || '';
         element.note = element.note || '';
         element.articles = Array.isArray(element.articles) ? element.articles : [];
-        element.articles.forEach(article => { article.id = article.id || uid(); });
+        element.articles.forEach(article => {
+            article.id = article.id || uid();
+            article.name = article.name || '';
+            ['code', 'ean', 'shelf', 'note'].forEach(key => { article[key] = article[key] || ''; });
+        });
         ['x', 'y', 'w', 'h'].forEach(key => { element[key] = Math.round(Number(element[key]) || 0); });
     });
 
@@ -885,7 +1002,7 @@ function save() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
         return true;
     } catch (err) {
-        alert('Data se nepodařilo uložit do prohlížeče. Zkontroluj volné místo nebo režim anonymního prohlížení.');
+        alert('Data se nepodařilo uložit – paměť prohlížeče je plná (nejspíš kvůli fotkám). Stáhni si zálohu v Nastavení a část fotek smaž.');
         return false;
     }
 }
@@ -989,113 +1106,92 @@ function checklistProgress(iso) {
     const done = all.filter(item => day.checks[item.id]).length;
     return { done, total: all.length };
 }
-
 /* ==========================================================================
    Plán prodejny
-   Souřadnice jsou v jednotkách plánu (zhruba pixely původního nákresu),
-   vykreslení si je přepočítá podle velikosti obrazovky.
+   Souřadnice jsou v jednotkách plánu (mřížka po 10), vykreslení si je
+   přepočítá podle velikosti obrazovky. Prodejna je 1100 × 1180 jednotek.
    ========================================================================== */
 
-const MAP_TYPES = [
-    { id: 'regal',        name: 'Regál – suché zboží',   fill: '#c9ccd1', stroke: '#111111', text: '#16202c' },
-    { id: 'pokladna',     name: 'Pokladna',              fill: '#ffe400', stroke: '#111111', text: '#16202c' },
-    { id: 'samoobsluzna', name: 'Samoobslužná pokladna', fill: '#ffe400', stroke: '#111111', text: '#16202c' },
-    { id: 'akce',         name: 'Akce',                  fill: '#ff8a1e', stroke: '#111111', text: '#16202c' },
-    { id: 'gondola',      name: 'Gondola',               fill: '#ffffff', stroke: '#e01b1b', text: '#c01510' },
-    { id: 'zelenina',     name: 'Ovoce, zelenina, květiny', fill: '#8fd130', stroke: '#111111', text: '#16202c' },
-    { id: 'pekarna',      name: 'Pekárna',               fill: '#9b3fbf', stroke: '#111111', text: '#ffffff' },
-    { id: 'chlazene',     name: 'Chlazené výrobky',      fill: '#3b48c4', stroke: '#111111', text: '#ffffff' },
-    { id: 'mrazene',      name: 'Mražené výrobky',       fill: '#7d9ed4', stroke: '#111111', text: '#16202c' },
-    { id: 'lednicka',     name: 'Lednička',              fill: '#a9dff0', stroke: '#111111', text: '#16202c' },
-    { id: 'kava',         name: 'Káva',                  fill: '#1b1b1b', stroke: '#111111', text: '#ffffff' },
-    { id: 'nonfood',      name: 'Nonfood / textil',      fill: '#f7b6cd', stroke: '#111111', text: '#16202c' },
-    { id: 'vystavka',     name: 'Výstavka / stojan',     fill: '#28a745', stroke: '#111111', text: '#ffffff' },
-    { id: 'ostatni',      name: 'Ostatní zboží',         fill: '#8a8a8a', stroke: '#111111', text: '#ffffff' },
-    { id: 'dvere',        name: 'Dveře / vstup',         fill: '#e01b1b', stroke: '#111111', text: '#ffffff' },
-    { id: 'popisek',      name: 'Popisek (jen text)',    fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
-];
-
 function mapTypeById(id) {
-    return MAP_TYPES.find(t => t.id === id) || MAP_TYPES[MAP_TYPES.length - 3];
+    return MAP_TYPES.find(t => t.id === id) || MAP_TYPES[13];
 }
 
-/* Výchozí plán podle ručního nákresu prodejny. */
+/* Výchozí plán prodejny.
+   Sloupce a řady jsou zarovnané na mřížku, ať plán působí souměrně:
+   čtyři vnitřní sloupce na x = 250 / 410 / 570 / 730, obvodové stěny na 40 a 1000. */
 function defaultMap() {
     const make = (type, name, x, y, w, h) => ({ id: uid(), type, name, x, y, w, h, note: '', articles: [] });
+    const COL = [250, 410, 570, 730];
 
     return {
+        seed: MAP_SEED,
         width: 1100,
         height: 1180,
         elements: [
-            /* Chlazení a mražení po obvodu */
-            make('chlazene', 'Chlazené výrobky – zadní stěna', 18, 18, 1030, 32),
-            make('chlazene', 'Chlazené výrobky', 18, 72, 52, 160),
-            make('mrazene', 'Mražené výrobky', 18, 232, 52, 136),
-            make('chlazene', 'Chlazené výrobky', 990, 72, 65, 100),
-            make('chlazene', 'Chlazené výrobky', 990, 185, 62, 115),
-            make('mrazene', 'Mražené výrobky – ostrov', 245, 255, 70, 95),
+            /* Obvodové stěny */
+            make('chlazene', 'Chlazené výrobky – zadní stěna', 40, 40, 1020, 36),
+            make('chlazene', 'Chlazené výrobky', 40, 100, 60, 180),
+            make('mrazene', 'Mražené výrobky', 40, 300, 60, 150),
+            make('chlazene', 'Chlazené výrobky', 1000, 100, 60, 170),
+            make('chlazene', 'Chlazené výrobky', 1000, 290, 60, 160),
+            make('pekarna', 'Pekárna', 1000, 480, 60, 140),
+            make('dvere', 'Dveře do Tomry (vratné lahve)', 1000, 820, 60, 80),
 
-            /* Akce a výstavky */
-            make('vystavka', 'Parkside', 250, 82, 62, 118),
-            make('akce', 'Akce', 375, 88, 70, 110),
-            make('akce', 'Akce', 532, 80, 78, 118),
-            make('akce', 'Akce', 375, 232, 68, 100),
-            make('akce', 'Akce', 532, 232, 75, 105),
-            make('nonfood', 'Nonfood', 755, 72, 75, 168),
-            make('nonfood', 'Nonfood', 755, 295, 68, 55),
+            /* Přední řada – výstavky, akce, nonfood */
+            make('vystavka', 'Parkside', COL[0], 100, 90, 140),
+            make('akce', 'Akce 1', COL[1], 100, 90, 140),
+            make('akce', 'Akce 2', COL[2], 100, 90, 140),
+            make('nonfood', 'Nonfood', COL[3], 100, 90, 140),
 
-            /* Gondoly – mění se podle plánu gondol */
-            make('gondola', 'Gondola A', 368, 337, 72, 22),
-            make('gondola', 'Gondola B', 528, 345, 85, 24),
-            make('gondola', 'Gondola C', 750, 352, 72, 24),
-            make('gondola', 'Gondola D', 748, 400, 70, 42),
-            make('gondola', 'Gondola – čelo uličky 2', 516, 394, 100, 18),
+            /* Druhá řada */
+            make('mrazene', 'Mražené výrobky – ostrov', COL[0], 280, 90, 120),
+            make('akce', 'Akce 3', COL[1], 280, 90, 120),
+            make('akce', 'Akce 4', COL[2], 280, 90, 120),
+            make('nonfood', 'Nonfood', COL[3], 280, 90, 120),
 
-            /* Regály se suchým zbožím */
-            make('regal', 'Regál – ulička 5', 18, 415, 52, 265),
-            make('regal', 'Regál mezi uličkami 4 a 5', 245, 397, 60, 400),
-            make('regal', 'Regál mezi uličkami 3 a 4', 380, 400, 42, 395),
-            make('regal', 'Regál mezi uličkami 2 a 3', 515, 405, 100, 390),
+            /* Gondoly nad uličkami – mění se podle plánu gondol */
+            make('gondola', 'Gondola A', COL[0], 420, 90, 26),
+            make('gondola', 'Gondola B', COL[1], 420, 90, 26),
+            make('gondola', 'Gondola C', COL[2], 420, 90, 26),
+            make('gondola', 'Gondola D', COL[3], 420, 90, 26),
+
+            /* Regály a úseky */
+            make('regal', 'Regál u stěny – ulička 5', 40, 480, 60, 280),
+            make('regal', 'Regál mezi uličkami 4 a 5', COL[0], 480, 90, 360),
+            make('regal', 'Regál mezi uličkami 3 a 4', COL[1], 480, 90, 360),
+            make('regal', 'Regál mezi uličkami 2 a 3', COL[2], 480, 90, 360),
+            make('zelenina', 'Ovoce a zelenina', COL[3], 480, 90, 300),
+            make('ostatni', 'Čaje, med, marmelády', 890, 560, 90, 200),
+            make('kava', 'Káva', 890, 880, 90, 140),
 
             /* Čela uliček */
-            make('gondola', 'Čelo uličky 5', 234, 796, 72, 20),
-            make('gondola', 'Čelo uličky 5 – spodní', 222, 824, 72, 18),
-            make('gondola', 'Čelo uličky 4', 380, 796, 44, 18),
-            make('gondola', 'Čelo uličky 4 – spodní', 358, 826, 64, 18),
-            make('gondola', 'Čelo uličky 3', 514, 796, 102, 20),
-            make('gondola', 'Čelo uličky 3 – spodní', 470, 822, 82, 18),
-
-            /* Ovoce, zelenina, květiny */
-            make('zelenina', 'Ovoce a zelenina', 755, 478, 52, 262),
-            make('zelenina', 'Ovoce a zelenina', 655, 872, 38, 125),
-            make('zelenina', 'Melouny', 738, 880, 90, 55),
-            make('zelenina', 'Květiny', 738, 1025, 75, 90),
-
-            /* Pravá strana */
-            make('pekarna', 'Pekárna', 990, 415, 48, 120),
-            make('ostatni', 'Čaje, med, marmelády', 932, 542, 58, 200),
-            make('dvere', 'Dveře do Tomry (vratné lahve)', 992, 778, 45, 68),
-            make('kava', 'Káva', 918, 870, 62, 125),
+            make('gondola', 'Čelo uličky 4/5', COL[0], 850, 90, 26),
+            make('gondola', 'Čelo uličky 3/4', COL[1], 850, 90, 26),
+            make('gondola', 'Čelo uličky 2/3', COL[2], 850, 90, 26),
 
             /* Pokladní zóna */
-            make('lednicka', 'Lednička u samoobslužných pokladen', 25, 730, 38, 70),
-            make('samoobsluzna', 'SB 1', 25, 838, 46, 40),
-            make('samoobsluzna', 'SB 2', 158, 830, 38, 44),
-            make('samoobsluzna', 'SB 3', 25, 912, 60, 62),
-            make('samoobsluzna', 'SB 4', 155, 918, 72, 56),
-            make('samoobsluzna', 'SB 5', 25, 1002, 60, 54),
-            make('samoobsluzna', 'SB 6', 155, 1008, 68, 56),
-            make('pokladna', 'Pokladna 1', 282, 824, 45, 326),
-            make('pokladna', 'Pokladna 2', 368, 838, 48, 312),
-            make('pokladna', 'Pokladna 3', 470, 830, 75, 320),
-            make('pokladna', 'Pokladna 4', 592, 870, 32, 282),
+            make('lednicka', 'Lednička u samoobslužných pokladen', 40, 800, 90, 60),
+            make('samoobsluzna', 'SB 1', 40, 900, 90, 70),
+            make('samoobsluzna', 'SB 2', 150, 900, 90, 70),
+            make('samoobsluzna', 'SB 3', 40, 1000, 90, 70),
+            make('samoobsluzna', 'SB 4', 150, 1000, 90, 70),
+            make('samoobsluzna', 'SB 5', 40, 1100, 90, 70),
+            make('samoobsluzna', 'SB 6', 150, 1100, 90, 70),
+            make('pokladna', 'Pokladna 1', 280, 900, 70, 250),
+            make('pokladna', 'Pokladna 2', 420, 900, 70, 250),
+            make('pokladna', 'Pokladna 3', 560, 900, 70, 250),
+            make('pokladna', 'Pokladna 4', 700, 900, 70, 250),
+
+            /* Ovoce a květiny u vchodu */
+            make('zelenina', 'Melouny', 800, 900, 80, 70),
+            make('zelenina', 'Květiny', 800, 1010, 80, 90),
 
             /* Popisky uliček */
-            make('popisek', 'Ulička 5', 108, 520, 70, 40),
-            make('popisek', 'Ulička 4', 322, 545, 70, 40),
-            make('popisek', 'Ulička 3', 435, 550, 70, 40),
-            make('popisek', 'Ulička 2', 630, 560, 70, 40),
-            make('popisek', 'Ulička 1', 846, 605, 70, 40)
+            make('popisek', 'Ulička 5', 130, 600, 90, 30),
+            make('popisek', 'Ulička 4', 330, 600, 90, 30),
+            make('popisek', 'Ulička 3', 490, 600, 90, 30),
+            make('popisek', 'Ulička 2', 650, 600, 90, 30),
+            make('popisek', 'Ulička 1', 810, 620, 90, 30)
         ]
     };
 }
@@ -1104,22 +1200,50 @@ function mapElementById(id) {
     return DB.map.elements.find(e => e.id === id) || null;
 }
 
-/* Vyhledá artikl napříč celým plánem. */
+/* Vyhledá artikl napříč celým plánem – podle názvu, čísla, EAN i poznámky. */
 function findArticles(query) {
     const text = query.trim().toLowerCase();
     if (!text) return [];
     const hits = [];
     DB.map.elements.forEach(element => {
         element.articles.forEach(article => {
-            const haystack = `${article.name} ${article.code || ''} ${article.note || ''}`.toLowerCase();
+            const haystack = [article.name, article.code, article.ean, article.shelf, article.note]
+                .filter(Boolean).join(' ').toLowerCase();
             if (haystack.includes(text)) hits.push({ element, article });
         });
     });
     return hits.sort((a, b) => a.article.name.localeCompare(b.article.name, 'cs'));
 }
 
+function allArticles() {
+    const rows = [];
+    DB.map.elements.forEach(element =>
+        element.articles.forEach(article => rows.push({ element, article })));
+    return rows.sort((a, b) => a.article.name.localeCompare(b.article.name, 'cs'));
+}
+
 function articleCount() {
     return DB.map.elements.reduce((sum, element) => sum + element.articles.length, 0);
+}
+
+function photoCount() {
+    return DB.map.elements.reduce((sum, element) =>
+        sum + element.articles.filter(article => article.photo).length, 0);
+}
+
+/* Kolik místa data zabírají – fotky se do prohlížeče vejdou jen v omezeném počtu. */
+function storageBytes() {
+    try {
+        return new Blob([JSON.stringify(DB)]).size;
+    } catch {
+        return JSON.stringify(DB).length;
+    }
+}
+
+function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} kB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 </script>
@@ -1159,11 +1283,21 @@ function effectiveZoom(available) {
 }
 
 function elementLabelHtml(element, zoom) {
-    if (element.type !== 'popisek' && zoom < 0.45) return '';
-    const vertical = element.h > element.w * 1.8 && element.h * zoom > 55;
     const count = element.articles.length;
-    return `<span class="map-label ${vertical ? 'vertical' : ''}">${esc(element.name)}${
-        count ? ` <span class="map-count">${count}</span>` : ''}</span>`;
+    const badge = count ? `<span class="map-count">${count}</span>` : '';
+    const camera = element.photo ? '<span class="map-photo-dot">📷</span>' : '';
+
+    if (element.type !== 'popisek' && zoom < 0.45) {
+        return badge || camera ? `<span class="map-label tiny">${badge}${camera}</span>` : '';
+    }
+
+    const type = mapTypeById(element.type);
+    const roomy = element.w * zoom > 72 && element.h * zoom > 48;
+    const vertical = element.h > element.w * 1.8 && element.h * zoom > 55;
+    const icon = roomy && type.icon ? `<span class="map-icon">${type.icon}</span>` : '';
+
+    return `<span class="map-label ${vertical ? 'vertical' : ''}">
+        ${icon}${esc(element.name)}${badge}${camera}</span>`;
 }
 
 function mapElementHtml(element, zoom, hits) {
@@ -1229,44 +1363,44 @@ function propsPanelHtml() {
             </div>` : `
             ${element.note ? `<div class="muted" style="margin-bottom:0.6rem;">📝 ${esc(element.note)}</div>` : ''}`}
 
-            <h3 style="margin-top:0.4rem;">🛒 Co tady je (${element.articles.length})
-                <button class="btn-secondary" data-map-action="add-article">➕ Přidat artikl</button>
-            </h3>
-            ${element.articles.length ? element.articles.map(article => `
-                <div class="row">
-                    <div class="row-main">
-                        <div class="row-title">${esc(article.name)}</div>
-                        <div class="row-sub">${article.code ? `č. ${esc(article.code)} · ` : ''}${esc(article.note || '')}
-                            ${article.shelf ? ` · ${esc(article.shelf)}` : ''}</div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn-ghost" data-map-action="edit-article" data-article="${article.id}">✏️</button>
-                    </div>
-                </div>`).join('')
-            : '<div class="empty">Zatím tu nic není zapsané.</div>'}
+            <div class="btn-row">
+                <button class="btn" data-map-action="detail">🔍 Otevřít detail a artikly (${element.articles.length})</button>
+                ${mapEdit ? `<button class="btn-secondary" data-map-action="element-photo">
+                    ${element.photo ? '🖼️ Změnit fotku místa' : '📷 Fotka místa'}</button>` : ''}
+            </div>
         </div>`;
 }
 
+function articleThumbHtml(article, elementId) {
+    return article.photo
+        ? `<img class="article-thumb" src="${esc(article.photo)}" alt=""
+                data-map-action="photo" data-el-id="${elementId}" data-article="${article.id}">`
+        : '<span class="article-thumb empty">🛒</span>';
+}
+
 function articleListHtml() {
-    const rows = [];
-    DB.map.elements.forEach(element => element.articles.forEach(article =>
-        rows.push({ element, article })));
-    rows.sort((a, b) => a.article.name.localeCompare(b.article.name, 'cs'));
+    const rows = allArticles();
 
     return `
         <div class="card">
             <h3>📋 Všechny artikly (${rows.length})
                 <button class="btn-secondary" data-map-action="toggle-list">Skrýt</button>
             </h3>
-            ${rows.length ? `<div class="table-scroll"><table class="data">
-                <thead><tr><th>Artikl</th><th>Číslo</th><th>Kde je</th></tr></thead>
-                <tbody>${rows.map(({ element, article }) => `
-                    <tr data-map-action="goto" data-el-id="${element.id}" style="cursor:pointer;">
-                        <td>${esc(article.name)}</td>
-                        <td>${esc(article.code || '–')}</td>
-                        <td>${esc(element.name)}</td>
-                    </tr>`).join('')}</tbody>
-            </table></div>` : '<div class="empty">Zatím žádné artikly. Vyber prvek v plánu a přidej, co v něm leží.</div>'}
+            ${rows.length ? rows.map(({ element, article }) => `
+                <div class="row">
+                    ${articleThumbHtml(article, element.id)}
+                    <div class="row-main" data-map-action="goto" data-el-id="${element.id}" style="cursor:pointer;">
+                        <div class="row-title">${esc(article.name)}</div>
+                        <div class="row-sub">📍 ${esc(element.name)}${article.shelf ? ` · ${esc(article.shelf)}` : ''}</div>
+                        <div class="row-sub">${article.ean ? `EAN ${esc(article.ean)}` : ''}${
+                            article.code ? `${article.ean ? ' · ' : ''}č. ${esc(article.code)}` : ''}</div>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn-ghost" data-map-action="edit-article-of"
+                                data-el-id="${element.id}" data-article="${article.id}">✏️</button>
+                    </div>
+                </div>`).join('')
+            : '<div class="empty">Zatím žádné artikly. Klikni na prvek v plánu a přidej, co v něm leží.</div>'}
         </div>`;
 }
 
@@ -1283,7 +1417,8 @@ function renderMap() {
             <div>
                 <h2>Plán prodejny</h2>
                 <div class="subtitle">${DB.map.elements.length} prvků · ${articleCount()} artiklů ·
-                    ${mapEdit ? 'režim úprav' : 'režim prohlížení'}</div>
+                    ${photoCount()} fotek · ${formatBytes(storageBytes())} ·
+                    ${mapEdit ? 'režim úprav' : 'režim prohlížení – klikni na prvek'}</div>
             </div>
             <div class="btn-row no-print">
                 <button class="${mapEdit ? 'btn' : 'btn-secondary'}" data-map-action="toggle-edit">
@@ -1300,12 +1435,14 @@ function renderMap() {
             ${mapSearch ? (hitList.length ? `
                 <div style="margin-top:0.7rem;">
                     ${hitList.map(({ element, article }) => `
-                        <div class="row" data-map-action="goto" data-el-id="${element.id}" style="cursor:pointer;">
-                            <div class="row-main">
+                        <div class="row">
+                            ${articleThumbHtml(article, element.id)}
+                            <div class="row-main" data-map-action="goto" data-el-id="${element.id}" style="cursor:pointer;">
                                 <div class="row-title">${esc(article.name)}</div>
                                 <div class="row-sub">📍 ${esc(element.name)}${article.shelf ? ` · ${esc(article.shelf)}` : ''}</div>
+                                <div class="row-sub">${article.ean ? `EAN ${esc(article.ean)}` : ''}</div>
                             </div>
-                            <span class="pill accent">ukázat</span>
+                            <button class="btn-ghost" data-map-action="detail-of" data-el-id="${element.id}">🔍</button>
                         </div>`).join('')}
                 </div>`
                 : '<div class="empty">Nic takového tu zapsané není.</div>') : ''}
@@ -1432,7 +1569,7 @@ function attachMapHandlers(zoom) {
         const element = mapElementById(node.dataset.el);
         if (!element) return;
         if (element.id !== mapSelected) selectElement(element.id);
-        if (!mapEdit) return;
+        if (!mapEdit) { openElementDetail(element.id); return; }
 
         drag = {
             node,
@@ -1482,6 +1619,11 @@ function attachMapHandlers(zoom) {
     canvas.addEventListener('pointercancel', endDrag);
     canvas.addEventListener('lostpointercapture', endDrag);
 
+    canvas.addEventListener('dblclick', event => {
+        const node = event.target.closest('.map-el');
+        if (node) openElementDetail(node.dataset.el);
+    });
+
     const search = view.querySelector('[data-map-search]');
     if (search) search.addEventListener('input', () => {
         const caret = search.selectionStart;
@@ -1527,19 +1669,24 @@ function addMapElement(type) {
     toast('Prvek přidán doprostřed plánu');
 }
 
-function articleForm(elementId, articleId) {
+function articleForm(elementId, articleId, afterSave) {
     const element = mapElementById(elementId);
     if (!element) return;
     const article = articleId ? element.articles.find(a => a.id === articleId) : null;
+    const done = () => { renderMap(); if (afterSave) afterSave(); };
 
     openForm({
         title: article ? 'Upravit artikl' : `Nový artikl · ${element.name}`,
         fields: [
             { name: 'name', label: 'Název', type: 'text', required: true, placeholder: 'např. Rýže basmati 1 kg' },
+            { name: 'ean', label: 'EAN', type: 'text', placeholder: '8594001234567',
+              hint: 'Čárový kód ze zadní strany obalu.' },
             { type: 'row', fields: [
                 { name: 'code', label: 'Číslo artiklu', type: 'text' },
-                { name: 'shelf', label: 'Police / pozice', type: 'text', placeholder: 'např. 3. police zleva' }
+                { name: 'shelf', label: 'Police / pozice', type: 'text', placeholder: 'např. 3. police shora' }
             ] },
+            { name: 'photo', label: 'Fotka artiklu', type: 'photo',
+              hint: 'Fotka se zmenší a uloží do prohlížeče. Ať jich není víc než pár set.' },
             { name: 'note', label: 'Poznámka', type: 'text', placeholder: 'např. akce od čtvrtka, zásoba ve skladu' }
         ],
         values: article || {},
@@ -1548,17 +1695,103 @@ function articleForm(elementId, articleId) {
             pushMapUndo();
             if (article) Object.assign(article, data);
             else element.articles.push({ id: uid(), ...data });
-            save();
-            renderMap();
+            if (!save()) { mapUndo.pop(); return; }
+            done();
             toast(article ? 'Uloženo' : 'Artikl přidán');
         },
         onDelete: article ? () => {
             pushMapUndo();
             element.articles = element.articles.filter(a => a.id !== articleId);
             save();
-            renderMap();
+            done();
             toast('Smazáno');
         } : null
+    });
+}
+
+/* Fotka celého místa – regálu, gondoly, chladicího boxu. */
+function elementPhotoForm(elementId) {
+    const element = mapElementById(elementId);
+    if (!element) return;
+
+    openForm({
+        title: `Fotka místa · ${element.name}`,
+        fields: [{ name: 'photo', label: 'Jak to tady vypadá', type: 'photo',
+                   hint: 'Vyfoť regál nebo gondolu, ať víš, jak má být naskládaná.' }],
+        values: { photo: element.photo || '' },
+        onSave: data => {
+            pushMapUndo();
+            element.photo = data.photo;
+            if (!save()) { mapUndo.pop(); return; }
+            renderMap();
+            toast(data.photo ? 'Fotka uložena' : 'Fotka odebrána');
+        }
+    });
+}
+
+/* Detail prvku – co v něm je, s fotkami. Otevírá se kliknutím v plánu. */
+function openElementDetail(elementId) {
+    const element = mapElementById(elementId);
+    if (!element) return;
+    const type = mapTypeById(element.type);
+    const reopen = () => openElementDetail(elementId);
+
+    openModal({
+        title: element.name || type.name,
+        bodyHtml: `
+            <div class="detail-head">
+                <span class="pill" style="background:${type.fill}; color:${type.text}; border-color:${type.stroke};">
+                    ${type.icon} ${esc(type.name)}</span>
+                ${element.note ? `<span class="muted">📝 ${esc(element.note)}</span>` : ''}
+            </div>
+            ${element.photo ? `<img class="detail-photo" src="${esc(element.photo)}" alt=""
+                                    data-open-photo="element">` : ''}
+            <h3 style="margin:0.9rem 0 0.3rem;">🛒 Artikly (${element.articles.length})</h3>
+            ${element.articles.length ? element.articles.map(article => `
+                <div class="row">
+                    ${articleThumbHtml(article, element.id).replace('data-map-action="photo"', 'data-open-photo="' + article.id + '"')}
+                    <div class="row-main">
+                        <div class="row-title">${esc(article.name)}</div>
+                        <div class="row-sub">${article.ean ? `EAN ${esc(article.ean)}` : 'bez EAN'}${
+                            article.code ? ` · č. ${esc(article.code)}` : ''}${
+                            article.shelf ? ` · ${esc(article.shelf)}` : ''}</div>
+                        ${article.note ? `<div class="row-sub">📝 ${esc(article.note)}</div>` : ''}
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn-ghost" data-edit-article="${article.id}">✏️</button>
+                    </div>
+                </div>`).join('')
+            : '<div class="empty">Zatím tu nic není zapsané. Přidej první artikl.</div>'}`,
+        actionsHtml: `
+            <button class="btn-secondary" data-detail-photo>${element.photo ? '🖼️ Fotka místa' : '📷 Fotka místa'}</button>
+            <button class="btn" data-detail-add>➕ Přidat artikl</button>`,
+        onMount: modal => {
+            modal.querySelector('[data-detail-add]').addEventListener('click',
+                () => articleForm(elementId, null, reopen));
+            modal.querySelector('[data-detail-photo]').addEventListener('click',
+                () => elementPhotoForm(elementId));
+            modal.querySelectorAll('[data-edit-article]').forEach(button =>
+                button.addEventListener('click', () => articleForm(elementId, button.dataset.editArticle, reopen)));
+            modal.querySelectorAll('[data-open-photo]').forEach(node =>
+                node.addEventListener('click', () => openPhoto(elementId, node.dataset.openPhoto)));
+        }
+    });
+}
+
+/* Fotka přes celou obrazovku; po zavření se vrátíme do detailu. */
+function openPhoto(elementId, articleId) {
+    const element = mapElementById(elementId);
+    if (!element) return;
+    const article = articleId === 'element' ? null : element.articles.find(a => a.id === articleId);
+    const photo = article ? article.photo : element.photo;
+    if (!photo) return;
+
+    openModal({
+        title: article ? article.name : element.name,
+        bodyHtml: `<img class="photo-full" src="${esc(photo)}" alt="">`,
+        actionsHtml: '<button class="btn-secondary" data-photo-back>Zpět</button>',
+        onMount: modal => modal.querySelector('[data-photo-back]')
+            .addEventListener('click', () => openElementDetail(elementId))
     });
 }
 
@@ -1623,11 +1856,23 @@ function runMapAction(action, data) {
             save();
             renderMap();
             break;
+        case 'detail':
+            if (element) openElementDetail(element.id);
+            break;
+        case 'element-photo':
+            if (element) elementPhotoForm(element.id);
+            break;
         case 'add-article':
             if (element) articleForm(element.id);
             break;
-        case 'edit-article':
-            if (element) articleForm(element.id, data.article);
+        case 'edit-article-of':
+            articleForm(data.elId, data.article);
+            break;
+        case 'photo':
+            openPhoto(data.elId, data.article);
+            break;
+        case 'detail-of':
+            openElementDetail(data.elId);
             break;
         case 'reset-map':
             if (!confirm('Vrátit plán do výchozí podoby? Přijdeš o své úpravy i o zapsané artikly.')) return;
@@ -1711,6 +1956,28 @@ function go(hash) {
     location.hash = hash;
 }
 
+/* Fotku před uložením zmenšíme – do prohlížeče se vejde jen pár megabajtů. */
+function compressImage(file, maxSide = 900, quality = 0.72) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Soubor se nepodařilo načíst.'));
+        reader.onload = () => {
+            const image = new Image();
+            image.onerror = () => reject(new Error('Tohle není obrázek.'));
+            image.onload = () => {
+                const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(image.width * scale);
+                canvas.height = Math.round(image.height * scale);
+                canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 /* --- Modální okno --------------------------------------------------------- */
 
 function closeModal() {
@@ -1775,6 +2042,27 @@ function fieldHtml(field, values) {
             </div>`;
     }
 
+    if (field.type === 'photo') {
+        return `
+            <div class="field">
+                <label>${esc(field.label)}</label>
+                <div class="photo-field">
+                    <div class="photo-preview ${value ? '' : 'empty'}" data-photo-preview="${field.name}">
+                        ${value ? `<img src="${esc(value)}" alt="">` : '<span>bez fotky</span>'}
+                    </div>
+                    <div class="photo-buttons">
+                        <label class="btn-secondary" style="cursor:pointer;">
+                            📷 Vyfotit / vybrat
+                            <input type="file" accept="image/*" data-photo-input="${field.name}" hidden>
+                        </label>
+                        <button type="button" class="btn-ghost" data-photo-clear="${field.name}">Odebrat</button>
+                    </div>
+                </div>
+                <input type="hidden" name="${field.name}" value="${esc(value || '')}">
+                ${field.hint ? `<div class="field-hint">${esc(field.hint)}</div>` : ''}
+            </div>`;
+    }
+
     let control;
     if (field.type === 'select') {
         const options = field.options.map(opt =>
@@ -1832,6 +2120,37 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
                     else current.push(chip.dataset.value);
                     holder.value = current.join(',');
                     chip.classList.toggle('on');
+                });
+            });
+
+            modal.querySelectorAll('[data-photo-input]').forEach(input => {
+                input.addEventListener('change', async () => {
+                    const file = input.files[0];
+                    if (!file) return;
+                    const name = input.dataset.photoInput;
+                    const preview = modal.querySelector(`[data-photo-preview="${name}"]`);
+                    preview.innerHTML = '<span>zpracovávám…</span>';
+                    try {
+                        const data = await compressImage(file);
+                        form.querySelector(`input[name="${name}"]`).value = data;
+                        preview.classList.remove('empty');
+                        preview.innerHTML = `<img src="${data}" alt="">`;
+                    } catch (err) {
+                        preview.classList.add('empty');
+                        preview.innerHTML = '<span>nepovedlo se</span>';
+                        alert(err.message);
+                    }
+                    input.value = '';
+                });
+            });
+
+            modal.querySelectorAll('[data-photo-clear]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const name = button.dataset.photoClear;
+                    form.querySelector(`input[name="${name}"]`).value = '';
+                    const preview = modal.querySelector(`[data-photo-preview="${name}"]`);
+                    preview.classList.add('empty');
+                    preview.innerHTML = '<span>bez fotky</span>';
                 });
             });
 
@@ -2544,6 +2863,8 @@ function renderNotes() {
 function renderSettings() {
     const settings = DB.settings;
     const dayCount = Object.keys(DB.days).length;
+    const used = storageBytes();
+    const usedPercent = Math.round((used / (5 * 1024 * 1024)) * 100);
 
     view.innerHTML = `
         <div class="view-head"><div><h2>Nastavení</h2>
@@ -2594,8 +2915,16 @@ function renderSettings() {
 
         <div class="card">
             <h3>💾 Záloha dat</h3>
-            <p class="muted">Uloženo: ${peopleText(DB.employees.length)}, ${dayCountText(dayCount)} v plánu, ${DB.notes.length} poznámek.
+            <p class="muted">Uloženo: ${peopleText(DB.employees.length)}, ${dayCountText(dayCount)} v plánu,
+               ${DB.notes.length} poznámek, ${articleCount()} artiklů a ${photoCount()} fotek.
                Když si smažeš data prohlížeče, přijdeš o ně – proto si čas od času stáhni zálohu.</p>
+            <div style="margin-top:0.6rem;">
+                <div class="day-person"><span>Zabrané místo</span><span>${formatBytes(used)} z ~5 MB</span></div>
+                <div class="bar"><div class="bar-fill ${usedPercent > 80 ? 'over' : ''}"
+                     style="width:${Math.min(100, usedPercent)}%"></div></div>
+                ${usedPercent > 80 ? '<div class="field-hint">Místa je málo – prohlížeč další fotky nemusí uložit. Stáhni si zálohu a nepotřebné fotky smaž.</div>'
+                                   : '<div class="field-hint">Fotky artiklů zabírají nejvíc místa. Jedna vyjde zhruba na 60 kB.</div>'}
+            </div>
             <div class="btn-row" style="margin-top:0.7rem;">
                 <button class="btn" data-action="export">⬇️ Stáhnout zálohu (JSON)</button>
                 <button class="btn-secondary" data-action="import">⬆️ Načíst zálohu</button>

@@ -33,11 +33,21 @@ function effectiveZoom(available) {
 }
 
 function elementLabelHtml(element, zoom) {
-    if (element.type !== 'popisek' && zoom < 0.45) return '';
-    const vertical = element.h > element.w * 1.8 && element.h * zoom > 55;
     const count = element.articles.length;
-    return `<span class="map-label ${vertical ? 'vertical' : ''}">${esc(element.name)}${
-        count ? ` <span class="map-count">${count}</span>` : ''}</span>`;
+    const badge = count ? `<span class="map-count">${count}</span>` : '';
+    const camera = element.photo ? '<span class="map-photo-dot">📷</span>' : '';
+
+    if (element.type !== 'popisek' && zoom < 0.45) {
+        return badge || camera ? `<span class="map-label tiny">${badge}${camera}</span>` : '';
+    }
+
+    const type = mapTypeById(element.type);
+    const roomy = element.w * zoom > 72 && element.h * zoom > 48;
+    const vertical = element.h > element.w * 1.8 && element.h * zoom > 55;
+    const icon = roomy && type.icon ? `<span class="map-icon">${type.icon}</span>` : '';
+
+    return `<span class="map-label ${vertical ? 'vertical' : ''}">
+        ${icon}${esc(element.name)}${badge}${camera}</span>`;
 }
 
 function mapElementHtml(element, zoom, hits) {
@@ -103,44 +113,44 @@ function propsPanelHtml() {
             </div>` : `
             ${element.note ? `<div class="muted" style="margin-bottom:0.6rem;">📝 ${esc(element.note)}</div>` : ''}`}
 
-            <h3 style="margin-top:0.4rem;">🛒 Co tady je (${element.articles.length})
-                <button class="btn-secondary" data-map-action="add-article">➕ Přidat artikl</button>
-            </h3>
-            ${element.articles.length ? element.articles.map(article => `
-                <div class="row">
-                    <div class="row-main">
-                        <div class="row-title">${esc(article.name)}</div>
-                        <div class="row-sub">${article.code ? `č. ${esc(article.code)} · ` : ''}${esc(article.note || '')}
-                            ${article.shelf ? ` · ${esc(article.shelf)}` : ''}</div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn-ghost" data-map-action="edit-article" data-article="${article.id}">✏️</button>
-                    </div>
-                </div>`).join('')
-            : '<div class="empty">Zatím tu nic není zapsané.</div>'}
+            <div class="btn-row">
+                <button class="btn" data-map-action="detail">🔍 Otevřít detail a artikly (${element.articles.length})</button>
+                ${mapEdit ? `<button class="btn-secondary" data-map-action="element-photo">
+                    ${element.photo ? '🖼️ Změnit fotku místa' : '📷 Fotka místa'}</button>` : ''}
+            </div>
         </div>`;
 }
 
+function articleThumbHtml(article, elementId) {
+    return article.photo
+        ? `<img class="article-thumb" src="${esc(article.photo)}" alt=""
+                data-map-action="photo" data-el-id="${elementId}" data-article="${article.id}">`
+        : '<span class="article-thumb empty">🛒</span>';
+}
+
 function articleListHtml() {
-    const rows = [];
-    DB.map.elements.forEach(element => element.articles.forEach(article =>
-        rows.push({ element, article })));
-    rows.sort((a, b) => a.article.name.localeCompare(b.article.name, 'cs'));
+    const rows = allArticles();
 
     return `
         <div class="card">
             <h3>📋 Všechny artikly (${rows.length})
                 <button class="btn-secondary" data-map-action="toggle-list">Skrýt</button>
             </h3>
-            ${rows.length ? `<div class="table-scroll"><table class="data">
-                <thead><tr><th>Artikl</th><th>Číslo</th><th>Kde je</th></tr></thead>
-                <tbody>${rows.map(({ element, article }) => `
-                    <tr data-map-action="goto" data-el-id="${element.id}" style="cursor:pointer;">
-                        <td>${esc(article.name)}</td>
-                        <td>${esc(article.code || '–')}</td>
-                        <td>${esc(element.name)}</td>
-                    </tr>`).join('')}</tbody>
-            </table></div>` : '<div class="empty">Zatím žádné artikly. Vyber prvek v plánu a přidej, co v něm leží.</div>'}
+            ${rows.length ? rows.map(({ element, article }) => `
+                <div class="row">
+                    ${articleThumbHtml(article, element.id)}
+                    <div class="row-main" data-map-action="goto" data-el-id="${element.id}" style="cursor:pointer;">
+                        <div class="row-title">${esc(article.name)}</div>
+                        <div class="row-sub">📍 ${esc(element.name)}${article.shelf ? ` · ${esc(article.shelf)}` : ''}</div>
+                        <div class="row-sub">${article.ean ? `EAN ${esc(article.ean)}` : ''}${
+                            article.code ? `${article.ean ? ' · ' : ''}č. ${esc(article.code)}` : ''}</div>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn-ghost" data-map-action="edit-article-of"
+                                data-el-id="${element.id}" data-article="${article.id}">✏️</button>
+                    </div>
+                </div>`).join('')
+            : '<div class="empty">Zatím žádné artikly. Klikni na prvek v plánu a přidej, co v něm leží.</div>'}
         </div>`;
 }
 
@@ -157,7 +167,8 @@ function renderMap() {
             <div>
                 <h2>Plán prodejny</h2>
                 <div class="subtitle">${DB.map.elements.length} prvků · ${articleCount()} artiklů ·
-                    ${mapEdit ? 'režim úprav' : 'režim prohlížení'}</div>
+                    ${photoCount()} fotek · ${formatBytes(storageBytes())} ·
+                    ${mapEdit ? 'režim úprav' : 'režim prohlížení – klikni na prvek'}</div>
             </div>
             <div class="btn-row no-print">
                 <button class="${mapEdit ? 'btn' : 'btn-secondary'}" data-map-action="toggle-edit">
@@ -174,12 +185,14 @@ function renderMap() {
             ${mapSearch ? (hitList.length ? `
                 <div style="margin-top:0.7rem;">
                     ${hitList.map(({ element, article }) => `
-                        <div class="row" data-map-action="goto" data-el-id="${element.id}" style="cursor:pointer;">
-                            <div class="row-main">
+                        <div class="row">
+                            ${articleThumbHtml(article, element.id)}
+                            <div class="row-main" data-map-action="goto" data-el-id="${element.id}" style="cursor:pointer;">
                                 <div class="row-title">${esc(article.name)}</div>
                                 <div class="row-sub">📍 ${esc(element.name)}${article.shelf ? ` · ${esc(article.shelf)}` : ''}</div>
+                                <div class="row-sub">${article.ean ? `EAN ${esc(article.ean)}` : ''}</div>
                             </div>
-                            <span class="pill accent">ukázat</span>
+                            <button class="btn-ghost" data-map-action="detail-of" data-el-id="${element.id}">🔍</button>
                         </div>`).join('')}
                 </div>`
                 : '<div class="empty">Nic takového tu zapsané není.</div>') : ''}
@@ -306,7 +319,7 @@ function attachMapHandlers(zoom) {
         const element = mapElementById(node.dataset.el);
         if (!element) return;
         if (element.id !== mapSelected) selectElement(element.id);
-        if (!mapEdit) return;
+        if (!mapEdit) { openElementDetail(element.id); return; }
 
         drag = {
             node,
@@ -356,6 +369,11 @@ function attachMapHandlers(zoom) {
     canvas.addEventListener('pointercancel', endDrag);
     canvas.addEventListener('lostpointercapture', endDrag);
 
+    canvas.addEventListener('dblclick', event => {
+        const node = event.target.closest('.map-el');
+        if (node) openElementDetail(node.dataset.el);
+    });
+
     const search = view.querySelector('[data-map-search]');
     if (search) search.addEventListener('input', () => {
         const caret = search.selectionStart;
@@ -401,19 +419,24 @@ function addMapElement(type) {
     toast('Prvek přidán doprostřed plánu');
 }
 
-function articleForm(elementId, articleId) {
+function articleForm(elementId, articleId, afterSave) {
     const element = mapElementById(elementId);
     if (!element) return;
     const article = articleId ? element.articles.find(a => a.id === articleId) : null;
+    const done = () => { renderMap(); if (afterSave) afterSave(); };
 
     openForm({
         title: article ? 'Upravit artikl' : `Nový artikl · ${element.name}`,
         fields: [
             { name: 'name', label: 'Název', type: 'text', required: true, placeholder: 'např. Rýže basmati 1 kg' },
+            { name: 'ean', label: 'EAN', type: 'text', placeholder: '8594001234567',
+              hint: 'Čárový kód ze zadní strany obalu.' },
             { type: 'row', fields: [
                 { name: 'code', label: 'Číslo artiklu', type: 'text' },
-                { name: 'shelf', label: 'Police / pozice', type: 'text', placeholder: 'např. 3. police zleva' }
+                { name: 'shelf', label: 'Police / pozice', type: 'text', placeholder: 'např. 3. police shora' }
             ] },
+            { name: 'photo', label: 'Fotka artiklu', type: 'photo',
+              hint: 'Fotka se zmenší a uloží do prohlížeče. Ať jich není víc než pár set.' },
             { name: 'note', label: 'Poznámka', type: 'text', placeholder: 'např. akce od čtvrtka, zásoba ve skladu' }
         ],
         values: article || {},
@@ -422,17 +445,103 @@ function articleForm(elementId, articleId) {
             pushMapUndo();
             if (article) Object.assign(article, data);
             else element.articles.push({ id: uid(), ...data });
-            save();
-            renderMap();
+            if (!save()) { mapUndo.pop(); return; }
+            done();
             toast(article ? 'Uloženo' : 'Artikl přidán');
         },
         onDelete: article ? () => {
             pushMapUndo();
             element.articles = element.articles.filter(a => a.id !== articleId);
             save();
-            renderMap();
+            done();
             toast('Smazáno');
         } : null
+    });
+}
+
+/* Fotka celého místa – regálu, gondoly, chladicího boxu. */
+function elementPhotoForm(elementId) {
+    const element = mapElementById(elementId);
+    if (!element) return;
+
+    openForm({
+        title: `Fotka místa · ${element.name}`,
+        fields: [{ name: 'photo', label: 'Jak to tady vypadá', type: 'photo',
+                   hint: 'Vyfoť regál nebo gondolu, ať víš, jak má být naskládaná.' }],
+        values: { photo: element.photo || '' },
+        onSave: data => {
+            pushMapUndo();
+            element.photo = data.photo;
+            if (!save()) { mapUndo.pop(); return; }
+            renderMap();
+            toast(data.photo ? 'Fotka uložena' : 'Fotka odebrána');
+        }
+    });
+}
+
+/* Detail prvku – co v něm je, s fotkami. Otevírá se kliknutím v plánu. */
+function openElementDetail(elementId) {
+    const element = mapElementById(elementId);
+    if (!element) return;
+    const type = mapTypeById(element.type);
+    const reopen = () => openElementDetail(elementId);
+
+    openModal({
+        title: element.name || type.name,
+        bodyHtml: `
+            <div class="detail-head">
+                <span class="pill" style="background:${type.fill}; color:${type.text}; border-color:${type.stroke};">
+                    ${type.icon} ${esc(type.name)}</span>
+                ${element.note ? `<span class="muted">📝 ${esc(element.note)}</span>` : ''}
+            </div>
+            ${element.photo ? `<img class="detail-photo" src="${esc(element.photo)}" alt=""
+                                    data-open-photo="element">` : ''}
+            <h3 style="margin:0.9rem 0 0.3rem;">🛒 Artikly (${element.articles.length})</h3>
+            ${element.articles.length ? element.articles.map(article => `
+                <div class="row">
+                    ${articleThumbHtml(article, element.id).replace('data-map-action="photo"', 'data-open-photo="' + article.id + '"')}
+                    <div class="row-main">
+                        <div class="row-title">${esc(article.name)}</div>
+                        <div class="row-sub">${article.ean ? `EAN ${esc(article.ean)}` : 'bez EAN'}${
+                            article.code ? ` · č. ${esc(article.code)}` : ''}${
+                            article.shelf ? ` · ${esc(article.shelf)}` : ''}</div>
+                        ${article.note ? `<div class="row-sub">📝 ${esc(article.note)}</div>` : ''}
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn-ghost" data-edit-article="${article.id}">✏️</button>
+                    </div>
+                </div>`).join('')
+            : '<div class="empty">Zatím tu nic není zapsané. Přidej první artikl.</div>'}`,
+        actionsHtml: `
+            <button class="btn-secondary" data-detail-photo>${element.photo ? '🖼️ Fotka místa' : '📷 Fotka místa'}</button>
+            <button class="btn" data-detail-add>➕ Přidat artikl</button>`,
+        onMount: modal => {
+            modal.querySelector('[data-detail-add]').addEventListener('click',
+                () => articleForm(elementId, null, reopen));
+            modal.querySelector('[data-detail-photo]').addEventListener('click',
+                () => elementPhotoForm(elementId));
+            modal.querySelectorAll('[data-edit-article]').forEach(button =>
+                button.addEventListener('click', () => articleForm(elementId, button.dataset.editArticle, reopen)));
+            modal.querySelectorAll('[data-open-photo]').forEach(node =>
+                node.addEventListener('click', () => openPhoto(elementId, node.dataset.openPhoto)));
+        }
+    });
+}
+
+/* Fotka přes celou obrazovku; po zavření se vrátíme do detailu. */
+function openPhoto(elementId, articleId) {
+    const element = mapElementById(elementId);
+    if (!element) return;
+    const article = articleId === 'element' ? null : element.articles.find(a => a.id === articleId);
+    const photo = article ? article.photo : element.photo;
+    if (!photo) return;
+
+    openModal({
+        title: article ? article.name : element.name,
+        bodyHtml: `<img class="photo-full" src="${esc(photo)}" alt="">`,
+        actionsHtml: '<button class="btn-secondary" data-photo-back>Zpět</button>',
+        onMount: modal => modal.querySelector('[data-photo-back]')
+            .addEventListener('click', () => openElementDetail(elementId))
     });
 }
 
@@ -497,11 +606,23 @@ function runMapAction(action, data) {
             save();
             renderMap();
             break;
+        case 'detail':
+            if (element) openElementDetail(element.id);
+            break;
+        case 'element-photo':
+            if (element) elementPhotoForm(element.id);
+            break;
         case 'add-article':
             if (element) articleForm(element.id);
             break;
-        case 'edit-article':
-            if (element) articleForm(element.id, data.article);
+        case 'edit-article-of':
+            articleForm(data.elId, data.article);
+            break;
+        case 'photo':
+            openPhoto(data.elId, data.article);
+            break;
+        case 'detail-of':
+            openElementDetail(data.elId);
             break;
         case 'reset-map':
             if (!confirm('Vrátit plán do výchozí podoby? Přijdeš o své úpravy i o zapsané artikly.')) return;

@@ -46,6 +46,28 @@ function go(hash) {
     location.hash = hash;
 }
 
+/* Fotku před uložením zmenšíme – do prohlížeče se vejde jen pár megabajtů. */
+function compressImage(file, maxSide = 900, quality = 0.72) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Soubor se nepodařilo načíst.'));
+        reader.onload = () => {
+            const image = new Image();
+            image.onerror = () => reject(new Error('Tohle není obrázek.'));
+            image.onload = () => {
+                const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(image.width * scale);
+                canvas.height = Math.round(image.height * scale);
+                canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 /* --- Modální okno --------------------------------------------------------- */
 
 function closeModal() {
@@ -110,6 +132,27 @@ function fieldHtml(field, values) {
             </div>`;
     }
 
+    if (field.type === 'photo') {
+        return `
+            <div class="field">
+                <label>${esc(field.label)}</label>
+                <div class="photo-field">
+                    <div class="photo-preview ${value ? '' : 'empty'}" data-photo-preview="${field.name}">
+                        ${value ? `<img src="${esc(value)}" alt="">` : '<span>bez fotky</span>'}
+                    </div>
+                    <div class="photo-buttons">
+                        <label class="btn-secondary" style="cursor:pointer;">
+                            📷 Vyfotit / vybrat
+                            <input type="file" accept="image/*" data-photo-input="${field.name}" hidden>
+                        </label>
+                        <button type="button" class="btn-ghost" data-photo-clear="${field.name}">Odebrat</button>
+                    </div>
+                </div>
+                <input type="hidden" name="${field.name}" value="${esc(value || '')}">
+                ${field.hint ? `<div class="field-hint">${esc(field.hint)}</div>` : ''}
+            </div>`;
+    }
+
     let control;
     if (field.type === 'select') {
         const options = field.options.map(opt =>
@@ -167,6 +210,37 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
                     else current.push(chip.dataset.value);
                     holder.value = current.join(',');
                     chip.classList.toggle('on');
+                });
+            });
+
+            modal.querySelectorAll('[data-photo-input]').forEach(input => {
+                input.addEventListener('change', async () => {
+                    const file = input.files[0];
+                    if (!file) return;
+                    const name = input.dataset.photoInput;
+                    const preview = modal.querySelector(`[data-photo-preview="${name}"]`);
+                    preview.innerHTML = '<span>zpracovávám…</span>';
+                    try {
+                        const data = await compressImage(file);
+                        form.querySelector(`input[name="${name}"]`).value = data;
+                        preview.classList.remove('empty');
+                        preview.innerHTML = `<img src="${data}" alt="">`;
+                    } catch (err) {
+                        preview.classList.add('empty');
+                        preview.innerHTML = '<span>nepovedlo se</span>';
+                        alert(err.message);
+                    }
+                    input.value = '';
+                });
+            });
+
+            modal.querySelectorAll('[data-photo-clear]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const name = button.dataset.photoClear;
+                    form.querySelector(`input[name="${name}"]`).value = '';
+                    const preview = modal.querySelector(`[data-photo-preview="${name}"]`);
+                    preview.classList.add('empty');
+                    preview.innerHTML = '<span>bez fotky</span>';
                 });
             });
 
@@ -879,6 +953,8 @@ function renderNotes() {
 function renderSettings() {
     const settings = DB.settings;
     const dayCount = Object.keys(DB.days).length;
+    const used = storageBytes();
+    const usedPercent = Math.round((used / (5 * 1024 * 1024)) * 100);
 
     view.innerHTML = `
         <div class="view-head"><div><h2>Nastavení</h2>
@@ -929,8 +1005,16 @@ function renderSettings() {
 
         <div class="card">
             <h3>💾 Záloha dat</h3>
-            <p class="muted">Uloženo: ${peopleText(DB.employees.length)}, ${dayCountText(dayCount)} v plánu, ${DB.notes.length} poznámek.
+            <p class="muted">Uloženo: ${peopleText(DB.employees.length)}, ${dayCountText(dayCount)} v plánu,
+               ${DB.notes.length} poznámek, ${articleCount()} artiklů a ${photoCount()} fotek.
                Když si smažeš data prohlížeče, přijdeš o ně – proto si čas od času stáhni zálohu.</p>
+            <div style="margin-top:0.6rem;">
+                <div class="day-person"><span>Zabrané místo</span><span>${formatBytes(used)} z ~5 MB</span></div>
+                <div class="bar"><div class="bar-fill ${usedPercent > 80 ? 'over' : ''}"
+                     style="width:${Math.min(100, usedPercent)}%"></div></div>
+                ${usedPercent > 80 ? '<div class="field-hint">Místa je málo – prohlížeč další fotky nemusí uložit. Stáhni si zálohu a nepotřebné fotky smaž.</div>'
+                                   : '<div class="field-hint">Fotky artiklů zabírají nejvíc místa. Jedna vyjde zhruba na 60 kB.</div>'}
+            </div>
             <div class="btn-row" style="margin-top:0.7rem;">
                 <button class="btn" data-action="export">⬇️ Stáhnout zálohu (JSON)</button>
                 <button class="btn-secondary" data-action="import">⬆️ Načíst zálohu</button>
