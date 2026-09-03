@@ -8,7 +8,15 @@ do paměti prohlížeče (localStorage) v telefonu nebo počítači.
 
 ## Jak to spustit
 
-**V telefonu (doporučeno):** otevři soubor `smena.html` z kořene repozitáře – je v něm sbalená
+**Online s přihlášením (doporučeno):**
+<https://claude.ai/code/artifact/54ab04a2-a9d7-4d9b-a3df-91b7e1ee501d>
+
+Otevře se pod tvým účtem, data se ukládají na server a jsou stejná v mobilu i na počítači.
+Změny se propisují mezi zařízeními samy; v hlavičce svítí stav ukládání (*Uloženo / Ukládám…*).
+Online verze se sestaví příkazem `node lidl/build-artifact.js` do `dist/vedeni-smeny.html`.
+
+
+**Offline v telefonu:** otevři soubor `smena.html` z kořene repozitáře – je v něm sbalená
 celá aplikace do jednoho souboru. Dá se poslat mailem, hodit na disk nebo otevřít z úložiště.
 V prohlížeči pak `Přidat na plochu` a chová se to jako aplikace.
 
@@ -61,9 +69,10 @@ Plán jde vytisknout (tlačítko **Tisk**) a tlačítko **Výchozí plán** vrá
 
 1. **Z poznámky se dá udělat úkol.** U každé poznámky je tlačítko ✅, které z ní vyrobí položku
    v checklistu. Tak z toho, co ti řeknou na tréninku, postupně vznikne tvůj vlastní systém.
-2. **Data jsou jen v tomhle prohlížeči.** Když si smažeš data prohlížeče nebo přejdeš na jiný
-   telefon, jsou pryč. V *Nastavení* je proto tlačítko **Stáhnout zálohu (JSON)** a **Načíst zálohu** –
-   dělej si zálohu třeba jednou za měsíc.
+2. **Kde data leží.** Online verze je má v účtu (a fotky v samostatných záznamech, aby se vešly
+   do limitu 256 kB na dokument). Offline verze je má jen v paměti prohlížeče – když si ji smažeš
+   nebo přejdeš na jiný telefon, jsou pryč. V *Nastavení* je proto **Stáhnout zálohu (JSON)**
+   a **Načíst zálohu**; stejnou cestou přeneseš data z offline verze do online.
 
 ## Struktura
 
@@ -73,6 +82,9 @@ lidl/
   styles.css   – vzhled (světlý i tmavý režim, tisk)
   store.js     – datový model, číselníky, ukládání, výpočty hodin, výchozí plán prodejny
   map.js       – editor plánu prodejny a vyhledávání artiklů
+  cloud.js     – online ukládání do účtu (jen v Artifact verzi)
+  inline.js    – společné kousky pro oba buildy
+  build-artifact.js – sestaví ../dist/vedeni-smeny.html pro publikování
   app.js       – vykreslování obrazovek, formuláře, akce
   build.js     – sloučí vše do ../smena.html
 ```

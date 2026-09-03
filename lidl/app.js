@@ -1283,11 +1283,26 @@ function copyWeek() {
 
 /* --- Záloha ------------------------------------------------------------------ */
 
-function exportData() {
-    const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+async function exportData() {
+    const data = JSON.stringify(DB, null, 2);
+    const filename = `vedeni-smeny-${todayISO()}.json`;
+
+    /* V online verzi si stažení musí odsouhlasit prohlížeč přes claude.use. */
+    const downloads = window.claude ? await window.claude.use('downloads').catch(() => null) : null;
+    if (downloads) {
+        try {
+            const result = await downloads.save({ filename, data });
+            if (result.status === 'saved') toast('Záloha stažena');
+        } catch (err) {
+            if (err.code !== 'declined') alert('Zálohu se nepodařilo stáhnout: ' + (err.message || err.code));
+        }
+        return;
+    }
+
+    const blob = new Blob([data], { type: 'application/json' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `vedeni-smeny-${todayISO()}.json`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -1435,18 +1450,32 @@ view.addEventListener('input', event => {
 
 /* --- Start -------------------------------------------------------------------- */
 
-function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+/* Prázdné téma = necháváme na prohlížeči (systémové nastavení). */
+function currentTheme() {
+    if (DB.settings.theme === 'dark' || DB.settings.theme === 'light') return DB.settings.theme;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme() {
+    const chosen = DB.settings.theme;
+    if (chosen === 'dark' || chosen === 'light') document.documentElement.setAttribute('data-theme', chosen);
+    else document.documentElement.removeAttribute('data-theme');
+    document.getElementById('theme-toggle').textContent = currentTheme() === 'dark' ? '☀️' : '🌙';
 }
 
 document.getElementById('theme-toggle').addEventListener('click', () => {
-    DB.settings.theme = DB.settings.theme === 'dark' ? 'light' : 'dark';
-    applyTheme(DB.settings.theme);
+    DB.settings.theme = currentTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme();
     save();
 });
 
 window.addEventListener('hashchange', render);
 
-applyTheme(DB.settings.theme || 'light');
-render();
+function boot() {
+    applyTheme();
+    render();
+}
+
+/* Online verze si nejdřív načte data z účtu, offline startuje rovnou. */
+if (window.CLOUD) window.CLOUD.start(boot);
+else boot();

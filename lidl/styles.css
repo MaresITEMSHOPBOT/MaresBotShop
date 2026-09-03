@@ -629,3 +629,19 @@ table.data td.num, table.data th.num { text-align: right; }
     border-radius: 10px;
     background: var(--bg-soft);
 }
+
+/* --- Stav ukládání v online verzi ------------------------------------------- */
+
+.cloud-chip {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.cloud-chip.ok { background: var(--success-soft); color: var(--success); border-color: var(--success); }
+.cloud-chip.saving { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.cloud-chip.error { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }

@@ -121,11 +121,26 @@ function propsPanelHtml() {
         </div>`;
 }
 
+/* Fotka je buď rovnou v datech, nebo uložená zvlášť v účtu a dotáhne se později. */
+function photoOf(item) {
+    if (item.photo) return item.photo;
+    if (item.photoId && window.CLOUD) return window.CLOUD.cachedPhoto(item.photoId);
+    return null;
+}
+
+function hasPhoto(item) {
+    return Boolean(item.photo || item.photoId);
+}
+
+/* Přepíše online vrstva – dotáhne fotky, které ještě nejsou stažené. */
+function hydratePhotos() {}
+
 function articleThumbHtml(article, elementId) {
-    return article.photo
-        ? `<img class="article-thumb" src="${esc(article.photo)}" alt=""
-                data-map-action="photo" data-el-id="${elementId}" data-article="${article.id}">`
-        : '<span class="article-thumb empty">🛒</span>';
+    if (!hasPhoto(article)) return '<span class="article-thumb empty">🛒</span>';
+    const src = photoOf(article);
+    return `<img class="article-thumb" ${src ? `src="${esc(src)}"` : 'data-photo-pending'}
+                 data-photo-id="${esc(article.photoId || '')}" alt=""
+                 data-map-action="photo" data-el-id="${elementId}" data-article="${article.id}">`;
 }
 
 function articleListHtml() {
@@ -238,6 +253,7 @@ function renderMap() {
     wrap.addEventListener('scroll', () => { mapScroll = { left: wrap.scrollLeft, top: wrap.scrollTop }; });
 
     attachMapHandlers(zoom);
+    hydratePhotos(view);
 }
 
 /* --- Interakce v plánu ------------------------------------------------------ */
@@ -443,6 +459,7 @@ function articleForm(elementId, articleId, afterSave) {
         onSave: data => {
             if (!data.name) return;
             pushMapUndo();
+            if (data.photo) data.photoId = '';
             if (article) Object.assign(article, data);
             else element.articles.push({ id: uid(), ...data });
             if (!save()) { mapUndo.pop(); return; }
@@ -472,6 +489,7 @@ function elementPhotoForm(elementId) {
         onSave: data => {
             pushMapUndo();
             element.photo = data.photo;
+            if (data.photo) element.photoId = '';
             if (!save()) { mapUndo.pop(); return; }
             renderMap();
             toast(data.photo ? 'Fotka uložena' : 'Fotka odebrána');
@@ -494,7 +512,8 @@ function openElementDetail(elementId) {
                     ${type.icon} ${esc(type.name)}</span>
                 ${element.note ? `<span class="muted">📝 ${esc(element.note)}</span>` : ''}
             </div>
-            ${element.photo ? `<img class="detail-photo" src="${esc(element.photo)}" alt=""
+            ${hasPhoto(element) ? `<img class="detail-photo" ${photoOf(element) ? `src="${esc(photoOf(element))}"` : 'data-photo-pending'}
+                                    data-photo-id="${esc(element.photoId || '')}" alt=""
                                     data-open-photo="element">` : ''}
             <h3 style="margin:0.9rem 0 0.3rem;">🛒 Artikly (${element.articles.length})</h3>
             ${element.articles.length ? element.articles.map(article => `
@@ -524,6 +543,7 @@ function openElementDetail(elementId) {
                 button.addEventListener('click', () => articleForm(elementId, button.dataset.editArticle, reopen)));
             modal.querySelectorAll('[data-open-photo]').forEach(node =>
                 node.addEventListener('click', () => openPhoto(elementId, node.dataset.openPhoto)));
+            hydratePhotos(modal);
         }
     });
 }
@@ -533,15 +553,21 @@ function openPhoto(elementId, articleId) {
     const element = mapElementById(elementId);
     if (!element) return;
     const article = articleId === 'element' ? null : element.articles.find(a => a.id === articleId);
-    const photo = article ? article.photo : element.photo;
-    if (!photo) return;
+    const target = article || element;
+    if (!hasPhoto(target)) return;
+    const photo = photoOf(target);
 
     openModal({
         title: article ? article.name : element.name,
-        bodyHtml: `<img class="photo-full" src="${esc(photo)}" alt="">`,
+        bodyHtml: photo
+            ? `<img class="photo-full" src="${esc(photo)}" alt="">`
+            : `<img class="photo-full" data-photo-pending data-photo-id="${esc(target.photoId)}" alt="">`,
         actionsHtml: '<button class="btn-secondary" data-photo-back>Zpět</button>',
-        onMount: modal => modal.querySelector('[data-photo-back]')
-            .addEventListener('click', () => openElementDetail(elementId))
+        onMount: modal => {
+            modal.querySelector('[data-photo-back]')
+                .addEventListener('click', () => openElementDetail(elementId));
+            hydratePhotos(modal);
+        }
     });
 }
 

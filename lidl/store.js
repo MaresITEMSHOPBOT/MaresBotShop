@@ -216,7 +216,7 @@ function emptyDb() {
             morningShift: { from: '06:00', to: '14:00' },
             afternoonShift: { from: '13:00', to: '21:30' },
             break: { afterHours: 6, minutes: 30 },
-            theme: 'light'
+            theme: ''
         },
         employees: [],
         tasks: DEFAULT_TASKS.map(t => ({ ...t })),
@@ -335,6 +335,8 @@ function load() {
 }
 
 function save() {
+    /* Online verze ukládá do účtu, offline do paměti prohlížeče. */
+    if (window.CLOUD && window.CLOUD.enabled) return window.CLOUD.save();
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
         return true;
@@ -565,7 +567,7 @@ function articleCount() {
 
 function photoCount() {
     return DB.map.elements.reduce((sum, element) =>
-        sum + element.articles.filter(article => article.photo).length, 0);
+        sum + element.articles.filter(article => article.photo || article.photoId).length, 0);
 }
 
 /* Kolik místa data zabírají – fotky se do prohlížeče vejdou jen v omezeném počtu. */
