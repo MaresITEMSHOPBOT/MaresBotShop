@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0050aa">
+    <meta name="description" content="Aplikace pro vedení směny v prodejně – plán lidí, palety, checklisty a poznámky z tréninku.">
+    <title>Vedení směny</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230050aa'/%3E%3Ctext x='32' y='46' font-family='Arial,sans-serif' font-size='40' font-weight='bold' fill='%23fff000' text-anchor='middle'%3EL%3C/text%3E%3C/svg%3E">
+    <style>
+:root {
+    --lidl-blue: #0050aa;
+    --lidl-yellow: #fff000;
+    --lidl-red: #e60a14;
+
+    --bg: #f2f5f9;
+    --bg-card: #ffffff;
+    --bg-soft: #f7f9fc;
+    --text: #16202c;
+    --text-secondary: #5b6b7d;
+    --accent: #0050aa;
+    --accent-soft: #e5eefb;
+    --border: #dde4ec;
+    --success: #1f9254;
+    --success-soft: #e4f5ec;
+    --warning: #b8770a;
+    --warning-soft: #fdf1dd;
+    --danger: #d0342c;
+    --danger-soft: #fceceb;
+    --shadow: 0 1px 2px rgba(16, 32, 48, 0.06), 0 2px 8px rgba(16, 32, 48, 0.06);
+    --radius: 12px;
+}
+
+[data-theme="dark"] {
+    --bg: #131a22;
+    --bg-card: #1c242e;
+    --bg-soft: #232d39;
+    --text: #eef3f8;
+    --text-secondary: #a2b1c2;
+    --accent: #6ea8f0;
+    --accent-soft: #23334a;
+    --border: #33404f;
+    --success: #5ed195;
+    --success-soft: #1d3a2c;
+    --warning: #f0b95b;
+    --warning-soft: #3a2f1a;
+    --danger: #f58179;
+    --danger-soft: #3d2321;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* --- Hlavička ------------------------------------------------------------ */
+
+.app-header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.7rem 1rem;
+}
+
+.brand { display: flex; align-items: center; gap: 0.7rem; min-width: 0; }
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--lidl-blue);
+    color: var(--lidl-yellow);
+    font-weight: 800;
+    font-size: 1.3rem;
+    border: 2px solid var(--lidl-yellow);
+    flex-shrink: 0;
+}
+
+.brand h1 { font-size: 1.05rem; line-height: 1.2; }
+.brand-sub { font-size: 0.78rem; color: var(--text-secondary); }
+
+.icon-btn {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 0.45rem 0.65rem;
+    font-size: 1.05rem;
+    cursor: pointer;
+}
+
+.tabs {
+    display: flex;
+    gap: 0.3rem;
+    overflow-x: auto;
+    padding: 0 0.6rem 0.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+    flex: 0 0 auto;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.87rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.tab:hover { background: var(--bg-soft); color: var(--text); }
+.tab.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+/* --- Layout -------------------------------------------------------------- */
+
+.view {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 1rem 4rem;
+}
+
+.view-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+}
+
+.view-head h2 { font-size: 1.25rem; }
+.view-head .subtitle { font-size: 0.85rem; color: var(--text-secondary); }
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.grid { display: grid; gap: 0.9rem; }
+.grid-2 { grid-template-columns: 1fr; }
+.grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (min-width: 760px) {
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .brand h1 { font-size: 1.2rem; }
+}
+
+/* --- Prvky --------------------------------------------------------------- */
+
+.btn, .btn-secondary, .btn-danger, .btn-ghost {
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.87rem;
+    border-radius: 10px;
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.btn { background: var(--accent); color: #fff; }
+.btn:hover { filter: brightness(1.08); }
+.btn-secondary { background: var(--bg-soft); color: var(--text); border-color: var(--border); }
+.btn-secondary:hover { background: var(--accent-soft); }
+.btn-danger { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+.btn-ghost { background: none; color: var(--text-secondary); padding: 0.3rem 0.45rem; }
+.btn-ghost:hover { color: var(--text); background: var(--bg-soft); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    box-shadow: var(--shadow);
+}
+.stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
+.stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+.stat-hint { font-size: 0.78rem; color: var(--text-secondary); }
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+}
+.pill.accent { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.pill.success { background: var(--success-soft); color: var(--success); border-color: var(--success); }
+.pill.warning { background: var(--warning-soft); color: var(--warning); border-color: var(--warning); }
+.pill.danger { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.row:last-child { border-bottom: none; }
+.row-main { flex: 1; min-width: 0; }
+.row-title { font-weight: 600; font-size: 0.92rem; }
+.row-sub { font-size: 0.8rem; color: var(--text-secondary); }
+.row-actions { display: flex; gap: 0.2rem; flex-shrink: 0; }
+
+.empty {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 1.2rem 0.5rem;
+    font-size: 0.9rem;
+}
+
+.muted { color: var(--text-secondary); font-size: 0.85rem; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+
+/* --- Týdenní plán -------------------------------------------------------- */
+
+.week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+}
+.week-label { font-weight: 700; font-size: 0.95rem; text-align: center; }
+
+.day-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.8rem;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+}
+.day-card:hover { border-color: var(--accent); }
+.day-card.today { border-left-color: var(--lidl-blue); background: var(--accent-soft); }
+.day-card.weekend { border-left-color: var(--warning); }
+
+.day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.day-name { font-weight: 700; font-size: 0.95rem; }
+.day-date { font-size: 0.8rem; color: var(--text-secondary); }
+.day-people { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.day-person { font-size: 0.82rem; display: flex; justify-content: space-between; gap: 0.5rem; }
+.day-person span:last-child { color: var(--text-secondary); flex-shrink: 0; }
+.day-meta { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+/* --- Formuláře ----------------------------------------------------------- */
+
+.field { margin-bottom: 0.8rem; }
+.field label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.25rem; }
+.field input, .field select, .field textarea {
+    width: 100%;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-soft);
+    color: var(--text);
+}
+.field textarea { min-height: 110px; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+}
+.field-row { display: flex; gap: 0.6rem; }
+.field-row > * { flex: 1; }
+.field-hint { font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.2rem; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.chip {
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+.check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.check-item:last-child { border-bottom: none; }
+.check-item input[type="checkbox"] { width: 20px; height: 20px; margin-top: 0.15rem; flex-shrink: 0; accent-color: var(--accent); }
+.check-item label { font-size: 0.9rem; flex: 1; cursor: pointer; }
+.check-item.done label { color: var(--text-secondary); text-decoration: line-through; }
+
+/* --- Modální okno -------------------------------------------------------- */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 18, 28, 0.55);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+    padding: 0;
+}
+@media (min-width: 640px) {
+    .modal-backdrop { align-items: center; padding: 1rem; }
+}
+
+.modal {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 560px;
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    padding: 1rem;
+    border: 1px solid var(--border);
+}
+@media (min-width: 640px) { .modal { border-radius: 16px; } }
+
+.modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+.modal-head h3 { font-size: 1.05rem; }
+.modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+.modal-actions .btn, .modal-actions .btn-secondary { flex: 1; justify-content: center; }
+
+/* --- Poznámky ------------------------------------------------------------ */
+
+.note-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 0.7rem;
+}
+.note-card.important { border-left: 4px solid var(--warning); }
+.note-head { display: flex; justify-content: space-between; gap: 0.5rem; align-items: flex-start; }
+.note-title { font-weight: 700; font-size: 0.98rem; }
+.note-body { white-space: pre-wrap; font-size: 0.9rem; margin-top: 0.5rem; }
+.note-meta { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.3rem; }
+
+.search-bar { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
+.search-bar input, .search-bar select {
+    font: inherit;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-card);
+    color: var(--text);
+}
+.search-bar input { flex: 1; min-width: 160px; }
+
+.bar { height: 8px; background: var(--bg-soft); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+.bar-fill { height: 100%; background: var(--accent); }
+.bar-fill.over { background: var(--danger); }
+.bar-fill.done { background: var(--success); }
+
+table.data { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+table.data th, table.data td { text-align: left; padding: 0.45rem 0.4rem; border-bottom: 1px solid var(--border); }
+table.data th { font-size: 0.76rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.03em; }
+table.data td.num, table.data th.num { text-align: right; }
+.table-scroll { overflow-x: auto; }
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.2rem;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg-card);
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    font-size: 0.87rem;
+    z-index: 200;
+    box-shadow: var(--shadow);
+}
+
+/* --- Tisk ---------------------------------------------------------------- */
+
+@media print {
+    .app-header, .btn, .btn-secondary, .btn-danger, .btn-ghost, .week-nav, .no-print { display: none !important; }
+    body { background: #fff; }
+    .view { padding: 0; max-width: none; }
+    .card, .day-card, .note-card { box-shadow: none; break-inside: avoid; }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+}
+
+</style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true">L</span>
+                <div>
+                    <h1>Vedení směny</h1>
+                    <p class="brand-sub" id="app-sub"></p>
+                </div>
+            </div>
+            <button id="theme-toggle" class="icon-btn" aria-label="Přepnout světlý a tmavý režim">🌙</button>
+        </div>
+        <nav class="tabs" id="main-nav" aria-label="Hlavní menu"></nav>
+    </header>
+
+    <main id="view" class="view"></main>
+    <div id="modal-root"></div>
+
+    <script>
+/* ==========================================================================
+   Vedení směny – datová vrstva
+   Vše se ukládá do localStorage prohlížeče. Žádný server, funguje offline.
+   ========================================================================== */
+
+const STORAGE_KEY = 'lidl-vedeni-smeny';
+const SCHEMA_VERSION = 1;
+
+/* --- Číselníky ------------------------------------------------------------ */
+
+const POSITIONS = [
+    'Vedoucí prodejny',
+    'Zástupce vedoucího',
+    'Vedoucí směny',
+    'Prodavač / pokladní',
+    'Brigádník',
+    'Pekař',
+    'Výpomoc z jiné prodejny'
+];
+
+const DEFAULT_TASKS = [
+    { id: 'pokladna',    name: 'Pokladna',              icon: '🧾' },
+    { id: 'prijem',      name: 'Příjem zboží / vykládka', icon: '🚚' },
+    { id: 'sucha',       name: 'Suché zboží',           icon: '📦' },
+    { id: 'ovoce',       name: 'Ovoce a zelenina',      icon: '🥦' },
+    { id: 'pecivo',      name: 'Pečivo / pečení',       icon: '🥐' },
+    { id: 'chlazene',    name: 'Chlazené',              icon: '🧀' },
+    { id: 'mrazene',     name: 'Mražené',               icon: '🧊' },
+    { id: 'akce',        name: 'Akce / nonfood',        icon: '🏷️' },
+    { id: 'data',        name: 'Kontrola dat / redukce', icon: '⏱️' },
+    { id: 'uklid',       name: 'Úklid',                 icon: '🧹' },
+    { id: 'vratky',      name: 'Vratky a obaly',        icon: '♻️' },
+    { id: 'inventura',   name: 'Inventura',             icon: '🔢' }
+];
+
+const DEFAULT_DELIVERY_TYPES = [
+    { id: 'sucha',    name: 'Suché zboží',       icon: '📦' },
+    { id: 'cerstve',  name: 'Čerstvé / chlazené', icon: '🧀' },
+    { id: 'ovoce',    name: 'Ovoce a zelenina',  icon: '🥦' },
+    { id: 'mrazene',  name: 'Mražené',           icon: '🧊' },
+    { id: 'pecivo',   name: 'Pečivo',            icon: '🥐' },
+    { id: 'napoje',   name: 'Nápoje',            icon: '🥤' },
+    { id: 'akce',     name: 'Akční zboží',       icon: '🏷️' }
+];
+
+const NOTE_CATEGORIES = [
+    'Otevírání a zavírání',
+    'Pokladna a tržba',
+    'Objednávky',
+    'Zboží a doplňování',
+    'Data spotřeby a odpisy',
+    'Personál a plánování',
+    'Bezpečnost a hygiena',
+    'Zákazník a reklamace',
+    'Systémy a technika',
+    'Ostatní'
+];
+
+/* Výchozí checklisty vedoucího směny – klidně si je uprav v sekci Checklist. */
+const DEFAULT_CHECKLISTS = {
+    open: [
+        'Odemknout prodejnu, vypnout alarm, zkontrolovat okolí a vstup',
+        'Kontrola teplot chlazení a mrazáků, zápis do formuláře',
+        'Rozdělit lidi na úseky a říct priority dne',
+        'Připravit pokladny – šuplíky, drobné, kontrola stavu',
+        'Kontrola pečiva – napečeno na otevírací špičku',
+        'Kontrola ovoce a zeleniny – kvalita, vytříděné kusy',
+        'Projít akční plochy a cenovky (nový akční týden)',
+        'Zkontrolovat příjem zboží / avízo dodávek na dnešek'
+    ],
+    during: [
+        'Kontrola front na pokladnách, včas otevřít druhou pokladnu',
+        'Průběžná kontrola dat spotřeby a redukce',
+        'Doplnění zboží z palet, prázdné palety a klece odklidit',
+        'Kontrola čistoty prodejny a zázemí',
+        'Odvod přebytečné hotovosti z pokladen do trezoru',
+        'Kontrola dodržování přestávek podle plánu'
+    ],
+    close: [
+        'Doplnit zboží na noc, uklidit uličky a paletové místo',
+        'Kontrola a zápis odpisů, uzavření redukcí',
+        'Uzávěrka pokladen, přepočet a odvod tržby do trezoru',
+        'Kontrola teplot na konci dne',
+        'Kontrola zázemí, vypnutí spotřebičů, vynesení odpadu',
+        'Poslední obchůzka – nikdo v prodejně, zavřené vstupy',
+        'Zapnout alarm, zamknout, zapsat předání směny'
+    ]
+};
+
+/* --- Pomocné funkce ------------------------------------------------------- */
+
+function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function isoDate(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function parseISO(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+
+function todayISO() {
+    return isoDate(new Date());
+}
+
+function addDays(iso, count) {
+    const date = parseISO(iso);
+    date.setDate(date.getDate() + count);
+    return isoDate(date);
+}
+
+/* Pondělí týdne, do kterého datum spadá. */
+function weekStart(iso) {
+    const date = parseISO(iso);
+    const shift = (date.getDay() + 6) % 7;
+    date.setDate(date.getDate() - shift);
+    return isoDate(date);
+}
+
+const DAY_NAMES = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'];
+const DAY_SHORT = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+const MONTH_NAMES = ['ledna', 'února', 'března', 'dubna', 'května', 'června',
+    'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
+
+function dayName(iso) {
+    return DAY_NAMES[parseISO(iso).getDay()];
+}
+
+function dayShort(iso) {
+    return DAY_SHORT[parseISO(iso).getDay()];
+}
+
+function isWeekend(iso) {
+    const d = parseISO(iso).getDay();
+    return d === 0 || d === 6;
+}
+
+function formatDate(iso) {
+    const date = parseISO(iso);
+    return `${date.getDate()}. ${date.getMonth() + 1}.`;
+}
+
+function formatDateLong(iso) {
+    const date = parseISO(iso);
+    return `${dayName(iso)} ${date.getDate()}. ${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/* '06:15' -> 375 minut */
+function timeToMinutes(time) {
+    if (!time || !/^\d{1,2}:\d{2}$/.test(time)) return null;
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+}
+
+function minutesToText(minutes) {
+    if (minutes == null) return '–';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m ? `${h}:${String(m).padStart(2, '0')} h` : `${h} h`;
+}
+
+/* Délka směny v minutách. Přes půlnoc se počítá jako pokračování dalšího dne. */
+function shiftMinutes(from, to) {
+    const start = timeToMinutes(from);
+    const end = timeToMinutes(to);
+    if (start == null || end == null) return 0;
+    return end >= start ? end - start : (24 * 60 - start) + end;
+}
+
+/* Čistý odpracovaný čas po odečtení zákonné přestávky. */
+function netMinutes(from, to) {
+    const gross = shiftMinutes(from, to);
+    const rules = DB.settings.break;
+    if (!rules || !rules.minutes) return gross;
+    if (gross >= rules.afterHours * 60) return gross - rules.minutes;
+    return gross;
+}
+
+/* --- Výchozí databáze ----------------------------------------------------- */
+
+function emptyDb() {
+    return {
+        version: SCHEMA_VERSION,
+        settings: {
+            storeName: '',
+            myName: '',
+            openFrom: '07:00',
+            openTo: '21:00',
+            morningShift: { from: '06:00', to: '14:00' },
+            afternoonShift: { from: '13:00', to: '21:30' },
+            break: { afterHours: 6, minutes: 30 },
+            theme: 'light'
+        },
+        employees: [],
+        tasks: DEFAULT_TASKS.map(t => ({ ...t })),
+        deliveryTypes: DEFAULT_DELIVERY_TYPES.map(t => ({ ...t })),
+        checklists: {
+            open: DEFAULT_CHECKLISTS.open.map(text => ({ id: uid(), text })),
+            during: DEFAULT_CHECKLISTS.during.map(text => ({ id: uid(), text })),
+            close: DEFAULT_CHECKLISTS.close.map(text => ({ id: uid(), text }))
+        },
+        days: {},
+        notes: []
+    };
+}
+
+/* Doplní chybějící klíče – aby appka přežila starší zálohu i ruční úpravu. */
+function normalize(data) {
+    const base = emptyDb();
+    if (!data || typeof data !== 'object') return base;
+
+    const db = {
+        version: SCHEMA_VERSION,
+        settings: { ...base.settings, ...(data.settings || {}) },
+        employees: Array.isArray(data.employees) ? data.employees : [],
+        tasks: Array.isArray(data.tasks) && data.tasks.length ? data.tasks : base.tasks,
+        deliveryTypes: Array.isArray(data.deliveryTypes) && data.deliveryTypes.length
+            ? data.deliveryTypes : base.deliveryTypes,
+        checklists: { ...base.checklists, ...(data.checklists || {}) },
+        days: (data.days && typeof data.days === 'object') ? data.days : {},
+        notes: Array.isArray(data.notes) ? data.notes : []
+    };
+
+    db.settings.break = { ...base.settings.break, ...(db.settings.break || {}) };
+    db.settings.morningShift = { ...base.settings.morningShift, ...(db.settings.morningShift || {}) };
+    db.settings.afternoonShift = { ...base.settings.afternoonShift, ...(db.settings.afternoonShift || {}) };
+
+    db.employees.forEach(e => {
+        e.id = e.id || uid();
+        e.skills = Array.isArray(e.skills) ? e.skills : [];
+        e.active = e.active !== false;
+    });
+
+    Object.entries(db.days).forEach(([iso, day]) => {
+        db.days[iso] = { ...emptyDay(iso), ...day };
+        const d = db.days[iso];
+        d.entries = Array.isArray(d.entries) ? d.entries : [];
+        d.deliveries = Array.isArray(d.deliveries) ? d.deliveries : [];
+        d.checks = d.checks && typeof d.checks === 'object' ? d.checks : {};
+        d.entries.forEach(entry => {
+            entry.id = entry.id || uid();
+            entry.tasks = Array.isArray(entry.tasks) ? entry.tasks : [];
+        });
+        d.deliveries.forEach(item => {
+            item.id = item.id || uid();
+            item.pallets = Number(item.pallets) || 0;
+            item.rolls = Number(item.rolls) || 0;
+        });
+    });
+
+    db.notes.forEach(n => {
+        n.id = n.id || uid();
+        n.tags = Array.isArray(n.tags) ? n.tags : [];
+        n.date = n.date || todayISO();
+    });
+
+    return db;
+}
+
+function emptyDay(iso) {
+    return {
+        date: iso,
+        leaderId: '',
+        leaderPmId: '',
+        note: '',
+        entries: [],
+        deliveries: [],
+        checks: {},
+        stats: { revenue: '', customers: '', writeOff: '' }
+    };
+}
+
+/* --- Načtení a uložení ---------------------------------------------------- */
+
+let DB = load();
+
+function load() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return normalize(raw ? JSON.parse(raw) : null);
+    } catch {
+        return emptyDb();
+    }
+}
+
+function save() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+        return true;
+    } catch (err) {
+        alert('Data se nepodařilo uložit do prohlížeče. Zkontroluj volné místo nebo režim anonymního prohlížení.');
+        return false;
+    }
+}
+
+function replaceDb(data) {
+    DB = normalize(data);
+    save();
+}
+
+/* --- Přístup k datům ------------------------------------------------------ */
+
+function getDay(iso) {
+    return DB.days[iso] || emptyDay(iso);
+}
+
+/* Vrátí den připravený k zápisu (a rovnou ho zaregistruje v databázi). */
+function ensureDay(iso) {
+    if (!DB.days[iso]) DB.days[iso] = emptyDay(iso);
+    return DB.days[iso];
+}
+
+function hasDayContent(day) {
+    return Boolean(
+        day.entries.length ||
+        day.deliveries.length ||
+        day.note ||
+        day.leaderId ||
+        day.leaderPmId ||
+        Object.values(day.checks).some(Boolean) ||
+        (day.stats && (day.stats.revenue || day.stats.customers || day.stats.writeOff))
+    );
+}
+
+/* Zahodí den, ve kterém po úpravě nic nezůstalo. */
+function pruneDay(iso) {
+    const day = DB.days[iso];
+    if (day && !hasDayContent(day)) delete DB.days[iso];
+}
+
+function employeeById(id) {
+    return DB.employees.find(e => e.id === id) || null;
+}
+
+function employeeName(id) {
+    const employee = employeeById(id);
+    return employee ? employee.name : 'Neurčeno';
+}
+
+function taskById(id) {
+    return DB.tasks.find(t => t.id === id) || { id, name: id, icon: '•' };
+}
+
+function deliveryTypeById(id) {
+    return DB.deliveryTypes.find(t => t.id === id) || { id, name: id, icon: '📦' };
+}
+
+function activeEmployees() {
+    return DB.employees.filter(e => e.active).sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+}
+
+function weekDays(startIso) {
+    return Array.from({ length: 7 }, (_, i) => addDays(startIso, i));
+}
+
+function palletsOfDay(iso) {
+    return getDay(iso).deliveries.reduce((sum, item) => sum + (Number(item.pallets) || 0), 0);
+}
+
+function rollsOfDay(iso) {
+    return getDay(iso).deliveries.reduce((sum, item) => sum + (Number(item.rolls) || 0), 0);
+}
+
+/* Odpracované minuty zaměstnance v zadaném rozsahu dní (včetně obou konců). */
+function workedMinutes(employeeId, fromIso, toIso) {
+    let total = 0;
+    Object.keys(DB.days).forEach(iso => {
+        if (iso < fromIso || iso > toIso) return;
+        getDay(iso).entries
+            .filter(entry => entry.employeeId === employeeId)
+            .forEach(entry => { total += netMinutes(entry.from, entry.to); });
+    });
+    return total;
+}
+
+/* Skloňování počtů – ať appka nemluví jako formulář. */
+function peopleText(count) {
+    if (count === 1) return '1 člověk';
+    if (count >= 2 && count <= 4) return `${count} lidi`;
+    return `${count} lidí`;
+}
+
+function dayCountText(count) {
+    if (count === 1) return '1 den';
+    if (count >= 2 && count <= 4) return `${count} dny`;
+    return `${count} dní`;
+}
+
+function checklistProgress(iso) {
+    const day = getDay(iso);
+    const all = [...DB.checklists.open, ...DB.checklists.during, ...DB.checklists.close];
+    const done = all.filter(item => day.checks[item.id]).length;
+    return { done, total: all.length };
+}
+
+</script>
+    <script>
+/* ==========================================================================
+   Vedení směny – aplikační logika
+   Pohledy se vykreslují do #view, akce se řeší delegací přes data-action.
+   ========================================================================== */
+
+const NAV = [
+    { id: 'prehled',   label: '📊 Přehled' },
+    { id: 'plan',      label: '📅 Plán' },
+    { id: 'tym',       label: '👥 Tým' },
+    { id: 'zbozi',     label: '📦 Zboží' },
+    { id: 'checklist', label: '✅ Checklist' },
+    { id: 'poznamky',  label: '📝 Poznámky' },
+    { id: 'nastaveni', label: '⚙️ Nastavení' }
+];
+
+const view = document.getElementById('view');
+const modalRoot = document.getElementById('modal-root');
+
+let planWeek = weekStart(todayISO());
+let noteFilter = { text: '', category: '', tag: '' };
+let goodsRange = 'week';
+
+/* --- Drobné pomůcky ------------------------------------------------------- */
+
+function esc(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function toast(message) {
+    const box = document.createElement('div');
+    box.className = 'toast';
+    box.textContent = message;
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 2200);
+}
+
+function persist(message) {
+    if (save() && message) toast(message);
+    render();
+}
+
+function go(hash) {
+    location.hash = hash;
+}
+
+/* --- Modální okno --------------------------------------------------------- */
+
+function closeModal() {
+    modalRoot.innerHTML = '';
+}
+
+function openModal({ title, bodyHtml, actionsHtml, onMount }) {
+    modalRoot.innerHTML = `
+        <div class="modal-backdrop" data-close-backdrop>
+            <div class="modal" role="dialog" aria-modal="true">
+                <div class="modal-head">
+                    <h3>${esc(title)}</h3>
+                    <button class="btn-ghost" data-close-modal aria-label="Zavřít">✕</button>
+                </div>
+                <div class="modal-body">${bodyHtml}</div>
+                ${actionsHtml ? `<div class="modal-actions">${actionsHtml}</div>` : ''}
+            </div>
+        </div>`;
+
+    modalRoot.querySelector('[data-close-modal]').addEventListener('click', closeModal);
+    modalRoot.querySelector('[data-close-backdrop]').addEventListener('click', event => {
+        if (event.target.hasAttribute('data-close-backdrop')) closeModal();
+    });
+    if (onMount) onMount(modalRoot.querySelector('.modal'));
+}
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeModal();
+});
+
+/* --- Generátor formulářů --------------------------------------------------
+   Pole: {name, label, type, options, hint, required, placeholder}
+   Typy: text | number | time | date | textarea | select | checkbox | chips | row
+   -------------------------------------------------------------------------- */
+
+function fieldHtml(field, values) {
+    const value = values[field.name];
+
+    if (field.type === 'row') {
+        return `<div class="field-row">${field.fields.map(f => fieldHtml(f, values)).join('')}</div>`;
+    }
+
+    if (field.type === 'checkbox') {
+        return `
+            <div class="field check-item">
+                <input type="checkbox" id="f-${field.name}" name="${field.name}" ${value ? 'checked' : ''}>
+                <label for="f-${field.name}">${esc(field.label)}</label>
+            </div>`;
+    }
+
+    if (field.type === 'chips') {
+        const selected = Array.isArray(value) ? value : [];
+        const chips = field.options.map(opt => `
+            <button type="button" class="chip ${selected.includes(opt.value) ? 'on' : ''}"
+                    data-chip="${field.name}" data-value="${esc(opt.value)}">${esc(opt.label)}</button>`).join('');
+        return `
+            <div class="field">
+                <label>${esc(field.label)}</label>
+                <div class="chips" data-chips="${field.name}">${chips}</div>
+                <input type="hidden" name="${field.name}" value="${esc(selected.join(','))}">
+                ${field.hint ? `<div class="field-hint">${esc(field.hint)}</div>` : ''}
+            </div>`;
+    }
+
+    let control;
+    if (field.type === 'select') {
+        const options = field.options.map(opt =>
+            `<option value="${esc(opt.value)}" ${String(value ?? '') === String(opt.value) ? 'selected' : ''}>${esc(opt.label)}</option>`
+        ).join('');
+        control = `<select name="${field.name}" ${field.required ? 'required' : ''}>${options}</select>`;
+    } else if (field.type === 'textarea') {
+        control = `<textarea name="${field.name}" placeholder="${esc(field.placeholder || '')}">${esc(value || '')}</textarea>`;
+    } else {
+        const extra = field.type === 'number' ? `min="${field.min ?? 0}" step="${field.step ?? 1}"` : '';
+        control = `<input type="${field.type}" name="${field.name}" value="${esc(value ?? '')}"
+                          placeholder="${esc(field.placeholder || '')}" ${extra} ${field.required ? 'required' : ''}>`;
+    }
+
+    return `
+        <div class="field">
+            <label>${esc(field.label)}</label>
+            ${control}
+            ${field.hint ? `<div class="field-hint">${esc(field.hint)}</div>` : ''}
+        </div>`;
+}
+
+function readForm(form, fields) {
+    const result = {};
+    const walk = list => list.forEach(field => {
+        if (field.type === 'row') return walk(field.fields);
+        const input = form.querySelector(`[name="${field.name}"]`);
+        if (!input) return;
+        if (field.type === 'checkbox') result[field.name] = input.checked;
+        else if (field.type === 'chips') result[field.name] = input.value ? input.value.split(',') : [];
+        else if (field.type === 'number') result[field.name] = input.value === '' ? '' : Number(input.value);
+        else result[field.name] = input.value.trim();
+    });
+    walk(fields);
+    return result;
+}
+
+function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave, onDelete, deleteLabel = 'Smazat' }) {
+    openModal({
+        title,
+        bodyHtml: `<form id="modal-form">${fields.map(f => fieldHtml(f, values)).join('')}</form>`,
+        actionsHtml: `
+            ${onDelete ? `<button type="button" class="btn-danger" data-form-delete>${esc(deleteLabel)}</button>` : ''}
+            <button type="button" class="btn-secondary" data-close-modal-2>Zrušit</button>
+            <button type="submit" form="modal-form" class="btn">${esc(submitLabel)}</button>`,
+        onMount: modal => {
+            const form = modal.querySelector('#modal-form');
+
+            modal.querySelectorAll('[data-chip]').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const holder = form.querySelector(`input[name="${chip.dataset.chip}"]`);
+                    const current = holder.value ? holder.value.split(',') : [];
+                    const index = current.indexOf(chip.dataset.value);
+                    if (index >= 0) current.splice(index, 1);
+                    else current.push(chip.dataset.value);
+                    holder.value = current.join(',');
+                    chip.classList.toggle('on');
+                });
+            });
+
+            modal.querySelector('[data-close-modal-2]').addEventListener('click', closeModal);
+            const deleteBtn = modal.querySelector('[data-form-delete]');
+            if (deleteBtn) deleteBtn.addEventListener('click', () => {
+                if (confirm('Opravdu smazat? Tuhle akci nelze vrátit zpět.')) { closeModal(); onDelete(); }
+            });
+
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                const data = readForm(form, fields);
+                closeModal();
+                onSave(data);
+            });
+            const first = form.querySelector('input, select, textarea');
+            if (first) first.focus();
+        }
+    });
+}
+
+function employeeOptions(includeEmpty = true) {
+    const options = activeEmployees().map(e => ({ value: e.id, label: e.name }));
+    return includeEmpty ? [{ value: '', label: '—' }, ...options] : options;
+}
+
+function taskChipOptions() {
+    return DB.tasks.map(t => ({ value: t.id, label: `${t.icon} ${t.name}` }));
+}
+
+/* --- Vykreslení hlavičky a routeru ---------------------------------------- */
+
+function currentRoute() {
+    const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+    return { name: parts[0] || 'prehled', param: parts[1] || '' };
+}
+
+function renderNav(active) {
+    document.getElementById('main-nav').innerHTML = NAV.map(item =>
+        `<button class="tab ${item.id === active ? 'active' : ''}" data-nav="${item.id}">${item.label}</button>`
+    ).join('');
+}
+
+function renderHeader() {
+    document.getElementById('app-sub').textContent =
+        DB.settings.storeName ? DB.settings.storeName : 'Nastav si prodejnu v Nastavení';
+}
+
+function render() {
+    const route = currentRoute();
+    const active = route.name === 'den' ? 'plan' : route.name;
+    renderNav(active);
+    renderHeader();
+    window.scrollTo({ top: 0 });
+
+    switch (route.name) {
+        case 'plan':      return renderPlan();
+        case 'den':       return renderDayDetail(route.param || todayISO());
+        case 'tym':       return renderTeam();
+        case 'zbozi':     return renderGoods();
+        case 'checklist': return renderChecklist();
+        case 'poznamky':  return renderNotes();
+        case 'nastaveni': return renderSettings();
+        default:          return renderDashboard();
+    }
+}
+
+/* --- Přehled --------------------------------------------------------------- */
+
+function entrySummary(entry) {
+    const tasks = entry.tasks.map(id => taskById(id).name).join(', ');
+    return `${entry.from}–${entry.to} · ${minutesToText(netMinutes(entry.from, entry.to))}${tasks ? ' · ' + tasks : ''}`;
+}
+
+function sortedEntries(day) {
+    return [...day.entries].sort((a, b) => (timeToMinutes(a.from) || 0) - (timeToMinutes(b.from) || 0));
+}
+
+function renderDashboard() {
+    const today = todayISO();
+    const day = getDay(today);
+    const tomorrow = addDays(today, 1);
+    const dayTomorrow = getDay(tomorrow);
+    const progress = checklistProgress(today);
+    const minutes = day.entries.reduce((sum, e) => sum + netMinutes(e.from, e.to), 0);
+    const reminders = DB.notes.filter(n => n.important).slice(0, 4);
+
+    const onboarding = DB.employees.length ? '' : `
+        <div class="card">
+            <h3>👋 Začni tady</h3>
+            <p class="muted">Aplikace je prázdná – naplň ji ve třech krocích:</p>
+            <ol class="muted" style="margin: 0.5rem 0 0.8rem 1.1rem;">
+                <li>V sekci <strong>Tým</strong> přidej kolegy a jejich úvazek.</li>
+                <li>V sekci <strong>Plán</strong> naplánuj směny na příští týden.</li>
+                <li>Z tréninku si všechno piš do <strong>Poznámek</strong>.</li>
+            </ol>
+            <div class="btn-row">
+                <button class="btn" data-action="add-employee">➕ Přidat prvního člověka</button>
+                <button class="btn-secondary" data-nav="nastaveni">⚙️ Nastavit prodejnu</button>
+            </div>
+        </div>`;
+
+    view.innerHTML = `
+        <div class="view-head">
+            <div>
+                <h2>Dnes</h2>
+                <div class="subtitle">${esc(formatDateLong(today))}</div>
+            </div>
+            <button class="btn" data-action="open-day" data-date="${today}">Otevřít dnešní den →</button>
+        </div>
+
+        ${onboarding}
+
+        <div class="grid grid-3" style="margin-bottom: 0.9rem;">
+            <div class="stat">
+                <div class="stat-label">Lidí ve směně</div>
+                <div class="stat-value">${day.entries.length}</div>
+                <div class="stat-hint">${minutesToText(minutes)} celkem</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Palet dnes</div>
+                <div class="stat-value">${palletsOfDay(today)}</div>
+                <div class="stat-hint">${rollsOfDay(today)} rolí / klecí</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Checklist</div>
+                <div class="stat-value">${progress.done}/${progress.total}</div>
+                <div class="stat-hint">úkolů vedoucího směny</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Vedoucí směny</div>
+                <div class="stat-value" style="font-size: 1rem; padding-top: 0.35rem;">
+                    ${day.leaderId ? esc(employeeName(day.leaderId)) : '<span class="muted">nezadáno</span>'}
+                </div>
+                <div class="stat-hint">${day.leaderPmId ? 'odpol.: ' + esc(employeeName(day.leaderPmId)) : 'odpolední nezadán'}</div>
+            </div>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="card">
+                <h3>👥 Kdo je dnes v práci
+                    <button class="btn-secondary" data-action="add-entry" data-date="${today}">➕ Přidat</button>
+                </h3>
+                ${day.entries.length ? sortedEntries(day).map(entry => `
+                    <div class="row">
+                        <div class="row-main">
+                            <div class="row-title">${esc(employeeName(entry.employeeId))}</div>
+                            <div class="row-sub">${esc(entrySummary(entry))}</div>
+                        </div>
+                        <div class="row-actions">
+                            <button class="btn-ghost" data-action="edit-entry" data-date="${today}" data-id="${entry.id}">✏️</button>
+                        </div>
+                    </div>`).join('') : '<div class="empty">Na dnešek zatím nikdo naplánovaný.</div>'}
+            </div>
+
+            <div class="card">
+                <h3>🚚 Dodávky dnes
+                    <button class="btn-secondary" data-action="add-delivery" data-date="${today}">➕ Zapsat</button>
+                </h3>
+                ${day.deliveries.length ? day.deliveries.map(item => {
+                    const type = deliveryTypeById(item.typeId);
+                    return `
+                    <div class="row">
+                        <div class="row-main">
+                            <div class="row-title">${type.icon} ${esc(type.name)}</div>
+                            <div class="row-sub">${item.pallets} palet${item.rolls ? ` · ${item.rolls} rolí` : ''}${item.arrived ? ` · příjezd ${esc(item.arrived)}` : ''}${item.note ? ' · ' + esc(item.note) : ''}</div>
+                        </div>
+                        <div class="row-actions">
+                            <button class="btn-ghost" data-action="edit-delivery" data-date="${today}" data-id="${item.id}">✏️</button>
+                        </div>
+                    </div>`;
+                }).join('') : '<div class="empty">Dnes zatím nic zapsaného.</div>'}
+            </div>
+
+            <div class="card">
+                <h3>📅 Zítra – ${esc(dayName(tomorrow))} ${esc(formatDate(tomorrow))}</h3>
+                ${dayTomorrow.entries.length ? sortedEntries(dayTomorrow).map(entry => `
+                    <div class="day-person">
+                        <span>${esc(employeeName(entry.employeeId))}</span>
+                        <span>${esc(entry.from)}–${esc(entry.to)}</span>
+                    </div>`).join('') : '<div class="empty">Zítřek zatím není naplánovaný.</div>'}
+                <div class="btn-row" style="margin-top: 0.7rem;">
+                    <button class="btn-secondary" data-action="open-day" data-date="${tomorrow}">Naplánovat zítřek</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>⭐ Připomínky z tréninku</h3>
+                ${reminders.length ? reminders.map(note => `
+                    <div class="row">
+                        <div class="row-main">
+                            <div class="row-title">${esc(note.title)}</div>
+                            <div class="row-sub">${esc(note.category || 'Bez kategorie')} · ${esc(formatDate(note.date))}</div>
+                        </div>
+                        <div class="row-actions">
+                            <button class="btn-ghost" data-action="edit-note" data-id="${note.id}">✏️</button>
+                        </div>
+                    </div>`).join('') : '<div class="empty">Označ si poznámku hvězdičkou a bude ti tady svítit.</div>'}
+                <div class="btn-row" style="margin-top: 0.7rem;">
+                    <button class="btn-secondary" data-action="add-note">➕ Nová poznámka</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+/* --- Týdenní plán ---------------------------------------------------------- */
+
+function renderPlan() {
+    const days = weekDays(planWeek);
+    const today = todayISO();
+    let weekMinutes = 0;
+    let weekPallets = 0;
+
+    const cards = days.map(iso => {
+        const day = getDay(iso);
+        const minutes = day.entries.reduce((sum, e) => sum + netMinutes(e.from, e.to), 0);
+        const pallets = palletsOfDay(iso);
+        weekMinutes += minutes;
+        weekPallets += pallets;
+
+        const people = sortedEntries(day).map(entry => `
+            <div class="day-person">
+                <span>${esc(employeeName(entry.employeeId))}</span>
+                <span>${esc(entry.from)}–${esc(entry.to)}</span>
+            </div>`).join('');
+
+        return `
+            <div class="day-card ${iso === today ? 'today' : ''} ${isWeekend(iso) ? 'weekend' : ''}"
+                 data-action="open-day" data-date="${iso}">
+                <div class="day-head">
+                    <span class="day-name">${esc(dayName(iso))}</span>
+                    <span class="day-date">${esc(formatDate(iso))}</span>
+                </div>
+                ${day.leaderId ? `<div class="muted">Vedoucí: ${esc(employeeName(day.leaderId))}</div>` : ''}
+                <div class="day-people">${people || '<span class="muted">Zatím nikdo</span>'}</div>
+                <div class="day-meta">
+                    ${day.entries.length ? `<span class="pill">${peopleText(day.entries.length)} · ${minutesToText(minutes)}</span>` : ''}
+                    ${pallets ? `<span class="pill accent">📦 ${pallets} palet</span>` : ''}
+                    ${day.note ? '<span class="pill warning">📝 poznámka</span>' : ''}
+                </div>
+            </div>`;
+    }).join('');
+
+    view.innerHTML = `
+        <div class="view-head">
+            <div>
+                <h2>Plán směn</h2>
+                <div class="subtitle">${esc(formatDate(planWeek))} – ${esc(formatDate(addDays(planWeek, 6)))}
+                    · ${minutesToText(weekMinutes)} · ${weekPallets} palet</div>
+            </div>
+            <div class="btn-row no-print">
+                <button class="btn-secondary" data-action="copy-week">📋 Zkopírovat minulý týden</button>
+                <button class="btn-secondary" data-action="print">🖨️ Tisk</button>
+            </div>
+        </div>
+
+        <div class="week-nav no-print">
+            <button class="btn-secondary" data-action="week-prev">← Předchozí</button>
+            <div class="week-label">Týden ${esc(formatDate(planWeek))}</div>
+            <button class="btn-secondary" data-action="week-next">Další →</button>
+        </div>
+        <div class="btn-row no-print" style="margin-bottom: 0.9rem;">
+            <button class="btn-secondary" data-action="week-today">Dnešní týden</button>
+        </div>
+
+        <div class="grid grid-2">${cards}</div>
+
+        <div class="card" style="margin-top: 0.9rem;">
+            <h3>⏱️ Hodiny v tomto týdnu</h3>
+            ${activeEmployees().length ? `
+            <div class="table-scroll">
+                <table class="data">
+                    <thead>
+                        <tr><th>Člověk</th><th class="num">Naplánováno</th><th class="num">Úvazek</th><th>Rozdíl</th></tr>
+                    </thead>
+                    <tbody>
+                        ${activeEmployees().map(employee => {
+                            const minutes = workedMinutes(employee.id, planWeek, addDays(planWeek, 6));
+                            const contract = Number(employee.contract) || 0;
+                            const diff = contract ? (minutes / 60) - contract : null;
+                            const label = diff == null ? '–'
+                                : diff === 0 ? 'přesně'
+                                : diff > 0 ? `+${diff.toFixed(1)} h` : `${diff.toFixed(1)} h`;
+                            const cls = diff == null ? '' : diff > 0.5 ? 'danger' : diff < -0.5 ? 'warning' : 'success';
+                            return `<tr>
+                                <td>${esc(employee.name)}</td>
+                                <td class="num">${minutesToText(minutes)}</td>
+                                <td class="num">${contract ? contract + ' h' : '–'}</td>
+                                <td>${cls ? `<span class="pill ${cls}">${label}</span>` : '–'}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>` : '<div class="empty">Nejdřív přidej lidi v sekci Tým.</div>'}
+        </div>`;
+}
+
+/* --- Detail dne ------------------------------------------------------------ */
+
+function checklistBlock(iso, key, title) {
+    const day = getDay(iso);
+    const items = DB.checklists[key] || [];
+    if (!items.length) return '';
+    return `
+        <div class="card">
+            <h3>${esc(title)}</h3>
+            ${items.map(item => `
+                <div class="check-item ${day.checks[item.id] ? 'done' : ''}">
+                    <input type="checkbox" id="chk-${item.id}" data-change="toggle-check"
+                           data-date="${iso}" data-id="${item.id}" ${day.checks[item.id] ? 'checked' : ''}>
+                    <label for="chk-${item.id}">${esc(item.text)}</label>
+                </div>`).join('')}
+        </div>`;
+}
+
+function renderDayDetail(iso) {
+    const day = getDay(iso);
+    const minutes = day.entries.reduce((sum, e) => sum + netMinutes(e.from, e.to), 0);
+    const progress = checklistProgress(iso);
+
+    view.innerHTML = `
+        <div class="view-head">
+            <div>
+                <h2>${esc(formatDateLong(iso))}</h2>
+                <div class="subtitle">${peopleText(day.entries.length)} · ${minutesToText(minutes)} ·
+                    ${palletsOfDay(iso)} palet · checklist ${progress.done}/${progress.total}</div>
+            </div>
+            <div class="btn-row no-print">
+                <button class="btn-secondary" data-action="day-prev" data-date="${iso}">←</button>
+                <button class="btn-secondary" data-action="day-next" data-date="${iso}">→</button>
+                <button class="btn-secondary" data-nav="plan">Zpět na plán</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>👑 Vedení směny</h3>
+            <div class="field-row">
+                <div class="field">
+                    <label>Ranní směna</label>
+                    <select data-change="set-leader" data-date="${iso}" data-slot="leaderId">
+                        ${employeeOptions().map(o =>
+                            `<option value="${esc(o.value)}" ${o.value === day.leaderId ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Odpolední směna</label>
+                    <select data-change="set-leader" data-date="${iso}" data-slot="leaderPmId">
+                        ${employeeOptions().map(o =>
+                            `<option value="${esc(o.value)}" ${o.value === day.leaderPmId ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="card">
+                <h3>👥 Rozdělení lidí
+                    <button class="btn-secondary" data-action="add-entry" data-date="${iso}">➕ Přidat</button>
+                </h3>
+                ${day.entries.length ? sortedEntries(day).map(entry => {
+                    const employee = employeeById(entry.employeeId);
+                    return `
+                    <div class="row">
+                        <div class="row-main">
+                            <div class="row-title">${esc(employee ? employee.name : 'Neurčeno')}
+                                ${employee && employee.position ? `<span class="muted">· ${esc(employee.position)}</span>` : ''}</div>
+                            <div class="row-sub">${esc(entrySummary(entry))}</div>
+                            ${entry.note ? `<div class="row-sub">📝 ${esc(entry.note)}</div>` : ''}
+                        </div>
+                        <div class="row-actions">
+                            <button class="btn-ghost" data-action="edit-entry" data-date="${iso}" data-id="${entry.id}">✏️</button>
+                        </div>
+                    </div>`;
+                }).join('') : '<div class="empty">Zatím prázdno. Přidej lidi do směny.</div>'}
+                <div class="btn-row no-print" style="margin-top: 0.7rem;">
+                    <button class="btn-secondary" data-action="copy-day" data-date="${iso}">📋 Zkopírovat z jiného dne</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🚚 Dodávky a palety
+                    <button class="btn-secondary" data-action="add-delivery" data-date="${iso}">➕ Zapsat</button>
+                </h3>
+                ${day.deliveries.length ? day.deliveries.map(item => {
+                    const type = deliveryTypeById(item.typeId);
+                    const span = (item.startedAt && item.doneAt)
+                        ? shiftMinutes(item.startedAt, item.doneAt) : null;
+                    const speed = span && item.pallets ? (item.pallets / (span / 60)).toFixed(1) : null;
+                    return `
+                    <div class="row">
+                        <div class="row-main">
+                            <div class="row-title">${type.icon} ${esc(type.name)} · ${item.pallets} palet</div>
+                            <div class="row-sub">
+                                ${item.rolls ? `${item.rolls} rolí / klecí · ` : ''}
+                                ${item.arrived ? `příjezd ${esc(item.arrived)} · ` : ''}
+                                ${span ? `zpracováno ${esc(item.startedAt)}–${esc(item.doneAt)} (${minutesToText(span)})` : 'nezpracováno'}
+                                ${speed ? ` · ${speed} palet/h` : ''}
+                            </div>
+                            ${item.note ? `<div class="row-sub">📝 ${esc(item.note)}</div>` : ''}
+                        </div>
+                        <div class="row-actions">
+                            <button class="btn-ghost" data-action="edit-delivery" data-date="${iso}" data-id="${item.id}">✏️</button>
+                        </div>
+                    </div>`;
+                }).join('') : '<div class="empty">Žádná dodávka zapsaná.</div>'}
+                ${day.deliveries.length ? `<div class="muted" style="margin-top:0.5rem;">
+                    Celkem <strong>${palletsOfDay(iso)}</strong> palet a <strong>${rollsOfDay(iso)}</strong> rolí.</div>` : ''}
+            </div>
+        </div>
+
+        ${checklistBlock(iso, 'open', '🌅 Otevření prodejny')}
+        ${checklistBlock(iso, 'during', '🕑 Během směny')}
+        ${checklistBlock(iso, 'close', '🌙 Zavírání')}
+
+        <div class="card">
+            <h3>📈 Čísla dne a předání směny</h3>
+            <div class="field-row">
+                <div class="field">
+                    <label>Tržba</label>
+                    <input type="text" data-change="set-stat" data-date="${iso}" data-key="revenue"
+                           value="${esc(day.stats.revenue || '')}" placeholder="např. 285 000">
+                </div>
+                <div class="field">
+                    <label>Zákazníků</label>
+                    <input type="text" data-change="set-stat" data-date="${iso}" data-key="customers"
+                           value="${esc(day.stats.customers || '')}" placeholder="např. 1 240">
+                </div>
+                <div class="field">
+                    <label>Odpisy</label>
+                    <input type="text" data-change="set-stat" data-date="${iso}" data-key="writeOff"
+                           value="${esc(day.stats.writeOff || '')}" placeholder="např. 3 200">
+                </div>
+            </div>
+            <div class="field">
+                <label>Poznámka ke směně (co se stalo, co předat dál)</label>
+                <textarea data-change="set-day-note" data-date="${iso}"
+                          placeholder="Např.: rozbitá chladicí vitrína – nahlášeno; chybí dodávka pečiva; nový kolega zaučen na pokladně.">${esc(day.note || '')}</textarea>
+            </div>
+        </div>`;
+}
+
+/* --- Tým ------------------------------------------------------------------- */
+
+function renderTeam() {
+    const weekFrom = weekStart(todayISO());
+    const weekTo = addDays(weekFrom, 6);
+    const list = [...DB.employees].sort((a, b) =>
+        Number(b.active) - Number(a.active) || a.name.localeCompare(b.name, 'cs'));
+
+    view.innerHTML = `
+        <div class="view-head">
+            <div>
+                <h2>Tým</h2>
+                <div class="subtitle">${peopleText(DB.employees.filter(e => e.active).length)} v týmu</div>
+            </div>
+            <button class="btn" data-action="add-employee">➕ Přidat člověka</button>
+        </div>
+
+        ${list.length ? `<div class="grid grid-2">${list.map(employee => {
+            const minutes = workedMinutes(employee.id, weekFrom, weekTo);
+            const contract = Number(employee.contract) || 0;
+            const percent = contract ? Math.min(150, Math.round((minutes / 60 / contract) * 100)) : 0;
+            const skills = employee.skills.map(id => {
+                const task = taskById(id);
+                return `<span class="pill">${task.icon} ${esc(task.name)}</span>`;
+            }).join('');
+
+            return `
+            <div class="card">
+                <h3>${esc(employee.name)} ${employee.active ? '' : '<span class="pill">neaktivní</span>'}
+                    <button class="btn-ghost" data-action="edit-employee" data-id="${employee.id}">✏️</button>
+                </h3>
+                <div class="muted">${esc(employee.position || 'Bez pozice')}${employee.phone ? ' · ' + esc(employee.phone) : ''}</div>
+                <div style="margin: 0.6rem 0 0.3rem;">
+                    <div class="day-person">
+                        <span>Tento týden</span>
+                        <span>${minutesToText(minutes)}${contract ? ` z ${contract} h` : ''}</span>
+                    </div>
+                    ${contract ? `<div class="bar"><div class="bar-fill ${percent > 105 ? 'over' : percent >= 95 ? 'done' : ''}"
+                        style="width:${Math.min(100, percent)}%"></div></div>` : ''}
+                </div>
+                ${skills ? `<div class="tag-list">${skills}</div>` : '<div class="muted">Zatím bez zaškolených úseků.</div>'}
+                ${employee.note ? `<div class="row-sub" style="margin-top:0.5rem;">📝 ${esc(employee.note)}</div>` : ''}
+            </div>`;
+        }).join('')}</div>` : '<div class="card"><div class="empty">Zatím tu nikdo není. Přidej kolegy, se kterými chodíš na směny.</div></div>'}`;
+}
+
+/* --- Zboží a palety --------------------------------------------------------- */
+
+function goodsRangeBounds() {
+    const today = todayISO();
+    const date = parseISO(today);
+    switch (goodsRange) {
+        case 'lastweek': {
+            const start = addDays(weekStart(today), -7);
+            return { from: start, to: addDays(start, 6), label: 'Minulý týden' };
+        }
+        case 'month': {
+            const first = isoDate(new Date(date.getFullYear(), date.getMonth(), 1));
+            const last = isoDate(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+            return { from: first, to: last, label: 'Tento měsíc' };
+        }
+        case 'last30':
+            return { from: addDays(today, -29), to: today, label: 'Posledních 30 dní' };
+        case 'all':
+            return { from: '0000-01-01', to: '9999-12-31', label: 'Celá historie' };
+        default: {
+            const start = weekStart(today);
+            return { from: start, to: addDays(start, 6), label: 'Tento týden' };
+        }
+    }
+}
+
+function renderGoods() {
+    const bounds = goodsRangeBounds();
+    const rows = [];
+    Object.keys(DB.days).sort().reverse().forEach(iso => {
+        if (iso < bounds.from || iso > bounds.to) return;
+        const day = getDay(iso);
+        if (day.deliveries.length) rows.push({ iso, day });
+    });
+
+    const totals = {};
+    let pallets = 0;
+    let rolls = 0;
+    rows.forEach(({ day }) => day.deliveries.forEach(item => {
+        pallets += Number(item.pallets) || 0;
+        rolls += Number(item.rolls) || 0;
+        totals[item.typeId] = (totals[item.typeId] || 0) + (Number(item.pallets) || 0);
+    }));
+
+    const perDay = rows.map(({ iso }) => ({ iso, pallets: palletsOfDay(iso) }));
+    const busiest = perDay.reduce((best, item) => (!best || item.pallets > best.pallets ? item : best), null);
+    const average = perDay.length ? (pallets / perDay.length).toFixed(1) : '0';
+    const typeRows = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+
+    view.innerHTML = `
+        <div class="view-head">
+            <div>
+                <h2>Zboží a palety</h2>
+                <div class="subtitle">${esc(bounds.label)} · ${dayCountText(rows.length)} se zápisem</div>
+            </div>
+            <div class="btn-row">
+                <select data-change="goods-range">
+                    <option value="week" ${goodsRange === 'week' ? 'selected' : ''}>Tento týden</option>
+                    <option value="lastweek" ${goodsRange === 'lastweek' ? 'selected' : ''}>Minulý týden</option>
+                    <option value="month" ${goodsRange === 'month' ? 'selected' : ''}>Tento měsíc</option>
+                    <option value="last30" ${goodsRange === 'last30' ? 'selected' : ''}>Posledních 30 dní</option>
+                    <option value="all" ${goodsRange === 'all' ? 'selected' : ''}>Vše</option>
+                </select>
+                <button class="btn" data-action="add-delivery" data-date="${todayISO()}">➕ Zapsat dodávku</button>
+            </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-bottom: 0.9rem;">
+            <div class="stat"><div class="stat-label">Palet celkem</div><div class="stat-value">${pallets}</div></div>
+            <div class="stat"><div class="stat-label">Průměr na den</div><div class="stat-value">${average}</div>
+                <div class="stat-hint">z dní s dodávkou</div></div>
+            <div class="stat"><div class="stat-label">Rolí / klecí</div><div class="stat-value">${rolls}</div></div>
+            <div class="stat"><div class="stat-label">Nejsilnější den</div>
+                <div class="stat-value" style="font-size:1.1rem; padding-top:0.3rem;">
+                    ${busiest ? `${esc(dayShort(busiest.iso))} ${esc(formatDate(busiest.iso))}` : '–'}</div>
+                <div class="stat-hint">${busiest ? busiest.pallets + ' palet' : 'zatím nic'}</div></div>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="card">
+                <h3>📊 Podle druhu zboží</h3>
+                ${typeRows.length ? typeRows.map(([typeId, count]) => {
+                    const type = deliveryTypeById(typeId);
+                    const percent = pallets ? Math.round((count / pallets) * 100) : 0;
+                    return `
+                        <div style="margin-bottom:0.6rem;">
+                            <div class="day-person"><span>${type.icon} ${esc(type.name)}</span><span>${count} palet · ${percent} %</span></div>
+                            <div class="bar"><div class="bar-fill" style="width:${percent}%"></div></div>
+                        </div>`;
+                }).join('') : '<div class="empty">V tomto období nic zapsaného.</div>'}
+            </div>
+
+            <div class="card">
+                <h3>🗓️ Den po dni</h3>
+                ${rows.length ? `<div class="table-scroll"><table class="data">
+                    <thead><tr><th>Den</th><th>Druhy</th><th class="num">Palet</th><th class="num">Rolí</th></tr></thead>
+                    <tbody>${rows.map(({ iso, day }) => `
+                        <tr data-action="open-day" data-date="${iso}" style="cursor:pointer;">
+                            <td>${esc(dayShort(iso))} ${esc(formatDate(iso))}</td>
+                            <td>${day.deliveries.map(d => deliveryTypeById(d.typeId).icon).join(' ')}</td>
+                            <td class="num">${palletsOfDay(iso)}</td>
+                            <td class="num">${rollsOfDay(iso)}</td>
+                        </tr>`).join('')}</tbody>
+                </table></div>` : '<div class="empty">Zapiš první dodávku a uvidíš tady statistiku.</div>'}
+            </div>
+        </div>`;
+}
+
+/* --- Checklist (šablony) ---------------------------------------------------- */
+
+const CHECKLIST_GROUPS = [
+    { key: 'open', title: '🌅 Otevření prodejny' },
+    { key: 'during', title: '🕑 Během směny' },
+    { key: 'close', title: '🌙 Zavírání' }
+];
+
+function renderChecklist() {
+    const today = todayISO();
+    const progress = checklistProgress(today);
+
+    view.innerHTML = `
+        <div class="view-head">
+            <div>
+                <h2>Checklist vedoucího směny</h2>
+                <div class="subtitle">Šablona úkolů. Odškrtávat se dá v konkrétním dni – dnes ${progress.done}/${progress.total}.</div>
+            </div>
+            <button class="btn" data-action="open-day" data-date="${today}">Odškrtávat dnešek →</button>
+        </div>
+
+        ${CHECKLIST_GROUPS.map(group => {
+            const items = DB.checklists[group.key] || [];
+            return `
+            <div class="card">
+                <h3>${group.title}
+                    <button class="btn-secondary" data-action="add-check" data-group="${group.key}">➕ Přidat úkol</button>
+                </h3>
+                ${items.length ? items.map((item, index) => `
+                    <div class="row">
+                        <div class="row-main"><div class="row-title" style="font-weight:500;">${esc(item.text)}</div></div>
+                        <div class="row-actions">
+                            <button class="btn-ghost" data-action="move-check" data-group="${group.key}" data-id="${item.id}" data-dir="-1"
+                                ${index === 0 ? 'disabled' : ''}>↑</button>
+                            <button class="btn-ghost" data-action="move-check" data-group="${group.key}" data-id="${item.id}" data-dir="1"
+                                ${index === items.length - 1 ? 'disabled' : ''}>↓</button>
+                            <button class="btn-ghost" data-action="edit-check" data-group="${group.key}" data-id="${item.id}">✏️</button>
+                        </div>
+                    </div>`).join('') : '<div class="empty">Zatím žádný úkol.</div>'}
+            </div>`;
+        }).join('')}`;
+}
+
+/* --- Poznámky z tréninku ---------------------------------------------------- */
+
+function allTags() {
+    const tags = new Set();
+    DB.notes.forEach(note => note.tags.forEach(tag => tags.add(tag)));
+    return [...tags].sort((a, b) => a.localeCompare(b, 'cs'));
+}
+
+function filteredNotes() {
+    const text = noteFilter.text.toLowerCase();
+    return DB.notes
+        .filter(note => !noteFilter.category || note.category === noteFilter.category)
+        .filter(note => !noteFilter.tag || note.tags.includes(noteFilter.tag))
+        .filter(note => !text ||
+            note.title.toLowerCase().includes(text) ||
+            (note.body || '').toLowerCase().includes(text) ||
+            note.tags.some(tag => tag.toLowerCase().includes(text)))
+        .sort((a, b) => Number(b.important) - Number(a.important) || b.date.localeCompare(a.date));
+}
+
+function renderNotes() {
+    const notes = filteredNotes();
+    const tags = allTags();
+
+    view.innerHTML = `
+        <div class="view-head">
+            <div>
+                <h2>Poznámky z tréninku</h2>
+                <div class="subtitle">${DB.notes.length} poznámek · ${DB.notes.filter(n => n.important).length} označených hvězdičkou</div>
+            </div>
+            <button class="btn" data-action="add-note">➕ Nová poznámka</button>
+        </div>
+
+        <div class="search-bar">
+            <input type="search" placeholder="Hledat v poznámkách…" value="${esc(noteFilter.text)}" data-change="note-search">
+            <select data-change="note-category">
+                <option value="">Všechny kategorie</option>
+                ${NOTE_CATEGORIES.map(category =>
+                    `<option value="${esc(category)}" ${noteFilter.category === category ? 'selected' : ''}>${esc(category)}</option>`).join('')}
+            </select>
+            ${tags.length ? `<select data-change="note-tag">
+                <option value="">Všechny štítky</option>
+                ${tags.map(tag => `<option value="${esc(tag)}" ${noteFilter.tag === tag ? 'selected' : ''}>#${esc(tag)}</option>`).join('')}
+            </select>` : ''}
+        </div>
+
+        ${notes.length ? notes.map(note => `
+            <div class="note-card ${note.important ? 'important' : ''}">
+                <div class="note-head">
+                    <div>
+                        <div class="note-title">${note.important ? '⭐ ' : ''}${esc(note.title)}</div>
+                        <div class="note-meta">${esc(formatDate(note.date))} · ${esc(note.category || 'Bez kategorie')}</div>
+                    </div>
+                    <div class="row-actions no-print">
+                        <button class="btn-ghost" data-action="note-to-check" data-id="${note.id}" title="Udělat z toho úkol v checklistu">✅</button>
+                        <button class="btn-ghost" data-action="edit-note" data-id="${note.id}">✏️</button>
+                    </div>
+                </div>
+                ${note.body ? `<div class="note-body">${esc(note.body)}</div>` : ''}
+                ${note.tags.length ? `<div class="tag-list">${note.tags.map(tag =>
+                    `<span class="pill">#${esc(tag)}</span>`).join('')}</div>` : ''}
+            </div>`).join('')
+        : `<div class="card"><div class="empty">
+                ${DB.notes.length ? 'Nic nenalezeno – zkus jiný filtr.' :
+                'Zatím prázdno. Po každém tréninku si sem zapiš, co ti řekli – ať to nezůstane jen v hlavě.'}
+           </div></div>`}`;
+}
+
+/* --- Nastavení -------------------------------------------------------------- */
+
+function renderSettings() {
+    const settings = DB.settings;
+    const dayCount = Object.keys(DB.days).length;
+
+    view.innerHTML = `
+        <div class="view-head"><div><h2>Nastavení</h2>
+            <div class="subtitle">Data jsou uložená jen v tomhle prohlížeči – zálohy si dělej exportem.</div></div></div>
+
+        <div class="card">
+            <h3>🏪 Prodejna</h3>
+            <div class="field-row">
+                <div class="field">
+                    <label>Název / číslo prodejny</label>
+                    <input type="text" data-change="setting" data-key="storeName" value="${esc(settings.storeName)}" placeholder="např. Lidl Kolín">
+                </div>
+                <div class="field">
+                    <label>Moje jméno</label>
+                    <input type="text" data-change="setting" data-key="myName" value="${esc(settings.myName)}" placeholder="např. Martin">
+                </div>
+            </div>
+            <div class="field-row">
+                <div class="field"><label>Otevírací doba od</label>
+                    <input type="time" data-change="setting" data-key="openFrom" value="${esc(settings.openFrom)}"></div>
+                <div class="field"><label>do</label>
+                    <input type="time" data-change="setting" data-key="openTo" value="${esc(settings.openTo)}"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>⏰ Výchozí časy směn</h3>
+            <div class="field-row">
+                <div class="field"><label>Ranní od</label>
+                    <input type="time" data-change="shift" data-shift="morningShift" data-key="from" value="${esc(settings.morningShift.from)}"></div>
+                <div class="field"><label>Ranní do</label>
+                    <input type="time" data-change="shift" data-shift="morningShift" data-key="to" value="${esc(settings.morningShift.to)}"></div>
+            </div>
+            <div class="field-row">
+                <div class="field"><label>Odpolední od</label>
+                    <input type="time" data-change="shift" data-shift="afternoonShift" data-key="from" value="${esc(settings.afternoonShift.from)}"></div>
+                <div class="field"><label>Odpolední do</label>
+                    <input type="time" data-change="shift" data-shift="afternoonShift" data-key="to" value="${esc(settings.afternoonShift.to)}"></div>
+            </div>
+            <div class="field-row">
+                <div class="field"><label>Přestávka po (hodin)</label>
+                    <input type="number" min="0" step="0.5" data-change="break" data-key="afterHours" value="${esc(settings.break.afterHours)}"></div>
+                <div class="field"><label>Délka přestávky (minut)</label>
+                    <input type="number" min="0" step="5" data-change="break" data-key="minutes" value="${esc(settings.break.minutes)}"></div>
+            </div>
+            <div class="field-hint">Přestávka se automaticky odečítá z odpracovaných hodin.</div>
+        </div>
+
+        <div class="card">
+            <h3>💾 Záloha dat</h3>
+            <p class="muted">Uloženo: ${peopleText(DB.employees.length)}, ${dayCountText(dayCount)} v plánu, ${DB.notes.length} poznámek.
+               Když si smažeš data prohlížeče, přijdeš o ně – proto si čas od času stáhni zálohu.</p>
+            <div class="btn-row" style="margin-top:0.7rem;">
+                <button class="btn" data-action="export">⬇️ Stáhnout zálohu (JSON)</button>
+                <button class="btn-secondary" data-action="import">⬆️ Načíst zálohu</button>
+                <button class="btn-danger" data-action="reset">🗑️ Smazat všechna data</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>ℹ️ Jak to používat</h3>
+            <ul class="muted" style="margin-left: 1.1rem;">
+                <li><strong>Plán</strong> – týden dopředu: kdo, odkdy dokdy a na jakém úseku.</li>
+                <li><strong>Den</strong> – během směny odškrtáváš checklist, zapisuješ palety a čísla dne.</li>
+                <li><strong>Zboží</strong> – z paletových zápisů uvidíš, které dny jsou nejsilnější a kolik lidí na ně potřebuješ.</li>
+                <li><strong>Poznámky</strong> – všechno z tréninku; tlačítkem ✅ z poznámky rovnou uděláš úkol v checklistu.</li>
+                <li>Na mobilu si stránku přidej na plochu – chová se pak jako aplikace.</li>
+            </ul>
+        </div>`;
+}
+
+/* --- Formuláře nad daty ------------------------------------------------------ */
+
+function entryForm(iso, entryId) {
+    const day = getDay(iso);
+    const entry = entryId ? day.entries.find(e => e.id === entryId) : null;
+    const morning = DB.settings.morningShift;
+
+    if (!activeEmployees().length) {
+        alert('Nejdřív přidej lidi v sekci Tým.');
+        return;
+    }
+
+    const fields = [
+        { name: 'employeeId', label: 'Kdo', type: 'select', options: employeeOptions(false), required: true },
+        { type: 'row', fields: [
+            { name: 'from', label: 'Od', type: 'time', required: true },
+            { name: 'to', label: 'Do', type: 'time', required: true }
+        ] },
+        { name: 'tasks', label: 'Co bude dělat', type: 'chips', options: taskChipOptions() },
+        { name: 'note', label: 'Poznámka', type: 'textarea', placeholder: 'např. zaučuje se na pokladně, odchod dřív v 17:00' }
+    ];
+
+    openForm({
+        title: entry ? 'Upravit směnu' : `Přidat do směny · ${formatDate(iso)}`,
+        fields,
+        values: entry || { from: morning.from, to: morning.to, tasks: [], employeeId: activeEmployees()[0].id },
+        onSave: data => {
+            if (!data.employeeId || !data.from || !data.to) return;
+            const target = ensureDay(iso);
+            if (entry) Object.assign(entry, data);
+            else target.entries.push({ id: uid(), ...data });
+            persist(entry ? 'Směna upravena' : 'Přidáno do plánu');
+        },
+        onDelete: entry ? () => {
+            const target = ensureDay(iso);
+            target.entries = target.entries.filter(e => e.id !== entryId);
+            pruneDay(iso);
+            persist('Smazáno');
+        } : null
+    });
+}
+
+function deliveryForm(iso, deliveryId) {
+    const day = getDay(iso);
+    const item = deliveryId ? day.deliveries.find(d => d.id === deliveryId) : null;
+
+    const fields = [
+        { name: 'date', label: 'Datum', type: 'date', required: true },
+        { name: 'typeId', label: 'Druh zboží', type: 'select',
+          options: DB.deliveryTypes.map(t => ({ value: t.id, label: `${t.icon} ${t.name}` })), required: true },
+        { type: 'row', fields: [
+            { name: 'pallets', label: 'Palet', type: 'number', required: true },
+            { name: 'rolls', label: 'Rolí / klecí', type: 'number' }
+        ] },
+        { type: 'row', fields: [
+            { name: 'arrived', label: 'Příjezd', type: 'time' },
+            { name: 'startedAt', label: 'Začátek zpracování', type: 'time' },
+            { name: 'doneAt', label: 'Hotovo', type: 'time' }
+        ] },
+        { name: 'note', label: 'Poznámka', type: 'textarea', placeholder: 'např. chybí 2 role pečiva, reklamace u ovoce' }
+    ];
+
+    openForm({
+        title: item ? 'Upravit dodávku' : `Zapsat dodávku · ${formatDate(iso)}`,
+        fields,
+        values: item ? { ...item, date: iso } : { date: iso, typeId: DB.deliveryTypes[0].id, pallets: '', rolls: '' },
+        onSave: data => {
+            const targetIso = data.date || iso;
+            const payload = {
+                typeId: data.typeId,
+                pallets: Number(data.pallets) || 0,
+                rolls: Number(data.rolls) || 0,
+                arrived: data.arrived,
+                startedAt: data.startedAt,
+                doneAt: data.doneAt,
+                note: data.note
+            };
+            if (item && targetIso === iso) {
+                Object.assign(item, payload);
+            } else {
+                if (item) {
+                    const source = ensureDay(iso);
+                    source.deliveries = source.deliveries.filter(d => d.id !== deliveryId);
+                    pruneDay(iso);
+                }
+                ensureDay(targetIso).deliveries.push({ id: uid(), ...payload });
+            }
+            persist('Dodávka uložena');
+        },
+        onDelete: item ? () => {
+            const target = ensureDay(iso);
+            target.deliveries = target.deliveries.filter(d => d.id !== deliveryId);
+            pruneDay(iso);
+            persist('Smazáno');
+        } : null
+    });
+}
+
+function employeeForm(employeeId) {
+    const employee = employeeId ? employeeById(employeeId) : null;
+
+    openForm({
+        title: employee ? 'Upravit člověka' : 'Nový člověk v týmu',
+        fields: [
+            { name: 'name', label: 'Jméno', type: 'text', required: true },
+            { type: 'row', fields: [
+                { name: 'position', label: 'Pozice', type: 'select', options: POSITIONS.map(p => ({ value: p, label: p })) },
+                { name: 'contract', label: 'Úvazek (h / týden)', type: 'number', step: 0.5 }
+            ] },
+            { name: 'phone', label: 'Telefon', type: 'text' },
+            { name: 'skills', label: 'Zaškolen na', type: 'chips', options: taskChipOptions(),
+              hint: 'Podle toho poznáš, koho můžeš kam postavit.' },
+            { name: 'note', label: 'Poznámka', type: 'textarea', placeholder: 'např. nesmí na pokladnu sám, studuje – jen odpoledne' },
+            { name: 'active', label: 'Aktivní (zobrazovat v plánu)', type: 'checkbox' }
+        ],
+        values: employee || { position: POSITIONS[3], contract: '', skills: [], active: true },
+        onSave: data => {
+            if (!data.name) return;
+            if (employee) Object.assign(employee, data);
+            else DB.employees.push({ id: uid(), ...data });
+            persist(employee ? 'Uloženo' : 'Člověk přidán');
+        },
+        onDelete: employee ? () => {
+            DB.employees = DB.employees.filter(e => e.id !== employeeId);
+            persist('Smazáno');
+        } : null,
+        deleteLabel: 'Smazat z týmu'
+    });
+}
+
+function noteForm(noteId) {
+    const note = noteId ? DB.notes.find(n => n.id === noteId) : null;
+
+    openForm({
+        title: note ? 'Upravit poznámku' : 'Nová poznámka z tréninku',
+        fields: [
+            { name: 'title', label: 'Nadpis', type: 'text', required: true, placeholder: 'např. Uzávěrka pokladen krok za krokem' },
+            { type: 'row', fields: [
+                { name: 'date', label: 'Datum', type: 'date' },
+                { name: 'category', label: 'Kategorie', type: 'select',
+                  options: NOTE_CATEGORIES.map(c => ({ value: c, label: c })) }
+            ] },
+            { name: 'body', label: 'Text', type: 'textarea', placeholder: 'Co přesně říkali, postup krok za krokem, na co si dát pozor…' },
+            { name: 'tagsText', label: 'Štítky', type: 'text', placeholder: 'trezor, pokladna, uzávěrka', hint: 'Odděl čárkou.' },
+            { name: 'important', label: '⭐ Důležité – zobrazit na přehledu', type: 'checkbox' }
+        ],
+        values: note ? { ...note, tagsText: note.tags.join(', ') }
+                     : { date: todayISO(), category: NOTE_CATEGORIES[0], important: false },
+        onSave: data => {
+            if (!data.title) return;
+            const payload = {
+                title: data.title,
+                date: data.date || todayISO(),
+                category: data.category,
+                body: data.body,
+                important: data.important,
+                tags: data.tagsText.split(',').map(t => t.trim()).filter(Boolean)
+            };
+            if (note) Object.assign(note, payload);
+            else DB.notes.unshift({ id: uid(), ...payload });
+            persist(note ? 'Uloženo' : 'Poznámka přidána');
+        },
+        onDelete: note ? () => {
+            DB.notes = DB.notes.filter(n => n.id !== noteId);
+            persist('Smazáno');
+        } : null
+    });
+}
+
+function checkItemForm(group, itemId) {
+    const items = DB.checklists[group];
+    const item = itemId ? items.find(i => i.id === itemId) : null;
+
+    openForm({
+        title: item ? 'Upravit úkol' : 'Nový úkol v checklistu',
+        fields: [{ name: 'text', label: 'Úkol', type: 'textarea', required: true }],
+        values: item || {},
+        onSave: data => {
+            if (!data.text) return;
+            if (item) item.text = data.text;
+            else items.push({ id: uid(), text: data.text });
+            persist('Uloženo');
+        },
+        onDelete: item ? () => {
+            DB.checklists[group] = items.filter(i => i.id !== itemId);
+            persist('Smazáno');
+        } : null
+    });
+}
+
+function noteToChecklistForm(noteId) {
+    const note = DB.notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    openForm({
+        title: 'Udělat z poznámky úkol',
+        fields: [
+            { name: 'group', label: 'Kam patří', type: 'select', options: [
+                { value: 'open', label: '🌅 Otevření prodejny' },
+                { value: 'during', label: '🕑 Během směny' },
+                { value: 'close', label: '🌙 Zavírání' }
+            ] },
+            { name: 'text', label: 'Znění úkolu', type: 'textarea', required: true }
+        ],
+        values: { group: 'during', text: note.title },
+        submitLabel: 'Přidat do checklistu',
+        onSave: data => {
+            if (!data.text) return;
+            DB.checklists[data.group].push({ id: uid(), text: data.text });
+            persist('Přidáno do checklistu');
+        }
+    });
+}
+
+function copyDayForm(iso) {
+    openForm({
+        title: 'Zkopírovat rozdělení lidí',
+        fields: [{ name: 'source', label: 'Ze kterého dne', type: 'date', required: true,
+                   hint: 'Zkopírují se lidé, časy a úseky. Dodávky ne.' }],
+        values: { source: addDays(iso, -7) },
+        submitLabel: 'Zkopírovat',
+        onSave: data => {
+            const source = getDay(data.source);
+            if (!source.entries.length) { alert('Ve zdrojovém dni nikdo naplánovaný není.'); return; }
+            const target = ensureDay(iso);
+            source.entries.forEach(entry => target.entries.push({ ...entry, id: uid() }));
+            persist(`Zkopírováno: ${peopleText(source.entries.length)}`);
+        }
+    });
+}
+
+function copyWeek() {
+    const source = addDays(planWeek, -7);
+    let copied = 0;
+    weekDays(planWeek).forEach((iso, index) => {
+        const from = getDay(addDays(source, index));
+        if (!from.entries.length) return;
+        const target = ensureDay(iso);
+        if (target.entries.length) return;
+        from.entries.forEach(entry => { target.entries.push({ ...entry, id: uid() }); copied++; });
+        if (from.leaderId && !target.leaderId) target.leaderId = from.leaderId;
+        if (from.leaderPmId && !target.leaderPmId) target.leaderPmId = from.leaderPmId;
+    });
+    if (!copied) { alert('Z minulého týdne není co kopírovat (nebo už je tenhle týden naplánovaný).'); return; }
+    persist(`Zkopírováno ${copied} směn`);
+}
+
+/* --- Záloha ------------------------------------------------------------------ */
+
+function exportData() {
+    const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `vedeni-smeny-${todayISO()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
+function importData() {
+    openModal({
+        title: 'Načíst zálohu',
+        bodyHtml: `
+            <p class="muted">Vyber soubor <code>vedeni-smeny-*.json</code>. Současná data budou přepsána.</p>
+            <div class="field" style="margin-top:0.8rem;"><input type="file" accept="application/json,.json" id="import-file"></div>`,
+        actionsHtml: '<button class="btn-secondary" data-close-import>Zrušit</button>',
+        onMount: modal => {
+            modal.querySelector('[data-close-import]').addEventListener('click', closeModal);
+            modal.querySelector('#import-file').addEventListener('change', event => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        replaceDb(JSON.parse(reader.result));
+                        closeModal();
+                        toast('Záloha načtena');
+                        render();
+                    } catch {
+                        alert('Soubor se nepodařilo přečíst – není to platná záloha.');
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+    });
+}
+
+/* --- Akce -------------------------------------------------------------------- */
+
+const ACTIONS = {
+    'open-day': data => go(`#/den/${data.date}`),
+    'day-prev': data => go(`#/den/${addDays(data.date, -1)}`),
+    'day-next': data => go(`#/den/${addDays(data.date, 1)}`),
+    'week-prev': () => { planWeek = addDays(planWeek, -7); render(); },
+    'week-next': () => { planWeek = addDays(planWeek, 7); render(); },
+    'week-today': () => { planWeek = weekStart(todayISO()); render(); },
+    'copy-week': () => { if (confirm('Zkopírovat plán z minulého týdne do dnů, které jsou prázdné?')) copyWeek(); },
+    'print': () => window.print(),
+    'add-entry': data => entryForm(data.date),
+    'edit-entry': data => entryForm(data.date, data.id),
+    'add-delivery': data => deliveryForm(data.date),
+    'edit-delivery': data => deliveryForm(data.date, data.id),
+    'copy-day': data => copyDayForm(data.date),
+    'add-employee': () => employeeForm(),
+    'edit-employee': data => employeeForm(data.id),
+    'add-note': () => noteForm(),
+    'edit-note': data => noteForm(data.id),
+    'note-to-check': data => noteToChecklistForm(data.id),
+    'add-check': data => checkItemForm(data.group),
+    'edit-check': data => checkItemForm(data.group, data.id),
+    'move-check': data => {
+        const items = DB.checklists[data.group];
+        const index = items.findIndex(i => i.id === data.id);
+        const next = index + Number(data.dir);
+        if (index < 0 || next < 0 || next >= items.length) return;
+        [items[index], items[next]] = [items[next], items[index]];
+        persist();
+    },
+    'export': exportData,
+    'import': importData,
+    'reset': () => {
+        if (!confirm('Opravdu smazat všechna data? Nejdřív si radši stáhni zálohu.')) return;
+        if (!confirm('Fakt to chceš smazat? Tohle vrátit nejde.')) return;
+        replaceDb(null);
+        toast('Data smazána');
+        render();
+    }
+};
+
+document.addEventListener('click', event => {
+    const navButton = event.target.closest('[data-nav]');
+    if (navButton) {
+        go(`#/${navButton.dataset.nav}`);
+        return;
+    }
+    const target = event.target.closest('[data-action]');
+    if (!target || target.disabled) return;
+    const handler = ACTIONS[target.dataset.action];
+    if (handler) handler({ ...target.dataset });
+});
+
+/* --- Změny v polích ----------------------------------------------------------- */
+
+const CHANGES = {
+    'toggle-check': (data, input) => {
+        const day = ensureDay(data.date);
+        if (input.checked) day.checks[data.id] = true;
+        else delete day.checks[data.id];
+        pruneDay(data.date);
+        save();
+        render();
+    },
+    'set-leader': (data, input) => {
+        const day = ensureDay(data.date);
+        day[data.slot] = input.value;
+        pruneDay(data.date);
+        save();
+    },
+    'set-stat': (data, input) => {
+        const day = ensureDay(data.date);
+        day.stats[data.key] = input.value.trim();
+        pruneDay(data.date);
+        save();
+    },
+    'set-day-note': (data, input) => {
+        const day = ensureDay(data.date);
+        day.note = input.value.trim();
+        pruneDay(data.date);
+        save();
+    },
+    'setting': (data, input) => { DB.settings[data.key] = input.value; save(); renderHeader(); },
+    'shift': (data, input) => { DB.settings[data.shift][data.key] = input.value; save(); },
+    'break': (data, input) => { DB.settings.break[data.key] = Number(input.value) || 0; save(); },
+    'goods-range': (data, input) => { goodsRange = input.value; render(); },
+    'note-search': (data, input) => { noteFilter.text = input.value; renderNotes(); },
+    'note-category': (data, input) => { noteFilter.category = input.value; renderNotes(); },
+    'note-tag': (data, input) => { noteFilter.tag = input.value; renderNotes(); }
+};
+
+function handleChange(event) {
+    const target = event.target.closest('[data-change]');
+    if (!target) return;
+    const handler = CHANGES[target.dataset.change];
+    if (handler) handler({ ...target.dataset }, target);
+}
+
+view.addEventListener('change', handleChange);
+view.addEventListener('input', event => {
+    /* Hledání reaguje hned, ostatní pole až po opuštění. */
+    if (event.target.dataset.change === 'note-search') {
+        const caret = event.target.selectionStart;
+        handleChange(event);
+        const field = view.querySelector('[data-change="note-search"]');
+        if (field) { field.focus(); field.setSelectionRange(caret, caret); }
+    }
+});
+
+/* --- Start -------------------------------------------------------------------- */
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+    DB.settings.theme = DB.settings.theme === 'dark' ? 'light' : 'dark';
+    applyTheme(DB.settings.theme);
+    save();
+});
+
+window.addEventListener('hashchange', render);
+
+applyTheme(DB.settings.theme || 'light');
+render();
+
+</script>
+</body>
+</html>
