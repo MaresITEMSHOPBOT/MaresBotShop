@@ -206,7 +206,8 @@ function emptyDb() {
             close: DEFAULT_CHECKLISTS.close.map(text => ({ id: uid(), text }))
         },
         days: {},
-        notes: []
+        notes: [],
+        map: defaultMap()
     };
 }
 
@@ -224,7 +225,8 @@ function normalize(data) {
             ? data.deliveryTypes : base.deliveryTypes,
         checklists: { ...base.checklists, ...(data.checklists || {}) },
         days: (data.days && typeof data.days === 'object') ? data.days : {},
-        notes: Array.isArray(data.notes) ? data.notes : []
+        notes: Array.isArray(data.notes) ? data.notes : [],
+        map: (data.map && Array.isArray(data.map.elements)) ? data.map : defaultMap()
     };
 
     db.settings.break = { ...base.settings.break, ...(db.settings.break || {}) };
@@ -258,6 +260,18 @@ function normalize(data) {
         n.id = n.id || uid();
         n.tags = Array.isArray(n.tags) ? n.tags : [];
         n.date = n.date || todayISO();
+    });
+
+    db.map.width = Number(db.map.width) || 1100;
+    db.map.height = Number(db.map.height) || 1180;
+    db.map.elements.forEach(element => {
+        element.id = element.id || uid();
+        element.type = element.type || 'ostatni';
+        element.name = element.name || '';
+        element.note = element.note || '';
+        element.articles = Array.isArray(element.articles) ? element.articles : [];
+        element.articles.forEach(article => { article.id = article.id || uid(); });
+        ['x', 'y', 'w', 'h'].forEach(key => { element[key] = Math.round(Number(element[key]) || 0); });
     });
 
     return db;
@@ -397,4 +411,136 @@ function checklistProgress(iso) {
     const all = [...DB.checklists.open, ...DB.checklists.during, ...DB.checklists.close];
     const done = all.filter(item => day.checks[item.id]).length;
     return { done, total: all.length };
+}
+
+/* ==========================================================================
+   Plán prodejny
+   Souřadnice jsou v jednotkách plánu (zhruba pixely původního nákresu),
+   vykreslení si je přepočítá podle velikosti obrazovky.
+   ========================================================================== */
+
+const MAP_TYPES = [
+    { id: 'regal',        name: 'Regál – suché zboží',   fill: '#c9ccd1', stroke: '#111111', text: '#16202c' },
+    { id: 'pokladna',     name: 'Pokladna',              fill: '#ffe400', stroke: '#111111', text: '#16202c' },
+    { id: 'samoobsluzna', name: 'Samoobslužná pokladna', fill: '#ffe400', stroke: '#111111', text: '#16202c' },
+    { id: 'akce',         name: 'Akce',                  fill: '#ff8a1e', stroke: '#111111', text: '#16202c' },
+    { id: 'gondola',      name: 'Gondola',               fill: '#ffffff', stroke: '#e01b1b', text: '#c01510' },
+    { id: 'zelenina',     name: 'Ovoce, zelenina, květiny', fill: '#8fd130', stroke: '#111111', text: '#16202c' },
+    { id: 'pekarna',      name: 'Pekárna',               fill: '#9b3fbf', stroke: '#111111', text: '#ffffff' },
+    { id: 'chlazene',     name: 'Chlazené výrobky',      fill: '#3b48c4', stroke: '#111111', text: '#ffffff' },
+    { id: 'mrazene',      name: 'Mražené výrobky',       fill: '#7d9ed4', stroke: '#111111', text: '#16202c' },
+    { id: 'lednicka',     name: 'Lednička',              fill: '#a9dff0', stroke: '#111111', text: '#16202c' },
+    { id: 'kava',         name: 'Káva',                  fill: '#1b1b1b', stroke: '#111111', text: '#ffffff' },
+    { id: 'nonfood',      name: 'Nonfood / textil',      fill: '#f7b6cd', stroke: '#111111', text: '#16202c' },
+    { id: 'vystavka',     name: 'Výstavka / stojan',     fill: '#28a745', stroke: '#111111', text: '#ffffff' },
+    { id: 'ostatni',      name: 'Ostatní zboží',         fill: '#8a8a8a', stroke: '#111111', text: '#ffffff' },
+    { id: 'dvere',        name: 'Dveře / vstup',         fill: '#e01b1b', stroke: '#111111', text: '#ffffff' },
+    { id: 'popisek',      name: 'Popisek (jen text)',    fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
+];
+
+function mapTypeById(id) {
+    return MAP_TYPES.find(t => t.id === id) || MAP_TYPES[MAP_TYPES.length - 3];
+}
+
+/* Výchozí plán podle ručního nákresu prodejny. */
+function defaultMap() {
+    const make = (type, name, x, y, w, h) => ({ id: uid(), type, name, x, y, w, h, note: '', articles: [] });
+
+    return {
+        width: 1100,
+        height: 1180,
+        elements: [
+            /* Chlazení a mražení po obvodu */
+            make('chlazene', 'Chlazené výrobky – zadní stěna', 18, 18, 1030, 32),
+            make('chlazene', 'Chlazené výrobky', 18, 72, 52, 160),
+            make('mrazene', 'Mražené výrobky', 18, 232, 52, 136),
+            make('chlazene', 'Chlazené výrobky', 990, 72, 65, 100),
+            make('chlazene', 'Chlazené výrobky', 990, 185, 62, 115),
+            make('mrazene', 'Mražené výrobky – ostrov', 245, 255, 70, 95),
+
+            /* Akce a výstavky */
+            make('vystavka', 'Parkside', 250, 82, 62, 118),
+            make('akce', 'Akce', 375, 88, 70, 110),
+            make('akce', 'Akce', 532, 80, 78, 118),
+            make('akce', 'Akce', 375, 232, 68, 100),
+            make('akce', 'Akce', 532, 232, 75, 105),
+            make('nonfood', 'Nonfood', 755, 72, 75, 168),
+            make('nonfood', 'Nonfood', 755, 295, 68, 55),
+
+            /* Gondoly – mění se podle plánu gondol */
+            make('gondola', 'Gondola A', 368, 337, 72, 22),
+            make('gondola', 'Gondola B', 528, 345, 85, 24),
+            make('gondola', 'Gondola C', 750, 352, 72, 24),
+            make('gondola', 'Gondola D', 748, 400, 70, 42),
+            make('gondola', 'Gondola – čelo uličky 2', 516, 394, 100, 18),
+
+            /* Regály se suchým zbožím */
+            make('regal', 'Regál – ulička 5', 18, 415, 52, 265),
+            make('regal', 'Regál mezi uličkami 4 a 5', 245, 397, 60, 400),
+            make('regal', 'Regál mezi uličkami 3 a 4', 380, 400, 42, 395),
+            make('regal', 'Regál mezi uličkami 2 a 3', 515, 405, 100, 390),
+
+            /* Čela uliček */
+            make('gondola', 'Čelo uličky 5', 234, 796, 72, 20),
+            make('gondola', 'Čelo uličky 5 – spodní', 222, 824, 72, 18),
+            make('gondola', 'Čelo uličky 4', 380, 796, 44, 18),
+            make('gondola', 'Čelo uličky 4 – spodní', 358, 826, 64, 18),
+            make('gondola', 'Čelo uličky 3', 514, 796, 102, 20),
+            make('gondola', 'Čelo uličky 3 – spodní', 470, 822, 82, 18),
+
+            /* Ovoce, zelenina, květiny */
+            make('zelenina', 'Ovoce a zelenina', 755, 478, 52, 262),
+            make('zelenina', 'Ovoce a zelenina', 655, 872, 38, 125),
+            make('zelenina', 'Melouny', 738, 880, 90, 55),
+            make('zelenina', 'Květiny', 738, 1025, 75, 90),
+
+            /* Pravá strana */
+            make('pekarna', 'Pekárna', 990, 415, 48, 120),
+            make('ostatni', 'Čaje, med, marmelády', 932, 542, 58, 200),
+            make('dvere', 'Dveře do Tomry (vratné lahve)', 992, 778, 45, 68),
+            make('kava', 'Káva', 918, 870, 62, 125),
+
+            /* Pokladní zóna */
+            make('lednicka', 'Lednička u samoobslužných pokladen', 25, 730, 38, 70),
+            make('samoobsluzna', 'SB 1', 25, 838, 46, 40),
+            make('samoobsluzna', 'SB 2', 158, 830, 38, 44),
+            make('samoobsluzna', 'SB 3', 25, 912, 60, 62),
+            make('samoobsluzna', 'SB 4', 155, 918, 72, 56),
+            make('samoobsluzna', 'SB 5', 25, 1002, 60, 54),
+            make('samoobsluzna', 'SB 6', 155, 1008, 68, 56),
+            make('pokladna', 'Pokladna 1', 282, 824, 45, 326),
+            make('pokladna', 'Pokladna 2', 368, 838, 48, 312),
+            make('pokladna', 'Pokladna 3', 470, 830, 75, 320),
+            make('pokladna', 'Pokladna 4', 592, 870, 32, 282),
+
+            /* Popisky uliček */
+            make('popisek', 'Ulička 5', 108, 520, 70, 40),
+            make('popisek', 'Ulička 4', 322, 545, 70, 40),
+            make('popisek', 'Ulička 3', 435, 550, 70, 40),
+            make('popisek', 'Ulička 2', 630, 560, 70, 40),
+            make('popisek', 'Ulička 1', 846, 605, 70, 40)
+        ]
+    };
+}
+
+function mapElementById(id) {
+    return DB.map.elements.find(e => e.id === id) || null;
+}
+
+/* Vyhledá artikl napříč celým plánem. */
+function findArticles(query) {
+    const text = query.trim().toLowerCase();
+    if (!text) return [];
+    const hits = [];
+    DB.map.elements.forEach(element => {
+        element.articles.forEach(article => {
+            const haystack = `${article.name} ${article.code || ''} ${article.note || ''}`.toLowerCase();
+            if (haystack.includes(text)) hits.push({ element, article });
+        });
+    });
+    return hits.sort((a, b) => a.article.name.localeCompare(b.article.name, 'cs'));
+}
+
+function articleCount() {
+    return DB.map.elements.reduce((sum, element) => sum + element.articles.length, 0);
 }

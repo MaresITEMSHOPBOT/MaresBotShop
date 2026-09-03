@@ -6,6 +6,7 @@
 const NAV = [
     { id: 'prehled',   label: '📊 Přehled' },
     { id: 'plan',      label: '📅 Plán' },
+    { id: 'mapa',      label: '🗺️ Prodejna' },
     { id: 'tym',       label: '👥 Tým' },
     { id: 'zbozi',     label: '📦 Zboží' },
     { id: 'checklist', label: '✅ Checklist' },
@@ -223,6 +224,7 @@ function render() {
 
     switch (route.name) {
         case 'plan':      return renderPlan();
+        case 'mapa':      return renderMap();
         case 'den':       return renderDayDetail(route.param || todayISO());
         case 'tym':       return renderTeam();
         case 'zbozi':     return renderGoods();
