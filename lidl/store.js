@@ -90,22 +90,22 @@ const DEFAULT_CHECKLISTS = {
 const MAP_SEED = 2;
 
 const MAP_TYPES = [
-    { id: 'regal',        name: 'Regál – suché zboží',      icon: '📦', fill: '#c6cbd2', stroke: '#5c6673', text: '#16202c' },
-    { id: 'pokladna',     name: 'Pokladna',                 icon: '🧾', fill: '#ffdf1b', stroke: '#a08600', text: '#16202c' },
-    { id: 'samoobsluzna', name: 'Samoobslužná pokladna',    icon: '🖥️', fill: '#ffe97a', stroke: '#a08600', text: '#16202c' },
-    { id: 'akce',         name: 'Akce',                     icon: '🏷️', fill: '#ff8a1e', stroke: '#a85200', text: '#301400' },
-    { id: 'gondola',      name: 'Gondola',                  icon: '⭐', fill: '#ffe9e7', stroke: '#e01b1b', text: '#b01410' },
-    { id: 'zelenina',     name: 'Ovoce, zelenina, květiny', icon: '🥦', fill: '#8fd130', stroke: '#4d7a10', text: '#16300a' },
-    { id: 'pekarna',      name: 'Pekárna',                  icon: '🥐', fill: '#9b3fbf', stroke: '#5f1f78', text: '#ffffff' },
-    { id: 'chlazene',     name: 'Chlazené výrobky',         icon: '🧀', fill: '#3b48c4', stroke: '#232c85', text: '#ffffff' },
-    { id: 'mrazene',      name: 'Mražené výrobky',          icon: '🧊', fill: '#7d9ed4', stroke: '#42618f', text: '#0d1c33' },
-    { id: 'lednicka',     name: 'Lednička',                 icon: '🥤', fill: '#a9dff0', stroke: '#3f8ba5', text: '#0d2b33' },
-    { id: 'kava',         name: 'Káva',                     icon: '☕', fill: '#2b2b2b', stroke: '#000000', text: '#ffffff' },
-    { id: 'nonfood',      name: 'Nonfood / textil',         icon: '👕', fill: '#f7b6cd', stroke: '#b25e7d', text: '#3a1122' },
-    { id: 'vystavka',     name: 'Výstavka / stojan',        icon: '🛠️', fill: '#28a745', stroke: '#136226', text: '#ffffff' },
-    { id: 'ostatni',      name: 'Ostatní zboží',            icon: '🍯', fill: '#8a8a8a', stroke: '#4d4d4d', text: '#ffffff' },
-    { id: 'dvere',        name: 'Dveře / vstup',            icon: '🚪', fill: '#e01b1b', stroke: '#8c0f0f', text: '#ffffff' },
-    { id: 'popisek',      name: 'Popisek (jen text)',       icon: '',   fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
+    { id: 'regal',        name: 'Regál – suché zboží',      levels: 5, icon: '📦', fill: '#c6cbd2', stroke: '#5c6673', text: '#16202c' },
+    { id: 'pokladna',     name: 'Pokladna',                 levels: 2, icon: '🧾', fill: '#ffdf1b', stroke: '#a08600', text: '#16202c' },
+    { id: 'samoobsluzna', name: 'Samoobslužná pokladna',    levels: 1, icon: '🖥️', fill: '#ffe97a', stroke: '#a08600', text: '#16202c' },
+    { id: 'akce',         name: 'Akce',                     levels: 3, icon: '🏷️', fill: '#ff8a1e', stroke: '#a85200', text: '#301400' },
+    { id: 'gondola',      name: 'Gondola',                  levels: 3, icon: '⭐', fill: '#ffe9e7', stroke: '#e01b1b', text: '#b01410' },
+    { id: 'zelenina',     name: 'Ovoce, zelenina, květiny', levels: 3, icon: '🥦', fill: '#8fd130', stroke: '#4d7a10', text: '#16300a' },
+    { id: 'pekarna',      name: 'Pekárna',                  levels: 4, icon: '🥐', fill: '#9b3fbf', stroke: '#5f1f78', text: '#ffffff' },
+    { id: 'chlazene',     name: 'Chlazené výrobky',         levels: 4, icon: '🧀', fill: '#3b48c4', stroke: '#232c85', text: '#ffffff' },
+    { id: 'mrazene',      name: 'Mražené výrobky',          levels: 3, icon: '🧊', fill: '#7d9ed4', stroke: '#42618f', text: '#0d1c33' },
+    { id: 'lednicka',     name: 'Lednička',                 levels: 3, icon: '🥤', fill: '#a9dff0', stroke: '#3f8ba5', text: '#0d2b33' },
+    { id: 'kava',         name: 'Káva',                     levels: 4, icon: '☕', fill: '#2b2b2b', stroke: '#000000', text: '#ffffff' },
+    { id: 'nonfood',      name: 'Nonfood / textil',         levels: 4, icon: '👕', fill: '#f7b6cd', stroke: '#b25e7d', text: '#3a1122' },
+    { id: 'vystavka',     name: 'Výstavka / stojan',        levels: 3, icon: '🛠️', fill: '#28a745', stroke: '#136226', text: '#ffffff' },
+    { id: 'ostatni',      name: 'Ostatní zboží',            levels: 4, icon: '🍯', fill: '#8a8a8a', stroke: '#4d4d4d', text: '#ffffff' },
+    { id: 'dvere',        name: 'Dveře / vstup',            levels: 1, icon: '🚪', fill: '#e01b1b', stroke: '#8c0f0f', text: '#ffffff' },
+    { id: 'popisek',      name: 'Popisek (jen text)',       levels: 1, icon: '',   fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
 ];
 
 /* --- Pomocné funkce ------------------------------------------------------- */
@@ -297,10 +297,15 @@ function normalize(data) {
         element.name = element.name || '';
         element.note = element.note || '';
         element.articles = Array.isArray(element.articles) ? element.articles : [];
+        if (element.levels != null) {
+            element.levels = Math.min(12, Math.max(1, Math.round(Number(element.levels) || 1)));
+        }
         element.articles.forEach(article => {
             article.id = article.id || uid();
             article.name = article.name || '';
             ['code', 'ean', 'shelf', 'note'].forEach(key => { article[key] = article[key] || ''; });
+            article.level = Math.max(0, Math.round(Number(article.level) || 0));
+            if (article.level > levelsOf(element)) article.level = 0;
         });
         ['x', 'y', 'w', 'h'].forEach(key => { element[key] = Math.round(Number(element[key]) || 0); });
     });
@@ -433,6 +438,12 @@ function peopleText(count) {
     return `${count} lidí`;
 }
 
+function articleText(count) {
+    if (count === 1) return '1 artikl';
+    if (count >= 2 && count <= 4) return `${count} artikly`;
+    return `${count} artiklů`;
+}
+
 function dayCountText(count) {
     if (count === 1) return '1 den';
     if (count >= 2 && count <= 4) return `${count} dny`;
@@ -533,6 +544,25 @@ function defaultMap() {
             make('popisek', 'Ulička 1', 810, 620, 90, 30)
         ]
     };
+}
+
+/* Počet polic – buď vlastní u prvku, nebo výchozí podle typu. */
+function levelsOf(element) {
+    if (element.levels) return element.levels;
+    return mapTypeById(element.type).levels || 1;
+}
+
+/* Artikly na jedné polici v pořadí, v jakém stojí zleva doprava.
+   Police 0 znamená „zatím nezařazeno". */
+function articlesOnLevel(element, level) {
+    return element.articles.filter(article => (article.level || 0) === level);
+}
+
+function levelName(level, total) {
+    if (!level) return 'Nezařazené';
+    if (level === 1) return total > 1 ? '1. police (nahoře)' : '1. police';
+    if (level === total) return `${level}. police (dole)`;
+    return `${level}. police`;
 }
 
 function mapElementById(id) {

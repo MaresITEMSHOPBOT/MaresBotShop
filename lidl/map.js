@@ -114,7 +114,7 @@ function propsPanelHtml() {
             ${element.note ? `<div class="muted" style="margin-bottom:0.6rem;">📝 ${esc(element.note)}</div>` : ''}`}
 
             <div class="btn-row">
-                <button class="btn" data-map-action="detail">🔍 Otevřít detail a artikly (${element.articles.length})</button>
+                <button class="btn" data-map-action="detail">📐 Otevřít regál (${articleText(element.articles.length)})</button>
                 ${mapEdit ? `<button class="btn-secondary" data-map-action="element-photo">
                     ${element.photo ? '🖼️ Změnit fotku místa' : '📷 Fotka místa'}</button>` : ''}
             </div>
@@ -181,7 +181,7 @@ function renderMap() {
         <div class="view-head">
             <div>
                 <h2>Plán prodejny</h2>
-                <div class="subtitle">${DB.map.elements.length} prvků · ${articleCount()} artiklů ·
+                <div class="subtitle">${DB.map.elements.length} prvků · ${articleText(articleCount())} ·
                     ${photoCount()} fotek · ${formatBytes(storageBytes())} ·
                     ${mapEdit ? 'režim úprav' : 'režim prohlížení – klikni na prvek'}</div>
             </div>
@@ -335,7 +335,7 @@ function attachMapHandlers(zoom) {
         const element = mapElementById(node.dataset.el);
         if (!element) return;
         if (element.id !== mapSelected) selectElement(element.id);
-        if (!mapEdit) { openElementDetail(element.id); return; }
+        if (!mapEdit) { go(`#/regal/${element.id}`); return; }
 
         drag = {
             node,
@@ -387,7 +387,7 @@ function attachMapHandlers(zoom) {
 
     canvas.addEventListener('dblclick', event => {
         const node = event.target.closest('.map-el');
-        if (node) openElementDetail(node.dataset.el);
+        if (node) go(`#/regal/${node.dataset.el}`);
     });
 
     const search = view.querySelector('[data-map-search]');
@@ -435,11 +435,14 @@ function addMapElement(type) {
     toast('Prvek přidán doprostřed plánu');
 }
 
-function articleForm(elementId, articleId, afterSave) {
+function articleForm(elementId, articleId, afterSave, presetLevel) {
     const element = mapElementById(elementId);
     if (!element) return;
     const article = articleId ? element.articles.find(a => a.id === articleId) : null;
-    const done = () => { renderMap(); if (afterSave) afterSave(); };
+    const done = () => { if (afterSave) afterSave(); else renderMap(); };
+    const total = levelsOf(element);
+    const levelOptions = [{ value: 0, label: 'Nezařazeno' }].concat(
+        Array.from({ length: total }, (_, i) => ({ value: i + 1, label: levelName(i + 1, total) })));
 
     openForm({
         title: article ? 'Upravit artikl' : `Nový artikl · ${element.name}`,
@@ -449,15 +452,17 @@ function articleForm(elementId, articleId, afterSave) {
               hint: 'Čárový kód ze zadní strany obalu.' },
             { type: 'row', fields: [
                 { name: 'code', label: 'Číslo artiklu', type: 'text' },
-                { name: 'shelf', label: 'Police / pozice', type: 'text', placeholder: 'např. 3. police shora' }
+                { name: 'level', label: 'Police', type: 'select', options: levelOptions }
             ] },
+            { name: 'shelf', label: 'Upřesnění pozice', type: 'text', placeholder: 'např. vlevo u kraje' },
             { name: 'photo', label: 'Fotka artiklu', type: 'photo',
               hint: 'Fotka se zmenší a uloží do prohlížeče. Ať jich není víc než pár set.' },
             { name: 'note', label: 'Poznámka', type: 'text', placeholder: 'např. akce od čtvrtka, zásoba ve skladu' }
         ],
-        values: article || {},
+        values: article || { level: presetLevel || 0 },
         onSave: data => {
             if (!data.name) return;
+            data.level = Number(data.level) || 0;
             pushMapUndo();
             if (data.photo) data.photoId = '';
             if (article) Object.assign(article, data);
@@ -477,7 +482,7 @@ function articleForm(elementId, articleId, afterSave) {
 }
 
 /* Fotka celého místa – regálu, gondoly, chladicího boxu. */
-function elementPhotoForm(elementId) {
+function elementPhotoForm(elementId, afterSave) {
     const element = mapElementById(elementId);
     if (!element) return;
 
@@ -491,64 +496,13 @@ function elementPhotoForm(elementId) {
             element.photo = data.photo;
             if (data.photo) element.photoId = '';
             if (!save()) { mapUndo.pop(); return; }
-            renderMap();
+            if (afterSave) afterSave(); else renderMap();
             toast(data.photo ? 'Fotka uložena' : 'Fotka odebrána');
         }
     });
 }
 
-/* Detail prvku – co v něm je, s fotkami. Otevírá se kliknutím v plánu. */
-function openElementDetail(elementId) {
-    const element = mapElementById(elementId);
-    if (!element) return;
-    const type = mapTypeById(element.type);
-    const reopen = () => openElementDetail(elementId);
-
-    openModal({
-        title: element.name || type.name,
-        bodyHtml: `
-            <div class="detail-head">
-                <span class="pill" style="background:${type.fill}; color:${type.text}; border-color:${type.stroke};">
-                    ${type.icon} ${esc(type.name)}</span>
-                ${element.note ? `<span class="muted">📝 ${esc(element.note)}</span>` : ''}
-            </div>
-            ${hasPhoto(element) ? `<img class="detail-photo" ${photoOf(element) ? `src="${esc(photoOf(element))}"` : 'data-photo-pending'}
-                                    data-photo-id="${esc(element.photoId || '')}" alt=""
-                                    data-open-photo="element">` : ''}
-            <h3 style="margin:0.9rem 0 0.3rem;">🛒 Artikly (${element.articles.length})</h3>
-            ${element.articles.length ? element.articles.map(article => `
-                <div class="row">
-                    ${articleThumbHtml(article, element.id).replace('data-map-action="photo"', 'data-open-photo="' + article.id + '"')}
-                    <div class="row-main">
-                        <div class="row-title">${esc(article.name)}</div>
-                        <div class="row-sub">${article.ean ? `EAN ${esc(article.ean)}` : 'bez EAN'}${
-                            article.code ? ` · č. ${esc(article.code)}` : ''}${
-                            article.shelf ? ` · ${esc(article.shelf)}` : ''}</div>
-                        ${article.note ? `<div class="row-sub">📝 ${esc(article.note)}</div>` : ''}
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn-ghost" data-edit-article="${article.id}">✏️</button>
-                    </div>
-                </div>`).join('')
-            : '<div class="empty">Zatím tu nic není zapsané. Přidej první artikl.</div>'}`,
-        actionsHtml: `
-            <button class="btn-secondary" data-detail-photo>${element.photo ? '🖼️ Fotka místa' : '📷 Fotka místa'}</button>
-            <button class="btn" data-detail-add>➕ Přidat artikl</button>`,
-        onMount: modal => {
-            modal.querySelector('[data-detail-add]').addEventListener('click',
-                () => articleForm(elementId, null, reopen));
-            modal.querySelector('[data-detail-photo]').addEventListener('click',
-                () => elementPhotoForm(elementId));
-            modal.querySelectorAll('[data-edit-article]').forEach(button =>
-                button.addEventListener('click', () => articleForm(elementId, button.dataset.editArticle, reopen)));
-            modal.querySelectorAll('[data-open-photo]').forEach(node =>
-                node.addEventListener('click', () => openPhoto(elementId, node.dataset.openPhoto)));
-            hydratePhotos(modal);
-        }
-    });
-}
-
-/* Fotka přes celou obrazovku; po zavření se vrátíme do detailu. */
+/* Fotka přes celou obrazovku; po zavření se vrátíme na regál. */
 function openPhoto(elementId, articleId) {
     const element = mapElementById(elementId);
     if (!element) return;
@@ -565,7 +519,7 @@ function openPhoto(elementId, articleId) {
         actionsHtml: '<button class="btn-secondary" data-photo-back>Zpět</button>',
         onMount: modal => {
             modal.querySelector('[data-photo-back]')
-                .addEventListener('click', () => openElementDetail(elementId));
+                .addEventListener('click', () => { closeModal(); go(`#/regal/${elementId}`); });
             hydratePhotos(modal);
         }
     });
@@ -633,7 +587,7 @@ function runMapAction(action, data) {
             renderMap();
             break;
         case 'detail':
-            if (element) openElementDetail(element.id);
+            if (element) go(`#/regal/${element.id}`);
             break;
         case 'element-photo':
             if (element) elementPhotoForm(element.id);
@@ -648,7 +602,7 @@ function runMapAction(action, data) {
             openPhoto(data.elId, data.article);
             break;
         case 'detail-of':
-            openElementDetail(data.elId);
+            go(`#/regal/${data.elId}`);
             break;
         case 'reset-map':
             if (!confirm('Vrátit plán do výchozí podoby? Přijdeš o své úpravy i o zapsané artikly.')) return;

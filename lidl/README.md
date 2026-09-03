@@ -34,7 +34,7 @@ node lidl/build.js
 | --- | --- |
 | **Přehled** | Dnešní směna na jedné obrazovce – kdo je v práci, palety, checklist, zítřek, připomínky. |
 | **Plán** | Týdenní plán směn, kopírování minulého týdne, tisk, přehled hodin proti úvazku. |
-| **Prodejna** | Editovatelný plán prodejny – regály, pokladny, gondoly, akce. K prvkům se zapisují artikly a dá se hledat „kde co leží". |
+| **Prodejna** | Editovatelný plán prodejny – regály, pokladny, gondoly, akce. Klik otevře regál ve 2D pohledu s policemi. |
 | **Den** | Detail dne: rozdělení lidí na úseky, dodávky, checklisty, tržba a předání směny. |
 | **Tým** | Lidé, jejich pozice, úvazek, na co jsou zaškolení, poznámky. |
 | **Zboží** | Statistika palet podle druhu a dne – z čísel poznáš, na které dny potřebuješ víc lidí. |
@@ -52,7 +52,10 @@ Typy prvků odpovídají barvám z původního nákresu: šedá regál, žlutá 
 červený obrys gondola, zelená ovoce/zelenina a květiny, fialová pekárna, modrá chlazené,
 světlejší modrá mražené a lednička u samoobslužných pokladen.
 
-**Digitální obchod:** klikni na prvek a otevře se jeho detail – co v něm leží. Ke každému
+**Pohled na regál:** klikni na prvek a otevře se čelní 2D pohled – regál rozdělený na police.
+Počet polic si nastavíš tlačítky ＋ a −, artikly přetáhneš prstem i myší na tu polici, kde
+ve skutečnosti stojí, a mezi policemi je přerovnáš stejným tažením. Zboží, u kterého ještě
+polici neznáš, čeká dole v **Nezařazených**. Kliknutím na artikl se otevře jeho úprava. Ke každému
 artiklu patří název, **EAN**, číslo artiklu, police a **fotka**. Vyfotit se dá i celé místo
 (*Fotka místa*), ať je vidět, jak má být regál naskládaný. V režimu prohlížení stačí na prvek
 klepnout, v režimu úprav slouží k otevření tlačítko *Detail* nebo dvojklik.
@@ -82,6 +85,7 @@ lidl/
   styles.css   – vzhled (světlý i tmavý režim, tisk)
   store.js     – datový model, číselníky, ukládání, výpočty hodin, výchozí plán prodejny
   map.js       – editor plánu prodejny a vyhledávání artiklů
+  shelf.js     – čelní 2D pohled na regál, police a přetahování artiklů
   cloud.js     – online ukládání do účtu (jen v Artifact verzi)
   inline.js    – společné kousky pro oba buildy
   build-artifact.js – sestaví ../dist/vedeni-smeny.html pro publikování

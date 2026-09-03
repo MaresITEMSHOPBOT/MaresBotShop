@@ -291,7 +291,7 @@ function renderHeader() {
 
 function render() {
     const route = currentRoute();
-    const active = route.name === 'den' ? 'plan' : route.name;
+    const active = route.name === 'den' ? 'plan' : route.name === 'regal' ? 'mapa' : route.name;
     renderNav(active);
     renderHeader();
     window.scrollTo({ top: 0 });
@@ -299,6 +299,7 @@ function render() {
     switch (route.name) {
         case 'plan':      return renderPlan();
         case 'mapa':      return renderMap();
+        case 'regal':     return renderShelf(route.param);
         case 'den':       return renderDayDetail(route.param || todayISO());
         case 'tym':       return renderTeam();
         case 'zbozi':     return renderGoods();
