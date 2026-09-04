@@ -48,7 +48,7 @@ function cloudChip() {
 /* --- Rozdělení dat na dokumenty --------------------------------------------- */
 
 const APP_DOCS = {
-    settings: () => ({ value: DB.settings }),
+    settings: () => ({ value: DB.settings, build: APP_BUILD }),
     team: () => ({ items: DB.employees }),
     checklists: () => ({ value: DB.checklists }),
     notes: () => ({ items: DB.notes }),
@@ -147,11 +147,26 @@ function rememberPhotoIds() {
 
 CLOUD.save = function () {
     if (!CLOUD.enabled) return false;
+    CLOUD.dirty = true;
     cloudStatus('saving', 'Ukládám…');
     clearTimeout(CLOUD.saveTimer);
-    CLOUD.saveTimer = setTimeout(flush, 700);
+    CLOUD.saveTimer = setTimeout(flush, 350);
     return true;
 };
+
+/* Když telefon uspí obrazovku nebo se stránka zavírá, uložíme hned. */
+function flushNow() {
+    if (!CLOUD.enabled || !CLOUD.dirty) return;
+    clearTimeout(CLOUD.saveTimer);
+    flush();
+}
+
+CLOUD.flushNow = flushNow;
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushNow();
+});
+window.addEventListener('pagehide', flushNow);
 
 async function flush() {
     if (CLOUD.saving) { CLOUD.dirtyAgain = true; return; }
@@ -162,8 +177,17 @@ async function flush() {
     const referenced = new Set();
 
     Object.entries(APP_DOCS).forEach(([id, build]) => {
-        const body = build();
-        const json = JSON.stringify(body);
+        let body;
+        let json;
+        try {
+            body = build();
+            json = JSON.stringify(body);
+        } catch (err) {
+            /* Jeden rozbitý dokument nesmí shodit ukládání ostatních. */
+            CLOUD.lastError = `${id}: ${err.message}`;
+            console.error('Nepodařilo se připravit dokument', id, err);
+            return;
+        }
         if (json.length > 250000) {
             cloudStatus('error', 'Data jsou moc velká');
             return;
@@ -206,13 +230,17 @@ async function flush() {
 
     try {
         await Promise.all(writes);
+        CLOUD.dirty = false;
+        CLOUD.lastError = '';
         cloudStatus('ok', 'Uloženo');
     } catch (err) {
+        CLOUD.lastError = `${(err && (err.code || err.name)) || ''} ${(err && err.message) || ''}`.trim();
         const code = err && err.code;
         if (code === 'quota_exceeded') cloudStatus('error', 'Plno – smaž fotky');
         else if (code === 'revoked' || code === 'not_granted') cloudStatus('error', 'Bez přístupu');
         else cloudStatus('error', 'Neuloženo');
         console.error('Ukládání selhalo', err);
+        if (typeof toast === 'function') toast('Uložit se nepodařilo – zkus to znovu');
     }
 
     CLOUD.saving = false;

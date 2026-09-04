@@ -1082,6 +1082,23 @@ function renderSettings() {
         </div>
 
         <div class="card">
+            <h3>🩺 Stav aplikace</h3>
+            <table class="data">
+                <tr><td>Verze</td><td><strong>${esc(APP_BUILD)}</strong></td></tr>
+                <tr><td>Ukládání</td><td><strong>${window.CLOUD
+                    ? (window.CLOUD.enabled ? 'do účtu (online)' : 'jen v tomhle prohlížeči')
+                    : 'jen v tomhle prohlížeči'}</strong></td></tr>
+                <tr><td>Zápisů dat spotřeby</td><td><strong>${DB.checks.length}</strong></td></tr>
+                <tr><td>Artiklů v plánu</td><td><strong>${articleCount()}</strong></td></tr>
+                ${window.CLOUD && window.CLOUD.lastError
+                    ? `<tr><td>Poslední chyba</td><td><strong>${esc(window.CLOUD.lastError)}</strong></td></tr>` : ''}
+            </table>
+            ${window.CLOUD && window.CLOUD.enabled
+                ? '<div class="btn-row" style="margin-top:0.7rem;"><button class="btn-secondary" data-action="flush">💾 Uložit hned</button></div>'
+                : ''}
+        </div>
+
+        <div class="card">
             <h3>ℹ️ Jak to používat</h3>
             <ul class="muted" style="margin-left: 1.1rem;">
                 <li><strong>Plán</strong> – týden dopředu: kdo, odkdy dokdy a na jakém úseku.</li>
@@ -1427,6 +1444,10 @@ const ACTIONS = {
         if (index < 0 || next < 0 || next >= items.length) return;
         [items[index], items[next]] = [items[next], items[index]];
         persist();
+    },
+    'flush': () => {
+        if (window.CLOUD && window.CLOUD.flushNow) window.CLOUD.flushNow();
+        toast('Ukládám do účtu…');
     },
     'export': exportData,
     'import': importData,

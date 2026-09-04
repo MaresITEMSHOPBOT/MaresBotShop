@@ -87,6 +87,15 @@ function renderShelf(elementId) {
             <div class="field-hint">Sem patří zboží, u kterého ještě nevíš polici. Odsud ho přetáhneš do regálu.</div>
         </div>
 
+        <div class="card">
+            <h3>📅 Data spotřeby (${checksForElement(element.id).length})
+                <button class="btn-secondary" data-shelf-action="scan">🔎 Zkontrolovat</button>
+            </h3>
+            ${checksForElement(element.id).length
+                ? checksForElement(element.id).slice(0, 6).map(checkRowHtml).join('')
+                : '<div class="empty">Tady zatím nic zapsaného není.</div>'}
+        </div>
+
         ${hasPhoto(element) ? `
         <div class="card">
             <h3>📷 Jak to tady vypadá</h3>
@@ -103,6 +112,7 @@ function renderShelf(elementId) {
         </div>`;
 
     attachShelfHandlers(element);
+    attachScanHandlers();
     hydratePhotos(view);
 }
 

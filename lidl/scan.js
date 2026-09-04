@@ -11,6 +11,7 @@ let scanPlace = null;      /* id místa, kde se právě skenuje */
 let scanSession = [];      /* co se zapsalo v tomhle kole */
 let scanFilter = 'open';
 let liveScan = null;       /* běžící kamera */
+let lastSavedId = '';      /* poslední zápis – ať je na obrazovce vidět */
 
 const BARCODE_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf'];
 
@@ -35,7 +36,7 @@ function checkRowHtml(check) {
     const action = checkActionLabel(check.action);
 
     return `
-        <div class="row ${check.done ? 'done-row' : ''}">
+        <div class="row ${check.done ? 'done-row' : ''} ${check.id === lastSavedId ? 'just-saved' : ''}">
             ${hasPhoto(check)
                 ? `<img class="article-thumb" ${photoOf(check) ? `src="${esc(photoOf(check))}"` : 'data-photo-pending'}
                         data-photo-id="${esc(check.photoId || '')}" alt=""
@@ -538,13 +539,15 @@ async function checkForm(checkId, ean, photo, fromCamera) {
                 const record = { id: uid(), at: todayISO(), done: false, ...payload };
                 DB.checks.unshift(record);
                 scanSession.unshift(record.id);
+                lastSavedId = record.id;
                 if (data.addArticle) addScannedArticle(element, record);
             }
 
             if (!save()) return;
             if (currentRoute().name === 'data') renderChecks();
             else renderScan(elementId);
-            toast(check ? 'Uloženo' : 'Zapsáno');
+            toast(check ? 'Uloženo'
+                : `Zapsáno: ${name}${data.expiry ? ' · ' + formatDate(data.expiry) : ''}`);
             /* Po zápisu z kamery pokračujeme rovnou dalším kusem. */
             if (fromCamera) startCameraScan();
         },

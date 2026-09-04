@@ -35,10 +35,13 @@ function effectiveZoom(available) {
 function elementLabelHtml(element, zoom) {
     const count = element.articles.length;
     const badge = count ? `<span class="map-count">${count}</span>` : '';
-    const camera = element.photo ? '<span class="map-photo-dot">📷</span>' : '';
+    const camera = hasPhoto(element) ? '<span class="map-photo-dot">📷</span>' : '';
+    const dates = openChecksForElement(element.id).length;
+    const dateBadge = dates ? `<span class="map-count dates">📅${dates}</span>` : '';
 
     if (element.type !== 'popisek' && zoom < 0.45) {
-        return badge || camera ? `<span class="map-label tiny">${badge}${camera}</span>` : '';
+        return badge || camera || dateBadge
+            ? `<span class="map-label tiny">${badge}${dateBadge}${camera}</span>` : '';
     }
 
     const type = mapTypeById(element.type);
@@ -47,7 +50,7 @@ function elementLabelHtml(element, zoom) {
     const icon = roomy && type.icon ? `<span class="map-icon">${type.icon}</span>` : '';
 
     return `<span class="map-label ${vertical ? 'vertical' : ''}">
-        ${icon}${esc(element.name)}${badge}${camera}</span>`;
+        ${icon}${esc(element.name)}${badge}${dateBadge}${camera}</span>`;
 }
 
 function mapElementHtml(element, zoom, hits) {

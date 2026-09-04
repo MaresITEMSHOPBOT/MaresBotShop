@@ -858,6 +858,9 @@ table.data td.num, table.data th.num { text-align: right; }
 .field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--danger); }
 .field-error { font-size: 0.8rem; color: var(--danger); font-weight: 600; margin-top: 0.25rem; }
 
+.map-count.dates { background: var(--danger); }
+.row.just-saved { background: var(--success-soft); border-radius: 8px; padding-left: 0.4rem; }
+
 /* Systémový tmavý režim (bez explicitní volby) – generováno build skriptem. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -909,6 +912,7 @@ table.data td.num, table.data th.num { text-align: right; }
    ========================================================================== */
 
 const STORAGE_KEY = 'lidl-vedeni-smeny';
+const APP_BUILD = '2026-09-04 13:35';   /* doplní build skript – ať je poznat, jaká verze běží */
 const SCHEMA_VERSION = 1;
 
 /* --- Číselníky ------------------------------------------------------------ */
@@ -1578,6 +1582,10 @@ function openChecks() {
         .sort((a, b) => (a.expiry || '9999').localeCompare(b.expiry || '9999'));
 }
 
+function openChecksForElement(elementId) {
+    return DB.checks.filter(check => check.elementId === elementId && !check.done);
+}
+
 function checksForElement(elementId) {
     return DB.checks
         .filter(check => check.elementId === elementId)
@@ -1652,10 +1660,13 @@ function effectiveZoom(available) {
 function elementLabelHtml(element, zoom) {
     const count = element.articles.length;
     const badge = count ? `<span class="map-count">${count}</span>` : '';
-    const camera = element.photo ? '<span class="map-photo-dot">📷</span>' : '';
+    const camera = hasPhoto(element) ? '<span class="map-photo-dot">📷</span>' : '';
+    const dates = openChecksForElement(element.id).length;
+    const dateBadge = dates ? `<span class="map-count dates">📅${dates}</span>` : '';
 
     if (element.type !== 'popisek' && zoom < 0.45) {
-        return badge || camera ? `<span class="map-label tiny">${badge}${camera}</span>` : '';
+        return badge || camera || dateBadge
+            ? `<span class="map-label tiny">${badge}${dateBadge}${camera}</span>` : '';
     }
 
     const type = mapTypeById(element.type);
@@ -1664,7 +1675,7 @@ function elementLabelHtml(element, zoom) {
     const icon = roomy && type.icon ? `<span class="map-icon">${type.icon}</span>` : '';
 
     return `<span class="map-label ${vertical ? 'vertical' : ''}">
-        ${icon}${esc(element.name)}${badge}${camera}</span>`;
+        ${icon}${esc(element.name)}${badge}${dateBadge}${camera}</span>`;
 }
 
 function mapElementHtml(element, zoom, hits) {
@@ -2361,6 +2372,15 @@ function renderShelf(elementId) {
             <div class="field-hint">Sem patří zboží, u kterého ještě nevíš polici. Odsud ho přetáhneš do regálu.</div>
         </div>
 
+        <div class="card">
+            <h3>📅 Data spotřeby (${checksForElement(element.id).length})
+                <button class="btn-secondary" data-shelf-action="scan">🔎 Zkontrolovat</button>
+            </h3>
+            ${checksForElement(element.id).length
+                ? checksForElement(element.id).slice(0, 6).map(checkRowHtml).join('')
+                : '<div class="empty">Tady zatím nic zapsaného není.</div>'}
+        </div>
+
         ${hasPhoto(element) ? `
         <div class="card">
             <h3>📷 Jak to tady vypadá</h3>
@@ -2377,6 +2397,7 @@ function renderShelf(elementId) {
         </div>`;
 
     attachShelfHandlers(element);
+    attachScanHandlers();
     hydratePhotos(view);
 }
 
@@ -2556,6 +2577,7 @@ let scanPlace = null;      /* id místa, kde se právě skenuje */
 let scanSession = [];      /* co se zapsalo v tomhle kole */
 let scanFilter = 'open';
 let liveScan = null;       /* běžící kamera */
+let lastSavedId = '';      /* poslední zápis – ať je na obrazovce vidět */
 
 const BARCODE_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf'];
 
@@ -2580,7 +2602,7 @@ function checkRowHtml(check) {
     const action = checkActionLabel(check.action);
 
     return `
-        <div class="row ${check.done ? 'done-row' : ''}">
+        <div class="row ${check.done ? 'done-row' : ''} ${check.id === lastSavedId ? 'just-saved' : ''}">
             ${hasPhoto(check)
                 ? `<img class="article-thumb" ${photoOf(check) ? `src="${esc(photoOf(check))}"` : 'data-photo-pending'}
                         data-photo-id="${esc(check.photoId || '')}" alt=""
@@ -3083,13 +3105,15 @@ async function checkForm(checkId, ean, photo, fromCamera) {
                 const record = { id: uid(), at: todayISO(), done: false, ...payload };
                 DB.checks.unshift(record);
                 scanSession.unshift(record.id);
+                lastSavedId = record.id;
                 if (data.addArticle) addScannedArticle(element, record);
             }
 
             if (!save()) return;
             if (currentRoute().name === 'data') renderChecks();
             else renderScan(elementId);
-            toast(check ? 'Uloženo' : 'Zapsáno');
+            toast(check ? 'Uloženo'
+                : `Zapsáno: ${name}${data.expiry ? ' · ' + formatDate(data.expiry) : ''}`);
             /* Po zápisu z kamery pokračujeme rovnou dalším kusem. */
             if (fromCamera) startCameraScan();
         },
@@ -4269,6 +4293,23 @@ function renderSettings() {
         </div>
 
         <div class="card">
+            <h3>🩺 Stav aplikace</h3>
+            <table class="data">
+                <tr><td>Verze</td><td><strong>${esc(APP_BUILD)}</strong></td></tr>
+                <tr><td>Ukládání</td><td><strong>${window.CLOUD
+                    ? (window.CLOUD.enabled ? 'do účtu (online)' : 'jen v tomhle prohlížeči')
+                    : 'jen v tomhle prohlížeči'}</strong></td></tr>
+                <tr><td>Zápisů dat spotřeby</td><td><strong>${DB.checks.length}</strong></td></tr>
+                <tr><td>Artiklů v plánu</td><td><strong>${articleCount()}</strong></td></tr>
+                ${window.CLOUD && window.CLOUD.lastError
+                    ? `<tr><td>Poslední chyba</td><td><strong>${esc(window.CLOUD.lastError)}</strong></td></tr>` : ''}
+            </table>
+            ${window.CLOUD && window.CLOUD.enabled
+                ? '<div class="btn-row" style="margin-top:0.7rem;"><button class="btn-secondary" data-action="flush">💾 Uložit hned</button></div>'
+                : ''}
+        </div>
+
+        <div class="card">
             <h3>ℹ️ Jak to používat</h3>
             <ul class="muted" style="margin-left: 1.1rem;">
                 <li><strong>Plán</strong> – týden dopředu: kdo, odkdy dokdy a na jakém úseku.</li>
@@ -4614,6 +4655,10 @@ const ACTIONS = {
         if (index < 0 || next < 0 || next >= items.length) return;
         [items[index], items[next]] = [items[next], items[index]];
         persist();
+    },
+    'flush': () => {
+        if (window.CLOUD && window.CLOUD.flushNow) window.CLOUD.flushNow();
+        toast('Ukládám do účtu…');
     },
     'export': exportData,
     'import': importData,

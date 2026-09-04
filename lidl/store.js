@@ -4,6 +4,7 @@
    ========================================================================== */
 
 const STORAGE_KEY = 'lidl-vedeni-smeny';
+const APP_BUILD = '__BUILD__';   /* doplní build skript – ať je poznat, jaká verze běží */
 const SCHEMA_VERSION = 1;
 
 /* --- Číselníky ------------------------------------------------------------ */
@@ -671,6 +672,10 @@ function openChecks() {
     return DB.checks
         .filter(check => !check.done)
         .sort((a, b) => (a.expiry || '9999').localeCompare(b.expiry || '9999'));
+}
+
+function openChecksForElement(elementId) {
+    return DB.checks.filter(check => check.elementId === elementId && !check.done);
 }
 
 function checksForElement(elementId) {

@@ -3,7 +3,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const read = name => fs.readFileSync(path.join(__dirname, name), 'utf8');
+const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+const read = name => fs.readFileSync(path.join(__dirname, name), 'utf8')
+    .replace("'__BUILD__'", `'${stamp}'`);
 
 /* Prohlížeč hlásí tmavý režim třemi způsoby: značkou data-theme="dark",
    značkou data-theme="light" a systémovým nastavením bez značky.
