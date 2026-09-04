@@ -299,6 +299,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
             /* Tlačítko odesíláme sami – atribut form= na tlačítku mimo formulář
                některé mobilní prohlížeče ignorují a tlačítko pak nic nedělá. */
             modal.querySelector('[data-form-submit]').addEventListener('click', () => {
+                logEvent('stisknuto ' + submitLabel);
                 if (typeof form.requestSubmit === 'function') form.requestSubmit();
                 else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
             });
@@ -311,7 +312,8 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
 
             form.addEventListener('submit', event => {
                 event.preventDefault();
-                if (!validateForm(form)) return;
+                logEvent(`odeslani formulare: ${title}`);
+                if (!validateForm(form)) { logEvent('formular neprosel kontrolou'); return; }
                 const data = readForm(form, fields);
                 closeModal();
                 onSave(data);
@@ -1103,6 +1105,10 @@ function renderSettings() {
             ${window.CLOUD && window.CLOUD.enabled
                 ? '<div class="btn-row" style="margin-top:0.7rem;"><button class="btn-secondary" data-action="flush">💾 Uložit hned</button></div>'
                 : ''}
+            <h3 style="margin-top:1rem;">Poslední události</h3>
+            <div class="event-log">${APP_EVENTS.length
+                ? APP_EVENTS.slice(-15).reverse().map(line => `<div>${esc(line)}</div>`).join('')
+                : '<div class="muted">Zatím nic.</div>'}</div>
         </div>
 
         <div class="card">
@@ -1559,6 +1565,7 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 window.addEventListener('hashchange', render);
 
 function boot() {
+    logEvent(`start, verze ${APP_BUILD}`);
     applyTheme();
     render();
 }

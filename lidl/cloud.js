@@ -88,13 +88,23 @@ function stripCheckPhotos(checks) {
     return checks.map(withoutPhoto);
 }
 
+const KNOWN_APP_DOCS = ['settings', 'team', 'checklists', 'notes', 'checks', 'plan'];
+
+/* Zápisy kontrol jen přibývají, takže je slučujeme podle id.
+   Co je z účtu, má přednost; co je jen tady, zůstane. */
+function mergeChecks(local, remote) {
+    const byId = new Map(local.map(check => [check.id, check]));
+    remote.forEach(check => byId.set(check.id, check));
+    return [...byId.values()].sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+}
+
 function applyAppDoc(id, body) {
     if (!body) return;
     if (id === 'settings') DB.settings = { ...DB.settings, ...body.value };
     if (id === 'team') DB.employees = body.items || [];
     if (id === 'checklists') DB.checklists = body.value || DB.checklists;
     if (id === 'notes') DB.notes = body.items || [];
-    if (id === 'checks') DB.checks = body.items || [];
+    if (id === 'checks') DB.checks = mergeChecks(DB.checks, body.items || []);
     if (id === 'plan' && body.value) DB.map = body.value;
 }
 
@@ -114,6 +124,12 @@ async function loadEverything() {
         applyAppDoc(doc.id, body);
     });
 
+    const remoteCheckIds = new Set();
+    const checksDoc = appDocs.docs.find(doc => doc.id === 'checks');
+    if (checksDoc && Array.isArray(checksDoc.data().items)) {
+        checksDoc.data().items.forEach(check => remoteCheckIds.add(check.id));
+    }
+
     const days = {};
     dayDocs.docs.forEach(doc => {
         const body = doc.data();
@@ -123,25 +139,24 @@ async function loadEverything() {
     DB.days = days;
 
     DB = normalize(DB);
-    recoverLocalChecks();
+    pushLocalOnlyChecks(remoteCheckIds);
     rememberPhotoIds();
     return true;
 }
 
-/* Zápisy, které jsou v prohlížeči, ale do účtu nedošly, doplníme zpátky. */
-function recoverLocalChecks() {
-    const local = readLocal();
-    if (!local || !Array.isArray(local.checks) || !local.checks.length) return;
-
-    const known = new Set(DB.checks.map(check => check.id));
-    const missing = local.checks.filter(check => check.id && !known.has(check.id));
+/* Zápisy, které máme tady, ale v účtu nejsou, hned pošleme – tak se doplní
+   všechno, co dřív uvázlo cestou. */
+function pushLocalOnlyChecks(remoteCheckIds) {
+    const missing = DB.checks.filter(check => !remoteCheckIds.has(check.id));
     if (!missing.length) return;
 
-    DB.checks = [...missing, ...DB.checks];
     CLOUD.recovered = missing.length;
-    console.warn(`Doplněno ${missing.length} zápisů z prohlížeče, které nedošly do účtu.`);
+    console.warn(`Do účtu chybí ${missing.length} zápisů, posílám je.`);
     setTimeout(() => {
-        if (typeof toast === 'function') toast(`Doplněno ${missing.length} zápisů z tohohle telefonu`);
+        if (typeof toast === 'function' && missing.length) {
+            toast(`Doplňuji ${missing.length} zápisů z tohohle telefonu`);
+        }
+        logEvent(`doplnuji ${missing.length} zapisu do uctu`);
         CLOUD.save();
     }, 1200);
 }
@@ -247,6 +262,7 @@ async function flush() {
         writes.push(CLOUD.db.doc(path).delete().catch(() => {}));
     });
 
+    logEvent(`zapisuji do uctu: ${writes.length} dokumentu`);
     try {
         await Promise.all(writes);
         CLOUD.dirty = false;
@@ -259,6 +275,7 @@ async function flush() {
         else if (code === 'revoked' || code === 'not_granted') cloudStatus('error', 'Bez přístupu');
         else cloudStatus('error', 'Neuloženo');
         console.error('Ukládání selhalo', err);
+        logEvent(`ukladani selhalo: ${CLOUD.lastError}`);
         if (typeof toast === 'function') toast('Uložit se nepodařilo – zkus to znovu');
     }
 
@@ -291,6 +308,25 @@ async function fetchPhoto(id) {
 
 CLOUD.fetchPhoto = fetchPhoto;
 
+/* Záznamník píšeme zvlášť, ne přes flush – ať je k dispozici i tehdy,
+   když se běžné ukládání zadrhne. */
+let diagTimer = null;
+
+CLOUD.log = function () {
+    if (!CLOUD.enabled) return;
+    clearTimeout(diagTimer);
+    diagTimer = setTimeout(() => {
+        CLOUD.db.doc('app/diag').set({
+            build: APP_BUILD,
+            at: new Date().toISOString(),
+            browser: navigator.userAgent.slice(0, 180),
+            checks: DB.checks.length,
+            lastError: CLOUD.lastError || '',
+            events: APP_EVENTS.slice(-40)
+        }).catch(err => console.warn('Záznamník se neuložil', err));
+    }, 1500);
+};
+
 /* Nahradí prázdnou funkci z map.js – doplní obrázky, které ještě nejsou stažené. */
 window.hydratePhotos = function (root) {
     if (!CLOUD.enabled || !root) return;
@@ -312,8 +348,13 @@ function watchChanges() {
     };
 
     CLOUD.db.collection('app').onSnapshot(snap => {
+        /* Cizí změny bereme jen tehdy, když sami nemáme rozdělanou práci –
+           jinak by nám starší podoba dokumentu přepsala právě zapsané. */
+        if (CLOUD.saving || CLOUD.dirty) return;
+
         let changed = false;
         snap.docs.forEach(doc => {
+            if (!KNOWN_APP_DOCS.includes(doc.id)) return;
             const json = JSON.stringify(doc.data());
             if (CLOUD.lastWritten['app/' + doc.id] === json) return;
             CLOUD.lastWritten['app/' + doc.id] = json;
@@ -324,6 +365,7 @@ function watchChanges() {
     }, onError);
 
     CLOUD.db.collection('days').onSnapshot(snap => {
+        if (CLOUD.saving || CLOUD.dirty) return;
         let changed = false;
         snap.docChanges().forEach(change => {
             const path = 'days/' + change.doc.id;

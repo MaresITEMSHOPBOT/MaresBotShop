@@ -200,10 +200,11 @@ function renderScan(elementId) {
                 Focení funguje pořád – vyfoť čárový kód zblízka, přečte se z fotky a fotka zůstane u záznamu.</div>` : ''}
 
             <form class="scan-manual" data-scan-form>
-                <input type="text" inputmode="numeric" autocomplete="off" placeholder="Nebo napiš EAN a dej Enter"
+                <input type="text" inputmode="numeric" autocomplete="off" placeholder="Nebo napiš EAN"
                        data-scan-input>
                 <button type="submit" class="btn-secondary">Zadat</button>
             </form>
+            <button class="btn-secondary scan-big" data-scan-action="manual">✏️ Zapsat ručně bez kódu</button>
 
             ${reader ? '' : `<div class="field-hint">
                 Čtečku kódů umí Chrome na Androidu. V tomhle prohlížeči ji nemám k dispozici –
@@ -223,13 +224,15 @@ function renderScan(elementId) {
             ${recent.map(checkRowHtml).join('')}
         </div>` : ''}`;
 
+    logEvent(`skenovani: ${element.name}`);
     const form = view.querySelector('[data-scan-form]');
     const input = view.querySelector('[data-scan-input]');
     form.addEventListener('submit', event => {
         event.preventDefault();
         const code = input.value.trim();
-        if (!code) return;
         input.value = '';
+        /* I prázdné pole otevře zápis – tlačítko nikdy nesmí být slepé. */
+        logEvent(code ? `zadan kod ${code}` : 'zapis bez kodu');
         checkForm(null, code);
     });
     input.focus();
@@ -601,7 +604,10 @@ async function checkForm(checkId, ean, photo, fromCamera) {
                 if (data.addArticle) addScannedArticle(element, record);
             }
 
-            if (!save()) return;
+            logEvent(`ukladam zaznam ${name}, celkem ${DB.checks.length}`);
+            const saved = save();
+            logEvent(`save vratilo ${saved}`);
+            if (!saved) { toast('Uložit se nepodařilo'); return; }
             if (currentRoute().name === 'data') renderChecks();
             else renderScan(elementId);
             toast(check ? 'Uloženo'
@@ -661,6 +667,10 @@ function runScanAction(action, data) {
             break;
         case 'camera':
             startCameraScan();
+            break;
+        case 'manual':
+            logEvent('rucni zapis');
+            checkForm(null, '');
             break;
         case 'photo-scan':
             view.querySelector('[data-scan-file]').click();

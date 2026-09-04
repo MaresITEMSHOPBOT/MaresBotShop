@@ -853,6 +853,19 @@ table.data td.num, table.data th.num { text-align: right; }
 .map-count.dates { background: var(--danger); }
 .row.just-saved { background: var(--success-soft); border-radius: 8px; padding-left: 0.4rem; }
 
+.event-log {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem;
+    max-height: 190px;
+    overflow: auto;
+    line-height: 1.5;
+}
+
 /* Systémový tmavý režim (bez explicitní volby) – generováno build skriptem. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -902,7 +915,7 @@ table.data td.num, table.data th.num { text-align: right; }
    ========================================================================== */
 
 const STORAGE_KEY = 'lidl-vedeni-smeny';
-const APP_BUILD = '2026-09-04 14:08';   /* doplní build skript – ať je poznat, jaká verze běží */
+const APP_BUILD = '2026-09-04 14:27';   /* doplní build skript – ať je poznat, jaká verze běží */
 const SCHEMA_VERSION = 1;
 
 /* --- Číselníky ------------------------------------------------------------ */
@@ -1006,6 +1019,17 @@ const MAP_TYPES = [
     { id: 'dvere',        name: 'Dveře / vstup',            levels: 1, icon: '🚪', fill: '#e01b1b', stroke: '#8c0f0f', text: '#ffffff' },
     { id: 'popisek',      name: 'Popisek (jen text)',       levels: 1, icon: '',   fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
 ];
+
+/* Krátký záznamník toho, co appka dělá – kvůli hledání chyb na telefonu.
+   Online verze ho posílá i do účtu, ať je vidět i na dálku. */
+const APP_EVENTS = [];
+
+function logEvent(message) {
+    const stamp = new Date().toTimeString().slice(0, 8);
+    APP_EVENTS.push(`${stamp} ${message}`);
+    if (APP_EVENTS.length > 60) APP_EVENTS.shift();
+    if (window.CLOUD && window.CLOUD.log) window.CLOUD.log();
+}
 
 /* --- Pomocné funkce ------------------------------------------------------- */
 
@@ -2779,10 +2803,11 @@ function renderScan(elementId) {
                 Focení funguje pořád – vyfoť čárový kód zblízka, přečte se z fotky a fotka zůstane u záznamu.</div>` : ''}
 
             <form class="scan-manual" data-scan-form>
-                <input type="text" inputmode="numeric" autocomplete="off" placeholder="Nebo napiš EAN a dej Enter"
+                <input type="text" inputmode="numeric" autocomplete="off" placeholder="Nebo napiš EAN"
                        data-scan-input>
                 <button type="submit" class="btn-secondary">Zadat</button>
             </form>
+            <button class="btn-secondary scan-big" data-scan-action="manual">✏️ Zapsat ručně bez kódu</button>
 
             ${reader ? '' : `<div class="field-hint">
                 Čtečku kódů umí Chrome na Androidu. V tomhle prohlížeči ji nemám k dispozici –
@@ -2802,13 +2827,15 @@ function renderScan(elementId) {
             ${recent.map(checkRowHtml).join('')}
         </div>` : ''}`;
 
+    logEvent(`skenovani: ${element.name}`);
     const form = view.querySelector('[data-scan-form]');
     const input = view.querySelector('[data-scan-input]');
     form.addEventListener('submit', event => {
         event.preventDefault();
         const code = input.value.trim();
-        if (!code) return;
         input.value = '';
+        /* I prázdné pole otevře zápis – tlačítko nikdy nesmí být slepé. */
+        logEvent(code ? `zadan kod ${code}` : 'zapis bez kodu');
         checkForm(null, code);
     });
     input.focus();
@@ -3180,7 +3207,10 @@ async function checkForm(checkId, ean, photo, fromCamera) {
                 if (data.addArticle) addScannedArticle(element, record);
             }
 
-            if (!save()) return;
+            logEvent(`ukladam zaznam ${name}, celkem ${DB.checks.length}`);
+            const saved = save();
+            logEvent(`save vratilo ${saved}`);
+            if (!saved) { toast('Uložit se nepodařilo'); return; }
             if (currentRoute().name === 'data') renderChecks();
             else renderScan(elementId);
             toast(check ? 'Uloženo'
@@ -3240,6 +3270,10 @@ function runScanAction(action, data) {
             break;
         case 'camera':
             startCameraScan();
+            break;
+        case 'manual':
+            logEvent('rucni zapis');
+            checkForm(null, '');
             break;
         case 'photo-scan':
             view.querySelector('[data-scan-file]').click();
@@ -3370,13 +3404,23 @@ function stripCheckPhotos(checks) {
     return checks.map(withoutPhoto);
 }
 
+const KNOWN_APP_DOCS = ['settings', 'team', 'checklists', 'notes', 'checks', 'plan'];
+
+/* Zápisy kontrol jen přibývají, takže je slučujeme podle id.
+   Co je z účtu, má přednost; co je jen tady, zůstane. */
+function mergeChecks(local, remote) {
+    const byId = new Map(local.map(check => [check.id, check]));
+    remote.forEach(check => byId.set(check.id, check));
+    return [...byId.values()].sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+}
+
 function applyAppDoc(id, body) {
     if (!body) return;
     if (id === 'settings') DB.settings = { ...DB.settings, ...body.value };
     if (id === 'team') DB.employees = body.items || [];
     if (id === 'checklists') DB.checklists = body.value || DB.checklists;
     if (id === 'notes') DB.notes = body.items || [];
-    if (id === 'checks') DB.checks = body.items || [];
+    if (id === 'checks') DB.checks = mergeChecks(DB.checks, body.items || []);
     if (id === 'plan' && body.value) DB.map = body.value;
 }
 
@@ -3396,6 +3440,12 @@ async function loadEverything() {
         applyAppDoc(doc.id, body);
     });
 
+    const remoteCheckIds = new Set();
+    const checksDoc = appDocs.docs.find(doc => doc.id === 'checks');
+    if (checksDoc && Array.isArray(checksDoc.data().items)) {
+        checksDoc.data().items.forEach(check => remoteCheckIds.add(check.id));
+    }
+
     const days = {};
     dayDocs.docs.forEach(doc => {
         const body = doc.data();
@@ -3405,25 +3455,24 @@ async function loadEverything() {
     DB.days = days;
 
     DB = normalize(DB);
-    recoverLocalChecks();
+    pushLocalOnlyChecks(remoteCheckIds);
     rememberPhotoIds();
     return true;
 }
 
-/* Zápisy, které jsou v prohlížeči, ale do účtu nedošly, doplníme zpátky. */
-function recoverLocalChecks() {
-    const local = readLocal();
-    if (!local || !Array.isArray(local.checks) || !local.checks.length) return;
-
-    const known = new Set(DB.checks.map(check => check.id));
-    const missing = local.checks.filter(check => check.id && !known.has(check.id));
+/* Zápisy, které máme tady, ale v účtu nejsou, hned pošleme – tak se doplní
+   všechno, co dřív uvázlo cestou. */
+function pushLocalOnlyChecks(remoteCheckIds) {
+    const missing = DB.checks.filter(check => !remoteCheckIds.has(check.id));
     if (!missing.length) return;
 
-    DB.checks = [...missing, ...DB.checks];
     CLOUD.recovered = missing.length;
-    console.warn(`Doplněno ${missing.length} zápisů z prohlížeče, které nedošly do účtu.`);
+    console.warn(`Do účtu chybí ${missing.length} zápisů, posílám je.`);
     setTimeout(() => {
-        if (typeof toast === 'function') toast(`Doplněno ${missing.length} zápisů z tohohle telefonu`);
+        if (typeof toast === 'function' && missing.length) {
+            toast(`Doplňuji ${missing.length} zápisů z tohohle telefonu`);
+        }
+        logEvent(`doplnuji ${missing.length} zapisu do uctu`);
         CLOUD.save();
     }, 1200);
 }
@@ -3529,6 +3578,7 @@ async function flush() {
         writes.push(CLOUD.db.doc(path).delete().catch(() => {}));
     });
 
+    logEvent(`zapisuji do uctu: ${writes.length} dokumentu`);
     try {
         await Promise.all(writes);
         CLOUD.dirty = false;
@@ -3541,6 +3591,7 @@ async function flush() {
         else if (code === 'revoked' || code === 'not_granted') cloudStatus('error', 'Bez přístupu');
         else cloudStatus('error', 'Neuloženo');
         console.error('Ukládání selhalo', err);
+        logEvent(`ukladani selhalo: ${CLOUD.lastError}`);
         if (typeof toast === 'function') toast('Uložit se nepodařilo – zkus to znovu');
     }
 
@@ -3573,6 +3624,25 @@ async function fetchPhoto(id) {
 
 CLOUD.fetchPhoto = fetchPhoto;
 
+/* Záznamník píšeme zvlášť, ne přes flush – ať je k dispozici i tehdy,
+   když se běžné ukládání zadrhne. */
+let diagTimer = null;
+
+CLOUD.log = function () {
+    if (!CLOUD.enabled) return;
+    clearTimeout(diagTimer);
+    diagTimer = setTimeout(() => {
+        CLOUD.db.doc('app/diag').set({
+            build: APP_BUILD,
+            at: new Date().toISOString(),
+            browser: navigator.userAgent.slice(0, 180),
+            checks: DB.checks.length,
+            lastError: CLOUD.lastError || '',
+            events: APP_EVENTS.slice(-40)
+        }).catch(err => console.warn('Záznamník se neuložil', err));
+    }, 1500);
+};
+
 /* Nahradí prázdnou funkci z map.js – doplní obrázky, které ještě nejsou stažené. */
 window.hydratePhotos = function (root) {
     if (!CLOUD.enabled || !root) return;
@@ -3594,8 +3664,13 @@ function watchChanges() {
     };
 
     CLOUD.db.collection('app').onSnapshot(snap => {
+        /* Cizí změny bereme jen tehdy, když sami nemáme rozdělanou práci –
+           jinak by nám starší podoba dokumentu přepsala právě zapsané. */
+        if (CLOUD.saving || CLOUD.dirty) return;
+
         let changed = false;
         snap.docs.forEach(doc => {
+            if (!KNOWN_APP_DOCS.includes(doc.id)) return;
             const json = JSON.stringify(doc.data());
             if (CLOUD.lastWritten['app/' + doc.id] === json) return;
             CLOUD.lastWritten['app/' + doc.id] = json;
@@ -3606,6 +3681,7 @@ function watchChanges() {
     }, onError);
 
     CLOUD.db.collection('days').onSnapshot(snap => {
+        if (CLOUD.saving || CLOUD.dirty) return;
         let changed = false;
         snap.docChanges().forEach(change => {
             const path = 'days/' + change.doc.id;
@@ -3974,6 +4050,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
             /* Tlačítko odesíláme sami – atribut form= na tlačítku mimo formulář
                některé mobilní prohlížeče ignorují a tlačítko pak nic nedělá. */
             modal.querySelector('[data-form-submit]').addEventListener('click', () => {
+                logEvent('stisknuto ' + submitLabel);
                 if (typeof form.requestSubmit === 'function') form.requestSubmit();
                 else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
             });
@@ -3986,7 +4063,8 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
 
             form.addEventListener('submit', event => {
                 event.preventDefault();
-                if (!validateForm(form)) return;
+                logEvent(`odeslani formulare: ${title}`);
+                if (!validateForm(form)) { logEvent('formular neprosel kontrolou'); return; }
                 const data = readForm(form, fields);
                 closeModal();
                 onSave(data);
@@ -4778,6 +4856,10 @@ function renderSettings() {
             ${window.CLOUD && window.CLOUD.enabled
                 ? '<div class="btn-row" style="margin-top:0.7rem;"><button class="btn-secondary" data-action="flush">💾 Uložit hned</button></div>'
                 : ''}
+            <h3 style="margin-top:1rem;">Poslední události</h3>
+            <div class="event-log">${APP_EVENTS.length
+                ? APP_EVENTS.slice(-15).reverse().map(line => `<div>${esc(line)}</div>`).join('')
+                : '<div class="muted">Zatím nic.</div>'}</div>
         </div>
 
         <div class="card">
@@ -5234,6 +5316,7 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 window.addEventListener('hashchange', render);
 
 function boot() {
+    logEvent(`start, verze ${APP_BUILD}`);
     applyTheme();
     render();
 }

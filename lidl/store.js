@@ -109,6 +109,17 @@ const MAP_TYPES = [
     { id: 'popisek',      name: 'Popisek (jen text)',       levels: 1, icon: '',   fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
 ];
 
+/* Krátký záznamník toho, co appka dělá – kvůli hledání chyb na telefonu.
+   Online verze ho posílá i do účtu, ať je vidět i na dálku. */
+const APP_EVENTS = [];
+
+function logEvent(message) {
+    const stamp = new Date().toTimeString().slice(0, 8);
+    APP_EVENTS.push(`${stamp} ${message}`);
+    if (APP_EVENTS.length > 60) APP_EVENTS.shift();
+    if (window.CLOUD && window.CLOUD.log) window.CLOUD.log();
+}
+
 /* --- Pomocné funkce ------------------------------------------------------- */
 
 function uid() {

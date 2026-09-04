@@ -861,6 +861,19 @@ table.data td.num, table.data th.num { text-align: right; }
 .map-count.dates { background: var(--danger); }
 .row.just-saved { background: var(--success-soft); border-radius: 8px; padding-left: 0.4rem; }
 
+.event-log {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem;
+    max-height: 190px;
+    overflow: auto;
+    line-height: 1.5;
+}
+
 /* Systémový tmavý režim (bez explicitní volby) – generováno build skriptem. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -912,7 +925,7 @@ table.data td.num, table.data th.num { text-align: right; }
    ========================================================================== */
 
 const STORAGE_KEY = 'lidl-vedeni-smeny';
-const APP_BUILD = '2026-09-04 14:08';   /* doplní build skript – ať je poznat, jaká verze běží */
+const APP_BUILD = '2026-09-04 14:18';   /* doplní build skript – ať je poznat, jaká verze běží */
 const SCHEMA_VERSION = 1;
 
 /* --- Číselníky ------------------------------------------------------------ */
@@ -1016,6 +1029,17 @@ const MAP_TYPES = [
     { id: 'dvere',        name: 'Dveře / vstup',            levels: 1, icon: '🚪', fill: '#e01b1b', stroke: '#8c0f0f', text: '#ffffff' },
     { id: 'popisek',      name: 'Popisek (jen text)',       levels: 1, icon: '',   fill: 'transparent', stroke: 'transparent', text: 'currentColor' }
 ];
+
+/* Krátký záznamník toho, co appka dělá – kvůli hledání chyb na telefonu.
+   Online verze ho posílá i do účtu, ať je vidět i na dálku. */
+const APP_EVENTS = [];
+
+function logEvent(message) {
+    const stamp = new Date().toTimeString().slice(0, 8);
+    APP_EVENTS.push(`${stamp} ${message}`);
+    if (APP_EVENTS.length > 60) APP_EVENTS.shift();
+    if (window.CLOUD && window.CLOUD.log) window.CLOUD.log();
+}
 
 /* --- Pomocné funkce ------------------------------------------------------- */
 
@@ -2789,10 +2813,11 @@ function renderScan(elementId) {
                 Focení funguje pořád – vyfoť čárový kód zblízka, přečte se z fotky a fotka zůstane u záznamu.</div>` : ''}
 
             <form class="scan-manual" data-scan-form>
-                <input type="text" inputmode="numeric" autocomplete="off" placeholder="Nebo napiš EAN a dej Enter"
+                <input type="text" inputmode="numeric" autocomplete="off" placeholder="Nebo napiš EAN"
                        data-scan-input>
                 <button type="submit" class="btn-secondary">Zadat</button>
             </form>
+            <button class="btn-secondary scan-big" data-scan-action="manual">✏️ Zapsat ručně bez kódu</button>
 
             ${reader ? '' : `<div class="field-hint">
                 Čtečku kódů umí Chrome na Androidu. V tomhle prohlížeči ji nemám k dispozici –
@@ -2812,13 +2837,15 @@ function renderScan(elementId) {
             ${recent.map(checkRowHtml).join('')}
         </div>` : ''}`;
 
+    logEvent(`skenovani: ${element.name}`);
     const form = view.querySelector('[data-scan-form]');
     const input = view.querySelector('[data-scan-input]');
     form.addEventListener('submit', event => {
         event.preventDefault();
         const code = input.value.trim();
-        if (!code) return;
         input.value = '';
+        /* I prázdné pole otevře zápis – tlačítko nikdy nesmí být slepé. */
+        logEvent(code ? `zadan kod ${code}` : 'zapis bez kodu');
         checkForm(null, code);
     });
     input.focus();
@@ -3190,7 +3217,10 @@ async function checkForm(checkId, ean, photo, fromCamera) {
                 if (data.addArticle) addScannedArticle(element, record);
             }
 
-            if (!save()) return;
+            logEvent(`ukladam zaznam ${name}, celkem ${DB.checks.length}`);
+            const saved = save();
+            logEvent(`save vratilo ${saved}`);
+            if (!saved) { toast('Uložit se nepodařilo'); return; }
             if (currentRoute().name === 'data') renderChecks();
             else renderScan(elementId);
             toast(check ? 'Uloženo'
@@ -3250,6 +3280,10 @@ function runScanAction(action, data) {
             break;
         case 'camera':
             startCameraScan();
+            break;
+        case 'manual':
+            logEvent('rucni zapis');
+            checkForm(null, '');
             break;
         case 'photo-scan':
             view.querySelector('[data-scan-file]').click();
@@ -3591,6 +3625,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
             /* Tlačítko odesíláme sami – atribut form= na tlačítku mimo formulář
                některé mobilní prohlížeče ignorují a tlačítko pak nic nedělá. */
             modal.querySelector('[data-form-submit]').addEventListener('click', () => {
+                logEvent('stisknuto ' + submitLabel);
                 if (typeof form.requestSubmit === 'function') form.requestSubmit();
                 else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
             });
@@ -3603,7 +3638,8 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
 
             form.addEventListener('submit', event => {
                 event.preventDefault();
-                if (!validateForm(form)) return;
+                logEvent(`odeslani formulare: ${title}`);
+                if (!validateForm(form)) { logEvent('formular neprosel kontrolou'); return; }
                 const data = readForm(form, fields);
                 closeModal();
                 onSave(data);
@@ -4395,6 +4431,10 @@ function renderSettings() {
             ${window.CLOUD && window.CLOUD.enabled
                 ? '<div class="btn-row" style="margin-top:0.7rem;"><button class="btn-secondary" data-action="flush">💾 Uložit hned</button></div>'
                 : ''}
+            <h3 style="margin-top:1rem;">Poslední události</h3>
+            <div class="event-log">${APP_EVENTS.length
+                ? APP_EVENTS.slice(-15).reverse().map(line => `<div>${esc(line)}</div>`).join('')
+                : '<div class="muted">Zatím nic.</div>'}</div>
         </div>
 
         <div class="card">
@@ -4851,6 +4891,7 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 window.addEventListener('hashchange', render);
 
 function boot() {
+    logEvent(`start, verze ${APP_BUILD}`);
     applyTheme();
     render();
 }
