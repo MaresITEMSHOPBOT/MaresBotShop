@@ -896,3 +896,15 @@ table.data td.num, table.data th.num { text-align: right; }
 .basket-name { font-weight: 600; font-size: 0.92rem; }
 .basket-sub { font-size: 0.78rem; color: var(--text-secondary); }
 .basket-go { font-size: 1.1rem; flex-shrink: 0; }
+
+.quick-add { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+.quick-add input {
+    flex: 1;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-soft);
+    color: var(--text);
+}

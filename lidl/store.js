@@ -44,6 +44,16 @@ const DEFAULT_DELIVERY_TYPES = [
     { id: 'akce',     name: 'Akční zboží',       icon: '🏷️' }
 ];
 
+/* Trvanlivost zboží a kolik dní před koncem se lepí sleva.
+   Čísla si každý upraví v Nastavení podle pravidel své prodejny. */
+const DEFAULT_SHELF_LIVES = [
+    { id: 'denni',       name: 'Denní',        days: 1 },
+    { id: 'tydenni',     name: 'Týdenní',      days: 2 },
+    { id: 'mesicni',     name: 'Měsíční',      days: 5 },
+    { id: 'dvoumesicni', name: 'Dvouměsíční',  days: 10 },
+    { id: 'trvanlive',   name: 'Trvanlivé',    days: 20 }
+];
+
 const NOTE_CATEGORIES = [
     'Otevírání a zavírání',
     'Pokladna a tržba',
@@ -228,6 +238,7 @@ function emptyDb() {
             morningShift: { from: '06:00', to: '14:00' },
             afternoonShift: { from: '13:00', to: '21:30' },
             break: { afterHours: 6, minutes: 30 },
+            shelfLives: DEFAULT_SHELF_LIVES.map(item => ({ ...item })),
             theme: ''
         },
         employees: [],
@@ -265,6 +276,12 @@ function normalize(data) {
     };
 
     db.settings.break = { ...base.settings.break, ...(db.settings.break || {}) };
+    if (!Array.isArray(db.settings.shelfLives) || !db.settings.shelfLives.length) {
+        db.settings.shelfLives = base.settings.shelfLives;
+    }
+    db.settings.shelfLives.forEach(item => {
+        item.days = Math.max(0, Math.round(Number(item.days) || 0));
+    });
     db.settings.morningShift = { ...base.settings.morningShift, ...(db.settings.morningShift || {}) };
     db.settings.afternoonShift = { ...base.settings.afternoonShift, ...(db.settings.afternoonShift || {}) };
 
@@ -300,7 +317,7 @@ function normalize(data) {
     db.checks.forEach(check => {
         check.id = check.id || uid();
         check.at = check.at || todayISO();
-        ['elementId', 'ean', 'name', 'expiry', 'note', 'action'].forEach(key => {
+        ['elementId', 'ean', 'name', 'expiry', 'note', 'action', 'shelfLife'].forEach(key => {
             check[key] = check[key] || '';
         });
         check.level = Math.max(0, Math.round(Number(check.level) || 0));
@@ -724,6 +741,46 @@ function isCheckout(element) {
 
 function checkoutElements() {
     return DB.map.elements.filter(isCheckout);
+}
+
+/* --- Slevy podle trvanlivosti ---------------------------------------------- */
+
+function shelfLives() {
+    return DB.settings.shelfLives || DEFAULT_SHELF_LIVES;
+}
+
+function shelfLifeById(id) {
+    return shelfLives().find(item => item.id === id) || null;
+}
+
+function shelfLifeName(id) {
+    const item = shelfLifeById(id);
+    return item ? item.name : '';
+}
+
+/* Kdy se má na zboží nalepit sleva. */
+function discountDate(expiry, shelfLife) {
+    const item = shelfLifeById(shelfLife);
+    if (!expiry || !item) return '';
+    return addDays(expiry, -item.days);
+}
+
+/* Stav slevy: kolik dní do lepení, nebo že už měla být. */
+function discountStatus(expiry, shelfLife) {
+    const date = discountDate(expiry, shelfLife);
+    if (!date) return null;
+    const days = daysUntil(date);
+    if (days < 0) return { date, days, label: `Sleva měla být ${formatDate(date)}`, pill: 'danger' };
+    if (days === 0) return { date, days, label: 'Slevit dnes', pill: 'danger' };
+    if (days === 1) return { date, days, label: 'Slevit zítra', pill: 'warning' };
+    return { date, days, label: `Slevit ${formatDate(date)}`, pill: days <= 3 ? 'warning' : '' };
+}
+
+function toDiscountToday() {
+    return openChecks().filter(check => {
+        const status = discountStatus(check.expiry, check.shelfLife);
+        return status && status.days <= 0;
+    });
 }
 
 function openChecksForElement(elementId) {

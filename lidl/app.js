@@ -133,6 +133,20 @@ function fieldHtml(field, values) {
             </div>`;
     }
 
+    if (field.type === 'choice') {
+        return `
+            <div class="field">
+                <label>${esc(field.label)}</label>
+                <div class="chips">
+                    ${field.options.map(option => `
+                        <button type="button" class="chip ${String(value ?? '') === String(option.value) ? 'on' : ''}"
+                                data-choice="${field.name}" data-value="${esc(option.value)}">${esc(option.label)}</button>`).join('')}
+                </div>
+                <input type="hidden" name="${field.name}" value="${esc(value ?? '')}">
+                ${field.hint ? `<div class="field-hint">${esc(field.hint)}</div>` : ''}
+            </div>`;
+    }
+
     if (field.type === 'date-quick') {
         return `
             <div class="field">
@@ -254,6 +268,15 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
                     else current.push(chip.dataset.value);
                     holder.value = current.join(',');
                     chip.classList.toggle('on');
+                });
+            });
+
+            modal.querySelectorAll('[data-choice]').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const name = chip.dataset.choice;
+                    form.querySelector(`input[name="${name}"]`).value = chip.dataset.value;
+                    modal.querySelectorAll(`[data-choice="${name}"]`)
+                        .forEach(other => other.classList.toggle('on', other === chip));
                 });
             });
 
@@ -1073,6 +1096,27 @@ function renderSettings() {
         </div>
 
         <div class="card">
+            <h3>🏷️ Slevy podle trvanlivosti</h3>
+            <p class="muted">Kolik dní před koncem spotřeby se na zboží lepí sleva.
+               Uprav si čísla podle pravidel vaší prodejny.</p>
+            <div class="table-scroll">
+                <table class="data">
+                    <thead><tr><th>Trvanlivost</th><th class="num">Slevit … dní předem</th></tr></thead>
+                    <tbody>
+                        ${shelfLives().map(item => `
+                            <tr>
+                                <td>${esc(item.name)}</td>
+                                <td class="num">
+                                    <input type="number" min="0" max="90" style="width: 5rem; text-align: right;"
+                                           data-change="shelf-life" data-id="${item.id}" value="${item.days}">
+                                </td>
+                            </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
             <h3>💾 Záloha dat</h3>
             <p class="muted">Uloženo: ${peopleText(DB.employees.length)}, ${dayCountText(dayCount)} v plánu,
                ${DB.notes.length} poznámek, ${articleCount()} artiklů a ${photoCount()} fotek.
@@ -1518,6 +1562,12 @@ const CHANGES = {
     'setting': (data, input) => { DB.settings[data.key] = input.value; save(); renderHeader(); },
     'shift': (data, input) => { DB.settings[data.shift][data.key] = input.value; save(); },
     'break': (data, input) => { DB.settings.break[data.key] = Number(input.value) || 0; save(); },
+    'shelf-life': (data, input) => {
+        const item = shelfLifeById(data.id);
+        if (!item) return;
+        item.days = Math.max(0, Math.round(Number(input.value) || 0));
+        save();
+    },
     'goods-range': (data, input) => { goodsRange = input.value; render(); },
     'note-search': (data, input) => { noteFilter.text = input.value; renderNotes(); },
     'note-category': (data, input) => { noteFilter.category = input.value; renderNotes(); },

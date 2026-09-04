@@ -82,6 +82,16 @@ a zapisuješ zboží. Kód se dá načíst třemi způsoby:
 3. **Ručně** – EAN se napíše do pole (zvládne i kód GS1-128 z pistolové čtečky). Zvládne to i klasická pistolová čtečka, ta kód „napíše"
    a odešle Enterem.
 
+**Nejrychlejší cesta:** v košíku napíšeš název artiklu, dáš *Přidat*, vybereš trvanlivost
+a datum – a je zapsáno. Artikl se přitom sám rozešle na **všechny pokladny včetně
+samoobslužných**, takže se na dalších už jen ťukne datum. Fotka jde přidat kdykoli.
+
+**Trvanlivost a slevy:** u artiklu se jednou vybere, jestli je denní, týdenní, měsíční,
+dvouměsíční nebo trvanlivý. Z toho aplikace počítá, **kdy se má nalepit sleva**, a píše to
+u záznamu i v košíku („Slevit dnes", „Slevit 6. 9."). Kolik dní před koncem se u které
+trvanlivosti slevuje, se nastavuje v *Nastavení → Slevy podle trvanlivosti*. Na přehledu
+je dlaždice **Nalepit slevu** s počtem kusů, které to čeká dnes nebo už měly být slevené.
+
 Na každém místě je **košík** – seznam zboží, které tam má být. U položky je vidět
 poslední zápis a datum, takže na první pohled poznáš, co už je zkontrolované
 (hlavička počítá „dnes 3/8"). Klepnutím na položku se otevře zápis s předvyplněným

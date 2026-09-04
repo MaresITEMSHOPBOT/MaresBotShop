@@ -907,6 +907,18 @@ table.data td.num, table.data th.num { text-align: right; }
 .basket-sub { font-size: 0.78rem; color: var(--text-secondary); }
 .basket-go { font-size: 1.1rem; flex-shrink: 0; }
 
+.quick-add { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+.quick-add input {
+    flex: 1;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-soft);
+    color: var(--text);
+}
+
 /* Systémový tmavý režim (bez explicitní volby) – generováno build skriptem. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -958,7 +970,7 @@ table.data td.num, table.data th.num { text-align: right; }
    ========================================================================== */
 
 const STORAGE_KEY = 'lidl-vedeni-smeny';
-const APP_BUILD = '2026-09-04 14:50';   /* doplní build skript – ať je poznat, jaká verze běží */
+const APP_BUILD = '2026-09-04 15:05';   /* doplní build skript – ať je poznat, jaká verze běží */
 const SCHEMA_VERSION = 1;
 
 /* --- Číselníky ------------------------------------------------------------ */
@@ -996,6 +1008,16 @@ const DEFAULT_DELIVERY_TYPES = [
     { id: 'pecivo',   name: 'Pečivo',            icon: '🥐' },
     { id: 'napoje',   name: 'Nápoje',            icon: '🥤' },
     { id: 'akce',     name: 'Akční zboží',       icon: '🏷️' }
+];
+
+/* Trvanlivost zboží a kolik dní před koncem se lepí sleva.
+   Čísla si každý upraví v Nastavení podle pravidel své prodejny. */
+const DEFAULT_SHELF_LIVES = [
+    { id: 'denni',       name: 'Denní',        days: 1 },
+    { id: 'tydenni',     name: 'Týdenní',      days: 2 },
+    { id: 'mesicni',     name: 'Měsíční',      days: 5 },
+    { id: 'dvoumesicni', name: 'Dvouměsíční',  days: 10 },
+    { id: 'trvanlive',   name: 'Trvanlivé',    days: 20 }
 ];
 
 const NOTE_CATEGORIES = [
@@ -1182,6 +1204,7 @@ function emptyDb() {
             morningShift: { from: '06:00', to: '14:00' },
             afternoonShift: { from: '13:00', to: '21:30' },
             break: { afterHours: 6, minutes: 30 },
+            shelfLives: DEFAULT_SHELF_LIVES.map(item => ({ ...item })),
             theme: ''
         },
         employees: [],
@@ -1219,6 +1242,12 @@ function normalize(data) {
     };
 
     db.settings.break = { ...base.settings.break, ...(db.settings.break || {}) };
+    if (!Array.isArray(db.settings.shelfLives) || !db.settings.shelfLives.length) {
+        db.settings.shelfLives = base.settings.shelfLives;
+    }
+    db.settings.shelfLives.forEach(item => {
+        item.days = Math.max(0, Math.round(Number(item.days) || 0));
+    });
     db.settings.morningShift = { ...base.settings.morningShift, ...(db.settings.morningShift || {}) };
     db.settings.afternoonShift = { ...base.settings.afternoonShift, ...(db.settings.afternoonShift || {}) };
 
@@ -1254,7 +1283,7 @@ function normalize(data) {
     db.checks.forEach(check => {
         check.id = check.id || uid();
         check.at = check.at || todayISO();
-        ['elementId', 'ean', 'name', 'expiry', 'note', 'action'].forEach(key => {
+        ['elementId', 'ean', 'name', 'expiry', 'note', 'action', 'shelfLife'].forEach(key => {
             check[key] = check[key] || '';
         });
         check.level = Math.max(0, Math.round(Number(check.level) || 0));
@@ -1678,6 +1707,46 @@ function isCheckout(element) {
 
 function checkoutElements() {
     return DB.map.elements.filter(isCheckout);
+}
+
+/* --- Slevy podle trvanlivosti ---------------------------------------------- */
+
+function shelfLives() {
+    return DB.settings.shelfLives || DEFAULT_SHELF_LIVES;
+}
+
+function shelfLifeById(id) {
+    return shelfLives().find(item => item.id === id) || null;
+}
+
+function shelfLifeName(id) {
+    const item = shelfLifeById(id);
+    return item ? item.name : '';
+}
+
+/* Kdy se má na zboží nalepit sleva. */
+function discountDate(expiry, shelfLife) {
+    const item = shelfLifeById(shelfLife);
+    if (!expiry || !item) return '';
+    return addDays(expiry, -item.days);
+}
+
+/* Stav slevy: kolik dní do lepení, nebo že už měla být. */
+function discountStatus(expiry, shelfLife) {
+    const date = discountDate(expiry, shelfLife);
+    if (!date) return null;
+    const days = daysUntil(date);
+    if (days < 0) return { date, days, label: `Sleva měla být ${formatDate(date)}`, pill: 'danger' };
+    if (days === 0) return { date, days, label: 'Slevit dnes', pill: 'danger' };
+    if (days === 1) return { date, days, label: 'Slevit zítra', pill: 'warning' };
+    return { date, days, label: `Slevit ${formatDate(date)}`, pill: days <= 3 ? 'warning' : '' };
+}
+
+function toDiscountToday() {
+    return openChecks().filter(check => {
+        const status = discountStatus(check.expiry, check.shelfLife);
+        return status && status.days <= 0;
+    });
 }
 
 function openChecksForElement(elementId) {
@@ -2807,6 +2876,7 @@ function checkRowHtml(check) {
     const element = mapElementById(check.elementId);
     const place = element ? element.name : 'Neznámé místo';
     const action = checkActionLabel(check.action);
+    const discount = check.done ? null : discountStatus(check.expiry, check.shelfLife);
 
     return `
         <div class="row ${check.done ? 'done-row' : ''} ${check.id === lastSavedId ? 'just-saved' : ''}">
@@ -2827,6 +2897,7 @@ function checkRowHtml(check) {
                 </div>
                 <div class="tag-list">
                     <span class="pill ${status.pill}">${esc(status.label)}</span>
+                    ${discount ? `<span class="pill ${discount.pill}">🏷️ ${esc(discount.label)}</span>` : ''}
                     ${action ? `<span class="pill">${esc(action)}</span>` : ''}
                     ${check.done ? '<span class="pill success">Vyřešeno</span>' : ''}
                 </div>
@@ -2865,9 +2936,9 @@ function renderChecks() {
             <div class="stat"><div class="stat-label">Do tří dnů</div>
                 <div class="stat-value" style="color: var(--warning);">${summary.brzy}</div>
                 <div class="stat-hint">hlídat</div></div>
-            <div class="stat"><div class="stat-label">Do týdne</div>
-                <div class="stat-value">${summary.tyden}</div>
-                <div class="stat-hint">v pořádku</div></div>
+            <div class="stat"><div class="stat-label">Nalepit slevu</div>
+                <div class="stat-value" style="color: var(--warning);">${toDiscountToday().length}</div>
+                <div class="stat-hint">dnes nebo už mělo být</div></div>
         </div>
 
         <div class="card">
@@ -2947,6 +3018,8 @@ function basketItemHtml(element, article) {
     const last = lastCheckFor(element.id, article);
     const status = last ? expiryStatus(last.expiry) : null;
     const today = last && last.at === todayISO();
+    const discount = last && !last.done
+        ? discountStatus(last.expiry, last.shelfLife || article.shelfLife) : null;
 
     return `
         <div class="basket-item ${today ? 'checked' : ''}" data-scan-action="basket-item"
@@ -2961,8 +3034,10 @@ function basketItemHtml(element, article) {
                 ${last
                     ? `<div class="tag-list"><span class="pill ${status.pill}">
                             ${last.expiry ? esc(formatDate(last.expiry)) : 'bez data'} · ${esc(status.label)}
-                       </span>${today ? '<span class="pill success">dnes zapsáno</span>' : ''}</div>`
-                    : '<div class="basket-sub muted">zatím nezkontrolováno</div>'}
+                       </span>${discount ? `<span class="pill ${discount.pill}">🏷️ ${esc(discount.label)}</span>` : ''}
+                       ${today ? '<span class="pill success">dnes zapsáno</span>' : ''}</div>`
+                    : `<div class="basket-sub muted">zatím nezkontrolováno${
+                        article.shelfLife ? ` · ${esc(shelfLifeName(article.shelfLife))}` : ''}</div>`}
             </div>
             <span class="basket-go">${today ? '✅' : '📝'}</span>
         </div>`;
@@ -2984,14 +3059,47 @@ function basketCardHtml(element) {
             ${items.length
                 ? `<div class="basket">${items.map(article => basketItemHtml(element, article)).join('')}</div>`
                 : '<div class="empty">Košík je prázdný. Naskenované zboží se sem přidává samo.</div>'}
+            <form class="quick-add" data-quick-add>
+                <input type="text" placeholder="Nový artikl – napiš název" data-quick-name autocomplete="off">
+                <button class="btn" type="submit">➕ Přidat</button>
+            </form>
+
             <div class="btn-row" style="margin-top:0.7rem;">
-                <button class="btn-secondary" data-scan-action="basket-add">➕ Přidat do košíku</button>
+                <button class="btn-secondary" data-scan-action="basket-add">➕ Přidat podrobně</button>
                 <button class="btn-secondary" data-scan-action="basket-copy">📋 Doplnit z prodejny</button>
                 ${isCheckout(element)
                     ? '<button class="btn-secondary" data-scan-action="basket-copy-all">📋 Doplnit na všechny pokladny</button>'
                     : ''}
             </div>
         </div>`;
+}
+
+/* Nový artikl rozešle na všechny pokladny, ať se zadává jen jednou. */
+function spreadToCheckouts(article, fromElement) {
+    const key = (article.ean || article.name || '').toLowerCase();
+    if (!key) return 0;
+    let added = 0;
+
+    checkoutElements().forEach(checkout => {
+        if (checkout.id === fromElement.id) return;
+        const known = checkout.articles.some(other =>
+            (other.ean || other.name || '').toLowerCase() === key);
+        if (known) return;
+        checkout.articles.push({ ...article, id: uid(), level: 0 });
+        added++;
+    });
+    return added;
+}
+
+/* Změnu trvanlivosti promítneme do všech kopií téhož artiklu. */
+function syncShelfLife(article, shelfLife) {
+    const key = (article.ean || article.name || '').toLowerCase();
+    if (!key) return;
+    DB.map.elements.forEach(element => {
+        element.articles.forEach(other => {
+            if ((other.ean || other.name || '').toLowerCase() === key) other.shelfLife = shelfLife;
+        });
+    });
 }
 
 /* Zkopíruje artikly z celé prodejny do košíku daného místa (bez duplicit). */
@@ -3116,6 +3224,16 @@ function renderScan(elementId) {
     });
     input.focus();
 
+    const quick = view.querySelector('[data-quick-add]');
+    if (quick) quick.addEventListener('submit', event => {
+        event.preventDefault();
+        const field = quick.querySelector('[data-quick-name]');
+        const name = field.value.trim();
+        if (!name) { field.focus(); return; }
+        field.value = '';
+        addQuickArticle(element, name);
+    });
+
     view.querySelector('[data-scan-file]').addEventListener('change', event => {
         const file = event.target.files[0];
         event.target.value = '';
@@ -3127,6 +3245,28 @@ function renderScan(elementId) {
 }
 
 /* --- Čtení kódu ---------------------------------------------------------------- */
+
+/* Nový artikl z rychlého řádku: založí se, rozešle na pokladny a hned
+   se otevře zápis, kde stačí datum. */
+function addQuickArticle(element, name) {
+    const existing = element.articles.find(article =>
+        article.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+        toast('Tenhle artikl už v košíku je');
+        checkForm(null, { ean: existing.ean || '', article: existing });
+        return;
+    }
+
+    const article = { id: uid(), name, ean: '', code: '', shelf: '', note: '',
+                      level: 0, shelfLife: '', photo: '' };
+    element.articles.push(article);
+    const spread = isCheckout(element) ? spreadToCheckouts(article, element) : 0;
+    save();
+    logEvent(`novy artikl ${name}, rozeslano na ${spread} pokladen`);
+    renderScan(element.id);
+    if (spread) toast(`Přidáno i na ${spread} dalších pokladen`);
+    checkForm(null, { article, newArticle: true });
+}
 
 /* --- Čtení kódu z fotky ---------------------------------------------------
    Fotka z telefonu bývá větší a kód na ní malý, proto zkoušíme několik
@@ -3492,7 +3632,7 @@ async function showCameraHelp() {
 
 async function checkForm(checkId, options = {}) {
     const { ean = '', photo = '', fromCamera = false, article = null,
-            expiry = '', note = '', source = '' } = options;
+            expiry = '', note = '', source = '', newArticle = false } = options;
     const check = checkId ? DB.checks.find(c => c.id === checkId) : null;
     if (check) await ensurePhotoData(check);
     const photoBefore = check ? (check.photo || '') : '';
@@ -3512,6 +3652,7 @@ async function checkForm(checkId, options = {}) {
         pieces: 1,
         level: known && known.element.id === elementId ? known.article.level : 0,
         action: '',
+        shelfLife: (article && article.shelfLife) || (known && known.article.shelfLife) || '',
         photo: (article && article.photo) || photo || '',
         expiry,
         note,
@@ -3519,41 +3660,58 @@ async function checkForm(checkId, options = {}) {
     };
     if (photo && check) values.photo = photo;
 
+    const lifeOptions = shelfLives().map(item => ({ value: item.id, label: `${item.name} (−${item.days} d)` }));
+    const compact = Boolean(article) && !check;
+
     openForm({
-        title: check ? 'Upravit záznam' : `Zápis · ${element.name}`,
+        title: check ? 'Upravit záznam'
+            : article ? article.name
+            : `Zápis · ${element.name}`,
         fields: [
-            { name: 'name', label: 'Co to je', type: 'text',
-              placeholder: known ? '' : 'např. Jogurt jahodový 150 g',
-              hint: 'Nechat prázdné je v pořádku – zapíše se podle EAN a název doplníš později.' },
+            ...(compact ? [] : [{ name: 'name', label: 'Co to je', type: 'text',
+                placeholder: known ? '' : 'např. Jogurt jahodový 150 g',
+                hint: 'Nechat prázdné je v pořádku – zapíše se podle EAN a název doplníš později.' }]),
             { name: 'expiry', label: 'Datum spotřeby', type: 'date-quick', required: true,
               hint: source
                 ? `Datum načteno ${source} – radši ho zkontroluj.`
                 : 'Bez data se zápis neuloží – to je hlavní, co při kontrole potřebuješ.' },
+            { name: 'shelfLife', label: 'Trvanlivost – podle ní se počítá sleva', type: 'choice',
+              options: lifeOptions,
+              hint: 'Nastavuje se u artiklu jednou, pak se jen zadává datum.' },
             { type: 'row', fields: [
                 { name: 'pieces', label: 'Kusů', type: 'number' },
-                { name: 'level', label: 'Police', type: 'select', options: levelOptions }
+                ...(compact ? [] : [{ name: 'level', label: 'Police', type: 'select', options: levelOptions }])
             ] },
-            { name: 'ean', label: 'EAN', type: 'text' },
+            ...(compact ? [] : [{ name: 'ean', label: 'EAN', type: 'text' }]),
             { name: 'photo', label: 'Fotka', type: 'photo' },
             { name: 'action', label: 'Co s tím', type: 'select', options: CHECK_ACTIONS },
             { name: 'note', label: 'Poznámka', type: 'text', placeholder: 'např. zadní řada, nahlášeno vedoucí' },
-            ...(check ? [] : [{ name: 'addArticle', label: 'Přidat i mezi artikly tohohle místa', type: 'checkbox' }])
+            ...(check || compact ? [] : [{ name: 'addArticle', label: 'Přidat i mezi artikly tohohle místa', type: 'checkbox' }])
         ],
         values,
         submitLabel: check ? 'Uložit' : 'Zapsat',
         onSave: data => {
-            const name = data.name || (data.ean ? `EAN ${data.ean}` : 'Bez názvu');
+            const name = data.name || (article && article.name)
+                || (data.ean ? `EAN ${data.ean}` : 'Bez názvu');
+            /* V rychlém zápisu se na EAN ani polici neptáme – vezmou se z artiklu. */
             const payload = {
                 elementId,
+                shelfLife: data.shelfLife || '',
                 name,
-                ean: data.ean,
+                ean: data.ean !== undefined ? data.ean : ((article && article.ean) || ''),
                 expiry: data.expiry,
                 pieces: Number(data.pieces) || 0,
-                level: Number(data.level) || 0,
+                level: data.level !== undefined
+                    ? (Number(data.level) || 0)
+                    : ((article && article.level) || 0),
                 action: data.action,
                 note: data.note,
                 photo: data.photo
             };
+
+            if (article && data.shelfLife && article.shelfLife !== data.shelfLife) {
+                syncShelfLife(article, data.shelfLife);
+            }
 
             if (check) {
                 Object.assign(check, payload);
@@ -3565,7 +3723,10 @@ async function checkForm(checkId, options = {}) {
                 DB.checks.unshift(record);
                 scanSession.unshift(record.id);
                 lastSavedId = record.id;
-                if (data.addArticle) addScannedArticle(element, record);
+                if (data.addArticle) {
+                    const added = addScannedArticle(element, record);
+                    if (added && isCheckout(element)) spreadToCheckouts(added, element);
+                }
             }
 
             logEvent(`ukladam zaznam ${name}, celkem ${DB.checks.length}`);
@@ -3594,9 +3755,10 @@ function addScannedArticle(element, record) {
     const existing = record.ean && element.articles.find(a => a.ean === record.ean);
     if (existing) {
         if (record.level) existing.level = record.level;
-        return;
+        if (record.shelfLife) existing.shelfLife = record.shelfLife;
+        return null;
     }
-    element.articles.push({
+    const article = {
         id: uid(),
         name: record.name,
         ean: record.ean,
@@ -3604,8 +3766,11 @@ function addScannedArticle(element, record) {
         shelf: '',
         note: '',
         level: record.level,
+        shelfLife: record.shelfLife || '',
         photo: record.photo || ''
-    });
+    };
+    element.articles.push(article);
+    return article;
 }
 
 /* --- Akce ----------------------------------------------------------------------- */
@@ -3842,6 +4007,20 @@ function fieldHtml(field, values) {
             </div>`;
     }
 
+    if (field.type === 'choice') {
+        return `
+            <div class="field">
+                <label>${esc(field.label)}</label>
+                <div class="chips">
+                    ${field.options.map(option => `
+                        <button type="button" class="chip ${String(value ?? '') === String(option.value) ? 'on' : ''}"
+                                data-choice="${field.name}" data-value="${esc(option.value)}">${esc(option.label)}</button>`).join('')}
+                </div>
+                <input type="hidden" name="${field.name}" value="${esc(value ?? '')}">
+                ${field.hint ? `<div class="field-hint">${esc(field.hint)}</div>` : ''}
+            </div>`;
+    }
+
     if (field.type === 'date-quick') {
         return `
             <div class="field">
@@ -3963,6 +4142,15 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
                     else current.push(chip.dataset.value);
                     holder.value = current.join(',');
                     chip.classList.toggle('on');
+                });
+            });
+
+            modal.querySelectorAll('[data-choice]').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const name = chip.dataset.choice;
+                    form.querySelector(`input[name="${name}"]`).value = chip.dataset.value;
+                    modal.querySelectorAll(`[data-choice="${name}"]`)
+                        .forEach(other => other.classList.toggle('on', other === chip));
                 });
             });
 
@@ -4782,6 +4970,27 @@ function renderSettings() {
         </div>
 
         <div class="card">
+            <h3>🏷️ Slevy podle trvanlivosti</h3>
+            <p class="muted">Kolik dní před koncem spotřeby se na zboží lepí sleva.
+               Uprav si čísla podle pravidel vaší prodejny.</p>
+            <div class="table-scroll">
+                <table class="data">
+                    <thead><tr><th>Trvanlivost</th><th class="num">Slevit … dní předem</th></tr></thead>
+                    <tbody>
+                        ${shelfLives().map(item => `
+                            <tr>
+                                <td>${esc(item.name)}</td>
+                                <td class="num">
+                                    <input type="number" min="0" max="90" style="width: 5rem; text-align: right;"
+                                           data-change="shelf-life" data-id="${item.id}" value="${item.days}">
+                                </td>
+                            </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
             <h3>💾 Záloha dat</h3>
             <p class="muted">Uloženo: ${peopleText(DB.employees.length)}, ${dayCountText(dayCount)} v plánu,
                ${DB.notes.length} poznámek, ${articleCount()} artiklů a ${photoCount()} fotek.
@@ -5227,6 +5436,12 @@ const CHANGES = {
     'setting': (data, input) => { DB.settings[data.key] = input.value; save(); renderHeader(); },
     'shift': (data, input) => { DB.settings[data.shift][data.key] = input.value; save(); },
     'break': (data, input) => { DB.settings.break[data.key] = Number(input.value) || 0; save(); },
+    'shelf-life': (data, input) => {
+        const item = shelfLifeById(data.id);
+        if (!item) return;
+        item.days = Math.max(0, Math.round(Number(input.value) || 0));
+        save();
+    },
     'goods-range': (data, input) => { goodsRange = input.value; render(); },
     'note-search': (data, input) => { noteFilter.text = input.value; renderNotes(); },
     'note-category': (data, input) => { noteFilter.category = input.value; renderNotes(); },
