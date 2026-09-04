@@ -565,7 +565,7 @@ let lastCameraError = '';
 
 async function startCameraScan() {
     if (!hasBarcodeReader()) {
-        alert('Tenhle prohlížeč neumí číst čárové kódy. Použij Chrome na Androidu, nebo zadej EAN ručně.');
+        notify('Tenhle prohlížeč neumí číst čárové kódy. Použij Chrome na Androidu, nebo zadej EAN ručně.', 'Skener');
         return;
     }
 
@@ -756,7 +756,7 @@ function openScannerWindow() {
     logEvent('otviram skener v novem okne');
     const opened = window.open(location.href, '_blank', 'noopener');
     if (!opened) {
-        alert('Prohlížeč nové okno nepustil. Zkus podržet odkaz na stránku a dát „Otevřít v novém panelu".');
+        notify('Prohlížeč nové okno nepustil. Zkus podržet odkaz na stránku a dát „Otevřít v novém panelu".', 'Nové okno');
         return;
     }
     toast('Skenuj v novém okně, zápisy se přenesou zpátky');
@@ -987,13 +987,14 @@ function runScanAction(action, data) {
             const element = mapElementById(scanPlace);
             const article = element && element.articles.find(a => a.id === data.id);
             if (!article) return;
-            if (!confirm(`Odebrat „${article.name}" z košíku tohohle místa?`)) return;
-            pushMapUndo();
-            element.articles = element.articles.filter(a => a.id !== data.id);
-            save();
-            logEvent(`odebran artikl ${article.name}`);
-            renderScan(element.id);
-            toast('Odebráno z košíku');
+            confirmAction(`Odebrat „${article.name}" z košíku tohohle místa?`, () => {
+                pushMapUndo();
+                element.articles = element.articles.filter(a => a.id !== data.id);
+                save();
+                logEvent(`odebran artikl ${article.name}`);
+                renderScan(element.id);
+                toast('Odebráno z košíku');
+            }, { yes: 'Odebrat' });
             break;
         }
         case 'basket-add':
@@ -1009,12 +1010,13 @@ function runScanAction(action, data) {
             break;
         }
         case 'basket-copy-all': {
-            if (!confirm('Doplnit zboží z celé prodejny do košíku všech pokladen?')) return;
-            let total = 0;
-            checkoutElements().forEach(checkout => { total += copyArticlesInto(checkout); });
-            save();
-            renderScan(scanPlace);
-            toast(`Na pokladny doplněno ${articleText(total)}`);
+            confirmAction('Doplnit zboží z celé prodejny do košíku všech pokladen?', () => {
+                let total = 0;
+                checkoutElements().forEach(checkout => { total += copyArticlesInto(checkout); });
+                save();
+                renderScan(scanPlace);
+                toast(`Na pokladny doplněno ${articleText(total)}`);
+            }, { safe: true, yes: 'Doplnit' });
             break;
         }
         case 'photo-scan':
@@ -1030,13 +1032,14 @@ function runScanAction(action, data) {
         case 'delete': {
             const check = DB.checks.find(c => c.id === data.id);
             if (!check) return;
-            if (!confirm(`Smazat zápis „${check.name}"?`)) return;
-            DB.checks = DB.checks.filter(c => c.id !== data.id);
-            scanSession = scanSession.filter(id => id !== data.id);
-            save();
-            logEvent(`smazan zaznam ${check.name}`);
-            if (currentRoute().name === 'data') renderChecks(); else renderScan(scanPlace);
-            toast('Zápis smazán');
+            confirmAction(`Smazat zápis „${check.name}"?`, () => {
+                DB.checks = DB.checks.filter(c => c.id !== data.id);
+                scanSession = scanSession.filter(id => id !== data.id);
+                save();
+                logEvent(`smazan zaznam ${check.name}`);
+                if (currentRoute().name === 'data') renderChecks(); else renderScan(scanPlace);
+                toast('Zápis smazán');
+            }, { yes: 'Smazat' });
             break;
         }
         case 'toggle-done': {

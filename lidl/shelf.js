@@ -245,13 +245,16 @@ function runShelfAction(action, element, data) {
             const total = levelsOf(element);
             if (total <= 1) return;
             const orphans = articlesOnLevel(element, total);
-            if (orphans.length && !confirm(
-                `Na poslední polici je ${articleText(orphans.length)}. Přesunou se mezi nezařazené. Pokračovat?`)) return;
-            pushMapUndo();
-            orphans.forEach(article => { article.level = 0; });
-            element.levels = total - 1;
-            save();
-            back();
+            const removeLevel = () => {
+                pushMapUndo();
+                orphans.forEach(article => { article.level = 0; });
+                element.levels = total - 1;
+                save();
+                back();
+            };
+            if (!orphans.length) { removeLevel(); break; }
+            confirmAction(`Na poslední polici je ${articleText(orphans.length)}. Přesunou se mezi nezařazené.`,
+                removeLevel, { safe: true, yes: 'Ubrat polici' });
             break;
         }
         case 'add':

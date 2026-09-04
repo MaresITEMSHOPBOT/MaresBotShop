@@ -927,6 +927,10 @@ table.data td.num, table.data th.num { text-align: right; }
 }
 .basket-remove:hover { color: var(--danger); }
 
+.confirm-layer { z-index: 150; align-items: center; padding: 1rem; }
+.confirm-box { max-width: 380px; border-radius: 16px; }
+.confirm-box h3 { font-size: 1.05rem; margin-bottom: 0.4rem; }
+
 /* Systémový tmavý režim (bez explicitní volby) – generováno build skriptem. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -978,7 +982,7 @@ table.data td.num, table.data th.num { text-align: right; }
    ========================================================================== */
 
 const STORAGE_KEY = 'lidl-vedeni-smeny';
-const APP_BUILD = '2026-09-04 15:15';   /* doplní build skript – ať je poznat, jaká verze běží */
+const APP_BUILD = '2026-09-04 15:27';   /* doplní build skript – ať je poznat, jaká verze běží */
 const SCHEMA_VERSION = 1;
 
 /* --- Číselníky ------------------------------------------------------------ */
@@ -1387,7 +1391,8 @@ function save() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
         return true;
     } catch (err) {
-        alert('Data se nepodařilo uložit – paměť prohlížeče je plná (nejspíš kvůli fotkám). Stáhni si zálohu v Nastavení a část fotek smaž.');
+        const message = 'Data se nepodařilo uložit – paměť prohlížeče je plná (nejspíš kvůli fotkám). Stáhni si zálohu v Nastavení a část fotek smaž.';
+        if (typeof notify === 'function') notify(message, 'Plná paměť'); else alert(message);
         return false;
     }
 }
@@ -2520,12 +2525,13 @@ function runMapAction(action, data) {
         }
         case 'delete-el':
             if (!element) return;
-            if (!confirm(`Smazat prvek „${element.name}“ i s artikly?`)) return;
-            pushMapUndo();
-            DB.map.elements = DB.map.elements.filter(e => e.id !== element.id);
-            mapSelected = null;
-            save();
-            renderMap();
+            confirmAction(`Smazat prvek „${element.name}“ i s artikly?`, () => {
+                pushMapUndo();
+                DB.map.elements = DB.map.elements.filter(e => e.id !== element.id);
+                mapSelected = null;
+                save();
+                renderMap();
+            }, { yes: 'Smazat' });
             break;
         case 'detail':
             if (element) go(`#/regal/${element.id}`);
@@ -2546,13 +2552,14 @@ function runMapAction(action, data) {
             go(`#/regal/${data.elId}`);
             break;
         case 'reset-map':
-            if (!confirm('Vrátit plán do výchozí podoby? Přijdeš o své úpravy i o zapsané artikly.')) return;
-            pushMapUndo();
-            DB.map = defaultMap();
-            mapSelected = null;
-            save();
-            renderMap();
-            toast('Plán vrácen na výchozí');
+            confirmAction('Vrátit plán do výchozí podoby? Přijdeš o své úpravy i o zapsané artikly.', () => {
+                pushMapUndo();
+                DB.map = defaultMap();
+                mapSelected = null;
+                save();
+                renderMap();
+                toast('Plán vrácen na výchozí');
+            }, { yes: 'Vrátit výchozí' });
             break;
     }
 }
@@ -2826,13 +2833,16 @@ function runShelfAction(action, element, data) {
             const total = levelsOf(element);
             if (total <= 1) return;
             const orphans = articlesOnLevel(element, total);
-            if (orphans.length && !confirm(
-                `Na poslední polici je ${articleText(orphans.length)}. Přesunou se mezi nezařazené. Pokračovat?`)) return;
-            pushMapUndo();
-            orphans.forEach(article => { article.level = 0; });
-            element.levels = total - 1;
-            save();
-            back();
+            const removeLevel = () => {
+                pushMapUndo();
+                orphans.forEach(article => { article.level = 0; });
+                element.levels = total - 1;
+                save();
+                back();
+            };
+            if (!orphans.length) { removeLevel(); break; }
+            confirmAction(`Na poslední polici je ${articleText(orphans.length)}. Přesunou se mezi nezařazené.`,
+                removeLevel, { safe: true, yes: 'Ubrat polici' });
             break;
         }
         case 'add':
@@ -3427,7 +3437,7 @@ let lastCameraError = '';
 
 async function startCameraScan() {
     if (!hasBarcodeReader()) {
-        alert('Tenhle prohlížeč neumí číst čárové kódy. Použij Chrome na Androidu, nebo zadej EAN ručně.');
+        notify('Tenhle prohlížeč neumí číst čárové kódy. Použij Chrome na Androidu, nebo zadej EAN ručně.', 'Skener');
         return;
     }
 
@@ -3618,7 +3628,7 @@ function openScannerWindow() {
     logEvent('otviram skener v novem okne');
     const opened = window.open(location.href, '_blank', 'noopener');
     if (!opened) {
-        alert('Prohlížeč nové okno nepustil. Zkus podržet odkaz na stránku a dát „Otevřít v novém panelu".');
+        notify('Prohlížeč nové okno nepustil. Zkus podržet odkaz na stránku a dát „Otevřít v novém panelu".', 'Nové okno');
         return;
     }
     toast('Skenuj v novém okně, zápisy se přenesou zpátky');
@@ -3849,13 +3859,14 @@ function runScanAction(action, data) {
             const element = mapElementById(scanPlace);
             const article = element && element.articles.find(a => a.id === data.id);
             if (!article) return;
-            if (!confirm(`Odebrat „${article.name}" z košíku tohohle místa?`)) return;
-            pushMapUndo();
-            element.articles = element.articles.filter(a => a.id !== data.id);
-            save();
-            logEvent(`odebran artikl ${article.name}`);
-            renderScan(element.id);
-            toast('Odebráno z košíku');
+            confirmAction(`Odebrat „${article.name}" z košíku tohohle místa?`, () => {
+                pushMapUndo();
+                element.articles = element.articles.filter(a => a.id !== data.id);
+                save();
+                logEvent(`odebran artikl ${article.name}`);
+                renderScan(element.id);
+                toast('Odebráno z košíku');
+            }, { yes: 'Odebrat' });
             break;
         }
         case 'basket-add':
@@ -3871,12 +3882,13 @@ function runScanAction(action, data) {
             break;
         }
         case 'basket-copy-all': {
-            if (!confirm('Doplnit zboží z celé prodejny do košíku všech pokladen?')) return;
-            let total = 0;
-            checkoutElements().forEach(checkout => { total += copyArticlesInto(checkout); });
-            save();
-            renderScan(scanPlace);
-            toast(`Na pokladny doplněno ${articleText(total)}`);
+            confirmAction('Doplnit zboží z celé prodejny do košíku všech pokladen?', () => {
+                let total = 0;
+                checkoutElements().forEach(checkout => { total += copyArticlesInto(checkout); });
+                save();
+                renderScan(scanPlace);
+                toast(`Na pokladny doplněno ${articleText(total)}`);
+            }, { safe: true, yes: 'Doplnit' });
             break;
         }
         case 'photo-scan':
@@ -3892,13 +3904,14 @@ function runScanAction(action, data) {
         case 'delete': {
             const check = DB.checks.find(c => c.id === data.id);
             if (!check) return;
-            if (!confirm(`Smazat zápis „${check.name}"?`)) return;
-            DB.checks = DB.checks.filter(c => c.id !== data.id);
-            scanSession = scanSession.filter(id => id !== data.id);
-            save();
-            logEvent(`smazan zaznam ${check.name}`);
-            if (currentRoute().name === 'data') renderChecks(); else renderScan(scanPlace);
-            toast('Zápis smazán');
+            confirmAction(`Smazat zápis „${check.name}"?`, () => {
+                DB.checks = DB.checks.filter(c => c.id !== data.id);
+                scanSession = scanSession.filter(id => id !== data.id);
+                save();
+                logEvent(`smazan zaznam ${check.name}`);
+                if (currentRoute().name === 'data') renderChecks(); else renderScan(scanPlace);
+                toast('Zápis smazán');
+            }, { yes: 'Smazat' });
             break;
         }
         case 'toggle-done': {
@@ -4030,6 +4043,43 @@ function openModal({ title, bodyHtml, actionsHtml, onMount }) {
 document.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeModal();
 });
+
+/* Vlastní potvrzení a oznámení. Systémové confirm/alert v zapouzdřené
+   stránce (desktopová appka, vložený rám) tiše nefungují – confirm rovnou
+   vrátí „ne" a alert se neukáže, takže by tlačítka vypadala jako mrtvá. */
+function confirmAction(message, onYes, options = {}) {
+    const layer = document.createElement('div');
+    layer.className = 'modal-backdrop confirm-layer';
+    layer.innerHTML = `
+        <div class="modal confirm-box">
+            <h3>${esc(options.title || 'Opravdu?')}</h3>
+            <p class="muted">${esc(message)}</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" data-confirm-no>Zrušit</button>
+                <button class="${options.safe ? 'btn' : 'btn-danger'}" data-confirm-yes>${esc(options.yes || 'Ano')}</button>
+            </div>
+        </div>`;
+    modalRoot.appendChild(layer);
+    layer.querySelector('[data-confirm-no]').addEventListener('click', () => layer.remove());
+    layer.querySelector('[data-confirm-yes]').addEventListener('click', () => {
+        layer.remove();
+        onYes();
+    });
+    layer.addEventListener('click', event => { if (event.target === layer) layer.remove(); });
+}
+
+function notify(message, title) {
+    const layer = document.createElement('div');
+    layer.className = 'modal-backdrop confirm-layer';
+    layer.innerHTML = `
+        <div class="modal confirm-box">
+            <h3>${esc(title || 'Poznámka')}</h3>
+            <p class="muted">${esc(message)}</p>
+            <div class="modal-actions"><button class="btn" data-confirm-no>Rozumím</button></div>
+        </div>`;
+    modalRoot.appendChild(layer);
+    layer.querySelector('[data-confirm-no]').addEventListener('click', () => layer.remove());
+}
 
 /* --- Generátor formulářů --------------------------------------------------
    Pole: {name, label, type, options, hint, required, placeholder}
@@ -4190,6 +4240,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
             <button type="button" class="btn" data-form-submit>${esc(submitLabel)}</button>`,
         onMount: modal => {
             const form = modal.querySelector('#modal-form');
+            logEvent(`otevren formular: ${title}`);
 
             modal.querySelectorAll('[data-chip]').forEach(chip => {
                 chip.addEventListener('click', () => {
@@ -4236,7 +4287,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
                     } catch (err) {
                         preview.classList.add('empty');
                         preview.innerHTML = '<span>nepovedlo se</span>';
-                        alert(err.message);
+                        notify(err.message, 'Fotka');
                     }
                     input.value = '';
                 });
@@ -4263,7 +4314,8 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
             modal.querySelector('[data-close-modal-2]').addEventListener('click', closeModal);
             const deleteBtn = modal.querySelector('[data-form-delete]');
             if (deleteBtn) deleteBtn.addEventListener('click', () => {
-                if (confirm('Opravdu smazat? Tuhle akci nelze vrátit zpět.')) { closeModal(); onDelete(); }
+                confirmAction('Opravdu smazat? Tuhle akci nelze vrátit zpět.',
+                    () => { closeModal(); onDelete(); }, { yes: 'Smazat' });
             });
 
             form.addEventListener('submit', event => {
@@ -5108,7 +5160,7 @@ function entryForm(iso, entryId) {
     const morning = DB.settings.morningShift;
 
     if (!activeEmployees().length) {
-        alert('Nejdřív přidej lidi v sekci Tým.');
+        notify('Nejdřív přidej lidi v sekci Tým.');
         return;
     }
 
@@ -5323,7 +5375,7 @@ function copyDayForm(iso) {
         submitLabel: 'Zkopírovat',
         onSave: data => {
             const source = getDay(data.source);
-            if (!source.entries.length) { alert('Ve zdrojovém dni nikdo naplánovaný není.'); return; }
+            if (!source.entries.length) { notify('Ve zdrojovém dni nikdo naplánovaný není.'); return; }
             const target = ensureDay(iso);
             source.entries.forEach(entry => target.entries.push({ ...entry, id: uid() }));
             persist(`Zkopírováno: ${peopleText(source.entries.length)}`);
@@ -5343,7 +5395,7 @@ function copyWeek() {
         if (from.leaderId && !target.leaderId) target.leaderId = from.leaderId;
         if (from.leaderPmId && !target.leaderPmId) target.leaderPmId = from.leaderPmId;
     });
-    if (!copied) { alert('Z minulého týdne není co kopírovat (nebo už je tenhle týden naplánovaný).'); return; }
+    if (!copied) { notify('Z minulého týdne není co kopírovat (nebo už je tenhle týden naplánovaný).'); return; }
     persist(`Zkopírováno ${copied} směn`);
 }
 
@@ -5360,7 +5412,7 @@ async function exportData() {
             const result = await downloads.save({ filename, data });
             if (result.status === 'saved') toast('Záloha stažena');
         } catch (err) {
-            if (err.code !== 'declined') alert('Zálohu se nepodařilo stáhnout: ' + (err.message || err.code));
+            if (err.code !== 'declined') notify('Zálohu se nepodařilo stáhnout: ' + (err.message || err.code), 'Záloha');
         }
         return;
     }
@@ -5395,7 +5447,7 @@ function importData() {
                         toast('Záloha načtena');
                         render();
                     } catch {
-                        alert('Soubor se nepodařilo přečíst – není to platná záloha.');
+                        notify('Soubor se nepodařilo přečíst – není to platná záloha.', 'Záloha');
                     }
                 };
                 reader.readAsText(file);
@@ -5413,7 +5465,8 @@ const ACTIONS = {
     'week-prev': () => { planWeek = addDays(planWeek, -7); render(); },
     'week-next': () => { planWeek = addDays(planWeek, 7); render(); },
     'week-today': () => { planWeek = weekStart(todayISO()); render(); },
-    'copy-week': () => { if (confirm('Zkopírovat plán z minulého týdne do dnů, které jsou prázdné?')) copyWeek(); },
+    'copy-week': () => confirmAction('Zkopírovat plán z minulého týdne do dnů, které jsou prázdné?',
+        copyWeek, { safe: true, yes: 'Zkopírovat' }),
     'print': () => window.print(),
     'add-entry': data => entryForm(data.date),
     'edit-entry': data => entryForm(data.date, data.id),
@@ -5442,11 +5495,13 @@ const ACTIONS = {
     'export': exportData,
     'import': importData,
     'reset': () => {
-        if (!confirm('Opravdu smazat všechna data? Nejdřív si radši stáhni zálohu.')) return;
-        if (!confirm('Fakt to chceš smazat? Tohle vrátit nejde.')) return;
-        replaceDb(null);
-        toast('Data smazána');
-        render();
+        confirmAction('Opravdu smazat všechna data? Nejdřív si radši stáhni zálohu.', () => {
+            confirmAction('Fakt to chceš smazat? Tohle vrátit nejde.', () => {
+                replaceDb(null);
+                toast('Data smazána');
+                render();
+            }, { yes: 'Smazat všechno' });
+        }, { yes: 'Pokračovat' });
     }
 };
 
@@ -5546,6 +5601,15 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 });
 
 window.addEventListener('hashchange', render);
+
+/* Každou chybu si poznamenáme – v účtu je pak vidět, co se na telefonu stalo. */
+window.addEventListener('error', event => {
+    logEvent(`CHYBA: ${event.message} (${String(event.filename || '').slice(-24)}:${event.lineno})`);
+});
+window.addEventListener('unhandledrejection', event => {
+    const reason = event.reason;
+    logEvent(`CHYBA slibu: ${(reason && (reason.message || reason.code)) || reason}`);
+});
 
 function boot() {
     logEvent(`start, verze ${APP_BUILD}`);

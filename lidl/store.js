@@ -413,7 +413,8 @@ function save() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
         return true;
     } catch (err) {
-        alert('Data se nepodařilo uložit – paměť prohlížeče je plná (nejspíš kvůli fotkám). Stáhni si zálohu v Nastavení a část fotek smaž.');
+        const message = 'Data se nepodařilo uložit – paměť prohlížeče je plná (nejspíš kvůli fotkám). Stáhni si zálohu v Nastavení a část fotek smaž.';
+        if (typeof notify === 'function') notify(message, 'Plná paměť'); else alert(message);
         return false;
     }
 }

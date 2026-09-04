@@ -916,3 +916,7 @@ table.data td.num, table.data th.num { text-align: right; }
     padding: 0.2rem 0.4rem;
 }
 .basket-remove:hover { color: var(--danger); }
+
+.confirm-layer { z-index: 150; align-items: center; padding: 1rem; }
+.confirm-box { max-width: 380px; border-radius: 16px; }
+.confirm-box h3 { font-size: 1.05rem; margin-bottom: 0.4rem; }

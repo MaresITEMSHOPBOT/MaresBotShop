@@ -599,12 +599,13 @@ function runMapAction(action, data) {
         }
         case 'delete-el':
             if (!element) return;
-            if (!confirm(`Smazat prvek „${element.name}“ i s artikly?`)) return;
-            pushMapUndo();
-            DB.map.elements = DB.map.elements.filter(e => e.id !== element.id);
-            mapSelected = null;
-            save();
-            renderMap();
+            confirmAction(`Smazat prvek „${element.name}“ i s artikly?`, () => {
+                pushMapUndo();
+                DB.map.elements = DB.map.elements.filter(e => e.id !== element.id);
+                mapSelected = null;
+                save();
+                renderMap();
+            }, { yes: 'Smazat' });
             break;
         case 'detail':
             if (element) go(`#/regal/${element.id}`);
@@ -625,13 +626,14 @@ function runMapAction(action, data) {
             go(`#/regal/${data.elId}`);
             break;
         case 'reset-map':
-            if (!confirm('Vrátit plán do výchozí podoby? Přijdeš o své úpravy i o zapsané artikly.')) return;
-            pushMapUndo();
-            DB.map = defaultMap();
-            mapSelected = null;
-            save();
-            renderMap();
-            toast('Plán vrácen na výchozí');
+            confirmAction('Vrátit plán do výchozí podoby? Přijdeš o své úpravy i o zapsané artikly.', () => {
+                pushMapUndo();
+                DB.map = defaultMap();
+                mapSelected = null;
+                save();
+                renderMap();
+                toast('Plán vrácen na výchozí');
+            }, { yes: 'Vrátit výchozí' });
             break;
     }
 }

@@ -99,6 +99,43 @@ document.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeModal();
 });
 
+/* Vlastní potvrzení a oznámení. Systémové confirm/alert v zapouzdřené
+   stránce (desktopová appka, vložený rám) tiše nefungují – confirm rovnou
+   vrátí „ne" a alert se neukáže, takže by tlačítka vypadala jako mrtvá. */
+function confirmAction(message, onYes, options = {}) {
+    const layer = document.createElement('div');
+    layer.className = 'modal-backdrop confirm-layer';
+    layer.innerHTML = `
+        <div class="modal confirm-box">
+            <h3>${esc(options.title || 'Opravdu?')}</h3>
+            <p class="muted">${esc(message)}</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" data-confirm-no>Zrušit</button>
+                <button class="${options.safe ? 'btn' : 'btn-danger'}" data-confirm-yes>${esc(options.yes || 'Ano')}</button>
+            </div>
+        </div>`;
+    modalRoot.appendChild(layer);
+    layer.querySelector('[data-confirm-no]').addEventListener('click', () => layer.remove());
+    layer.querySelector('[data-confirm-yes]').addEventListener('click', () => {
+        layer.remove();
+        onYes();
+    });
+    layer.addEventListener('click', event => { if (event.target === layer) layer.remove(); });
+}
+
+function notify(message, title) {
+    const layer = document.createElement('div');
+    layer.className = 'modal-backdrop confirm-layer';
+    layer.innerHTML = `
+        <div class="modal confirm-box">
+            <h3>${esc(title || 'Poznámka')}</h3>
+            <p class="muted">${esc(message)}</p>
+            <div class="modal-actions"><button class="btn" data-confirm-no>Rozumím</button></div>
+        </div>`;
+    modalRoot.appendChild(layer);
+    layer.querySelector('[data-confirm-no]').addEventListener('click', () => layer.remove());
+}
+
 /* --- Generátor formulářů --------------------------------------------------
    Pole: {name, label, type, options, hint, required, placeholder}
    Typy: text | number | time | date | textarea | select | checkbox | chips | row
@@ -258,6 +295,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
             <button type="button" class="btn" data-form-submit>${esc(submitLabel)}</button>`,
         onMount: modal => {
             const form = modal.querySelector('#modal-form');
+            logEvent(`otevren formular: ${title}`);
 
             modal.querySelectorAll('[data-chip]').forEach(chip => {
                 chip.addEventListener('click', () => {
@@ -304,7 +342,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
                     } catch (err) {
                         preview.classList.add('empty');
                         preview.innerHTML = '<span>nepovedlo se</span>';
-                        alert(err.message);
+                        notify(err.message, 'Fotka');
                     }
                     input.value = '';
                 });
@@ -331,7 +369,8 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
             modal.querySelector('[data-close-modal-2]').addEventListener('click', closeModal);
             const deleteBtn = modal.querySelector('[data-form-delete]');
             if (deleteBtn) deleteBtn.addEventListener('click', () => {
-                if (confirm('Opravdu smazat? Tuhle akci nelze vrátit zpět.')) { closeModal(); onDelete(); }
+                confirmAction('Opravdu smazat? Tuhle akci nelze vrátit zpět.',
+                    () => { closeModal(); onDelete(); }, { yes: 'Smazat' });
             });
 
             form.addEventListener('submit', event => {
@@ -1176,7 +1215,7 @@ function entryForm(iso, entryId) {
     const morning = DB.settings.morningShift;
 
     if (!activeEmployees().length) {
-        alert('Nejdřív přidej lidi v sekci Tým.');
+        notify('Nejdřív přidej lidi v sekci Tým.');
         return;
     }
 
@@ -1391,7 +1430,7 @@ function copyDayForm(iso) {
         submitLabel: 'Zkopírovat',
         onSave: data => {
             const source = getDay(data.source);
-            if (!source.entries.length) { alert('Ve zdrojovém dni nikdo naplánovaný není.'); return; }
+            if (!source.entries.length) { notify('Ve zdrojovém dni nikdo naplánovaný není.'); return; }
             const target = ensureDay(iso);
             source.entries.forEach(entry => target.entries.push({ ...entry, id: uid() }));
             persist(`Zkopírováno: ${peopleText(source.entries.length)}`);
@@ -1411,7 +1450,7 @@ function copyWeek() {
         if (from.leaderId && !target.leaderId) target.leaderId = from.leaderId;
         if (from.leaderPmId && !target.leaderPmId) target.leaderPmId = from.leaderPmId;
     });
-    if (!copied) { alert('Z minulého týdne není co kopírovat (nebo už je tenhle týden naplánovaný).'); return; }
+    if (!copied) { notify('Z minulého týdne není co kopírovat (nebo už je tenhle týden naplánovaný).'); return; }
     persist(`Zkopírováno ${copied} směn`);
 }
 
@@ -1428,7 +1467,7 @@ async function exportData() {
             const result = await downloads.save({ filename, data });
             if (result.status === 'saved') toast('Záloha stažena');
         } catch (err) {
-            if (err.code !== 'declined') alert('Zálohu se nepodařilo stáhnout: ' + (err.message || err.code));
+            if (err.code !== 'declined') notify('Zálohu se nepodařilo stáhnout: ' + (err.message || err.code), 'Záloha');
         }
         return;
     }
@@ -1463,7 +1502,7 @@ function importData() {
                         toast('Záloha načtena');
                         render();
                     } catch {
-                        alert('Soubor se nepodařilo přečíst – není to platná záloha.');
+                        notify('Soubor se nepodařilo přečíst – není to platná záloha.', 'Záloha');
                     }
                 };
                 reader.readAsText(file);
@@ -1481,7 +1520,8 @@ const ACTIONS = {
     'week-prev': () => { planWeek = addDays(planWeek, -7); render(); },
     'week-next': () => { planWeek = addDays(planWeek, 7); render(); },
     'week-today': () => { planWeek = weekStart(todayISO()); render(); },
-    'copy-week': () => { if (confirm('Zkopírovat plán z minulého týdne do dnů, které jsou prázdné?')) copyWeek(); },
+    'copy-week': () => confirmAction('Zkopírovat plán z minulého týdne do dnů, které jsou prázdné?',
+        copyWeek, { safe: true, yes: 'Zkopírovat' }),
     'print': () => window.print(),
     'add-entry': data => entryForm(data.date),
     'edit-entry': data => entryForm(data.date, data.id),
@@ -1510,11 +1550,13 @@ const ACTIONS = {
     'export': exportData,
     'import': importData,
     'reset': () => {
-        if (!confirm('Opravdu smazat všechna data? Nejdřív si radši stáhni zálohu.')) return;
-        if (!confirm('Fakt to chceš smazat? Tohle vrátit nejde.')) return;
-        replaceDb(null);
-        toast('Data smazána');
-        render();
+        confirmAction('Opravdu smazat všechna data? Nejdřív si radši stáhni zálohu.', () => {
+            confirmAction('Fakt to chceš smazat? Tohle vrátit nejde.', () => {
+                replaceDb(null);
+                toast('Data smazána');
+                render();
+            }, { yes: 'Smazat všechno' });
+        }, { yes: 'Pokračovat' });
     }
 };
 
@@ -1614,6 +1656,15 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 });
 
 window.addEventListener('hashchange', render);
+
+/* Každou chybu si poznamenáme – v účtu je pak vidět, co se na telefonu stalo. */
+window.addEventListener('error', event => {
+    logEvent(`CHYBA: ${event.message} (${String(event.filename || '').slice(-24)}:${event.lineno})`);
+});
+window.addEventListener('unhandledrejection', event => {
+    const reason = event.reason;
+    logEvent(`CHYBA slibu: ${(reason && (reason.message || reason.code)) || reason}`);
+});
 
 function boot() {
     logEvent(`start, verze ${APP_BUILD}`);
