@@ -501,8 +501,9 @@ async function checkForm(checkId, ean, photo, fromCamera) {
     openForm({
         title: check ? 'Upravit záznam' : `Zápis · ${element.name}`,
         fields: [
-            { name: 'name', label: 'Co to je', type: 'text', required: true,
-              placeholder: known ? '' : 'např. Jogurt jahodový 150 g' },
+            { name: 'name', label: 'Co to je', type: 'text',
+              placeholder: known ? '' : 'např. Jogurt jahodový 150 g',
+              hint: 'Nechat prázdné je v pořádku – zapíše se podle EAN a název doplníš později.' },
             { name: 'expiry', label: 'Datum spotřeby', type: 'date-quick' },
             { type: 'row', fields: [
                 { name: 'pieces', label: 'Kusů', type: 'number' },
@@ -517,10 +518,10 @@ async function checkForm(checkId, ean, photo, fromCamera) {
         values,
         submitLabel: check ? 'Uložit' : 'Zapsat',
         onSave: data => {
-            if (!data.name) return;
+            const name = data.name || (data.ean ? `EAN ${data.ean}` : 'Bez názvu');
             const payload = {
                 elementId,
-                name: data.name,
+                name,
                 ean: data.ean,
                 expiry: data.expiry,
                 pieces: Number(data.pieces) || 0,

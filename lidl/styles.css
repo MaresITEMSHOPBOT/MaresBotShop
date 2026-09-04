@@ -844,3 +844,6 @@ table.data td.num, table.data th.num { text-align: right; }
 
 .scan-hint { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; }
 .scan-hint.bad { color: var(--danger); font-weight: 600; }
+
+.field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--danger); }
+.field-error { font-size: 0.8rem; color: var(--danger); font-weight: 600; margin-top: 0.25rem; }

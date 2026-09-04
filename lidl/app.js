@@ -205,10 +205,38 @@ function readForm(form, fields) {
     return result;
 }
 
+/* Formulář kontrolujeme sami – prohlížeč umí odeslání zablokovat tak,
+   že to uvnitř okna není vidět a tlačítko vypadá jako nefunkční. */
+function validateForm(form) {
+    form.querySelectorAll('.field-error').forEach(node => node.remove());
+    form.querySelectorAll('.field.invalid').forEach(node => node.classList.remove('invalid'));
+
+    const broken = [...form.elements].find(element => element.willValidate && !element.checkValidity());
+    if (!broken) return true;
+
+    const field = broken.closest('.field') || broken.parentElement;
+    field.classList.add('invalid');
+    const message = document.createElement('div');
+    message.className = 'field-error';
+    message.textContent = broken.validity.valueMissing
+        ? 'Tohle je potřeba vyplnit.'
+        : broken.validationMessage || 'Zkontroluj prosím zadanou hodnotu.';
+    field.appendChild(message);
+
+    field.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    broken.focus({ preventScroll: true });
+    broken.addEventListener('input', () => {
+        field.classList.remove('invalid');
+        const note = field.querySelector('.field-error');
+        if (note) note.remove();
+    }, { once: true });
+    return false;
+}
+
 function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave, onDelete, deleteLabel = 'Smazat' }) {
     openModal({
         title,
-        bodyHtml: `<form id="modal-form">${fields.map(f => fieldHtml(f, values)).join('')}</form>`,
+        bodyHtml: `<form id="modal-form" novalidate>${fields.map(f => fieldHtml(f, values)).join('')}</form>`,
         actionsHtml: `
             ${onDelete ? `<button type="button" class="btn-danger" data-form-delete>${esc(deleteLabel)}</button>` : ''}
             <button type="button" class="btn-secondary" data-close-modal-2>Zrušit</button>
@@ -276,6 +304,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
 
             form.addEventListener('submit', event => {
                 event.preventDefault();
+                if (!validateForm(form)) return;
                 const data = readForm(form, fields);
                 closeModal();
                 onSave(data);
