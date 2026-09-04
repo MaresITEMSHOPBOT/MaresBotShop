@@ -296,8 +296,11 @@ function renderScan(elementId) {
             </button>
             ${reader && blocked ? `<button class="btn-secondary scan-big" data-scan-action="camera">
                 🎥 Zkusit znovu kameru</button>` : ''}
-            ${blocked ? `<div class="field-hint">Živou kameru tenhle prohlížeč stránce nepustil.
-                Focení funguje pořád – vyfoť čárový kód zblízka, přečte se z fotky a fotka zůstane u záznamu.</div>` : ''}
+            ${blocked ? `
+                <button class="btn-secondary scan-big" data-scan-action="new-window">↗️ Skener v novém okně</button>
+                <div class="field-hint">Živou kameru tenhle prohlížeč stránce uvnitř Claude nepustil.
+                Focení funguje pořád. V novém okně appka běží samostatně a kameru většinou dostane –
+                zápisy se uloží do telefonu a při dalším otevření se samy přenesou do účtu.</div>` : ''}
 
             <form class="scan-manual" data-scan-form>
                 <input type="text" inputmode="numeric" autocomplete="off" placeholder="Nebo napiš EAN"
@@ -329,13 +332,14 @@ function renderScan(elementId) {
     logEvent(`skenovani: ${element.name}`);
     const form = view.querySelector('[data-scan-form]');
     const input = view.querySelector('[data-scan-input]');
-    form.addEventListener('submit', event => {
+    form.addEventListener('submit', async event => {
         event.preventDefault();
         const code = input.value.trim();
         input.value = '';
         /* I prázdné pole otevře zápis – tlačítko nikdy nesmí být slepé. */
         logEvent(code ? `zadan kod ${code}` : 'zapis bez kodu');
-        checkForm(null, code);
+        const details = code ? await detailsFromCode(code, null) : {};
+        checkForm(null, details);
     });
     input.focus();
 
@@ -357,15 +361,17 @@ function renderScan(elementId) {
    -------------------------------------------------------------------------- */
 
 function toCanvas(source, { crop = 1, scale = 1, contrast = 1 } = {}) {
-    const width = source.width * crop;
-    const height = source.height * crop;
+    const sourceWidth = source.videoWidth || source.width;
+    const sourceHeight = source.videoHeight || source.height;
+    const width = sourceWidth * crop;
+    const height = sourceHeight * crop;
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale);
     canvas.height = Math.round(height * scale);
 
     const ctx = canvas.getContext('2d', { willReadFrequently: contrast !== 1 });
     ctx.drawImage(source,
-        (source.width - width) / 2, (source.height - height) / 2, width, height,
+        (sourceWidth - width) / 2, (sourceHeight - height) / 2, width, height,
         0, 0, canvas.width, canvas.height);
 
     if (contrast !== 1) {
@@ -405,6 +411,31 @@ async function decodeImage(file) {
     return null;
 }
 
+/* Text z obrázku – umí ho jen prohlížeč se čtečkou písma. Zkoušíme
+   i zvětšenou a kontrastnější podobu, drobné datum bývá jinak nečitelné. */
+function hasTextReader() {
+    return typeof window.TextDetector === 'function';
+}
+
+async function readDate(source) {
+    if (!hasTextReader()) return '';
+    const detector = new window.TextDetector();
+    const attempts = [null, { scale: 2, contrast: 1.6 }, { crop: 0.6, scale: 3, contrast: 2 }];
+
+    for (const options of attempts) {
+        try {
+            const image = options ? toCanvas(source, options) : source;
+            const blocks = await detector.detect(image);
+            const text = blocks.map(block => block.rawValue).join(' ');
+            const date = findDateInText(text);
+            if (date) return date;
+        } catch (err) {
+            console.warn('Čtení textu selhalo', err);
+        }
+    }
+    return '';
+}
+
 /* Kód z vyfoceného obrázku; fotku si rovnou necháme k záznamu. */
 async function readCodeFromPhoto(file) {
     toast('Čtu kód z fotky…');
@@ -412,18 +443,41 @@ async function readCodeFromPhoto(file) {
 
     if (!hasBarcodeReader()) {
         toast('Tenhle prohlížeč kódy číst neumí – EAN doplň ručně');
-        checkForm(null, '', photo);
+        checkForm(null, { photo });
         return;
     }
 
     const code = await decodeImage(file).catch(() => null);
+    const details = await detailsFromCode(code, file);
+
     if (code) {
         navigator.vibrate?.(60);
-        toast(`Načteno ${code}`);
+        toast(details.expiry ? `Načteno ${details.ean || code} · ${formatDate(details.expiry)}`
+                             : `Načteno ${details.ean || code}`);
     } else {
         toast('Kód se nepodařilo přečíst – zkus focení zblízka, EAN jde napsat ručně');
     }
-    checkForm(null, code || '', photo);
+    checkForm(null, { ...details, photo });
+}
+
+/* Z kódu (a případně z obrázku) vytáhne EAN, datum spotřeby a šarži. */
+async function detailsFromCode(code, imageSource) {
+    const gs1 = code ? parseGs1(code) : null;
+    const details = {
+        ean: gs1 && gs1.gtin ? gtinToEan(gs1.gtin) : (code || ''),
+        expiry: gs1 && gs1.expiry ? gs1.expiry : '',
+        note: gs1 && gs1.batch ? `šarže ${gs1.batch}` : '',
+        source: gs1 && gs1.expiry ? 'z čárového kódu' : ''
+    };
+
+    if (!details.expiry && imageSource) {
+        const date = await readDate(imageSource);
+        if (date) {
+            details.expiry = date;
+            details.source = 'z fotky';
+        }
+    }
+    return details;
 }
 
 /* Živé skenování kamerou. Kamera se drží otevřená, dokud ji sám nezavřeš –
@@ -448,6 +502,7 @@ async function startCameraScan() {
                 <button class="btn-secondary" data-scan-torch hidden>🔦 Přisvítit</button>
                 <button class="btn-secondary" data-scan-retry hidden>Zkusit znovu</button>
                 <button class="btn-secondary" data-scan-fallback hidden>📷 Vyfotit kód</button>
+                <button class="btn-secondary" data-scan-window hidden>↗️ Nové okno</button>
                 <button class="btn-ghost" data-scan-help>Proč to nejde?</button>
             </div>`,
         actionsHtml: '<button class="btn-secondary" data-scan-close>Zavřít</button>',
@@ -455,6 +510,10 @@ async function startCameraScan() {
             modal.querySelector('[data-scan-close]').addEventListener('click', stopCameraScan);
             modal.querySelector('[data-scan-help]').addEventListener('click', showCameraHelp);
             modal.querySelector('[data-scan-retry]').addEventListener('click', () => runCameraScan(modal));
+            modal.querySelector('[data-scan-window]').addEventListener('click', () => {
+                stopCameraScan();
+                openScannerWindow();
+            });
             modal.querySelector('[data-scan-fallback]').addEventListener('click', () => {
                 stopCameraScan();
                 const file = view.querySelector('[data-scan-file]');
@@ -513,6 +572,7 @@ async function runCameraScan(modal) {
     hint.textContent = 'Zapínám kameru…';
     retryBtn.hidden = true;
     fallbackBtn.hidden = true;
+    modal.querySelector('[data-scan-window]').hidden = true;
 
     let stream;
     try {
@@ -527,6 +587,7 @@ async function runCameraScan(modal) {
         hint.classList.add('bad');
         retryBtn.hidden = false;
         fallbackBtn.hidden = false;
+        modal.querySelector('[data-scan-window]').hidden = false;
         return;
     }
 
@@ -567,11 +628,17 @@ async function runCameraScan(modal) {
                 if (codes.length && codes[0].rawValue) {
                     const code = codes[0].rawValue;
                     navigator.vibrate?.(60);
-                    hint.textContent = `Načteno ${code}`;
+                    hint.textContent = 'Načteno, hledám ještě datum…';
+
+                    /* Ze stejného záběru vytěžíme fotku i datum spotřeby. */
+                    const frame = toCanvas(video, {});
+                    const details = await detailsFromCode(code, frame);
+                    const photo = frame.toDataURL('image/jpeg', 0.72);
+
                     liveScan.running = false;
                     stopStream();
                     closeModal();
-                    checkForm(null, code, '', true);
+                    checkForm(null, { ...details, photo, fromCamera: true });
                     return;
                 }
                 if (++misses === 60) hint.textContent = 'Zkus kód přiblížit nebo přisvítit.';
@@ -601,6 +668,19 @@ function stopStream() {
 function stopCameraScan() {
     stopStream();
     closeModal();
+}
+
+/* Samostatné okno appky. Stránka v něm neběží uvnitř Claude, takže
+   kameru obvykle dostane; data zůstanou v telefonu a při dalším otevření
+   v účtu se dopošlou. */
+function openScannerWindow() {
+    logEvent('otviram skener v novem okne');
+    const opened = window.open(location.href, '_blank', 'noopener');
+    if (!opened) {
+        alert('Prohlížeč nové okno nepustil. Zkus podržet odkaz na stránku a dát „Otevřít v novém panelu".');
+        return;
+    }
+    toast('Skenuj v novém okně, zápisy se přenesou zpátky');
 }
 
 /* Když kamera nejede, tohle řekne proč – ať je co poslat dál. */
@@ -637,7 +717,9 @@ async function showCameraHelp() {
 
 /* --- Zápis záznamu -------------------------------------------------------------- */
 
-async function checkForm(checkId, ean, photo, fromCamera, article) {
+async function checkForm(checkId, options = {}) {
+    const { ean = '', photo = '', fromCamera = false, article = null,
+            expiry = '', note = '', source = '' } = options;
     const check = checkId ? DB.checks.find(c => c.id === checkId) : null;
     if (check) await ensurePhotoData(check);
     const photoBefore = check ? (check.photo || '') : '';
@@ -658,6 +740,8 @@ async function checkForm(checkId, ean, photo, fromCamera, article) {
         level: known && known.element.id === elementId ? known.article.level : 0,
         action: '',
         photo: (article && article.photo) || photo || '',
+        expiry,
+        note,
         addArticle: !known
     };
     if (photo && check) values.photo = photo;
@@ -669,7 +753,9 @@ async function checkForm(checkId, ean, photo, fromCamera, article) {
               placeholder: known ? '' : 'např. Jogurt jahodový 150 g',
               hint: 'Nechat prázdné je v pořádku – zapíše se podle EAN a název doplníš později.' },
             { name: 'expiry', label: 'Datum spotřeby', type: 'date-quick', required: true,
-              hint: 'Bez data se zápis neuloží – to je hlavní, co při kontrole potřebuješ.' },
+              hint: source
+                ? `Datum načteno ${source} – radši ho zkontroluj.`
+                : 'Bez data se zápis neuloží – to je hlavní, co při kontrole potřebuješ.' },
             { type: 'row', fields: [
                 { name: 'pieces', label: 'Kusů', type: 'number' },
                 { name: 'level', label: 'Police', type: 'select', options: levelOptions }
@@ -773,16 +859,19 @@ function runScanAction(action, data) {
         case 'camera':
             startCameraScan();
             break;
+        case 'new-window':
+            openScannerWindow();
+            break;
         case 'manual':
             logEvent('rucni zapis');
-            checkForm(null, '');
+            checkForm(null, {});
             break;
         case 'basket-item': {
             const element = mapElementById(scanPlace);
             const article = element && element.articles.find(a => a.id === data.id);
             if (!article) return;
             logEvent(`kosik: ${article.name}`);
-            checkForm(null, article.ean || '', '', false, article);
+            checkForm(null, { ean: article.ean || '', article });
             break;
         }
         case 'basket-add':

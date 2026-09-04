@@ -79,7 +79,7 @@ a zapisuješ zboží. Kód se dá načíst třemi způsoby:
    otevře znovu, takže se dá projít celá police za sebou. Když kamera nenaběhne, tlačítko
    *Proč to nejde?* vypíše, co prohlížeč hlásí.
 2. **Vyfocením kódu** – vyfotíš čárový kód, aplikace ho přečte a fotku rovnou přiloží k záznamu.
-3. **Ručně** – EAN se napíše do pole. Zvládne to i klasická pistolová čtečka, ta kód „napíše"
+3. **Ručně** – EAN se napíše do pole (zvládne i kód GS1-128 z pistolové čtečky). Zvládne to i klasická pistolová čtečka, ta kód „napíše"
    a odešle Enterem.
 
 Na každém místě je **košík** – seznam zboží, které tam má být. U položky je vidět
@@ -87,6 +87,11 @@ poslední zápis a datum, takže na první pohled poznáš, co už je zkontrolov
 (hlavička počítá „dnes 3/8"). Klepnutím na položku se otevře zápis s předvyplněným
 názvem, EAN i fotkou. Košík pokladny se **doplní sám** ze zboží celé prodejny, dá se
 doplnit ručně tlačítkem, nebo najednou na všechny pokladny.
+
+**Datum se často doplní samo.** Ze dvou zdrojů: čárový kód GS1-128 (na krabicích
+a paletách nese datum spotřeby přímo v sobě – appka z něj vytáhne i EAN a šarži),
+a text z fotky, pokud prohlížeč umí číst písmo. Když se datum načte, aplikace to
+u pole napíše – vždycky ho zkontroluj.
 
 **Datum spotřeby je povinné** – bez něj se zápis neuloží, protože právě o něj při
 kontrole jde. K záznamu dál patří název, datum (tlačítka *Dnes / Zítra / +2 / +3 / +7*),

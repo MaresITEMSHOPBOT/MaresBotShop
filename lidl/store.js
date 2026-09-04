@@ -764,3 +764,112 @@ function checkText(count) {
     if (count >= 2 && count <= 4) return `${count} záznamy`;
     return `${count} záznamů`;
 }
+
+
+/* ==========================================================================
+   Čtení data spotřeby
+   Dva zdroje: čárový kód GS1-128 (na krabicích a paletách nese datum přímo)
+   a text z fotky, když prohlížeč umí číst písmo.
+   ========================================================================== */
+
+/* Datum ve tvaru RRMMDD podle GS1. Den 00 znamená konec měsíce. */
+function gs1Date(digits) {
+    if (!/^\d{6}$/.test(digits)) return '';
+    const year = 2000 + Number(digits.slice(0, 2));
+    const month = Number(digits.slice(2, 4));
+    let day = Number(digits.slice(4, 6));
+    if (month < 1 || month > 12) return '';
+    if (!day) day = new Date(year, month, 0).getDate();
+    if (day > 31) return '';
+    return isoDate(new Date(year, month - 1, day));
+}
+
+/* Délky pevných datových prvků GS1; ostatní končí oddělovačem. */
+const GS1_FIXED = {
+    '00': 18, '01': 14, '02': 14, '11': 6, '12': 6, '13': 6,
+    '15': 6, '16': 6, '17': 6, '20': 2
+};
+
+const GS1_SEPARATOR = '\x1d';
+
+/* Rozebere kód GS1-128 na to, co nás zajímá: zboží, datum a šarži. */
+function parseGs1(raw) {
+    if (!raw || raw.length < 4) return null;
+    const text = String(raw).replace(/[()]/g, '');
+    if (!/^\d/.test(text)) return null;
+
+    const result = {};
+    let index = 0;
+    let found = 0;
+
+    while (index + 2 <= text.length) {
+        const ai = text.slice(index, index + 2);
+        let value;
+
+        if (GS1_FIXED[ai]) {
+            value = text.slice(index + 2, index + 2 + GS1_FIXED[ai]);
+            index += 2 + GS1_FIXED[ai];
+        } else if (/^(10|21|22|30|37|90|91)$/.test(ai)) {
+            const rest = text.slice(index + 2);
+            const end = rest.indexOf(GS1_SEPARATOR);
+            value = end >= 0 ? rest.slice(0, end) : rest;
+            index += 2 + value.length + (end >= 0 ? 1 : 0);
+        } else {
+            return found ? result : null;
+        }
+
+        if (!value) break;
+        found++;
+
+        if (ai === '01' || ai === '02') result.gtin = value;
+        if (ai === '17' || ai === '15') result.expiry = gs1Date(value) || result.expiry;
+        if (ai === '10') result.batch = value;
+        if (text[index] === GS1_SEPARATOR) index++;
+    }
+
+    return found ? result : null;
+}
+
+/* Z GTIN-14 udělá EAN-13, pokud jde jen o doplňkovou nulu vpředu. */
+function gtinToEan(gtin) {
+    if (!gtin) return '';
+    const trimmed = gtin.replace(/^0+/, '');
+    return trimmed.length === 13 || trimmed.length === 8 ? trimmed : gtin;
+}
+
+/* Najde v textu datum. Bere jen data, která u zboží dávají smysl:
+   od měsíce zpátky po tři roky dopředu. Vrací z nich to nejbližší. */
+function findDateInText(text) {
+    if (!text) return '';
+    const today = parseISO(todayISO());
+    const oldest = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+    const newest = new Date(today.getFullYear() + 3, today.getMonth(), today.getDate());
+    const found = [];
+
+    const push = (year, month, day) => {
+        if (month < 1 || month > 12) return;
+        const last = new Date(year, month, 0).getDate();
+        const safeDay = day ? Math.min(day, last) : last;
+        const date = new Date(year, month - 1, safeDay);
+        if (date >= oldest && date <= newest) found.push(date);
+    };
+
+    const clean = String(text).replace(/[oO]/g, '0');
+
+    clean.replace(/(\d{4})-(\d{1,2})-(\d{1,2})/g, (m, y, mo, d) => {
+        push(Number(y), Number(mo), Number(d)); return m;
+    });
+    clean.replace(/(\d{1,2})[.\/\-\s](\d{1,2})[.\/\-\s](\d{4})/g, (m, d, mo, y) => {
+        push(Number(y), Number(mo), Number(d)); return m;
+    });
+    clean.replace(/(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{2})(?!\d)/g, (m, d, mo, y) => {
+        push(2000 + Number(y), Number(mo), Number(d)); return m;
+    });
+    clean.replace(/(?:^|[^\d])(\d{1,2})[.\/\-](\d{4})(?!\d)/g, (m, mo, y) => {
+        push(Number(y), Number(mo), 0); return m;
+    });
+
+    if (!found.length) return '';
+    found.sort((a, b) => a - b);
+    return isoDate(found[0]);
+}
