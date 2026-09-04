@@ -137,7 +137,8 @@ function fieldHtml(field, values) {
         return `
             <div class="field">
                 <label>${esc(field.label)}</label>
-                <input type="date" name="${field.name}" value="${esc(value || '')}">
+                <input type="date" name="${field.name}" value="${esc(value || '')}"
+                       ${field.required ? 'required' : ''}>
                 <div class="chips" style="margin-top:0.4rem;">
                     ${[['Dnes', 0], ['Zítra', 1], ['+2 dny', 2], ['+3 dny', 3], ['+7 dní', 7]].map(([label, days]) =>
                         `<button type="button" class="chip" data-date-add="${days}"

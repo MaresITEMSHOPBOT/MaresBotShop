@@ -863,3 +863,36 @@ table.data td.num, table.data th.num { text-align: right; }
     overflow: auto;
     line-height: 1.5;
 }
+
+/* --- Košík místa ------------------------------------------------------------ */
+
+.basket { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.basket-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-soft);
+    cursor: pointer;
+}
+.basket-item:hover { border-color: var(--accent); }
+.basket-item.checked { background: var(--success-soft); border-color: var(--success); }
+
+.basket-photo {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    display: grid;
+    place-items: center;
+}
+.basket-main { flex: 1; min-width: 0; }
+.basket-name { font-weight: 600; font-size: 0.92rem; }
+.basket-sub { font-size: 0.78rem; color: var(--text-secondary); }
+.basket-go { font-size: 1.1rem; flex-shrink: 0; }

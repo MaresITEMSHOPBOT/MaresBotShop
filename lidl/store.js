@@ -708,6 +708,24 @@ function openChecks() {
         .sort((a, b) => (a.expiry || '9999').localeCompare(b.expiry || '9999'));
 }
 
+/* Poslední zápis k artiklu na daném místě – podle EAN, jinak podle názvu. */
+function lastCheckFor(elementId, article) {
+    return DB.checks
+        .filter(check => check.elementId === elementId)
+        .filter(check => (article.ean && check.ean === article.ean)
+            || (!article.ean && check.name === article.name))
+        .sort((a, b) => (b.at || '').localeCompare(a.at || ''))[0] || null;
+}
+
+/* Pokladny a samoobslužné pokladny – tam se košík doplňuje sám. */
+function isCheckout(element) {
+    return element.type === 'pokladna' || element.type === 'samoobsluzna';
+}
+
+function checkoutElements() {
+    return DB.map.elements.filter(isCheckout);
+}
+
 function openChecksForElement(elementId) {
     return DB.checks.filter(check => check.elementId === elementId && !check.done);
 }

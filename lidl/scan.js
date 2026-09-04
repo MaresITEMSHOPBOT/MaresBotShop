@@ -165,6 +165,88 @@ function renderPlacePicker() {
     attachScanHandlers();
 }
 
+/* --- Košík místa -------------------------------------------------------------
+   Co má na tomhle místě být. U každé položky je vidět poslední zápis,
+   takže na první pohled poznáš, co už je zkontrolované.
+   ------------------------------------------------------------------------- */
+
+function basketItemHtml(element, article) {
+    const last = lastCheckFor(element.id, article);
+    const status = last ? expiryStatus(last.expiry) : null;
+    const today = last && last.at === todayISO();
+
+    return `
+        <div class="basket-item ${today ? 'checked' : ''}" data-scan-action="basket-item"
+             data-id="${article.id}">
+            ${hasPhoto(article)
+                ? `<img class="basket-photo" ${photoOf(article) ? `src="${esc(photoOf(article))}"` : 'data-photo-pending'}
+                        data-photo-id="${esc(article.photoId || '')}" alt="">`
+                : '<span class="basket-photo empty">🛒</span>'}
+            <div class="basket-main">
+                <div class="basket-name">${esc(article.name)}</div>
+                <div class="basket-sub">${article.ean ? `EAN ${esc(article.ean)}` : 'bez EAN'}</div>
+                ${last
+                    ? `<div class="tag-list"><span class="pill ${status.pill}">
+                            ${last.expiry ? esc(formatDate(last.expiry)) : 'bez data'} · ${esc(status.label)}
+                       </span>${today ? '<span class="pill success">dnes zapsáno</span>' : ''}</div>`
+                    : '<div class="basket-sub muted">zatím nezkontrolováno</div>'}
+            </div>
+            <span class="basket-go">${today ? '✅' : '📝'}</span>
+        </div>`;
+}
+
+function basketCardHtml(element) {
+    const items = element.articles;
+    const donesToday = items.filter(article => {
+        const last = lastCheckFor(element.id, article);
+        return last && last.at === todayISO();
+    }).length;
+
+    return `
+        <div class="card">
+            <h3>🧺 Košík – co je na tomhle místě (${items.length})
+                ${items.length ? `<span class="pill ${donesToday === items.length ? 'success' : ''}">
+                    dnes ${donesToday}/${items.length}</span>` : ''}
+            </h3>
+            ${items.length
+                ? `<div class="basket">${items.map(article => basketItemHtml(element, article)).join('')}</div>`
+                : '<div class="empty">Košík je prázdný. Naskenované zboží se sem přidává samo.</div>'}
+            <div class="btn-row" style="margin-top:0.7rem;">
+                <button class="btn-secondary" data-scan-action="basket-add">➕ Přidat do košíku</button>
+                <button class="btn-secondary" data-scan-action="basket-copy">📋 Doplnit z prodejny</button>
+                ${isCheckout(element)
+                    ? '<button class="btn-secondary" data-scan-action="basket-copy-all">📋 Doplnit na všechny pokladny</button>'
+                    : ''}
+            </div>
+        </div>`;
+}
+
+/* Zkopíruje artikly z celé prodejny do košíku daného místa (bez duplicit). */
+function copyArticlesInto(element) {
+    const key = article => (article.ean || article.name || '').toLowerCase();
+    const known = new Set(element.articles.map(key));
+    let added = 0;
+
+    DB.map.elements.forEach(source => {
+        if (source.id === element.id) return;
+        source.articles.forEach(article => {
+            const id = key(article);
+            if (!id || known.has(id)) return;
+            known.add(id);
+            element.articles.push({
+                ...article,
+                id: uid(),
+                level: 0,
+                photo: article.photo || '',
+                photoId: article.photoId || ''
+            });
+            added++;
+        });
+    });
+    element.basketSeeded = true;
+    return added;
+}
+
 /* --- Skenování na místě -------------------------------------------------------- */
 
 function renderScan(elementId) {
@@ -172,7 +254,25 @@ function renderScan(elementId) {
     if (!element) { go('#/skenovat'); return; }
     scanPlace = elementId;
 
-    const recent = checksForElement(elementId).slice(0, 8);
+    /* Pokladny mají v košíku všechno zboží z prodejny – doplní se samo,
+       ať se nemusí u každé pokladny přidávat ručně. */
+    if (isCheckout(element) && !element.basketSeeded && !element.articles.length) {
+        const added = copyArticlesInto(element);
+        if (added) {
+            save();
+            logEvent(`kosik pokladny doplnen o ${added} artiklu`);
+            setTimeout(() => toast(`Do košíku doplněno ${articleText(added)} z prodejny`), 400);
+        } else {
+            element.basketSeeded = true;
+        }
+    }
+
+    /* V košíku je stav u každé položky, takže sem patří jen zápisy,
+       které se k žádné položce košíku nevážou. */
+    const basketKeys = new Set(element.articles.map(a => (a.ean || a.name || '').toLowerCase()));
+    const recent = checksForElement(elementId)
+        .filter(check => !basketKeys.has((check.ean || check.name || '').toLowerCase()))
+        .slice(0, 8);
     const reader = hasBarcodeReader();
     const blocked = Boolean(DB.settings.cameraBlocked);
 
@@ -211,6 +311,8 @@ function renderScan(elementId) {
                 EAN napiš ručně, nebo použij pistolovou čtečku, ta kód do pole napíše sama.</div>`}
         </div>
 
+        ${basketCardHtml(element)}
+
         <div class="card">
             <h3>Zapsáno v tomhle kole (${scanSession.length})</h3>
             ${scanSession.length
@@ -220,7 +322,7 @@ function renderScan(elementId) {
 
         ${recent.length ? `
         <div class="card">
-            <h3>Dřívější zápisy na tomhle místě (${recent.length})</h3>
+            <h3>Další zápisy na tomhle místě (${recent.length})</h3>
             ${recent.map(checkRowHtml).join('')}
         </div>` : ''}`;
 
@@ -535,7 +637,7 @@ async function showCameraHelp() {
 
 /* --- Zápis záznamu -------------------------------------------------------------- */
 
-async function checkForm(checkId, ean, photo, fromCamera) {
+async function checkForm(checkId, ean, photo, fromCamera, article) {
     const check = checkId ? DB.checks.find(c => c.id === checkId) : null;
     if (check) await ensurePhotoData(check);
     const photoBefore = check ? (check.photo || '') : '';
@@ -543,19 +645,19 @@ async function checkForm(checkId, ean, photo, fromCamera) {
     const element = mapElementById(elementId);
     if (!element) { go('#/skenovat'); return; }
 
-    const known = !check && ean ? articleByEan(ean) : null;
+    const known = article ? { element, article } : (!check && ean ? articleByEan(ean) : null);
     const total = levelsOf(element);
     const levelOptions = [{ value: 0, label: 'Neurčeno' }].concat(
         Array.from({ length: total }, (_, i) => ({ value: i + 1, label: levelName(i + 1, total) })));
 
     const values = check ? { ...check } : {
         name: known ? known.article.name : '',
-        ean: ean || '',
+        ean: (article && article.ean) || ean || '',
         expiry: '',
         pieces: 1,
         level: known && known.element.id === elementId ? known.article.level : 0,
         action: '',
-        photo: photo || '',
+        photo: (article && article.photo) || photo || '',
         addArticle: !known
     };
     if (photo && check) values.photo = photo;
@@ -566,7 +668,8 @@ async function checkForm(checkId, ean, photo, fromCamera) {
             { name: 'name', label: 'Co to je', type: 'text',
               placeholder: known ? '' : 'např. Jogurt jahodový 150 g',
               hint: 'Nechat prázdné je v pořádku – zapíše se podle EAN a název doplníš později.' },
-            { name: 'expiry', label: 'Datum spotřeby', type: 'date-quick' },
+            { name: 'expiry', label: 'Datum spotřeby', type: 'date-quick', required: true,
+              hint: 'Bez data se zápis neuloží – to je hlavní, co při kontrole potřebuješ.' },
             { type: 'row', fields: [
                 { name: 'pieces', label: 'Kusů', type: 'number' },
                 { name: 'level', label: 'Police', type: 'select', options: levelOptions }
@@ -598,6 +701,8 @@ async function checkForm(checkId, ean, photo, fromCamera) {
                 if (data.photo !== photoBefore) check.photoId = '';
             } else {
                 const record = { id: uid(), at: todayISO(), done: false, ...payload };
+                /* Fotku z košíku si záznam převezme odkazem, ať se neukládá dvakrát. */
+                if (!record.photo && article && article.photoId) record.photoId = article.photoId;
                 DB.checks.unshift(record);
                 scanSession.unshift(record.id);
                 lastSavedId = record.id;
@@ -672,6 +777,35 @@ function runScanAction(action, data) {
             logEvent('rucni zapis');
             checkForm(null, '');
             break;
+        case 'basket-item': {
+            const element = mapElementById(scanPlace);
+            const article = element && element.articles.find(a => a.id === data.id);
+            if (!article) return;
+            logEvent(`kosik: ${article.name}`);
+            checkForm(null, article.ean || '', '', false, article);
+            break;
+        }
+        case 'basket-add':
+            articleForm(scanPlace, null, () => renderScan(scanPlace));
+            break;
+        case 'basket-copy': {
+            const element = mapElementById(scanPlace);
+            if (!element) return;
+            const added = copyArticlesInto(element);
+            save();
+            renderScan(scanPlace);
+            toast(added ? `Doplněno ${articleText(added)}` : 'Nic nového k doplnění');
+            break;
+        }
+        case 'basket-copy-all': {
+            if (!confirm('Doplnit zboží z celé prodejny do košíku všech pokladen?')) return;
+            let total = 0;
+            checkoutElements().forEach(checkout => { total += copyArticlesInto(checkout); });
+            save();
+            renderScan(scanPlace);
+            toast(`Na pokladny doplněno ${articleText(total)}`);
+            break;
+        }
         case 'photo-scan':
             view.querySelector('[data-scan-file]').click();
             break;

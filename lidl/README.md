@@ -82,7 +82,14 @@ a zapisuješ zboží. Kód se dá načíst třemi způsoby:
 3. **Ručně** – EAN se napíše do pole. Zvládne to i klasická pistolová čtečka, ta kód „napíše"
    a odešle Enterem.
 
-K záznamu patří název, datum spotřeby (tlačítka *Dnes / Zítra / +2 / +3 / +7*),
+Na každém místě je **košík** – seznam zboží, které tam má být. U položky je vidět
+poslední zápis a datum, takže na první pohled poznáš, co už je zkontrolované
+(hlavička počítá „dnes 3/8"). Klepnutím na položku se otevře zápis s předvyplněným
+názvem, EAN i fotkou. Košík pokladny se **doplní sám** ze zboží celé prodejny, dá se
+doplnit ručně tlačítkem, nebo najednou na všechny pokladny.
+
+**Datum spotřeby je povinné** – bez něj se zápis neuloží, protože právě o něj při
+kontrole jde. K záznamu dál patří název, datum (tlačítka *Dnes / Zítra / +2 / +3 / +7*),
 počet kusů, police, fotka a co s tím (redukce, odpis,
 vrácení dodavateli). Zaškrtnutá volba *Přidat i mezi artikly tohohle místa* rovnou staví
 digitální prodejnu – co naskenuješ, objeví se v regálu.
