@@ -86,10 +86,13 @@ a zapisuješ zboží. Kód se dá načíst třemi způsoby:
 a datum – a je zapsáno. Artikl se přitom sám rozešle na **všechny pokladny včetně
 samoobslužných**, takže se na dalších už jen ťukne datum. Fotka jde přidat kdykoli.
 
+Zápis se maže 🗑️ přímo v seznamu, artikl z košíku křížkem ✕ u položky.
+
 **Trvanlivost a slevy:** u artiklu se jednou vybere, jestli je denní, týdenní, měsíční,
 dvouměsíční nebo trvanlivý. Z toho aplikace počítá, **kdy se má nalepit sleva**, a píše to
 u záznamu i v košíku („Slevit dnes", „Slevit 6. 9."). Kolik dní před koncem se u které
-trvanlivosti slevuje, se nastavuje v *Nastavení → Slevy podle trvanlivosti*. Na přehledu
+trvanlivosti slevuje, se nastavuje v *Nastavení → Slevy podle trvanlivosti*; u konkrétního
+artiklu jde počet dní zadat i ručně a přebije kategorii. Na přehledu
 je dlaždice **Nalepit slevu** s počtem kusů, které to čeká dnes nebo už měly být slevené.
 
 Na každém místě je **košík** – seznam zboží, které tam má být. U položky je vidět

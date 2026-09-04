@@ -321,6 +321,7 @@ function normalize(data) {
             check[key] = check[key] || '';
         });
         check.level = Math.max(0, Math.round(Number(check.level) || 0));
+        check.discountDays = Math.max(0, Math.round(Number(check.discountDays) || 0));
         check.pieces = Math.max(0, Math.round(Number(check.pieces) || 0));
         check.done = Boolean(check.done);
     });
@@ -347,6 +348,7 @@ function normalize(data) {
             article.name = article.name || '';
             ['code', 'ean', 'shelf', 'note'].forEach(key => { article[key] = article[key] || ''; });
             article.level = Math.max(0, Math.round(Number(article.level) || 0));
+            article.discountDays = Math.max(0, Math.round(Number(article.discountDays) || 0));
             if (article.level > levelsOf(element)) article.level = 0;
         });
         ['x', 'y', 'w', 'h'].forEach(key => { element[key] = Math.round(Number(element[key]) || 0); });
@@ -758,16 +760,26 @@ function shelfLifeName(id) {
     return item ? item.name : '';
 }
 
+/* Kolik dní před koncem se lepí sleva. Vlastní číslo u artiklu má přednost
+   před kategorií, ať jde nastavit i výjimka. */
+function discountLeadDays(item) {
+    if (!item) return null;
+    const own = Number(item.discountDays);
+    if (own > 0) return own;
+    const life = shelfLifeById(item.shelfLife);
+    return life ? life.days : null;
+}
+
 /* Kdy se má na zboží nalepit sleva. */
-function discountDate(expiry, shelfLife) {
-    const item = shelfLifeById(shelfLife);
-    if (!expiry || !item) return '';
-    return addDays(expiry, -item.days);
+function discountDateOf(item) {
+    const days = discountLeadDays(item);
+    if (!item || !item.expiry || days == null) return '';
+    return addDays(item.expiry, -days);
 }
 
 /* Stav slevy: kolik dní do lepení, nebo že už měla být. */
-function discountStatus(expiry, shelfLife) {
-    const date = discountDate(expiry, shelfLife);
+function discountStatusOf(item) {
+    const date = discountDateOf(item);
     if (!date) return null;
     const days = daysUntil(date);
     if (days < 0) return { date, days, label: `Sleva měla být ${formatDate(date)}`, pill: 'danger' };
@@ -778,7 +790,7 @@ function discountStatus(expiry, shelfLife) {
 
 function toDiscountToday() {
     return openChecks().filter(check => {
-        const status = discountStatus(check.expiry, check.shelfLife);
+        const status = discountStatusOf(check);
         return status && status.days <= 0;
     });
 }

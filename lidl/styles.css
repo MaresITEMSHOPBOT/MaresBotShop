@@ -908,3 +908,11 @@ table.data td.num, table.data th.num { text-align: right; }
     background: var(--bg-soft);
     color: var(--text);
 }
+
+.basket-remove {
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding: 0.2rem 0.4rem;
+}
+.basket-remove:hover { color: var(--danger); }

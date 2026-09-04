@@ -34,7 +34,7 @@ function checkRowHtml(check) {
     const element = mapElementById(check.elementId);
     const place = element ? element.name : 'Neznámé místo';
     const action = checkActionLabel(check.action);
-    const discount = check.done ? null : discountStatus(check.expiry, check.shelfLife);
+    const discount = check.done ? null : discountStatusOf(check);
 
     return `
         <div class="row ${check.done ? 'done-row' : ''} ${check.id === lastSavedId ? 'just-saved' : ''}">
@@ -65,6 +65,8 @@ function checkRowHtml(check) {
                         title="${check.done ? 'Vrátit mezi nevyřešené' : 'Označit jako vyřešené'}">
                     ${check.done ? '↩︎' : '✅'}</button>
                 <button class="btn-ghost" data-scan-action="edit" data-id="${check.id}">✏️</button>
+                <button class="btn-ghost" data-scan-action="delete" data-id="${check.id}"
+                        title="Smazat zápis">🗑️</button>
             </div>
         </div>`;
 }
@@ -177,7 +179,9 @@ function basketItemHtml(element, article) {
     const status = last ? expiryStatus(last.expiry) : null;
     const today = last && last.at === todayISO();
     const discount = last && !last.done
-        ? discountStatus(last.expiry, last.shelfLife || article.shelfLife) : null;
+        ? discountStatusOf({ ...article, ...last, shelfLife: last.shelfLife || article.shelfLife,
+                             discountDays: last.discountDays || article.discountDays })
+        : null;
 
     return `
         <div class="basket-item ${today ? 'checked' : ''}" data-scan-action="basket-item"
@@ -198,6 +202,8 @@ function basketItemHtml(element, article) {
                         article.shelfLife ? ` · ${esc(shelfLifeName(article.shelfLife))}` : ''}</div>`}
             </div>
             <span class="basket-go">${today ? '✅' : '📝'}</span>
+            <button class="btn-ghost basket-remove" data-scan-action="basket-remove"
+                    data-id="${article.id}" title="Odebrat z košíku">✕</button>
         </div>`;
 }
 
@@ -249,13 +255,15 @@ function spreadToCheckouts(article, fromElement) {
     return added;
 }
 
-/* Změnu trvanlivosti promítneme do všech kopií téhož artiklu. */
-function syncShelfLife(article, shelfLife) {
+/* Trvanlivost i vlastní počet dní promítneme do všech kopií téhož artiklu. */
+function syncArticleRules(article, shelfLife, discountDays) {
     const key = (article.ean || article.name || '').toLowerCase();
     if (!key) return;
     DB.map.elements.forEach(element => {
         element.articles.forEach(other => {
-            if ((other.ean || other.name || '').toLowerCase() === key) other.shelfLife = shelfLife;
+            if ((other.ean || other.name || '').toLowerCase() !== key) return;
+            other.shelfLife = shelfLife;
+            other.discountDays = discountDays;
         });
     });
 }
@@ -811,6 +819,7 @@ async function checkForm(checkId, options = {}) {
         level: known && known.element.id === elementId ? known.article.level : 0,
         action: '',
         shelfLife: (article && article.shelfLife) || (known && known.article.shelfLife) || '',
+        discountDays: (article && article.discountDays) || '',
         photo: (article && article.photo) || photo || '',
         expiry,
         note,
@@ -834,8 +843,9 @@ async function checkForm(checkId, options = {}) {
                 ? `Datum načteno ${source} – radši ho zkontroluj.`
                 : 'Bez data se zápis neuloží – to je hlavní, co při kontrole potřebuješ.' },
             { name: 'shelfLife', label: 'Trvanlivost – podle ní se počítá sleva', type: 'choice',
-              options: lifeOptions,
-              hint: 'Nastavuje se u artiklu jednou, pak se jen zadává datum.' },
+              options: lifeOptions },
+            { name: 'discountDays', label: 'Nebo si zadej sám: slevit … dní před koncem', type: 'number',
+              hint: 'Nech prázdné a použije se počet dní podle trvanlivosti nahoře.' },
             { type: 'row', fields: [
                 { name: 'pieces', label: 'Kusů', type: 'number' },
                 ...(compact ? [] : [{ name: 'level', label: 'Police', type: 'select', options: levelOptions }])
@@ -855,6 +865,7 @@ async function checkForm(checkId, options = {}) {
             const payload = {
                 elementId,
                 shelfLife: data.shelfLife || '',
+                discountDays: Math.max(0, Number(data.discountDays) || 0),
                 name,
                 ean: data.ean !== undefined ? data.ean : ((article && article.ean) || ''),
                 expiry: data.expiry,
@@ -867,9 +878,7 @@ async function checkForm(checkId, options = {}) {
                 photo: data.photo
             };
 
-            if (article && data.shelfLife && article.shelfLife !== data.shelfLife) {
-                syncShelfLife(article, data.shelfLife);
-            }
+            if (article) syncArticleRules(article, data.shelfLife || '', Number(data.discountDays) || 0);
 
             if (check) {
                 Object.assign(check, payload);
@@ -935,7 +944,11 @@ function addScannedArticle(element, record) {
 
 function attachScanHandlers() {
     view.querySelectorAll('[data-scan-action]').forEach(node => {
-        node.addEventListener('click', () => runScanAction(node.dataset.scanAction, node.dataset));
+        node.addEventListener('click', event => {
+            /* Tlačítko uvnitř položky košíku nesmí spustit i akci celé položky. */
+            event.stopPropagation();
+            runScanAction(node.dataset.scanAction, node.dataset);
+        });
     });
 }
 
@@ -970,6 +983,19 @@ function runScanAction(action, data) {
             checkForm(null, { ean: article.ean || '', article });
             break;
         }
+        case 'basket-remove': {
+            const element = mapElementById(scanPlace);
+            const article = element && element.articles.find(a => a.id === data.id);
+            if (!article) return;
+            if (!confirm(`Odebrat „${article.name}" z košíku tohohle místa?`)) return;
+            pushMapUndo();
+            element.articles = element.articles.filter(a => a.id !== data.id);
+            save();
+            logEvent(`odebran artikl ${article.name}`);
+            renderScan(element.id);
+            toast('Odebráno z košíku');
+            break;
+        }
         case 'basket-add':
             articleForm(scanPlace, null, () => renderScan(scanPlace));
             break;
@@ -1001,6 +1027,18 @@ function runScanAction(action, data) {
         case 'edit':
             checkForm(data.id);
             break;
+        case 'delete': {
+            const check = DB.checks.find(c => c.id === data.id);
+            if (!check) return;
+            if (!confirm(`Smazat zápis „${check.name}"?`)) return;
+            DB.checks = DB.checks.filter(c => c.id !== data.id);
+            scanSession = scanSession.filter(id => id !== data.id);
+            save();
+            logEvent(`smazan zaznam ${check.name}`);
+            if (currentRoute().name === 'data') renderChecks(); else renderScan(scanPlace);
+            toast('Zápis smazán');
+            break;
+        }
         case 'toggle-done': {
             const check = DB.checks.find(c => c.id === data.id);
             if (!check) return;
