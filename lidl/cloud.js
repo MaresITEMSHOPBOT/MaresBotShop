@@ -242,6 +242,8 @@ async function fetchPhoto(id) {
     }
 }
 
+CLOUD.fetchPhoto = fetchPhoto;
+
 /* Nahradí prázdnou funkci z map.js – doplní obrázky, které ještě nejsou stažené. */
 window.hydratePhotos = function (root) {
     if (!CLOUD.enabled || !root) return;

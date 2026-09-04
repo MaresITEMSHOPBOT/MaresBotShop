@@ -133,6 +133,20 @@ function fieldHtml(field, values) {
             </div>`;
     }
 
+    if (field.type === 'date-quick') {
+        return `
+            <div class="field">
+                <label>${esc(field.label)}</label>
+                <input type="date" name="${field.name}" value="${esc(value || '')}">
+                <div class="chips" style="margin-top:0.4rem;">
+                    ${[['Dnes', 0], ['Zítra', 1], ['+2 dny', 2], ['+3 dny', 3], ['+7 dní', 7]].map(([label, days]) =>
+                        `<button type="button" class="chip" data-date-add="${days}"
+                                 data-date-target="${field.name}">${label}</button>`).join('')}
+                </div>
+                ${field.hint ? `<div class="field-hint">${esc(field.hint)}</div>` : ''}
+            </div>`;
+    }
+
     if (field.type === 'photo') {
         return `
             <div class="field">
@@ -211,6 +225,15 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
                     else current.push(chip.dataset.value);
                     holder.value = current.join(',');
                     chip.classList.toggle('on');
+                });
+            });
+
+            modal.querySelectorAll('[data-date-add]').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const target = form.querySelector(`input[name="${chip.dataset.dateTarget}"]`);
+                    target.value = addDays(todayISO(), Number(chip.dataset.dateAdd));
+                    modal.querySelectorAll(`[data-date-target="${chip.dataset.dateTarget}"]`)
+                        .forEach(other => other.classList.toggle('on', other === chip));
                 });
             });
 

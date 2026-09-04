@@ -75,11 +75,15 @@ V sekci **Data spotřeby** dáš *Začít kontrolu*, vybereš místo (Pokladna 1
 a zapisuješ zboží. Kód se dá načíst třemi způsoby:
 
 1. **Kamerou** – živé skenování. Umí ho Chrome na Androidu (čtečka zabudovaná v prohlížeči).
+   Okno kamery nabízí přisvícení, opakovaný pokus a přepnutí na focení. Po zápisu se kamera
+   otevře znovu, takže se dá projít celá police za sebou. Když kamera nenaběhne, tlačítko
+   *Proč to nejde?* vypíše, co prohlížeč hlásí.
 2. **Vyfocením kódu** – vyfotíš čárový kód, aplikace ho přečte a fotku rovnou přiloží k záznamu.
 3. **Ručně** – EAN se napíše do pole. Zvládne to i klasická pistolová čtečka, ta kód „napíše"
    a odešle Enterem.
 
-K záznamu patří název, datum spotřeby, počet kusů, police, fotka a co s tím (redukce, odpis,
+K záznamu patří název, datum spotřeby (tlačítka *Dnes / Zítra / +2 / +3 / +7*),
+počet kusů, police, fotka a co s tím (redukce, odpis,
 vrácení dodavateli). Zaškrtnutá volba *Přidat i mezi artikly tohohle místa* rovnou staví
 digitální prodejnu – co naskenuješ, objeví se v regálu.
 

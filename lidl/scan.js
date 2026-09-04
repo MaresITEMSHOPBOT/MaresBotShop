@@ -267,79 +267,216 @@ async function readCodeFromPhoto(file) {
     }
 }
 
-/* Živé skenování kamerou – běží, dokud se kód nenajde nebo okno nezavřeš. */
+/* Živé skenování kamerou. Kamera se drží otevřená, dokud ji sám nezavřeš –
+   po zápisu se vrátí, ať jde projít celou polici za sebou. */
+let lastCameraError = '';
+
 async function startCameraScan() {
-    if (!hasBarcodeReader()) { toast('Čtečka kódů tu není'); return; }
+    if (!hasBarcodeReader()) {
+        alert('Tenhle prohlížeč neumí číst čárové kódy. Použij Chrome na Androidu, nebo zadej EAN ručně.');
+        return;
+    }
 
     openModal({
         title: 'Namiř na čárový kód',
         bodyHtml: `
             <div class="scan-view">
-                <video playsinline muted data-scan-video></video>
+                <video playsinline muted autoplay data-scan-video></video>
                 <div class="scan-frame"></div>
             </div>
-            <div class="field-hint" data-scan-hint>Zapínám kameru…</div>`,
+            <div class="scan-hint" data-scan-hint>Zapínám kameru…</div>
+            <div class="btn-row" style="margin-top:0.6rem;">
+                <button class="btn-secondary" data-scan-torch hidden>🔦 Přisvítit</button>
+                <button class="btn-secondary" data-scan-retry hidden>Zkusit znovu</button>
+                <button class="btn-secondary" data-scan-fallback hidden>📷 Vyfotit kód</button>
+                <button class="btn-ghost" data-scan-help>Proč to nejde?</button>
+            </div>`,
         actionsHtml: '<button class="btn-secondary" data-scan-close>Zavřít</button>',
         onMount: modal => {
             modal.querySelector('[data-scan-close]').addEventListener('click', stopCameraScan);
+            modal.querySelector('[data-scan-help]').addEventListener('click', showCameraHelp);
+            modal.querySelector('[data-scan-retry]').addEventListener('click', () => runCameraScan(modal));
+            modal.querySelector('[data-scan-fallback]').addEventListener('click', () => {
+                stopCameraScan();
+                const file = view.querySelector('[data-scan-file]');
+                if (file) file.click();
+            });
             runCameraScan(modal);
         }
     });
 }
 
+/* Kameru zkoušíme postupně: zadní, jakákoli zadní, cokoli. */
+async function openCameraStream() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Prohlížeč kameru vůbec nenabízí.');
+    }
+    const attempts = [
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false },
+        { video: { facingMode: 'environment' }, audio: false },
+        { video: true, audio: false }
+    ];
+    let lastError;
+    for (const constraints of attempts) {
+        try {
+            return await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (err) {
+            lastError = err;
+            if (err.name === 'NotAllowedError' || err.name === 'SecurityError') break;
+        }
+    }
+    throw lastError;
+}
+
+function cameraErrorText(err) {
+    switch (err && err.name) {
+        case 'NotAllowedError':
+        case 'SecurityError':
+            return 'Prohlížeč kameru nepustil. Povol kameru pro claude.ai v nastavení stránky, nebo použij „Vyfotit kód" – ten otevře fotoaparát telefonu a funguje vždycky.';
+        case 'NotFoundError':
+        case 'OverconstrainedError':
+            return 'Žádnou kameru jsem nenašel.';
+        case 'NotReadableError':
+            return 'Kameru drží jiná aplikace. Zavři ji a zkus to znovu.';
+        default:
+            return `Kameru se nepodařilo spustit (${(err && (err.name || err.message)) || 'neznámá chyba'}).`;
+    }
+}
+
 async function runCameraScan(modal) {
     const video = modal.querySelector('[data-scan-video]');
     const hint = modal.querySelector('[data-scan-hint]');
-    let stream;
+    const torchBtn = modal.querySelector('[data-scan-torch]');
+    const retryBtn = modal.querySelector('[data-scan-retry]');
+    const fallbackBtn = modal.querySelector('[data-scan-fallback]');
 
+    stopStream();
+    hint.textContent = 'Zapínám kameru…';
+    retryBtn.hidden = true;
+    fallbackBtn.hidden = true;
+
+    let stream;
     try {
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' } }, audio: false
-        });
+        stream = await openCameraStream();
     } catch (err) {
-        hint.textContent = 'Kamera není k dispozici – zavři okno a vyfoť kód tlačítkem „Vyfotit kód".';
+        lastCameraError = `${err.name || ''} ${err.message || ''}`.trim();
+        hint.textContent = cameraErrorText(err);
+        hint.classList.add('bad');
+        retryBtn.hidden = false;
+        fallbackBtn.hidden = false;
         return;
     }
 
+    /* Okno se mohlo mezitím zavřít – pak kameru rovnou zhasneme. */
+    if (!modal.isConnected) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+    }
+
+    hint.classList.remove('bad');
     video.srcObject = stream;
     await video.play().catch(() => {});
-    hint.textContent = 'Hledám kód…';
-
-    const detector = newDetector();
+    hint.textContent = 'Hledám kód… drž ho v rámečku.';
     liveScan = { stream, running: true };
 
-    const tick = async () => {
+    const track = stream.getVideoTracks()[0];
+    const canTorch = track && track.getCapabilities && track.getCapabilities().torch;
+    torchBtn.hidden = !canTorch;
+    if (canTorch) {
+        torchBtn.onclick = () => {
+            liveScan.torch = !liveScan.torch;
+            track.applyConstraints({ advanced: [{ torch: liveScan.torch }] }).catch(() => {});
+            torchBtn.textContent = liveScan.torch ? '🔦 Zhasnout' : '🔦 Přisvítit';
+        };
+    }
+
+    const detector = newDetector();
+    let busy = false;
+    let misses = 0;
+
+    const scanFrame = async () => {
         if (!liveScan || !liveScan.running) return;
-        try {
-            const codes = await detector.detect(video);
-            if (codes.length) {
-                const code = codes[0].rawValue;
-                navigator.vibrate?.(60);
-                stopCameraScan();
-                checkForm(null, code);
-                return;
+        if (!busy && video.videoWidth) {
+            busy = true;
+            try {
+                const codes = await detector.detect(video);
+                if (codes.length && codes[0].rawValue) {
+                    const code = codes[0].rawValue;
+                    navigator.vibrate?.(60);
+                    hint.textContent = `Načteno ${code}`;
+                    liveScan.running = false;
+                    stopStream();
+                    closeModal();
+                    checkForm(null, code, '', true);
+                    return;
+                }
+                if (++misses === 60) hint.textContent = 'Zkus kód přiblížit nebo přisvítit.';
+            } catch (err) {
+                lastCameraError = `detect: ${err.message || err}`;
             }
-        } catch (err) {
-            /* Jednotlivé neúspěšné snímky nevadí, zkoušíme dál. */
+            busy = false;
         }
-        if (liveScan && liveScan.running) requestAnimationFrame(tick);
+        scheduleFrame(video, scanFrame);
     };
-    requestAnimationFrame(tick);
+    scheduleFrame(video, scanFrame);
+}
+
+/* Novější prohlížeče umí callback na snímek videa, jinak stačí animační rámec. */
+function scheduleFrame(video, callback) {
+    if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(() => callback());
+    else requestAnimationFrame(() => callback());
+}
+
+function stopStream() {
+    if (!liveScan) return;
+    liveScan.running = false;
+    liveScan.stream.getTracks().forEach(track => track.stop());
+    liveScan = null;
 }
 
 function stopCameraScan() {
-    if (liveScan) {
-        liveScan.running = false;
-        liveScan.stream.getTracks().forEach(track => track.stop());
-        liveScan = null;
-    }
+    stopStream();
     closeModal();
+}
+
+/* Když kamera nejede, tohle řekne proč – ať je co poslat dál. */
+async function showCameraHelp() {
+    const rows = [
+        ['Čtečka čárových kódů', hasBarcodeReader() ? 'k dispozici' : 'chybí (potřebuje Chrome na Androidu)'],
+        ['Kamera v prohlížeči', navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 'k dispozici' : 'chybí'],
+        ['Zabezpečené připojení', window.isSecureContext ? 'ano' : 'ne'],
+        ['Stránka běží v rámu', window.top !== window.self ? 'ano (online verze)' : 'ne']
+    ];
+
+    try {
+        const status = await navigator.permissions.query({ name: 'camera' });
+        rows.push(['Povolení kamery', status.state === 'granted' ? 'povoleno'
+            : status.state === 'denied' ? 'zakázáno' : 'zeptá se']);
+    } catch {
+        rows.push(['Povolení kamery', 'prohlížeč neřekne']);
+    }
+    if (lastCameraError) rows.push(['Poslední chyba', lastCameraError]);
+
+    openModal({
+        title: 'Co říká prohlížeč',
+        bodyHtml: `
+            <table class="data">${rows.map(([label, value]) =>
+                `<tr><td>${esc(label)}</td><td><strong>${esc(value)}</strong></td></tr>`).join('')}</table>
+            <p class="muted" style="margin-top:0.7rem;">
+                Když kamera nejede, tlačítko <strong>Vyfotit kód</strong> funguje vždycky – otevře
+                fotoaparát telefonu, kód se přečte z fotky a fotka zůstane u záznamu.</p>`,
+        actionsHtml: '<button class="btn-secondary" data-help-close>Zpět ke skenování</button>',
+        onMount: modal => modal.querySelector('[data-help-close]')
+            .addEventListener('click', () => startCameraScan())
+    });
 }
 
 /* --- Zápis záznamu -------------------------------------------------------------- */
 
-function checkForm(checkId, ean, photo) {
+async function checkForm(checkId, ean, photo, fromCamera) {
     const check = checkId ? DB.checks.find(c => c.id === checkId) : null;
+    if (check) await ensurePhotoData(check);
+    const photoBefore = check ? (check.photo || '') : '';
     const elementId = check ? check.elementId : scanPlace;
     const element = mapElementById(elementId);
     if (!element) { go('#/skenovat'); return; }
@@ -349,7 +486,7 @@ function checkForm(checkId, ean, photo) {
     const levelOptions = [{ value: 0, label: 'Neurčeno' }].concat(
         Array.from({ length: total }, (_, i) => ({ value: i + 1, label: levelName(i + 1, total) })));
 
-    const values = check || {
+    const values = check ? { ...check } : {
         name: known ? known.article.name : '',
         ean: ean || '',
         expiry: '',
@@ -366,14 +503,12 @@ function checkForm(checkId, ean, photo) {
         fields: [
             { name: 'name', label: 'Co to je', type: 'text', required: true,
               placeholder: known ? '' : 'např. Jogurt jahodový 150 g' },
+            { name: 'expiry', label: 'Datum spotřeby', type: 'date-quick' },
             { type: 'row', fields: [
-                { name: 'expiry', label: 'Datum spotřeby', type: 'date' },
-                { name: 'pieces', label: 'Kusů', type: 'number' }
-            ] },
-            { type: 'row', fields: [
-                { name: 'ean', label: 'EAN', type: 'text' },
+                { name: 'pieces', label: 'Kusů', type: 'number' },
                 { name: 'level', label: 'Police', type: 'select', options: levelOptions }
             ] },
+            { name: 'ean', label: 'EAN', type: 'text' },
             { name: 'photo', label: 'Fotka', type: 'photo' },
             { name: 'action', label: 'Co s tím', type: 'select', options: CHECK_ACTIONS },
             { name: 'note', label: 'Poznámka', type: 'text', placeholder: 'např. zadní řada, nahlášeno vedoucí' },
@@ -397,7 +532,7 @@ function checkForm(checkId, ean, photo) {
 
             if (check) {
                 Object.assign(check, payload);
-                if (data.photo) check.photoId = '';
+                if (data.photo !== photoBefore) check.photoId = '';
             } else {
                 const record = { id: uid(), at: todayISO(), done: false, ...payload };
                 DB.checks.unshift(record);
@@ -409,6 +544,8 @@ function checkForm(checkId, ean, photo) {
             if (currentRoute().name === 'data') renderChecks();
             else renderScan(elementId);
             toast(check ? 'Uloženo' : 'Zapsáno');
+            /* Po zápisu z kamery pokračujeme rovnou dalším kusem. */
+            if (fromCamera) startCameraScan();
         },
         onDelete: check ? () => {
             DB.checks = DB.checks.filter(c => c.id !== checkId);

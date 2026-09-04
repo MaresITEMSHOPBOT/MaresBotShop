@@ -135,6 +135,16 @@ function hasPhoto(item) {
 /* Přepíše online vrstva – dotáhne fotky, které ještě nejsou stažené. */
 function hydratePhotos() {}
 
+/* Před úpravou potřebujeme mít fotku po ruce, ať ji formulář ukáže
+   a ať „Odebrat" opravdu odebere. */
+async function ensurePhotoData(item) {
+    if (!item || item.photo || !item.photoId) return;
+    if (window.CLOUD && window.CLOUD.fetchPhoto) {
+        const data = await window.CLOUD.fetchPhoto(item.photoId);
+        if (data) item.photo = data;
+    }
+}
+
 function articleThumbHtml(article, elementId) {
     if (!hasPhoto(article)) return '<span class="article-thumb empty">🛒</span>';
     const src = photoOf(article);
@@ -435,10 +445,12 @@ function addMapElement(type) {
     toast('Prvek přidán doprostřed plánu');
 }
 
-function articleForm(elementId, articleId, afterSave, presetLevel) {
+async function articleForm(elementId, articleId, afterSave, presetLevel) {
     const element = mapElementById(elementId);
     if (!element) return;
     const article = articleId ? element.articles.find(a => a.id === articleId) : null;
+    await ensurePhotoData(article);
+    const photoBefore = article ? (article.photo || '') : '';
     const done = () => { if (afterSave) afterSave(); else renderMap(); };
     const total = levelsOf(element);
     const levelOptions = [{ value: 0, label: 'Nezařazeno' }].concat(
@@ -464,9 +476,12 @@ function articleForm(elementId, articleId, afterSave, presetLevel) {
             if (!data.name) return;
             data.level = Number(data.level) || 0;
             pushMapUndo();
-            if (data.photo) data.photoId = '';
-            if (article) Object.assign(article, data);
-            else element.articles.push({ id: uid(), ...data });
+            if (article) {
+                Object.assign(article, data);
+                if (data.photo !== photoBefore) article.photoId = '';
+            } else {
+                element.articles.push({ id: uid(), ...data });
+            }
             if (!save()) { mapUndo.pop(); return; }
             done();
             toast(article ? 'Uloženo' : 'Artikl přidán');
@@ -482,9 +497,11 @@ function articleForm(elementId, articleId, afterSave, presetLevel) {
 }
 
 /* Fotka celého místa – regálu, gondoly, chladicího boxu. */
-function elementPhotoForm(elementId, afterSave) {
+async function elementPhotoForm(elementId, afterSave) {
     const element = mapElementById(elementId);
     if (!element) return;
+    await ensurePhotoData(element);
+    const photoBefore = element.photo || '';
 
     openForm({
         title: `Fotka místa · ${element.name}`,
@@ -494,7 +511,7 @@ function elementPhotoForm(elementId, afterSave) {
         onSave: data => {
             pushMapUndo();
             element.photo = data.photo;
-            if (data.photo) element.photoId = '';
+            if (data.photo !== photoBefore) element.photoId = '';
             if (!save()) { mapUndo.pop(); return; }
             if (afterSave) afterSave(); else renderMap();
             toast(data.photo ? 'Fotka uložena' : 'Fotka odebrána');
