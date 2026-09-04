@@ -35,6 +35,7 @@ node lidl/build.js
 | **Přehled** | Dnešní směna na jedné obrazovce – kdo je v práci, palety, checklist, zítřek, připomínky. |
 | **Plán** | Týdenní plán směn, kopírování minulého týdne, tisk, přehled hodin proti úvazku. |
 | **Prodejna** | Editovatelný plán prodejny – regály, pokladny, gondoly, akce. Klik otevře regál ve 2D pohledu s policemi. |
+| **Data spotřeby** | Kontrola dat: vybereš místo, skenuješ zboží, fotíš ho a zapisuješ datum spotřeby. |
 | **Den** | Detail dne: rozdělení lidí na úseky, dodávky, checklisty, tržba a předání směny. |
 | **Tým** | Lidé, jejich pozice, úvazek, na co jsou zaškolení, poznámky. |
 | **Zboží** | Statistika palet podle druhu a dne – z čísel poznáš, na které dny potřebuješ víc lidí. |
@@ -68,6 +69,23 @@ pobere řádově stovky – kolik je zabráno, ukazuje pruh v *Nastavení*.
 
 Plán jde vytisknout (tlačítko **Tisk**) a tlačítko **Výchozí plán** vrátí původní podobu.
 
+## Kontrola dat spotřeby
+
+V sekci **Data spotřeby** dáš *Začít kontrolu*, vybereš místo (Pokladna 1, konkrétní regál…)
+a zapisuješ zboží. Kód se dá načíst třemi způsoby:
+
+1. **Kamerou** – živé skenování. Umí ho Chrome na Androidu (čtečka zabudovaná v prohlížeči).
+2. **Vyfocením kódu** – vyfotíš čárový kód, aplikace ho přečte a fotku rovnou přiloží k záznamu.
+3. **Ručně** – EAN se napíše do pole. Zvládne to i klasická pistolová čtečka, ta kód „napíše"
+   a odešle Enterem.
+
+K záznamu patří název, datum spotřeby, počet kusů, police, fotka a co s tím (redukce, odpis,
+vrácení dodavateli). Zaškrtnutá volba *Přidat i mezi artikly tohohle místa* rovnou staví
+digitální prodejnu – co naskenuješ, objeví se v regálu.
+
+Přehled řadí zboží od nejnaléhavějšího: prošlé, končí dnes, do tří dnů, do týdne. Hotové
+položky odškrtneš a zmizí z seznamu k řešení.
+
 ## Dvě věci, které se vyplatí vědět
 
 1. **Z poznámky se dá udělat úkol.** U každé poznámky je tlačítko ✅, které z ní vyrobí položku
@@ -86,6 +104,7 @@ lidl/
   store.js     – datový model, číselníky, ukládání, výpočty hodin, výchozí plán prodejny
   map.js       – editor plánu prodejny a vyhledávání artiklů
   shelf.js     – čelní 2D pohled na regál, police a přetahování artiklů
+  scan.js      – kontrola dat spotřeby: výběr místa, čtení kódů, zápisy
   cloud.js     – online ukládání do účtu (jen v Artifact verzi)
   inline.js    – společné kousky pro oba buildy
   build-artifact.js – sestaví ../dist/vedeni-smeny.html pro publikování

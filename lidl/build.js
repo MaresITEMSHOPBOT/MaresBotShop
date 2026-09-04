@@ -13,6 +13,7 @@ const html = read('index.html')
     .replace('<script src="store.js"></script>', () => `<script>\n${read('store.js')}\n</script>`)
     .replace('<script src="map.js"></script>', () => `<script>\n${read('map.js')}\n</script>`)
     .replace('<script src="shelf.js"></script>', () => `<script>\n${read('shelf.js')}\n</script>`)
+    .replace('<script src="scan.js"></script>', () => `<script>\n${read('scan.js')}\n</script>`)
     .replace('<script src="app.js"></script>', () => `<script>\n${read('app.js')}\n</script>`);
 
 fs.writeFileSync(output, html);

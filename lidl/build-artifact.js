@@ -16,7 +16,7 @@ const output = path.join(outputDir, 'vedeni-smeny.html');
 /* Pořadí skriptů: data → plán → online vrstva → aplikace.
    cloud.js musí být před app.js (ten se na startu ptá, jestli existuje)
    a za map.js (přepisuje v něm dotahování fotek). */
-const scripts = ['store.js', 'map.js', 'shelf.js', 'cloud.js', 'app.js'];
+const scripts = ['store.js', 'map.js', 'shelf.js', 'scan.js', 'cloud.js', 'app.js'];
 
 const html = `<title>Vedení směny</title>
 <style>

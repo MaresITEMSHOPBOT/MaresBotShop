@@ -7,6 +7,7 @@ const NAV = [
     { id: 'prehled',   label: '📊 Přehled' },
     { id: 'plan',      label: '📅 Plán' },
     { id: 'mapa',      label: '🗺️ Prodejna' },
+    { id: 'data',      label: '📅 Data spotřeby' },
     { id: 'tym',       label: '👥 Tým' },
     { id: 'zbozi',     label: '📦 Zboží' },
     { id: 'checklist', label: '✅ Checklist' },
@@ -291,7 +292,10 @@ function renderHeader() {
 
 function render() {
     const route = currentRoute();
-    const active = route.name === 'den' ? 'plan' : route.name === 'regal' ? 'mapa' : route.name;
+    const active = route.name === 'den' ? 'plan'
+        : route.name === 'regal' ? 'mapa'
+        : route.name === 'skenovat' ? 'data'
+        : route.name;
     renderNav(active);
     renderHeader();
     window.scrollTo({ top: 0 });
@@ -300,6 +304,8 @@ function render() {
         case 'plan':      return renderPlan();
         case 'mapa':      return renderMap();
         case 'regal':     return renderShelf(route.param);
+        case 'data':      return renderChecks();
+        case 'skenovat':  return route.param ? renderScan(route.param) : renderPlacePicker();
         case 'den':       return renderDayDetail(route.param || todayISO());
         case 'tym':       return renderTeam();
         case 'zbozi':     return renderGoods();

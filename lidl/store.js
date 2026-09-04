@@ -228,6 +228,7 @@ function emptyDb() {
         },
         days: {},
         notes: [],
+        checks: [],
         map: defaultMap()
     };
 }
@@ -247,6 +248,7 @@ function normalize(data) {
         checklists: { ...base.checklists, ...(data.checklists || {}) },
         days: (data.days && typeof data.days === 'object') ? data.days : {},
         notes: Array.isArray(data.notes) ? data.notes : [],
+        checks: Array.isArray(data.checks) ? data.checks : [],
         map: (data.map && Array.isArray(data.map.elements)) ? data.map : defaultMap()
     };
 
@@ -281,6 +283,17 @@ function normalize(data) {
         n.id = n.id || uid();
         n.tags = Array.isArray(n.tags) ? n.tags : [];
         n.date = n.date || todayISO();
+    });
+
+    db.checks.forEach(check => {
+        check.id = check.id || uid();
+        check.at = check.at || todayISO();
+        ['elementId', 'ean', 'name', 'expiry', 'note', 'action'].forEach(key => {
+            check[key] = check[key] || '';
+        });
+        check.level = Math.max(0, Math.round(Number(check.level) || 0));
+        check.pieces = Math.max(0, Math.round(Number(check.pieces) || 0));
+        check.done = Boolean(check.done);
     });
 
     /* Starší, ručně obkreslený plán nahradíme srovnaným – ale jen dokud si do něj
@@ -613,4 +626,84 @@ function formatBytes(bytes) {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} kB`;
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/* ==========================================================================
+   Kontrola dat spotřeby
+   Záznam vzniká při skenování zboží na konkrétním místě v prodejně.
+   ========================================================================== */
+
+const CHECK_ACTIONS = [
+    { value: '', label: 'Zatím nic' },
+    { value: 'sledovat', label: 'Sledovat' },
+    { value: 'redukce', label: 'Dát do redukce' },
+    { value: 'odpis', label: 'Odepsat' },
+    { value: 'vraceni', label: 'Vrátit dodavateli' }
+];
+
+/* Kolik dní zbývá do data spotřeby (záporné = prošlé). */
+function daysUntil(iso) {
+    if (!iso) return null;
+    const today = parseISO(todayISO());
+    const target = parseISO(iso);
+    return Math.round((target - today) / 86400000);
+}
+
+/* Naléhavost záznamu – podle ní se barví seznam. */
+function expiryStatus(iso) {
+    const days = daysUntil(iso);
+    if (days == null) return { key: 'nedatum', label: 'Bez data', pill: '' };
+    if (days < 0) return { key: 'prosle', label: days === -1 ? 'Prošlo včera' : `Prošlo před ${Math.abs(days)} dny`, pill: 'danger' };
+    if (days === 0) return { key: 'dnes', label: 'Končí dnes', pill: 'danger' };
+    if (days === 1) return { key: 'zitra', label: 'Končí zítra', pill: 'warning' };
+    if (days <= 3) return { key: 'brzy', label: `Zbývají ${days} dny`, pill: 'warning' };
+    if (days <= 7) return { key: 'tyden', label: `Zbývá ${days} dní`, pill: 'accent' };
+    return { key: 'ok', label: `Zbývá ${days} dní`, pill: '' };
+}
+
+function checkActionLabel(value) {
+    const action = CHECK_ACTIONS.find(a => a.value === value);
+    return action && action.value ? action.label : '';
+}
+
+/* Nevyřešené záznamy od nejnaléhavějšího. */
+function openChecks() {
+    return DB.checks
+        .filter(check => !check.done)
+        .sort((a, b) => (a.expiry || '9999').localeCompare(b.expiry || '9999'));
+}
+
+function checksForElement(elementId) {
+    return DB.checks
+        .filter(check => check.elementId === elementId)
+        .sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+}
+
+function checkSummary() {
+    const summary = { prosle: 0, dnes: 0, brzy: 0, tyden: 0, celkem: 0 };
+    openChecks().forEach(check => {
+        summary.celkem++;
+        const key = expiryStatus(check.expiry).key;
+        if (key === 'prosle') summary.prosle++;
+        else if (key === 'dnes') summary.dnes++;
+        else if (key === 'zitra' || key === 'brzy') summary.brzy++;
+        else if (key === 'tyden') summary.tyden++;
+    });
+    return summary;
+}
+
+/* Najde artikl podle EAN kdekoli v plánu – kvůli předvyplnění názvu. */
+function articleByEan(ean) {
+    if (!ean) return null;
+    for (const element of DB.map.elements) {
+        const article = element.articles.find(a => a.ean && a.ean === ean);
+        if (article) return { element, article };
+    }
+    return null;
+}
+
+function checkText(count) {
+    if (count === 1) return '1 záznam';
+    if (count >= 2 && count <= 4) return `${count} záznamy`;
+    return `${count} záznamů`;
 }

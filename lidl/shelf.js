@@ -55,6 +55,7 @@ function renderShelf(elementId) {
             </div>
             <div class="btn-row no-print">
                 <button class="btn-secondary" data-nav="mapa">← Zpět do plánu</button>
+                <button class="btn-secondary" data-shelf-action="scan">🔎 Kontrola dat</button>
                 <button class="btn" data-shelf-action="add">➕ Přidat artikl</button>
             </div>
         </div>
@@ -258,6 +259,10 @@ function runShelfAction(action, element, data) {
             break;
         case 'open-photo':
             openPhoto(element.id, 'element');
+            break;
+        case 'scan':
+            scanSession = [];
+            go(`#/skenovat/${element.id}`);
             break;
     }
 }

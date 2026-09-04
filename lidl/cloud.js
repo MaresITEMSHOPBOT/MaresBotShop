@@ -52,32 +52,40 @@ const APP_DOCS = {
     team: () => ({ items: DB.employees }),
     checklists: () => ({ value: DB.checklists }),
     notes: () => ({ items: DB.notes }),
+    checks: () => ({ items: stripCheckPhotos(DB.checks) }),
     plan: () => ({ value: stripPhotos(DB.map) })
 };
 
-/* Fotky do plánu nepatří – uloží se zvlášť, jinak by dokument přerostl limit. */
-function stripPhotos(map) {
-    const copy = JSON.parse(JSON.stringify(map));
-    copy.elements.forEach(element => {
-        element.photoId = detachPhoto(element);
-        delete element.photo;
-        element.articles.forEach(article => {
-            article.photoId = detachPhoto(article);
-            delete article.photo;
-        });
-    });
-    return copy;
-}
-
-/* Vrátí id fotky; novou fotku uloží do fronty k zápisu. */
-function detachPhoto(item) {
-    if (!item.photo) return item.photoId || '';
-    if (!item.photoId) {
+/* Fotky do plánu nepatří – uloží se zvlášť, jinak by dokument přerostl limit.
+   Id fotky se přiděluje živým datům, ne kopii, aby se při každém uložení
+   nezakládala nová fotka. */
+function assignPhotoIds() {
+    photoHolders().forEach(item => {
+        if (!item.photo || item.photoId) return;
         item.photoId = 'f' + uid();
         CLOUD.photos.set(item.photoId, item.photo);
         CLOUD.pendingPhotos.add(item.photoId);
-    }
-    return item.photoId;
+    });
+}
+
+function withoutPhoto(item) {
+    const copy = { ...item, photoId: item.photoId || '' };
+    delete copy.photo;
+    return copy;
+}
+
+function stripPhotos(map) {
+    return {
+        ...map,
+        elements: map.elements.map(element => ({
+            ...withoutPhoto(element),
+            articles: element.articles.map(withoutPhoto)
+        }))
+    };
+}
+
+function stripCheckPhotos(checks) {
+    return checks.map(withoutPhoto);
 }
 
 function applyAppDoc(id, body) {
@@ -86,6 +94,7 @@ function applyAppDoc(id, body) {
     if (id === 'team') DB.employees = body.items || [];
     if (id === 'checklists') DB.checklists = body.value || DB.checklists;
     if (id === 'notes') DB.notes = body.items || [];
+    if (id === 'checks') DB.checks = body.items || [];
     if (id === 'plan' && body.value) DB.map = body.value;
 }
 
@@ -118,14 +127,20 @@ async function loadEverything() {
     return true;
 }
 
+/* Všechno, co může nést fotku – prvky plánu, jejich artikly a záznamy kontrol. */
+function photoHolders() {
+    const holders = [];
+    DB.map.elements.forEach(element => {
+        holders.push(element);
+        element.articles.forEach(article => holders.push(article));
+    });
+    DB.checks.forEach(check => holders.push(check));
+    return holders;
+}
+
 function rememberPhotoIds() {
     CLOUD.knownPhotoIds = new Set();
-    DB.map.elements.forEach(element => {
-        if (element.photoId) CLOUD.knownPhotoIds.add(element.photoId);
-        element.articles.forEach(article => {
-            if (article.photoId) CLOUD.knownPhotoIds.add(article.photoId);
-        });
-    });
+    photoHolders().forEach(item => { if (item.photoId) CLOUD.knownPhotoIds.add(item.photoId); });
 }
 
 /* --- Zápis ------------------------------------------------------------------ */
@@ -141,6 +156,7 @@ CLOUD.save = function () {
 async function flush() {
     if (CLOUD.saving) { CLOUD.dirtyAgain = true; return; }
     CLOUD.saving = true;
+    assignPhotoIds();
 
     const writes = [];
     const referenced = new Set();
@@ -158,10 +174,7 @@ async function flush() {
         }
     });
 
-    DB.map.elements.forEach(element => {
-        if (element.photoId) referenced.add(element.photoId);
-        element.articles.forEach(article => { if (article.photoId) referenced.add(article.photoId); });
-    });
+    photoHolders().forEach(item => { if (item.photoId) referenced.add(item.photoId); });
 
     CLOUD.pendingPhotos.forEach(id => {
         const data = CLOUD.photos.get(id);
