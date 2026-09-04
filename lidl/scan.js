@@ -174,6 +174,7 @@ function renderScan(elementId) {
 
     const recent = checksForElement(elementId).slice(0, 8);
     const reader = hasBarcodeReader();
+    const blocked = Boolean(DB.settings.cameraBlocked);
 
     view.innerHTML = `
         <div class="view-head">
@@ -188,11 +189,15 @@ function renderScan(elementId) {
         </div>
 
         <div class="card scan-card">
-            ${reader ? `<button class="btn scan-big" data-scan-action="camera">🎥 Skenovat kamerou</button>` : ''}
-            <button class="${reader ? 'btn-secondary' : 'btn'} scan-big" data-scan-action="photo-scan">
-                📷 Vyfotit kód${reader ? '' : ' (a přečíst)'}
+            ${reader && !blocked ? `<button class="btn scan-big" data-scan-action="camera">🎥 Skenovat kamerou</button>` : ''}
+            <button class="${reader && !blocked ? 'btn-secondary' : 'btn'} scan-big" data-scan-action="photo-scan">
+                📷 Vyfotit kód
                 <input type="file" accept="image/*" capture="environment" hidden data-scan-file>
             </button>
+            ${reader && blocked ? `<button class="btn-secondary scan-big" data-scan-action="camera">
+                🎥 Zkusit znovu kameru</button>` : ''}
+            ${blocked ? `<div class="field-hint">Živou kameru tenhle prohlížeč stránce nepustil.
+                Focení funguje pořád – vyfoť čárový kód zblízka, přečte se z fotky a fotka zůstane u záznamu.</div>` : ''}
 
             <form class="scan-manual" data-scan-form>
                 <input type="text" inputmode="numeric" autocomplete="off" placeholder="Nebo napiš EAN a dej Enter"
@@ -241,31 +246,79 @@ function renderScan(elementId) {
 
 /* --- Čtení kódu ---------------------------------------------------------------- */
 
-/* Kód z vyfoceného obrázku; fotku si rovnou necháme k artiklu. */
+/* --- Čtení kódu z fotky ---------------------------------------------------
+   Fotka z telefonu bývá větší a kód na ní malý, proto zkoušíme několik
+   úprav: originál, vyříznutý střed, zvětšení a zvýšení kontrastu.
+   -------------------------------------------------------------------------- */
+
+function toCanvas(source, { crop = 1, scale = 1, contrast = 1 } = {}) {
+    const width = source.width * crop;
+    const height = source.height * crop;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: contrast !== 1 });
+    ctx.drawImage(source,
+        (source.width - width) / 2, (source.height - height) / 2, width, height,
+        0, 0, canvas.width, canvas.height);
+
+    if (contrast !== 1) {
+        const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = image.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const grey = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+            const boosted = Math.max(0, Math.min(255, (grey - 128) * contrast + 128));
+            data[i] = data[i + 1] = data[i + 2] = boosted;
+        }
+        ctx.putImageData(image, 0, 0);
+    }
+    return canvas;
+}
+
+async function decodeImage(file) {
+    const bitmap = await createImageBitmap(file);
+    const detector = newDetector();
+    const attempts = [
+        {},
+        { crop: 0.7, scale: 2 },
+        { scale: 2, contrast: 1.8 },
+        { crop: 0.5, scale: 3, contrast: 2.2 }
+    ];
+
+    for (const options of attempts) {
+        try {
+            const source = Object.keys(options).length ? toCanvas(bitmap, options) : bitmap;
+            const codes = await detector.detect(source);
+            const hit = codes.find(code => code.rawValue);
+            if (hit) { bitmap.close?.(); return hit.rawValue; }
+        } catch (err) {
+            console.warn('Pokus o přečtení kódu selhal', err);
+        }
+    }
+    bitmap.close?.();
+    return null;
+}
+
+/* Kód z vyfoceného obrázku; fotku si rovnou necháme k záznamu. */
 async function readCodeFromPhoto(file) {
+    toast('Čtu kód z fotky…');
     const photo = await compressImage(file).catch(() => '');
 
     if (!hasBarcodeReader()) {
-        toast('Kód nepřečtu, EAN doplň ručně');
+        toast('Tenhle prohlížeč kódy číst neumí – EAN doplň ručně');
         checkForm(null, '', photo);
         return;
     }
 
-    try {
-        const bitmap = await createImageBitmap(file);
-        const codes = await newDetector().detect(bitmap);
-        bitmap.close?.();
-        if (codes.length) {
-            navigator.vibrate?.(60);
-            checkForm(null, codes[0].rawValue, photo);
-        } else {
-            toast('Kód se nepodařilo přečíst');
-            checkForm(null, '', photo);
-        }
-    } catch (err) {
-        console.error('Čtení kódu selhalo', err);
-        checkForm(null, '', photo);
+    const code = await decodeImage(file).catch(() => null);
+    if (code) {
+        navigator.vibrate?.(60);
+        toast(`Načteno ${code}`);
+    } else {
+        toast('Kód se nepodařilo přečíst – zkus focení zblízka, EAN jde napsat ručně');
     }
+    checkForm(null, code || '', photo);
 }
 
 /* Živé skenování kamerou. Kamera se drží otevřená, dokud ji sám nezavřeš –
@@ -361,6 +414,10 @@ async function runCameraScan(modal) {
         stream = await openCameraStream();
     } catch (err) {
         lastCameraError = `${err.name || ''} ${err.message || ''}`.trim();
+        if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
+            DB.settings.cameraBlocked = true;
+            save();
+        }
         hint.textContent = cameraErrorText(err);
         hint.classList.add('bad');
         retryBtn.hidden = false;
@@ -374,6 +431,7 @@ async function runCameraScan(modal) {
         return;
     }
 
+    if (DB.settings.cameraBlocked) { DB.settings.cameraBlocked = false; save(); }
     hint.classList.remove('bad');
     video.srcObject = stream;
     await video.play().catch(() => {});

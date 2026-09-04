@@ -123,8 +123,27 @@ async function loadEverything() {
     DB.days = days;
 
     DB = normalize(DB);
+    recoverLocalChecks();
     rememberPhotoIds();
     return true;
+}
+
+/* Zápisy, které jsou v prohlížeči, ale do účtu nedošly, doplníme zpátky. */
+function recoverLocalChecks() {
+    const local = readLocal();
+    if (!local || !Array.isArray(local.checks) || !local.checks.length) return;
+
+    const known = new Set(DB.checks.map(check => check.id));
+    const missing = local.checks.filter(check => check.id && !known.has(check.id));
+    if (!missing.length) return;
+
+    DB.checks = [...missing, ...DB.checks];
+    CLOUD.recovered = missing.length;
+    console.warn(`Doplněno ${missing.length} zápisů z prohlížeče, které nedošly do účtu.`);
+    setTimeout(() => {
+        if (typeof toast === 'function') toast(`Doplněno ${missing.length} zápisů z tohohle telefonu`);
+        CLOUD.save();
+    }, 1200);
 }
 
 /* Všechno, co může nést fotku – prvky plánu, jejich artikly a záznamy kontrol. */

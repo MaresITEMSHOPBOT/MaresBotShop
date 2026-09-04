@@ -353,9 +353,32 @@ function load() {
     }
 }
 
+/* Co je uložené v prohlížeči – kvůli dohledání zápisů, které nedošly do účtu. */
+function readLocal() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+/* Do prohlížeče ukládáme vždycky – i v online verzi. Je to záchranná síť:
+   když zápis nedojde do účtu, neztratí se a při dalším spuštění se doplní. */
+function saveLocal() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 function save() {
-    /* Online verze ukládá do účtu, offline do paměti prohlížeče. */
-    if (window.CLOUD && window.CLOUD.enabled) return window.CLOUD.save();
+    if (window.CLOUD && window.CLOUD.enabled) {
+        saveLocal();
+        return window.CLOUD.save();
+    }
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
         return true;

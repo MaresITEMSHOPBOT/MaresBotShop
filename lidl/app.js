@@ -240,7 +240,7 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
         actionsHtml: `
             ${onDelete ? `<button type="button" class="btn-danger" data-form-delete>${esc(deleteLabel)}</button>` : ''}
             <button type="button" class="btn-secondary" data-close-modal-2>Zrušit</button>
-            <button type="submit" form="modal-form" class="btn">${esc(submitLabel)}</button>`,
+            <button type="button" class="btn" data-form-submit>${esc(submitLabel)}</button>`,
         onMount: modal => {
             const form = modal.querySelector('#modal-form');
 
@@ -296,6 +296,13 @@ function openForm({ title, fields, values = {}, submitLabel = 'Uložit', onSave,
                 });
             });
 
+            /* Tlačítko odesíláme sami – atribut form= na tlačítku mimo formulář
+               některé mobilní prohlížeče ignorují a tlačítko pak nic nedělá. */
+            modal.querySelector('[data-form-submit]').addEventListener('click', () => {
+                if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            });
+
             modal.querySelector('[data-close-modal-2]').addEventListener('click', closeModal);
             const deleteBtn = modal.querySelector('[data-form-delete]');
             if (deleteBtn) deleteBtn.addEventListener('click', () => {
@@ -338,8 +345,8 @@ function renderNav(active) {
 }
 
 function renderHeader() {
-    document.getElementById('app-sub').textContent =
-        DB.settings.storeName ? DB.settings.storeName : 'Nastav si prodejnu v Nastavení';
+    const place = DB.settings.storeName || 'Nastav si prodejnu v Nastavení';
+    document.getElementById('app-sub').textContent = `${place} · v${APP_BUILD}`;
 }
 
 function render() {
