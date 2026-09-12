@@ -27,3 +27,7 @@ kontrole, export do JSON (záloha) i CSV (Excel) a import zálohy na jiné zař�
 
 - `index.html` + `app.js` + `data.js` + `styles.css` – studijní web s teorií, ABCD testy a otevřenými otázkami
 - `studium.html` – tentýž web zabalený do jediného souboru
+
+**Online verze:** aplikace je zveřejněná i jako hostovaná stránka, takže jde otevřít přímo v mobilu
+bez stahování souboru. Data se ukládají zvlášť v každém prohlížeči/zařízení – přenos mezi zařízeními
+se dělá exportem a importem zálohy.
