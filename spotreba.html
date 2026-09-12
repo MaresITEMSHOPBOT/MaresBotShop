@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kontrola dat spotřeby</title>
+<style>
+:root {
+    --bg: #f5f7fa;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --text: #1a202c;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --accent: #3182ce;
+    --accent-hover: #2c5282;
+    --border: #e2e8f0;
+    --success: #2f855a;
+    --success-bg: #f0fff4;
+    --error: #c53030;
+    --error-bg: #fff5f5;
+    --warning: #b7791f;
+    --warning-bg: #fffaf0;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] {
+    --bg: #1a202c;
+    --bg-secondary: #2d3748;
+    --bg-card: #2d3748;
+    --text: #f7fafc;
+    --text-secondary: #cbd5e0;
+    --text-muted: #a0aec0;
+    --accent: #63b3ed;
+    --accent-hover: #90cdf4;
+    --border: #4a5568;
+    --success: #68d391;
+    --success-bg: #22543d;
+    --error: #fc8181;
+    --error-bg: #63171b;
+    --warning: #f6ad55;
+    --warning-bg: #5f370e;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-text-size-adjust: 100%;
+}
+
+header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0.8rem 1rem;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+header h1 { font-size: 1.15rem; }
+header .today { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; }
+
+#theme-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--text);
+    flex-shrink: 0;
+}
+#theme-toggle:hover { border-color: var(--accent); }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+
+/* ---- záložky ---- */
+.tabs {
+    display: flex;
+    gap: 0.3rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.2rem;
+    overflow-x: auto;
+}
+.tab {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    margin-bottom: -2px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab .count {
+    display: inline-block;
+    background: var(--error);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.05rem 0.4rem;
+    margin-left: 0.25rem;
+    vertical-align: text-top;
+}
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ---- upozornění ---- */
+#alert-banner {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning);
+    border-left: 5px solid var(--warning);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1.2rem;
+}
+#alert-banner.critical { background: var(--error-bg); border-color: var(--error); border-left-color: var(--error); }
+#alert-banner h2 { font-size: 1rem; margin-bottom: 0.3rem; }
+#alert-banner ul { margin: 0.5rem 0 0 1.2rem; font-size: 0.9rem; }
+#alert-banner li { margin-bottom: 0.15rem; }
+
+/* ---- přehledové dlaždice ---- */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 1.2rem;
+}
+.stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 0.8rem;
+    box-shadow: var(--shadow);
+}
+.stat .value { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+.stat .label { font-size: 0.78rem; color: var(--text-muted); }
+.stat.due .value { color: var(--warning); }
+.stat.expired .value { color: var(--error); }
+.stat.ok .value { color: var(--success); }
+
+/* ---- nástrojová lišta ---- */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.toolbar input[type="search"] { flex: 1 1 200px; min-width: 0; }
+.filters { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.chip:hover { border-color: var(--accent); }
+.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+/* ---- formuláře ---- */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1rem;
+}
+.card > h2 { font-size: 1.05rem; margin-bottom: 0.2rem; }
+.card > .hint { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.9rem; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.8rem;
+}
+.field { display: flex; flex-direction: column; gap: 0.25rem; }
+.field label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); }
+.field .note { font-size: 0.75rem; color: var(--text-muted); }
+
+input, select, textarea {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text);
+    width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+textarea { resize: vertical; min-height: 60px; }
+
+.btn, .btn-secondary, .btn-danger, .btn-success {
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+.btn { background: var(--accent); color: #fff; }
+.btn:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--bg-secondary); color: var(--text); border-color: var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: var(--error); color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+
+.form-msg { font-size: 0.88rem; margin-top: 0.7rem; }
+.form-msg.error { color: var(--error); }
+.form-msg.ok { color: var(--success); }
+
+/* ---- seznam artiklů ---- */
+.group-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin: 1.2rem 0 0.5rem;
+    font-weight: 700;
+}
+.item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+    margin-bottom: 0.6rem;
+    box-shadow: var(--shadow);
+}
+.item.s-expired { border-left-color: var(--error); }
+.item.s-today { border-left-color: var(--error); }
+.item.s-due { border-left-color: var(--warning); }
+.item.s-ok { border-left-color: var(--success); }
+.item.s-nodate { border-left-color: var(--text-muted); }
+
+.item-head { display: flex; justify-content: space-between; gap: 0.6rem; align-items: flex-start; flex-wrap: wrap; }
+.item-name { font-weight: 700; font-size: 1rem; }
+.item-ids { font-size: 0.8rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.badge.s-expired, .badge.s-today { background: var(--error-bg); color: var(--error); border: 1px solid var(--error); }
+.badge.s-due { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning); }
+.badge.s-ok { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+.badge.s-nodate { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+
+.item-dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.2rem;
+    margin-top: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+.item-dates b { color: var(--text); font-variant-numeric: tabular-nums; }
+.item-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.7rem; }
+.item-actions button { font-size: 0.85rem; padding: 0.4rem 0.75rem; }
+
+.item-history { margin-top: 0.7rem; border-top: 1px dashed var(--border); padding-top: 0.6rem; }
+.item-history ol { list-style: none; font-size: 0.85rem; }
+.item-history li { padding: 0.3rem 0; border-bottom: 1px dotted var(--border); color: var(--text-secondary); }
+.item-history li:last-child { border-bottom: none; }
+.yes { color: var(--success); font-weight: 700; }
+.no { color: var(--error); font-weight: 700; }
+
+.empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem 1rem;
+    font-size: 0.92rem;
+}
+
+/* ---- modální okno kontroly ---- */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 200;
+}
+.overlay[hidden] { display: none !important; }
+.modal {
+    background: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 1.2rem;
+}
+.modal h2 { font-size: 1.1rem; margin-bottom: 0.2rem; }
+.modal .sub { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+.step { margin-bottom: 1rem; }
+.step .q { font-weight: 600; margin-bottom: 0.5rem; }
+.choice-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.choice {
+    flex: 1 1 130px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+}
+.choice:hover { border-color: var(--accent); }
+.choice.sel-yes { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+.choice.sel-no { border-color: var(--error); background: var(--error-bg); color: var(--error); }
+.step.done .q { color: var(--text-muted); }
+.checkline { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; margin-top: 0.6rem; }
+.checkline input { width: auto; }
+
+/* ---- historie ---- */
+.log-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.88rem;
+}
+.log-item .when { font-size: 0.78rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.log-item .what { margin-top: 0.15rem; }
+
+footer {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 520px) {
+    header h1 { font-size: 1rem; }
+    .container { padding: 0.8rem; }
+    .item-actions button { flex: 1 1 auto; }
+}
+
+@media print {
+    header, .tabs, .toolbar, .item-actions, footer, #theme-toggle, .stats { display: none !important; }
+    .item, .card { box-shadow: none; page-break-inside: avoid; }
+    body { background: #fff; color: #000; }
+}
+</style>
+</head>
+<body>
+<header>
+    <div class="header-content">
+        <div>
+            <h1>📅 Kontrola dat spotřeby</h1>
+            <div class="today">Dnes je <span id="today-label"></span></div>
+        </div>
+        <button id="theme-toggle" aria-label="Přepnout téma">🌙</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="tabs" role="tablist">
+        <button class="tab active" data-panel="panel-list">📋 Artikly</button>
+        <button class="tab" data-panel="panel-add">➕ Přidat artikl</button>
+        <button class="tab" data-panel="panel-log">🕘 Historie kontrol</button>
+        <button class="tab" data-panel="panel-settings">⚙️ Nastavení</button>
+    </div>
+
+    <!-- ===== PŘEHLED ARTIKLŮ ===== -->
+    <section id="panel-list" class="panel active">
+        <div id="alert-banner" hidden></div>
+
+        <div class="stats">
+            <div class="stat"><div class="value" id="stat-total">0</div><div class="label">Artiklů celkem</div></div>
+            <div class="stat due"><div class="value" id="stat-due">0</div><div class="label">Ke kontrole</div></div>
+            <div class="stat expired"><div class="value" id="stat-expired">0</div><div class="label">Prošlé datum</div></div>
+            <div class="stat ok"><div class="value" id="stat-ok">0</div><div class="label">V pořádku</div></div>
+            <div class="stat" id="stat-nodate-tile" hidden><div class="value" id="stat-nodate">0</div><div class="label">Chybí datum</div></div>
+            <div class="stat"><div class="value" id="stat-checked-today">0</div><div class="label">Kontrol dnes</div></div>
+        </div>
+
+        <div class="toolbar">
+            <input type="search" id="search" placeholder="Hledat podle EAN, čísla artiklu nebo názvu…" autocomplete="off">
+            <div class="filters" id="filters">
+                <button class="chip active" data-filter="all">Vše</button>
+                <button class="chip" data-filter="action">Vyžaduje akci</button>
+                <button class="chip" data-filter="due">Ke kontrole</button>
+                <button class="chip" data-filter="expired">Prošlé</button>
+                <button class="chip" data-filter="ok">V pořádku</button>
+            </div>
+            <button class="btn-secondary" id="print-btn">🖨️ Tisk seznamu</button>
+        </div>
+
+        <div id="list"></div>
+    </section>
+
+    <!-- ===== PŘIDAT / UPRAVIT ARTIKL ===== -->
+    <section id="panel-add" class="panel">
+        <form class="card" id="article-form" autocomplete="off">
+            <h2 id="form-title">Nový artikl</h2>
+            <p class="hint">Zadej EAN, číslo artiklu, název a nejhorší (nejbližší) datum spotřeby, které je na prodejně.</p>
+            <input type="hidden" id="f-id">
+            <div class="form-grid">
+                <div class="field">
+                    <label for="f-ean">EAN *</label>
+                    <input type="text" id="f-ean" inputmode="numeric" placeholder="např. 8594001234567" required>
+                    <span class="note" id="ean-note">Lze načíst i čtečkou – Enter přeskočí na další pole.</span>
+                </div>
+                <div class="field">
+                    <label for="f-number">Číslo artiklu *</label>
+                    <input type="text" id="f-number" placeholder="např. 104523" required>
+                </div>
+                <div class="field">
+                    <label for="f-name">Název artiklu *</label>
+                    <input type="text" id="f-name" placeholder="např. Mléko polotučné 1 l" required>
+                </div>
+                <div class="field">
+                    <label for="f-date">Nejhorší datum spotřeby *</label>
+                    <input type="date" id="f-date" required>
+                    <span class="note">Nejbližší datum, které se na prodejně nachází.</span>
+                </div>
+                <div class="field">
+                    <label for="f-lead">Hlásit X dní před koncem *</label>
+                    <input type="number" id="f-lead" min="1" max="365" step="1" value="7" required>
+                    <span class="note">7 = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.</span>
+                </div>
+                <div class="field">
+                    <label for="f-note">Poznámka</label>
+                    <input type="text" id="f-note" placeholder="např. regál 12, chlazení">
+                </div>
+            </div>
+            <div class="btn-row">
+                <button type="submit" class="btn" id="form-submit">Uložit artikl</button>
+                <button type="button" class="btn-secondary" id="form-reset">Vyprázdnit formulář</button>
+            </div>
+            <div class="form-msg" id="form-msg"></div>
+        </form>
+    </section>
+
+    <!-- ===== HISTORIE ===== -->
+    <section id="panel-log" class="panel">
+        <div class="card">
+            <h2>Historie kontrol</h2>
+            <p class="hint">Záznam všech provedených kontrol – zda zboží bylo na prodejně, zda byla nalepena sleva a jaké nové datum spotřeby bylo zadáno.</p>
+            <div class="toolbar">
+                <input type="search" id="log-search" placeholder="Hledat v historii…" autocomplete="off">
+            </div>
+            <div id="log-list"></div>
+        </div>
+    </section>
+
+    <!-- ===== NASTAVENÍ ===== -->
+    <section id="panel-settings" class="panel">
+        <div class="card">
+            <h2>Upozornění</h2>
+            <p class="hint">Aplikace hlásí artikl, jakmile do jeho data spotřeby zbývá nastavený počet dní včetně dnešního dne.</p>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="s-lead">Výchozí počet dní pro nové artikly</label>
+                    <input type="number" id="s-lead" min="1" max="365" step="1" value="7">
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="btn" id="s-save">Uložit nastavení</button>
+                <button class="btn-secondary" id="notif-btn">🔔 Povolit upozornění prohlížeče</button>
+            </div>
+            <div class="form-msg" id="s-msg"></div>
+        </div>
+
+        <div class="card">
+            <h2>Data</h2>
+            <p class="hint">Artikly i historie kontrol se ukládají do tohoto prohlížeče (localStorage). Pro přenos na jiné zařízení použij export.</p>
+            <div class="btn-row">
+                <button class="btn-secondary" id="export-json">⬇️ Export (JSON záloha)</button>
+                <button class="btn-secondary" id="export-csv">⬇️ Export (CSV pro Excel)</button>
+                <button class="btn-secondary" id="import-btn">⬆️ Import ze zálohy</button>
+                <button class="btn-danger" id="wipe-btn">🗑️ Smazat všechna data</button>
+            </div>
+            <input type="file" id="import-file" accept=".json,application/json" hidden>
+            <div class="form-msg" id="data-msg"></div>
+        </div>
+
+        <div class="card">
+            <h2>Jak to funguje</h2>
+            <ol style="font-size: 0.9rem; margin-left: 1.2rem; color: var(--text-secondary);">
+                <li>Přidáš artikl: EAN, číslo artiklu, název, nejhorší datum spotřeby a počet dní (např. 7).</li>
+                <li>Jakmile do data spotřeby zbývá 7 dní <b>včetně dneška</b>, artikl se nahoře ohlásí jako „Ke kontrole“.</li>
+                <li>Klikneš na <b>Zkontrolovat</b> a odpovíš, zda je zboží s tímto datem na prodejně.</li>
+                <li>Pokud ano, potvrdíš, zda byla nalepena sleva.</li>
+                <li>Nakonec zadáš nové nejhorší datum spotřeby – kontrola artiklu tím pokračuje dál.</li>
+            </ol>
+        </div>
+    </section>
+</div>
+
+<footer>Kontrola dat spotřeby artiklů · data zůstávají v tomto prohlížeči</footer>
+
+<!-- ===== MODÁL KONTROLY ===== -->
+<div class="overlay" id="check-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="check-title">
+        <h2 id="check-title">Kontrola artiklu</h2>
+        <div class="sub" id="check-sub"></div>
+
+        <div class="step" id="step-present">
+            <div class="q" id="q-present">1. Je na prodejně zboží s tímto datem spotřeby?</div>
+            <div class="choice-row">
+                <button type="button" class="choice" id="present-yes">✅ Ano, je tam</button>
+                <button type="button" class="choice" id="present-no">❌ Ne, není tam</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-discount" hidden>
+            <div class="q">2. Byla nalepena sleva?</div>
+            <div class="choice-row">
+                <button type="button" class="choice" id="disc-yes">🏷️ Ano, sleva nalepena</button>
+                <button type="button" class="choice" id="disc-no">🚫 Ne, bez slevy</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-newdate" hidden>
+            <div class="q" id="q-newdate">3. Nové nejhorší datum spotřeby</div>
+            <div class="field">
+                <input type="date" id="check-newdate">
+                <span class="note">Nejbližší datum spotřeby, které na prodejně zůstává.</span>
+            </div>
+            <label class="checkline"><input type="checkbox" id="check-nodate"> Nové datum teď neznám / artikl nemáme</label>
+            <div class="field" style="margin-top: 0.6rem;">
+                <label for="check-note">Poznámka ke kontrole</label>
+                <input type="text" id="check-note" placeholder="nepovinné">
+            </div>
+        </div>
+
+        <div class="form-msg error" id="check-msg"></div>
+        <div class="btn-row">
+            <button type="button" class="btn" id="check-save" hidden>Uložit kontrolu</button>
+            <button type="button" class="btn-secondary" id="check-cancel">Zrušit</button>
+        </div>
+    </div>
+</div>
+<script>
+/* ===================================================================
+   Kontrola dat spotřeby artiklů
+   Data se ukládají do localStorage tohoto prohlížeče.
+   =================================================================== */
+
+const STORE_KEY = 'spotreba-data-v1';
+const THEME_KEY = 'spotreba-theme';
+const DEFAULT_LEAD = 7;
+
+let state = loadState();
+let activeFilter = 'all';
+let searchQuery = '';
+let logQuery = '';
+let expandedHistory = {};
+let renderedForDay = null;
+
+/* ---------- ukládání ---------- */
+
+function emptyState() {
+    return { articles: [], settings: { defaultLead: DEFAULT_LEAD }, notified: {} };
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORE_KEY);
+        if (!raw) return emptyState();
+        const parsed = JSON.parse(raw);
+        const base = emptyState();
+        return {
+            articles: Array.isArray(parsed.articles) ? parsed.articles.map(normalizeArticle) : base.articles,
+            settings: { ...base.settings, ...(parsed.settings || {}) },
+            notified: parsed.notified || {}
+        };
+    } catch {
+        return emptyState();
+    }
+}
+
+function saveState() {
+    try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    } catch (e) {
+        showMsg('data-msg', 'Data se nepodařilo uložit do prohlížeče: ' + e.message, 'error');
+    }
+}
+
+function normalizeArticle(a) {
+    return {
+        id: a.id || newId(),
+        ean: String(a.ean || ''),
+        number: String(a.number || ''),
+        name: String(a.name || ''),
+        worstDate: a.worstDate || '',
+        leadDays: Number(a.leadDays) > 0 ? Number(a.leadDays) : DEFAULT_LEAD,
+        note: a.note || '',
+        createdAt: a.createdAt || new Date().toISOString(),
+        checks: Array.isArray(a.checks) ? a.checks : []
+    };
+}
+
+function newId() {
+    return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+/* ---------- práce s datem ---------- */
+
+function todayISO() {
+    const d = new Date();
+    return toISO(d);
+}
+
+function toISO(d) {
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function parseISO(iso) {
+    const [y, m, d] = String(iso).split('-').map(Number);
+    return new Date(y, (m || 1) - 1, d || 1);
+}
+
+/** Počet celých dní mezi dvěma ISO daty (to - from). */
+function dayDiff(fromISO, toISOStr) {
+    const ms = parseISO(toISOStr) - parseISO(fromISO);
+    return Math.round(ms / 86400000);
+}
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = parseISO(iso);
+    return `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()}`;
+}
+
+function fmtDateTime(isoTs) {
+    const d = new Date(isoTs);
+    const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()} ${time}`;
+}
+
+function fmtWeekday(iso) {
+    const names = ['nedělí', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
+    return names[parseISO(iso).getDay()];
+}
+
+/**
+ * Zbývající dny včetně dneška: datum spotřeby dnes = 1 den.
+ * Artikl se hlásí, jakmile je tato hodnota <= nastavený počet dní.
+ */
+function daysLeftInclusive(article) {
+    if (!article.worstDate) return null;
+    return dayDiff(todayISO(), article.worstDate) + 1;
+}
+
+function statusOf(article) {
+    if (!article.worstDate) return 'nodate';
+    const diff = dayDiff(todayISO(), article.worstDate);
+    if (diff < 0) return 'expired';
+    if (diff === 0) return 'today';
+    return diff + 1 <= article.leadDays ? 'due' : 'ok';
+}
+
+const STATUS_LABEL = {
+    expired: 'Prošlé datum',
+    today: 'Končí dnes',
+    due: 'Ke kontrole',
+    ok: 'V pořádku',
+    nodate: 'Chybí datum'
+};
+
+function needsAction(article) {
+    return statusOf(article) !== 'ok';
+}
+
+function leftText(article) {
+    const left = daysLeftInclusive(article);
+    if (left === null) return 'není zadané datum spotřeby';
+    if (left < 0) return `prošlo před ${Math.abs(left) + 1} dny`;
+    if (left === 0) return 'prošlo včera';
+    if (left === 1) return 'poslední den (dnes)';
+    return `zbývá ${left} dní včetně dneška`;
+}
+
+/* ---------- téma ---------- */
+
+function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY) || 'light';
+    applyTheme(saved);
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        localStorage.setItem(THEME_KEY, next);
+    });
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+/* ---------- záložky ---------- */
+
+function initTabs() {
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => showPanel(tab.dataset.panel));
+    });
+}
+
+function showPanel(panelId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.panel === panelId));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === panelId));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- vykreslení přehledu ---------- */
+
+function render() {
+    renderedForDay = todayISO();
+    document.getElementById('today-label').textContent = `${fmtWeekday(renderedForDay)} ${fmtDate(renderedForDay)}`;
+    renderStats();
+    renderAlert();
+    renderList();
+    renderLog();
+    updateTabBadge();
+    updateTitle();
+}
+
+function renderStats() {
+    const a = state.articles;
+    const count = st => a.filter(x => st.includes(statusOf(x))).length;
+    document.getElementById('stat-total').textContent = a.length;
+    document.getElementById('stat-due').textContent = count(['due', 'today']);
+    document.getElementById('stat-expired').textContent = count(['expired']);
+    document.getElementById('stat-ok').textContent = count(['ok']);
+    const noDate = count(['nodate']);
+    document.getElementById('stat-nodate').textContent = noDate;
+    document.getElementById('stat-nodate-tile').hidden = noDate === 0;
+    document.getElementById('stat-checked-today').textContent = checksToday().length;
+}
+
+function checksToday() {
+    const today = todayISO();
+    const out = [];
+    state.articles.forEach(a => a.checks.forEach(c => {
+        if (c.at && c.at.slice(0, 10) === today) out.push({ article: a, check: c });
+    }));
+    return out;
+}
+
+function renderAlert() {
+    const banner = document.getElementById('alert-banner');
+    const flagged = state.articles.filter(needsAction).sort(byUrgency);
+    if (flagged.length === 0) {
+        banner.hidden = true;
+        return;
+    }
+    const hasCritical = flagged.some(a => ['expired', 'today'].includes(statusOf(a)));
+    banner.hidden = false;
+    banner.classList.toggle('critical', hasCritical);
+    const items = flagged.map(a =>
+        `<li><b>${esc(a.name)}</b> (č. ${esc(a.number)}) – ${esc(fmtDate(a.worstDate))}, ${esc(leftText(a))}
+         <span class="badge s-${statusOf(a)}">${STATUS_LABEL[statusOf(a)]}</span></li>`
+    ).join('');
+    banner.innerHTML = `
+        <h2>${hasCritical ? '🚨' : '⚠️'} Ke kontrole: ${flagged.length} ${plural(flagged.length, 'artikl', 'artikly', 'artiklů')}</h2>
+        <div style="font-size:0.88rem;color:var(--text-secondary)">Zkontroluj zboží na prodejně a zaznamenej výsledek.</div>
+        <ul>${items}</ul>`;
+}
+
+function byUrgency(x, y) {
+    const rank = { expired: 0, today: 1, due: 2, nodate: 3, ok: 4 };
+    const r = rank[statusOf(x)] - rank[statusOf(y)];
+    if (r !== 0) return r;
+    if (!x.worstDate) return 1;
+    if (!y.worstDate) return -1;
+    return x.worstDate.localeCompare(y.worstDate) || x.name.localeCompare(y.name, 'cs');
+}
+
+function matchesSearch(a, q) {
+    if (!q) return true;
+    const hay = `${a.ean} ${a.number} ${a.name} ${a.note}`.toLowerCase();
+    return hay.includes(q.toLowerCase());
+}
+
+function renderList() {
+    const list = document.getElementById('list');
+    let items = state.articles.filter(a => matchesSearch(a, searchQuery));
+
+    if (activeFilter === 'action') items = items.filter(needsAction);
+    else if (activeFilter === 'due') items = items.filter(a => ['due', 'today'].includes(statusOf(a)));
+    else if (activeFilter === 'expired') items = items.filter(a => statusOf(a) === 'expired');
+    else if (activeFilter === 'ok') items = items.filter(a => statusOf(a) === 'ok');
+
+    items.sort(byUrgency);
+
+    if (items.length === 0) {
+        list.innerHTML = `<div class="empty">${state.articles.length === 0
+            ? 'Zatím žádné artikly. Přidej první na záložce <b>➕ Přidat artikl</b>.'
+            : 'Žádný artikl neodpovídá filtru.'}</div>`;
+        return;
+    }
+
+    const action = items.filter(needsAction);
+    const fine = items.filter(a => !needsAction(a));
+    let html = '';
+    if (action.length) {
+        html += `<div class="group-title">Vyžaduje kontrolu (${action.length})</div>`;
+        html += action.map(itemHtml).join('');
+    }
+    if (fine.length) {
+        html += `<div class="group-title">V pořádku (${fine.length})</div>`;
+        html += fine.map(itemHtml).join('');
+    }
+    list.innerHTML = html;
+}
+
+function itemHtml(a) {
+    const st = statusOf(a);
+    const last = a.checks.length ? a.checks[a.checks.length - 1] : null;
+    const open = !!expandedHistory[a.id];
+    return `
+    <div class="item s-${st}" data-id="${a.id}">
+        <div class="item-head">
+            <div>
+                <div class="item-name">${esc(a.name)}</div>
+                <div class="item-ids">EAN ${esc(a.ean || '—')} · č. artiklu ${esc(a.number || '—')}${a.note ? ' · ' + esc(a.note) : ''}</div>
+            </div>
+            <span class="badge s-${st}">${STATUS_LABEL[st]}</span>
+        </div>
+        <div class="item-dates">
+            <span>Nejhorší datum spotřeby: <b>${esc(fmtDate(a.worstDate))}</b></span>
+            <span>${esc(leftText(a))}</span>
+            <span>Hlásit: <b>${a.leadDays} ${plural(a.leadDays, 'den', 'dny', 'dní')}</b> předem</span>
+            <span>Poslední kontrola: <b>${last ? esc(fmtDateTime(last.at)) : 'nikdy'}</b></span>
+        </div>
+        <div class="item-actions">
+            <button class="${needsAction(a) ? 'btn' : 'btn-secondary'}" data-act="check" data-id="${a.id}">🔍 Zkontrolovat</button>
+            <button class="btn-secondary" data-act="edit" data-id="${a.id}">✏️ Upravit</button>
+            <button class="btn-secondary" data-act="history" data-id="${a.id}">🕘 Historie (${a.checks.length})</button>
+            <button class="btn-secondary" data-act="delete" data-id="${a.id}">🗑️ Smazat</button>
+        </div>
+        ${open ? historyHtml(a) : ''}
+    </div>`;
+}
+
+function historyHtml(a) {
+    if (a.checks.length === 0) {
+        return '<div class="item-history"><i style="font-size:0.85rem;color:var(--text-muted)">Žádná kontrola zatím nebyla provedena.</i></div>';
+    }
+    const rows = a.checks.slice().reverse().map(c => `<li>${checkSentence(c)}</li>`).join('');
+    return `<div class="item-history"><ol>${rows}</ol></div>`;
+}
+
+function checkSentence(c) {
+    const parts = [`<b>${esc(fmtDateTime(c.at))}</b> – kontrola data ${esc(fmtDate(c.checkedDate))}:`];
+    parts.push(c.present
+        ? 'zboží na prodejně <span class="yes">ANO</span>'
+        : 'zboží na prodejně <span class="no">NE</span>');
+    if (c.present) {
+        parts.push(c.discount
+            ? 'sleva <span class="yes">NALEPENA</span>'
+            : 'sleva <span class="no">NENALEPENA</span>');
+    }
+    parts.push(c.newDate
+        ? `nové datum <b>${esc(fmtDate(c.newDate))}</b>`
+        : 'nové datum <i>nezadáno</i>');
+    if (c.note) parts.push(`pozn.: ${esc(c.note)}`);
+    return parts.join(', ').replace(':,', ':');
+}
+
+function updateTabBadge() {
+    const tab = document.querySelector('.tab[data-panel="panel-list"]');
+    const n = state.articles.filter(needsAction).length;
+    tab.innerHTML = '📋 Artikly' + (n ? ` <span class="count">${n}</span>` : '');
+}
+
+function updateTitle() {
+    const n = state.articles.filter(needsAction).length;
+    document.title = (n ? `(${n}) ` : '') + 'Kontrola dat spotřeby';
+}
+
+/* ---------- historie kontrol (globální) ---------- */
+
+function renderLog() {
+    const box = document.getElementById('log-list');
+    const all = [];
+    state.articles.forEach(a => a.checks.forEach(c => all.push({ a, c })));
+    all.sort((x, y) => y.c.at.localeCompare(x.c.at));
+
+    const q = logQuery.toLowerCase();
+    const filtered = q
+        ? all.filter(({ a }) => `${a.ean} ${a.number} ${a.name}`.toLowerCase().includes(q))
+        : all;
+
+    if (filtered.length === 0) {
+        box.innerHTML = `<div class="empty">${all.length === 0 ? 'Zatím nebyla provedena žádná kontrola.' : 'Nic nenalezeno.'}</div>`;
+        return;
+    }
+    box.innerHTML = filtered.map(({ a, c }) => `
+        <div class="log-item">
+            <div class="when">${esc(fmtDateTime(c.at))}</div>
+            <div><b>${esc(a.name)}</b> <span class="item-ids">EAN ${esc(a.ean)} · č. ${esc(a.number)}</span></div>
+            <div class="what">${checkSentence(c).replace(/^<b>[^<]*<\/b> – /, '')}</div>
+        </div>`).join('');
+}
+
+/* ---------- formulář artiklu ---------- */
+
+function initForm() {
+    const form = document.getElementById('article-form');
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        submitArticle();
+    });
+    document.getElementById('form-reset').addEventListener('click', resetForm);
+
+    // Čtečka EAN typicky odešle Enter – přeskočíme na další pole místo odeslání.
+    document.getElementById('f-ean').addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('f-number').focus();
+        }
+    });
+    document.getElementById('f-ean').addEventListener('input', showEanHint);
+}
+
+function showEanHint() {
+    const ean = document.getElementById('f-ean').value.trim();
+    const note = document.getElementById('ean-note');
+    if (ean && /^\d{8}$|^\d{13}$/.test(ean) && !validEanChecksum(ean)) {
+        note.textContent = '⚠️ Kontrolní číslice EAN nesouhlasí – zkontroluj zadání (uložit lze i tak).';
+        note.style.color = 'var(--warning)';
+    } else {
+        note.textContent = 'Lze načíst i čtečkou – Enter přeskočí na další pole.';
+        note.style.color = '';
+    }
+}
+
+function validEanChecksum(code) {
+    const digits = code.split('').map(Number);
+    const check = digits.pop();
+    let sum = 0;
+    digits.reverse().forEach((d, i) => { sum += d * (i % 2 === 0 ? 3 : 1); });
+    return (10 - (sum % 10)) % 10 === check;
+}
+
+function submitArticle() {
+    const id = document.getElementById('f-id').value;
+    const ean = document.getElementById('f-ean').value.trim();
+    const number = document.getElementById('f-number').value.trim();
+    const name = document.getElementById('f-name').value.trim();
+    const worstDate = document.getElementById('f-date').value;
+    const leadDays = parseInt(document.getElementById('f-lead').value, 10);
+    const note = document.getElementById('f-note').value.trim();
+
+    if (!ean || !number || !name || !worstDate) {
+        return showMsg('form-msg', 'Vyplň EAN, číslo artiklu, název i nejhorší datum spotřeby.', 'error');
+    }
+    if (!(leadDays >= 1)) {
+        return showMsg('form-msg', 'Počet dní pro upozornění musí být alespoň 1.', 'error');
+    }
+
+    if (id) {
+        const a = state.articles.find(x => x.id === id);
+        if (!a) return showMsg('form-msg', 'Artikl už neexistuje.', 'error');
+        Object.assign(a, { ean, number, name, worstDate, leadDays, note });
+        saveState();
+        resetForm();
+        render();
+        showPanel('panel-list');
+        return showMsg('form-msg', '', 'ok');
+    }
+
+    const dup = state.articles.find(x => x.ean === ean || (x.number && x.number === number));
+    if (dup) {
+        const ok = confirm(`Artikl s tímto EAN / číslem už existuje:\n\n${dup.name} (${fmtDate(dup.worstDate)})\n\nChceš u něj jen změnit nejhorší datum spotřeby?`);
+        if (ok) {
+            dup.worstDate = worstDate;
+            dup.leadDays = leadDays;
+            if (note) dup.note = note;
+            saveState();
+            resetForm();
+            render();
+            showPanel('panel-list');
+            return;
+        }
+    }
+
+    state.articles.push(normalizeArticle({ ean, number, name, worstDate, leadDays, note }));
+    saveState();
+    resetForm();
+    render();
+    showMsg('form-msg', `✅ Artikl „${name}“ byl přidán. Ohlásí se ${leadDays} ${plural(leadDays, 'den', 'dny', 'dní')} před koncem spotřeby.`, 'ok');
+    document.getElementById('f-ean').focus();
+}
+
+function resetForm() {
+    document.getElementById('article-form').reset();
+    document.getElementById('f-id').value = '';
+    document.getElementById('f-lead').value = state.settings.defaultLead;
+    document.getElementById('form-title').textContent = 'Nový artikl';
+    document.getElementById('form-submit').textContent = 'Uložit artikl';
+    showMsg('form-msg', '');
+    showEanHint();
+}
+
+function editArticle(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    document.getElementById('f-id').value = a.id;
+    document.getElementById('f-ean').value = a.ean;
+    document.getElementById('f-number').value = a.number;
+    document.getElementById('f-name').value = a.name;
+    document.getElementById('f-date').value = a.worstDate;
+    document.getElementById('f-lead').value = a.leadDays;
+    document.getElementById('f-note').value = a.note;
+    document.getElementById('form-title').textContent = 'Úprava artiklu';
+    document.getElementById('form-submit').textContent = 'Uložit změny';
+    showMsg('form-msg', '');
+    showPanel('panel-add');
+}
+
+function deleteArticle(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    if (!confirm(`Smazat artikl „${a.name}“ i s historií kontrol?`)) return;
+    state.articles = state.articles.filter(x => x.id !== id);
+    delete state.notified[id];
+    saveState();
+    render();
+}
+
+/* ---------- kontrola artiklu ---------- */
+
+let checkCtx = null;
+
+function openCheck(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    checkCtx = { id: a.id, present: null, discount: null };
+
+    document.getElementById('check-sub').innerHTML =
+        `<b>${esc(a.name)}</b><br>EAN ${esc(a.ean)} · č. artiklu ${esc(a.number)}<br>
+         Kontrolované datum spotřeby: <b>${esc(fmtDate(a.worstDate))}</b> (${esc(leftText(a))})`;
+    document.getElementById('q-present').textContent =
+        `1. Je na prodejně zboží s datem spotřeby ${fmtDate(a.worstDate)} nebo horším?`;
+
+    ['present-yes', 'present-no', 'disc-yes', 'disc-no'].forEach(btnId => {
+        document.getElementById(btnId).classList.remove('sel-yes', 'sel-no');
+    });
+    document.getElementById('step-present').classList.remove('done');
+    document.getElementById('step-discount').hidden = true;
+    document.getElementById('step-discount').classList.remove('done');
+    document.getElementById('step-newdate').hidden = true;
+    document.getElementById('check-save').hidden = true;
+    document.getElementById('check-newdate').value = '';
+    document.getElementById('check-nodate').checked = false;
+    document.getElementById('check-note').value = '';
+    showMsg('check-msg', '');
+    document.getElementById('check-overlay').hidden = false;
+}
+
+function closeCheck() {
+    document.getElementById('check-overlay').hidden = true;
+    checkCtx = null;
+}
+
+function initCheckModal() {
+    document.getElementById('present-yes').addEventListener('click', () => setPresent(true));
+    document.getElementById('present-no').addEventListener('click', () => setPresent(false));
+    document.getElementById('disc-yes').addEventListener('click', () => setDiscount(true));
+    document.getElementById('disc-no').addEventListener('click', () => setDiscount(false));
+    document.getElementById('check-cancel').addEventListener('click', closeCheck);
+    document.getElementById('check-save').addEventListener('click', saveCheck);
+    document.getElementById('check-nodate').addEventListener('change', e => {
+        const input = document.getElementById('check-newdate');
+        input.disabled = e.target.checked;
+        if (e.target.checked) input.value = '';
+    });
+    document.getElementById('check-overlay').addEventListener('click', e => {
+        if (e.target.id === 'check-overlay') closeCheck();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !document.getElementById('check-overlay').hidden) closeCheck();
+    });
+}
+
+function setPresent(present) {
+    if (!checkCtx) return;
+    checkCtx.present = present;
+    document.getElementById('present-yes').classList.toggle('sel-yes', present);
+    document.getElementById('present-no').classList.toggle('sel-no', !present);
+    document.getElementById('step-present').classList.add('done');
+
+    if (present) {
+        document.getElementById('step-discount').hidden = false;
+        document.getElementById('step-newdate').hidden = true;
+        document.getElementById('check-save').hidden = true;
+    } else {
+        // Zboží s tímto datem už na prodejně není – sleva se neřeší, jen nové datum.
+        checkCtx.discount = null;
+        document.getElementById('step-discount').hidden = true;
+        openNewDateStep();
+    }
+}
+
+function setDiscount(discount) {
+    if (!checkCtx) return;
+    checkCtx.discount = discount;
+    document.getElementById('disc-yes').classList.toggle('sel-yes', discount);
+    document.getElementById('disc-no').classList.toggle('sel-no', !discount);
+    document.getElementById('step-discount').classList.add('done');
+    openNewDateStep();
+}
+
+function openNewDateStep() {
+    const step = document.getElementById('step-newdate');
+    step.hidden = false;
+    document.getElementById('q-newdate').textContent =
+        (checkCtx.present ? '3.' : '2.') + ' Nové nejhorší datum spotřeby';
+    document.getElementById('check-save').hidden = false;
+    document.getElementById('check-newdate').focus();
+}
+
+function saveCheck() {
+    if (!checkCtx) return;
+    const a = state.articles.find(x => x.id === checkCtx.id);
+    if (!a) return closeCheck();
+
+    const noDate = document.getElementById('check-nodate').checked;
+    const newDate = document.getElementById('check-newdate').value;
+    if (!noDate && !newDate) {
+        return showMsg('check-msg', 'Zadej nové nejhorší datum spotřeby, nebo zaškrtni „Nové datum teď neznám“.', 'error');
+    }
+
+    a.checks.push({
+        at: new Date().toISOString(),
+        checkedDate: a.worstDate,
+        present: checkCtx.present,
+        discount: checkCtx.discount,
+        newDate: noDate ? '' : newDate,
+        note: document.getElementById('check-note').value.trim()
+    });
+    a.worstDate = noDate ? '' : newDate;
+    delete state.notified[a.id];
+    saveState();
+    closeCheck();
+    render();
+    showPanel('panel-list');
+}
+
+/* ---------- upozornění prohlížeče ---------- */
+
+function initNotifications() {
+    document.getElementById('notif-btn').addEventListener('click', () => {
+        if (!('Notification' in window)) {
+            return showMsg('s-msg', 'Tento prohlížeč upozornění nepodporuje. Artikly ke kontrole se i tak zobrazí v aplikaci nahoře.', 'error');
+        }
+        Notification.requestPermission().then(p => {
+            showMsg('s-msg', p === 'granted'
+                ? '✅ Upozornění povolena.'
+                : 'Upozornění nebyla povolena – hlášení uvidíš přímo v aplikaci.', p === 'granted' ? 'ok' : 'error');
+            if (p === 'granted') notifyDue();
+        });
+    });
+    notifyDue();
+}
+
+function notifyDue() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const today = todayISO();
+    const due = state.articles.filter(a => {
+        if (!needsAction(a) || statusOf(a) === 'nodate') return false;
+        if (state.notified[a.id] === today) return false;
+        return !a.checks.some(c => c.at.slice(0, 10) === today);
+    });
+    if (due.length === 0) return;
+
+    const title = due.length === 1
+        ? `Kontrola spotřeby: ${due[0].name}`
+        : `Ke kontrole je ${due.length} ${plural(due.length, 'artikl', 'artikly', 'artiklů')}`;
+    const body = due.slice(0, 5)
+        .map(a => `${a.name} – ${fmtDate(a.worstDate)} (${leftText(a)})`)
+        .join('\n') + (due.length > 5 ? `\n… a další ${due.length - 5}` : '');
+    try {
+        new Notification(title, { body, tag: 'spotreba-' + today });
+        due.forEach(a => { state.notified[a.id] = today; });
+        saveState();
+    } catch { /* upozornění nelze zobrazit, aplikace funguje dál */ }
+}
+
+/* ---------- nastavení a data ---------- */
+
+function initSettings() {
+    document.getElementById('s-lead').value = state.settings.defaultLead;
+    document.getElementById('s-save').addEventListener('click', () => {
+        const v = parseInt(document.getElementById('s-lead').value, 10);
+        if (!(v >= 1)) return showMsg('s-msg', 'Počet dní musí být alespoň 1.', 'error');
+        state.settings.defaultLead = v;
+        saveState();
+        document.getElementById('f-lead').value = v;
+        showMsg('s-msg', `✅ Nové artikly se budou hlásit ${v} ${plural(v, 'den', 'dny', 'dní')} před koncem spotřeby.`, 'ok');
+    });
+
+    document.getElementById('export-json').addEventListener('click', exportJson);
+    document.getElementById('export-csv').addEventListener('click', exportCsv);
+    document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+    document.getElementById('import-file').addEventListener('change', importJson);
+    document.getElementById('wipe-btn').addEventListener('click', () => {
+        if (!confirm('Opravdu smazat všechny artikly i historii kontrol? Tuto akci nelze vzít zpět.')) return;
+        state = emptyState();
+        saveState();
+        resetForm();
+        render();
+        showMsg('data-msg', 'Všechna data byla smazána.', 'ok');
+    });
+}
+
+function download(filename, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportJson() {
+    download(`spotreba-zaloha-${todayISO()}.json`, JSON.stringify(state, null, 2), 'application/json');
+    showMsg('data-msg', '✅ Záloha byla vyexportována.', 'ok');
+}
+
+function exportCsv() {
+    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit dni predem', 'Stav', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
+    const rows = state.articles.slice().sort(byUrgency).map(a => {
+        const last = a.checks.length ? a.checks[a.checks.length - 1] : null;
+        return [
+            a.ean, a.number, a.name, a.worstDate,
+            daysLeftInclusive(a) === null ? '' : daysLeftInclusive(a),
+            a.leadDays, STATUS_LABEL[statusOf(a)], a.checks.length,
+            last ? fmtDateTime(last.at) : '',
+            last ? (last.present ? 'ANO' : 'NE') : '',
+            last ? (last.present ? (last.discount ? 'ANO' : 'NE') : '') : '',
+            a.note
+        ];
+    });
+    const csv = [head, ...rows]
+        .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
+        .join('\r\n');
+    download(`spotreba-artikly-${todayISO()}.csv`, '﻿' + csv, 'text/csv;charset=utf-8');
+    showMsg('data-msg', '✅ CSV pro Excel bylo vyexportováno.', 'ok');
+}
+
+function importJson(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const data = JSON.parse(String(reader.result));
+            const incoming = Array.isArray(data.articles) ? data.articles.map(normalizeArticle) : [];
+            if (incoming.length === 0 && !confirm('Záloha neobsahuje žádné artikly. Přesto pokračovat?')) return;
+            const merge = state.articles.length > 0 &&
+                confirm(`Aktuálně máš ${state.articles.length} artiklů.\n\nOK = přidat artikly ze zálohy k nim\nZrušit = nahradit vše obsahem zálohy`);
+            if (merge) {
+                const known = new Set(state.articles.map(a => a.id));
+                incoming.forEach(a => {
+                    if (known.has(a.id)) a.id = newId();
+                    state.articles.push(a);
+                });
+            } else {
+                state.articles = incoming;
+                state.settings = { ...state.settings, ...(data.settings || {}) };
+                state.notified = data.notified || {};
+            }
+            saveState();
+            document.getElementById('s-lead').value = state.settings.defaultLead;
+            resetForm();
+            render();
+            showMsg('data-msg', `✅ Import hotov – načteno ${incoming.length} artiklů.`, 'ok');
+        } catch (err) {
+            showMsg('data-msg', 'Import se nepodařil: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+}
+
+/* ---------- pomocné ---------- */
+
+function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, ch =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function plural(n, one, few, many) {
+    const abs = Math.abs(n);
+    if (abs === 1) return one;
+    if (abs >= 2 && abs <= 4) return few;
+    return many;
+}
+
+function showMsg(elId, text, kind) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'form-msg' + (kind ? ' ' + kind : '');
+}
+
+/* ---------- inicializace ---------- */
+
+function initListEvents() {
+    document.getElementById('list').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        const { act, id } = btn.dataset;
+        if (act === 'check') openCheck(id);
+        else if (act === 'edit') editArticle(id);
+        else if (act === 'delete') deleteArticle(id);
+        else if (act === 'history') {
+            expandedHistory[id] = !expandedHistory[id];
+            renderList();
+        }
+    });
+
+    document.getElementById('search').addEventListener('input', e => {
+        searchQuery = e.target.value.trim();
+        renderList();
+    });
+    document.getElementById('log-search').addEventListener('input', e => {
+        logQuery = e.target.value.trim();
+        renderLog();
+    });
+    document.getElementById('filters').addEventListener('click', e => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        activeFilter = chip.dataset.filter;
+        document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('active', c === chip));
+        renderList();
+    });
+    document.getElementById('print-btn').addEventListener('click', () => window.print());
+}
+
+function initDayWatcher() {
+    // Po změně dne (nebo vrácení k záložce) se stavy přepočítají a znovu ohlásí.
+    const check = () => {
+        if (renderedForDay !== todayISO()) {
+            render();
+            notifyDue();
+        }
+    };
+    setInterval(check, 60000);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) { check(); notifyDue(); }
+    });
+}
+
+function init() {
+    initTheme();
+    initTabs();
+    initForm();
+    initListEvents();
+    initCheckModal();
+    initSettings();
+    document.getElementById('f-lead').value = state.settings.defaultLead;
+    document.getElementById('f-date').min = '2000-01-01';
+    render();
+    initNotifications();
+    initDayWatcher();
+}
+
+init();
+</script>
+</body>
+</html>
