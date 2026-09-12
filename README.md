@@ -21,6 +21,10 @@ Evidence artiklů a hlídání jejich data spotřeby. Stačí otevřít soubor `
    - nakonec se zadá **nové nejhorší datum spotřeby** (nebo „datum teď neznám“)
 4. Celá kontrola se uloží do historie a hlídání pokračuje s novým datem.
 
+**Vyřazení z prodeje:** artikl, který se už neprodává, lze označit tlačítkem *Vyřadit z prodeje*
+(nebo rovnou při kontrole volbou „Vyřazeno z prodeje“). Přestane se hlídat a hlásit, ale zůstane
+uložený i s celou historií – najdeš ho pod filtrem *Vyřazené* a kdykoli ho lze vrátit do prodeje.
+
 Kategorie se u artiklu zobrazují jako barevný štítek, dají se podle nich filtrovat i vyhledávat a v
 Nastavení je lze přejmenovat, přebarvit nebo smazat (artikly zůstanou zachované, jen bez kategorie).
 

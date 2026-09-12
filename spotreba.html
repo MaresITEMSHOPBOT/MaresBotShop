@@ -263,6 +263,8 @@ textarea { resize: vertical; min-height: 60px; }
 .item.s-due { border-left-color: var(--warning); }
 .item.s-ok { border-left-color: var(--success); }
 .item.s-nodate { border-left-color: var(--text-muted); }
+.item.s-retired { border-left-color: var(--text-muted); background: var(--bg); }
+.item.s-retired .item-name { color: var(--text-secondary); }
 
 .item-head { display: flex; justify-content: space-between; gap: 0.6rem; align-items: flex-start; flex-wrap: wrap; }
 .item-name { font-weight: 700; font-size: 1rem; }
@@ -314,7 +316,7 @@ textarea { resize: vertical; min-height: 60px; }
 .badge.s-expired, .badge.s-today { background: var(--error-bg); color: var(--error); border: 1px solid var(--error); }
 .badge.s-due { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning); }
 .badge.s-ok { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
-.badge.s-nodate { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+.badge.s-nodate, .badge.s-retired { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
 
 .item-dates {
     display: flex;
@@ -384,6 +386,7 @@ textarea { resize: vertical; min-height: 60px; }
 .choice:hover { border-color: var(--accent); }
 .choice.sel-yes { border-color: var(--success); background: var(--success-bg); color: var(--success); }
 .choice.sel-no { border-color: var(--error); background: var(--error-bg); color: var(--error); }
+.choice.sel-alt { border-color: var(--text-muted); background: var(--bg); color: var(--text); }
 .step.done .q { color: var(--text-muted); }
 .checkline { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; margin-top: 0.6rem; }
 .checkline input { width: auto; }
@@ -449,6 +452,7 @@ footer {
             <div class="stat expired"><div class="value" id="stat-expired">0</div><div class="label">Prošlé datum</div></div>
             <div class="stat ok"><div class="value" id="stat-ok">0</div><div class="label">V pořádku</div></div>
             <div class="stat" id="stat-nodate-tile" hidden><div class="value" id="stat-nodate">0</div><div class="label">Chybí datum</div></div>
+            <div class="stat" id="stat-retired-tile" hidden><div class="value" id="stat-retired">0</div><div class="label">Vyřazené z prodeje</div></div>
             <div class="stat"><div class="value" id="stat-checked-today">0</div><div class="label">Kontrol dnes</div></div>
         </div>
 
@@ -460,6 +464,7 @@ footer {
                 <button class="chip" data-filter="due">Ke kontrole</button>
                 <button class="chip" data-filter="expired">Prošlé</button>
                 <button class="chip" data-filter="ok">V pořádku</button>
+                <button class="chip" data-filter="retired">📦 Vyřazené</button>
             </div>
             <select id="cat-filter" aria-label="Filtr podle kategorie">
                 <option value="all">Všechny kategorie</option>
@@ -602,6 +607,7 @@ footer {
             <div class="choice-row">
                 <button type="button" class="choice" id="present-yes">✅ Ano, je tam</button>
                 <button type="button" class="choice" id="present-no">❌ Ne, není tam</button>
+                <button type="button" class="choice" id="present-retired">📦 Vyřazeno z prodeje</button>
             </div>
         </div>
 
@@ -615,13 +621,15 @@ footer {
 
         <div class="step" id="step-newdate" hidden>
             <div class="q" id="q-newdate">3. Nové nejhorší datum spotřeby</div>
-            <div class="field">
-                <input type="date" id="check-newdate">
-                <span class="note">Nejbližší datum spotřeby, které na prodejně zůstává.</span>
+            <div id="newdate-fields">
+                <div class="field">
+                    <input type="date" id="check-newdate">
+                    <span class="note">Nejbližší datum spotřeby, které na prodejně zůstává.</span>
+                </div>
+                <label class="checkline"><input type="checkbox" id="check-nodate"> Nové datum teď neznám / artikl nemáme</label>
             </div>
-            <label class="checkline"><input type="checkbox" id="check-nodate"> Nové datum teď neznám / artikl nemáme</label>
             <div class="field" style="margin-top: 0.6rem;">
-                <label for="check-note">Poznámka ke kontrole</label>
+                <label for="check-note" id="check-note-label">Poznámka ke kontrole</label>
                 <input type="text" id="check-note" placeholder="nepovinné">
             </div>
         </div>
@@ -692,6 +700,7 @@ function normalizeArticle(a) {
         leadDays: Number(a.leadDays) > 0 ? Number(a.leadDays) : DEFAULT_LEAD,
         note: a.note || '',
         categoryId: a.categoryId || '',
+        retiredAt: a.retiredAt || '',
         createdAt: a.createdAt || new Date().toISOString(),
         checks: Array.isArray(a.checks) ? a.checks : []
     };
@@ -737,8 +746,13 @@ function createCategory(name) {
     return cat;
 }
 
+/** Počítá jen artikly, které jsou v aktuálním seznamu vidět (prodej vs. vyřazené). */
+function visibleArticles() {
+    return state.articles.filter(a => isRetired(a) === (activeFilter === 'retired'));
+}
+
 function countInCategory(id) {
-    return state.articles.filter(a => (a.categoryId || '') === id).length;
+    return visibleArticles().filter(a => (a.categoryId || '') === id).length;
 }
 
 function catChip(a) {
@@ -759,7 +773,7 @@ function renderCategorySelects() {
 
     const filter = document.getElementById('cat-filter');
     const keepFilter = filter.value;
-    filter.innerHTML = `<option value="all">Všechny kategorie (${state.articles.length})</option>`
+    filter.innerHTML = `<option value="all">Všechny kategorie (${visibleArticles().length})</option>`
         + cats.map(c => `<option value="${c.id}">${esc(c.name)} (${countInCategory(c.id)})</option>`).join('')
         + `<option value="none">Bez kategorie (${countInCategory('')})</option>`;
     filter.value = optionExists(filter, keepFilter) ? keepFilter : 'all';
@@ -909,7 +923,12 @@ function daysLeftInclusive(article) {
     return dayDiff(todayISO(), article.worstDate) + 1;
 }
 
+function isRetired(article) {
+    return !!article.retiredAt;
+}
+
 function statusOf(article) {
+    if (isRetired(article)) return 'retired';
     if (!article.worstDate) return 'nodate';
     const diff = dayDiff(todayISO(), article.worstDate);
     if (diff < 0) return 'expired';
@@ -922,11 +941,13 @@ const STATUS_LABEL = {
     today: 'Končí dnes',
     due: 'Ke kontrole',
     ok: 'V pořádku',
-    nodate: 'Chybí datum'
+    nodate: 'Chybí datum',
+    retired: 'Vyřazeno z prodeje'
 };
 
+/** Vyřazené artikly se nehlídají – nepočítají se do hlášení ani do kontrol. */
 function needsAction(article) {
-    return statusOf(article) !== 'ok';
+    return !['ok', 'retired'].includes(statusOf(article));
 }
 
 function leftText(article) {
@@ -995,6 +1016,9 @@ function renderStats() {
     const noDate = count(['nodate']);
     document.getElementById('stat-nodate').textContent = noDate;
     document.getElementById('stat-nodate-tile').hidden = noDate === 0;
+    const retired = count(['retired']);
+    document.getElementById('stat-retired').textContent = retired;
+    document.getElementById('stat-retired-tile').hidden = retired === 0;
     document.getElementById('stat-checked-today').textContent = checksToday().length;
 }
 
@@ -1002,7 +1026,7 @@ function checksToday() {
     const today = todayISO();
     const out = [];
     state.articles.forEach(a => a.checks.forEach(c => {
-        if (c.at && c.at.slice(0, 10) === today) out.push({ article: a, check: c });
+        if (c.at && c.at.slice(0, 10) === today && !c.kind) out.push({ article: a, check: c });
     }));
     return out;
 }
@@ -1028,7 +1052,7 @@ function renderAlert() {
 }
 
 function byUrgency(x, y) {
-    const rank = { expired: 0, today: 1, due: 2, nodate: 3, ok: 4 };
+    const rank = { expired: 0, today: 1, due: 2, nodate: 3, ok: 4, retired: 5 };
     const r = rank[statusOf(x)] - rank[statusOf(y)];
     if (r !== 0) return r;
     if (!x.worstDate) return 1;
@@ -1050,6 +1074,9 @@ function renderList() {
     if (categoryFilter === 'none') items = items.filter(a => !catById(a.categoryId));
     else if (categoryFilter !== 'all') items = items.filter(a => a.categoryId === categoryFilter);
 
+    // Vyřazené artikly se v běžném seznamu nezobrazují, mají vlastní filtr.
+    items = items.filter(a => isRetired(a) === (activeFilter === 'retired'));
+
     if (activeFilter === 'action') items = items.filter(needsAction);
     else if (activeFilter === 'due') items = items.filter(a => ['due', 'today'].includes(statusOf(a)));
     else if (activeFilter === 'expired') items = items.filter(a => statusOf(a) === 'expired');
@@ -1060,7 +1087,15 @@ function renderList() {
     if (items.length === 0) {
         list.innerHTML = `<div class="empty">${state.articles.length === 0
             ? 'Zatím žádné artikly. Přidej první na záložce <b>➕ Přidat artikl</b>.'
-            : 'Žádný artikl neodpovídá filtru.'}</div>`;
+            : (activeFilter === 'retired'
+                ? 'Žádný artikl není vyřazený z prodeje.'
+                : 'Žádný artikl neodpovídá filtru.')}</div>`;
+        return;
+    }
+
+    if (activeFilter === 'retired') {
+        list.innerHTML = `<div class="group-title">Vyřazeno z prodeje (${items.length})</div>`
+            + items.map(itemHtml).join('');
         return;
     }
 
@@ -1078,9 +1113,15 @@ function renderList() {
     list.innerHTML = html;
 }
 
+/** Poslední skutečná kontrola – záznamy o vyřazení a vrácení se do ní nepočítají. */
+function lastCheck(a) {
+    const checks = a.checks.filter(c => !c.kind);
+    return checks.length ? checks[checks.length - 1] : null;
+}
+
 function itemHtml(a) {
     const st = statusOf(a);
-    const last = a.checks.length ? a.checks[a.checks.length - 1] : null;
+    const last = lastCheck(a);
     const open = !!expandedHistory[a.id];
     return `
     <div class="item s-${st}" data-id="${a.id}">
@@ -1094,12 +1135,15 @@ function itemHtml(a) {
         </div>
         <div class="item-dates">
             <span>Nejhorší datum spotřeby: <b>${esc(fmtDate(a.worstDate))}</b></span>
-            <span>${esc(leftText(a))}</span>
+            <span>${st === 'retired' ? 'vyřazeno ' + esc(fmtDateTime(a.retiredAt)) : esc(leftText(a))}</span>
             <span>Hlásit: <b>${a.leadDays} ${plural(a.leadDays, 'den', 'dny', 'dní')}</b> předem</span>
             <span>Poslední kontrola: <b>${last ? esc(fmtDateTime(last.at)) : 'nikdy'}</b></span>
         </div>
         <div class="item-actions">
-            <button class="${needsAction(a) ? 'btn' : 'btn-secondary'}" data-act="check" data-id="${a.id}">🔍 Zkontrolovat</button>
+            ${st === 'retired'
+                ? `<button class="btn" data-act="restore" data-id="${a.id}">↩️ Vrátit do prodeje</button>`
+                : `<button class="${needsAction(a) ? 'btn' : 'btn-secondary'}" data-act="check" data-id="${a.id}">🔍 Zkontrolovat</button>
+                   <button class="btn-secondary" data-act="retire" data-id="${a.id}">📦 Vyřadit z prodeje</button>`}
             <button class="btn-secondary" data-act="edit" data-id="${a.id}">✏️ Upravit</button>
             <button class="btn-secondary" data-act="history" data-id="${a.id}">🕘 Historie (${a.checks.length})</button>
             <button class="btn-secondary" data-act="delete" data-id="${a.id}">🗑️ Smazat</button>
@@ -1117,6 +1161,12 @@ function historyHtml(a) {
 }
 
 function checkSentence(c) {
+    if (c.kind === 'retired' || c.kind === 'restored') {
+        const what = c.kind === 'retired'
+            ? 'artikl <b>vyřazen z prodeje</b>'
+            : 'artikl <b>vrácen do prodeje</b>';
+        return `<b>${esc(fmtDateTime(c.at))}</b> – ${what}${c.note ? ', pozn.: ' + esc(c.note) : ''}`;
+    }
     const parts = [`<b>${esc(fmtDateTime(c.at))}</b> – kontrola data ${esc(fmtDate(c.checkedDate))}:`];
     parts.push(c.present
         ? 'zboží na prodejně <span class="yes">ANO</span>'
@@ -1302,6 +1352,27 @@ function editArticle(id) {
     showPanel('panel-add');
 }
 
+function retireArticle(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a || isRetired(a)) return;
+    if (!confirm(`Označit artikl „${a.name}“ jako vyřazený z prodeje?\n\nPřestane se hlídat a hlásit, ale zůstane uložený i s celou historií kontrol. Kdykoli ho lze vrátit do prodeje.`)) return;
+    a.retiredAt = new Date().toISOString();
+    a.checks.push({ kind: 'retired', at: a.retiredAt, note: '' });
+    delete state.notified[a.id];
+    saveState();
+    render();
+}
+
+function restoreArticle(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a || !isRetired(a)) return;
+    if (!confirm(`Vrátit artikl „${a.name}“ zpět do prodeje?\n\nZačne se opět hlídat. Pokud u něj chybí datum spotřeby, doplň ho přes Upravit nebo Zkontrolovat.`)) return;
+    a.retiredAt = '';
+    a.checks.push({ kind: 'restored', at: new Date().toISOString(), note: '' });
+    saveState();
+    render();
+}
+
 function deleteArticle(id) {
     const a = state.articles.find(x => x.id === id);
     if (!a) return;
@@ -1319,7 +1390,7 @@ let checkCtx = null;
 function openCheck(id) {
     const a = state.articles.find(x => x.id === id);
     if (!a) return;
-    checkCtx = { id: a.id, present: null, discount: null };
+    checkCtx = { id: a.id, present: null, discount: null, retire: false };
 
     document.getElementById('check-sub').innerHTML =
         `<b>${esc(a.name)}</b><br>EAN ${esc(a.ean)} · č. artiklu ${esc(a.number)}<br>
@@ -1327,9 +1398,10 @@ function openCheck(id) {
     document.getElementById('q-present').textContent =
         `1. Je na prodejně zboží s datem spotřeby ${fmtDate(a.worstDate)} nebo horším?`;
 
-    ['present-yes', 'present-no', 'disc-yes', 'disc-no'].forEach(btnId => {
-        document.getElementById(btnId).classList.remove('sel-yes', 'sel-no');
+    ['present-yes', 'present-no', 'present-retired', 'disc-yes', 'disc-no'].forEach(btnId => {
+        document.getElementById(btnId).classList.remove('sel-yes', 'sel-no', 'sel-alt');
     });
+    resetNewDateStep();
     document.getElementById('step-present').classList.remove('done');
     document.getElementById('step-discount').hidden = true;
     document.getElementById('step-discount').classList.remove('done');
@@ -1350,6 +1422,7 @@ function closeCheck() {
 function initCheckModal() {
     document.getElementById('present-yes').addEventListener('click', () => setPresent(true));
     document.getElementById('present-no').addEventListener('click', () => setPresent(false));
+    document.getElementById('present-retired').addEventListener('click', setRetiredChoice);
     document.getElementById('disc-yes').addEventListener('click', () => setDiscount(true));
     document.getElementById('disc-no').addEventListener('click', () => setDiscount(false));
     document.getElementById('check-cancel').addEventListener('click', closeCheck);
@@ -1370,8 +1443,11 @@ function initCheckModal() {
 function setPresent(present) {
     if (!checkCtx) return;
     checkCtx.present = present;
+    checkCtx.retire = false;
+    resetNewDateStep();
     document.getElementById('present-yes').classList.toggle('sel-yes', present);
     document.getElementById('present-no').classList.toggle('sel-no', !present);
+    document.getElementById('present-retired').classList.remove('sel-alt');
     document.getElementById('step-present').classList.add('done');
 
     if (present) {
@@ -1395,6 +1471,33 @@ function setDiscount(discount) {
     openNewDateStep();
 }
 
+/** Artikl se během kontroly ukázal jako vyřazený z prodeje – nové datum se neřeší. */
+function setRetiredChoice() {
+    if (!checkCtx) return;
+    checkCtx.present = false;
+    checkCtx.discount = null;
+    checkCtx.retire = true;
+    document.getElementById('present-yes').classList.remove('sel-yes');
+    document.getElementById('present-no').classList.remove('sel-no');
+    document.getElementById('present-retired').classList.add('sel-alt');
+    document.getElementById('step-present').classList.add('done');
+    document.getElementById('step-discount').hidden = true;
+
+    document.getElementById('step-newdate').hidden = false;
+    document.getElementById('newdate-fields').hidden = true;
+    document.getElementById('q-newdate').textContent = '2. Vyřazení artiklu z prodeje';
+    document.getElementById('check-note-label').textContent = 'Důvod vyřazení (nepovinné)';
+    document.getElementById('check-save').textContent = '📦 Vyřadit z prodeje';
+    document.getElementById('check-save').hidden = false;
+    document.getElementById('check-note').focus();
+}
+
+function resetNewDateStep() {
+    document.getElementById('newdate-fields').hidden = false;
+    document.getElementById('check-note-label').textContent = 'Poznámka ke kontrole';
+    document.getElementById('check-save').textContent = 'Uložit kontrolu';
+}
+
 function openNewDateStep() {
     const step = document.getElementById('step-newdate');
     step.hidden = false;
@@ -1409,6 +1512,20 @@ function saveCheck() {
     const a = state.articles.find(x => x.id === checkCtx.id);
     if (!a) return closeCheck();
 
+    const note = document.getElementById('check-note').value.trim();
+
+    if (checkCtx.retire) {
+        const at = new Date().toISOString();
+        a.checks.push({ kind: 'retired', at, checkedDate: a.worstDate, note });
+        a.retiredAt = at;
+        delete state.notified[a.id];
+        saveState();
+        closeCheck();
+        render();
+        showPanel('panel-list');
+        return;
+    }
+
     const noDate = document.getElementById('check-nodate').checked;
     const newDate = document.getElementById('check-newdate').value;
     if (!noDate && !newDate) {
@@ -1421,7 +1538,7 @@ function saveCheck() {
         present: checkCtx.present,
         discount: checkCtx.discount,
         newDate: noDate ? '' : newDate,
-        note: document.getElementById('check-note').value.trim()
+        note
     });
     a.worstDate = noDate ? '' : newDate;
     delete state.notified[a.id];
@@ -1535,13 +1652,14 @@ async function exportJson() {
 }
 
 async function exportCsv() {
-    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Kategorie', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit dni predem', 'Stav', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
+    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Kategorie', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit dni predem', 'Stav', 'Vyrazeno z prodeje', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
     const rows = state.articles.slice().sort(byUrgency).map(a => {
-        const last = a.checks.length ? a.checks[a.checks.length - 1] : null;
+        const last = lastCheck(a);
         return [
             a.ean, a.number, a.name, (catById(a.categoryId) || { name: '' }).name, a.worstDate,
             daysLeftInclusive(a) === null ? '' : daysLeftInclusive(a),
-            a.leadDays, STATUS_LABEL[statusOf(a)], a.checks.length,
+            a.leadDays, STATUS_LABEL[statusOf(a)], isRetired(a) ? 'ANO' : 'NE',
+            a.checks.filter(c => !c.kind).length,
             last ? fmtDateTime(last.at) : '',
             last ? (last.present ? 'ANO' : 'NE') : '',
             last ? (last.present ? (last.discount ? 'ANO' : 'NE') : '') : '',
@@ -1625,6 +1743,8 @@ function initListEvents() {
         if (!btn) return;
         const { act, id } = btn.dataset;
         if (act === 'check') openCheck(id);
+        else if (act === 'retire') retireArticle(id);
+        else if (act === 'restore') restoreArticle(id);
         else if (act === 'edit') editArticle(id);
         else if (act === 'delete') deleteArticle(id);
         else if (act === 'history') {
@@ -1646,6 +1766,7 @@ function initListEvents() {
         if (!chip) return;
         activeFilter = chip.dataset.filter;
         document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('active', c === chip));
+        renderCategorySelects();
         renderList();
     });
     document.getElementById('print-btn').addEventListener('click', () => window.print());
