@@ -10,7 +10,8 @@ Evidence artiklů a hlídání jejich data spotřeby. Stačí otevřít soubor `
 **Postup práce:**
 
 1. **Přidat artikl** – EAN, číslo artiklu, název, *nejhorší datum spotřeby* (nejbližší datum, které je
-   na prodejně) a počet dní pro upozornění (výchozí 7).
+   na prodejně), počet dní pro upozornění (výchozí 7) a volitelně **vlastní kategorie**
+   (např. „Chlazení“, „Pečivo“, „Regál 12“) – tu lze vytvořit rovnou ve formuláři nebo v Nastavení.
 2. **Upozornění** – jakmile do data spotřeby zbývá zadaný počet dní **včetně dnešního dne**
    (7 dní = datum spotřeby je za 6 dní), artikl se objeví v horním hlášení, ve stavu „Ke kontrole“,
    v počítadle u záložky i jako upozornění prohlížeče (pokud je povolíš v Nastavení).
@@ -19,6 +20,9 @@ Evidence artiklů a hlídání jejich data spotřeby. Stačí otevřít soubor `
    - pokud ano: byla nalepena **sleva**? ano / ne
    - nakonec se zadá **nové nejhorší datum spotřeby** (nebo „datum teď neznám“)
 4. Celá kontrola se uloží do historie a hlídání pokračuje s novým datem.
+
+Kategorie se u artiklu zobrazují jako barevný štítek, dají se podle nich filtrovat i vyhledávat a v
+Nastavení je lze přejmenovat, přebarvit nebo smazat (artikly zůstanou zachované, jen bez kategorie).
 
 Další funkce: hledání a filtry, úprava a mazání artiklů, historie všech kontrol, tisk seznamu ke
 kontrole, export do JSON (záloha) i CSV (Excel) a import zálohy na jiné zařízení, světlý/tmavý režim.

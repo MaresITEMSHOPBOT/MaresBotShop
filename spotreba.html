@@ -267,6 +267,43 @@ textarea { resize: vertical; min-height: 60px; }
 .item-head { display: flex; justify-content: space-between; gap: 0.6rem; align-items: flex-start; flex-wrap: wrap; }
 .item-name { font-weight: 700; font-size: 1rem; }
 .item-ids { font-size: 0.8rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* ---- kategorie ---- */
+.cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    background: var(--bg);
+    white-space: nowrap;
+}
+.cat-chip::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--cat, var(--text-muted));
+    flex-shrink: 0;
+}
+.item-head .cat-chip { margin-top: 0.35rem; }
+.toolbar select { width: auto; flex: 0 1 auto; }
+
+.cat-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-row .cat-count { font-size: 0.8rem; color: var(--text-muted); margin-right: auto; }
+.cat-row button { font-size: 0.8rem; padding: 0.3rem 0.6rem; }
 .badge {
     font-size: 0.75rem;
     font-weight: 700;
@@ -424,6 +461,9 @@ footer {
                 <button class="chip" data-filter="expired">Prošlé</button>
                 <button class="chip" data-filter="ok">V pořádku</button>
             </div>
+            <select id="cat-filter" aria-label="Filtr podle kategorie">
+                <option value="all">Všechny kategorie</option>
+            </select>
             <button class="btn-secondary" id="print-btn">🖨️ Tisk seznamu</button>
         </div>
 
@@ -459,6 +499,15 @@ footer {
                     <label for="f-lead">Hlásit X dní před koncem *</label>
                     <input type="number" id="f-lead" min="1" max="365" step="1" value="7" required>
                     <span class="note">7 = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.</span>
+                </div>
+                <div class="field">
+                    <label for="f-category">Kategorie</label>
+                    <select id="f-category">
+                        <option value="">Bez kategorie</option>
+                        <option value="__new">➕ Vytvořit novou kategorii…</option>
+                    </select>
+                    <input type="text" id="f-newcat" placeholder="Název nové kategorie" hidden>
+                    <span class="note">Vlastní kategorie, např. „Chlazení“, „Pečivo“, „Regál 12“.</span>
                 </div>
                 <div class="field">
                     <label for="f-note">Poznámka</label>
@@ -501,6 +550,17 @@ footer {
                 <button class="btn-secondary" id="notif-btn">🔔 Povolit upozornění prohlížeče</button>
             </div>
             <div class="form-msg" id="s-msg"></div>
+        </div>
+
+        <div class="card">
+            <h2>Kategorie</h2>
+            <p class="hint">Vlastní kategorie pro třídění artiklů. Novou lze vytvořit i přímo ve formuláři artiklu.</p>
+            <div class="toolbar">
+                <input type="text" id="cat-new" placeholder="Název nové kategorie, např. Chlazení" autocomplete="off">
+                <button class="btn" id="cat-add">Přidat kategorii</button>
+            </div>
+            <div id="cat-list"></div>
+            <div class="form-msg" id="cat-msg"></div>
         </div>
 
         <div class="card">
@@ -585,6 +645,7 @@ const DEFAULT_LEAD = 7;
 
 let state = loadState();
 let activeFilter = 'all';
+let categoryFilter = 'all';
 let searchQuery = '';
 let logQuery = '';
 let expandedHistory = {};
@@ -593,7 +654,7 @@ let renderedForDay = null;
 /* ---------- ukládání ---------- */
 
 function emptyState() {
-    return { articles: [], settings: { defaultLead: DEFAULT_LEAD }, notified: {} };
+    return { articles: [], categories: [], settings: { defaultLead: DEFAULT_LEAD }, notified: {} };
 }
 
 function loadState() {
@@ -604,6 +665,7 @@ function loadState() {
         const base = emptyState();
         return {
             articles: Array.isArray(parsed.articles) ? parsed.articles.map(normalizeArticle) : base.articles,
+            categories: Array.isArray(parsed.categories) ? parsed.categories.map(normalizeCategory) : base.categories,
             settings: { ...base.settings, ...(parsed.settings || {}) },
             notified: parsed.notified || {}
         };
@@ -629,6 +691,7 @@ function normalizeArticle(a) {
         worstDate: a.worstDate || '',
         leadDays: Number(a.leadDays) > 0 ? Number(a.leadDays) : DEFAULT_LEAD,
         note: a.note || '',
+        categoryId: a.categoryId || '',
         createdAt: a.createdAt || new Date().toISOString(),
         checks: Array.isArray(a.checks) ? a.checks : []
     };
@@ -636,6 +699,164 @@ function normalizeArticle(a) {
 
 function newId() {
     return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+/* ---------- kategorie ---------- */
+
+const CAT_COLORS = ['#3182ce', '#38a169', '#d69e2e', '#dd6b20', '#d53f8c', '#805ad5', '#319795', '#718096'];
+
+function normalizeCategory(c) {
+    return {
+        id: c.id || ('c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7)),
+        name: String(c.name || '').trim() || 'Kategorie',
+        color: c.color || CAT_COLORS[0]
+    };
+}
+
+function sortedCategories() {
+    return state.categories.slice().sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+}
+
+function catById(id) {
+    return state.categories.find(c => c.id === id) || null;
+}
+
+function findCategoryByName(name) {
+    const needle = name.trim().toLowerCase();
+    return state.categories.find(c => c.name.toLowerCase() === needle) || null;
+}
+
+/** Vytvoří kategorii; pokud stejný název existuje, vrátí ji beze změny. */
+function createCategory(name) {
+    const clean = String(name || '').trim();
+    if (!clean) return null;
+    const existing = findCategoryByName(clean);
+    if (existing) return existing;
+    const cat = normalizeCategory({ name: clean, color: CAT_COLORS[state.categories.length % CAT_COLORS.length] });
+    state.categories.push(cat);
+    return cat;
+}
+
+function countInCategory(id) {
+    return state.articles.filter(a => (a.categoryId || '') === id).length;
+}
+
+function catChip(a) {
+    const cat = catById(a.categoryId);
+    if (!cat) return '';
+    return `<span class="cat-chip" style="--cat:${esc(cat.color)}">${esc(cat.name)}</span>`;
+}
+
+function renderCategorySelects() {
+    const cats = sortedCategories();
+
+    const form = document.getElementById('f-category');
+    const keepForm = form.value;
+    form.innerHTML = '<option value="">Bez kategorie</option>'
+        + cats.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')
+        + '<option value="__new">➕ Vytvořit novou kategorii…</option>';
+    form.value = optionExists(form, keepForm) ? keepForm : '';
+
+    const filter = document.getElementById('cat-filter');
+    const keepFilter = filter.value;
+    filter.innerHTML = `<option value="all">Všechny kategorie (${state.articles.length})</option>`
+        + cats.map(c => `<option value="${c.id}">${esc(c.name)} (${countInCategory(c.id)})</option>`).join('')
+        + `<option value="none">Bez kategorie (${countInCategory('')})</option>`;
+    filter.value = optionExists(filter, keepFilter) ? keepFilter : 'all';
+    categoryFilter = filter.value;
+}
+
+function optionExists(select, value) {
+    return Array.from(select.options).some(o => o.value === value);
+}
+
+function renderCategoryManager() {
+    const box = document.getElementById('cat-list');
+    const cats = sortedCategories();
+    if (cats.length === 0) {
+        box.innerHTML = '<div class="empty">Zatím žádná kategorie. Vytvoř ji výše nebo rovnou ve formuláři artiklu.</div>';
+        return;
+    }
+    box.innerHTML = cats.map(c => {
+        const n = countInCategory(c.id);
+        return `<div class="cat-row">
+            <span class="cat-chip" style="--cat:${esc(c.color)}">${esc(c.name)}</span>
+            <span class="cat-count">${n} ${plural(n, 'artikl', 'artikly', 'artiklů')}</span>
+            <button class="btn-secondary" data-cat-act="rename" data-id="${c.id}">✏️ Přejmenovat</button>
+            <button class="btn-secondary" data-cat-act="color" data-id="${c.id}">🎨 Barva</button>
+            <button class="btn-secondary" data-cat-act="delete" data-id="${c.id}">🗑️ Smazat</button>
+        </div>`;
+    }).join('');
+}
+
+function initCategories() {
+    document.getElementById('cat-add').addEventListener('click', () => {
+        const input = document.getElementById('cat-new');
+        const name = input.value.trim();
+        if (!name) return showMsg('cat-msg', 'Zadej název kategorie.', 'error');
+        if (findCategoryByName(name)) return showMsg('cat-msg', `Kategorie „${name}“ už existuje.`, 'error');
+        createCategory(name);
+        saveState();
+        input.value = '';
+        refreshCategories();
+        showMsg('cat-msg', `✅ Kategorie „${name}“ byla vytvořena.`, 'ok');
+    });
+    document.getElementById('cat-new').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('cat-add').click(); }
+    });
+
+    document.getElementById('cat-list').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-cat-act]');
+        if (!btn) return;
+        const cat = catById(btn.dataset.id);
+        if (!cat) return;
+
+        if (btn.dataset.catAct === 'rename') {
+            const name = prompt('Nový název kategorie:', cat.name);
+            if (name === null) return;
+            const clean = name.trim();
+            if (!clean) return showMsg('cat-msg', 'Název nesmí být prázdný.', 'error');
+            const clash = findCategoryByName(clean);
+            if (clash && clash.id !== cat.id) return showMsg('cat-msg', `Kategorie „${clean}“ už existuje.`, 'error');
+            cat.name = clean;
+            showMsg('cat-msg', '✅ Kategorie byla přejmenována.', 'ok');
+        } else if (btn.dataset.catAct === 'color') {
+            const i = CAT_COLORS.indexOf(cat.color);
+            cat.color = CAT_COLORS[(i + 1) % CAT_COLORS.length];
+            showMsg('cat-msg', '');
+        } else {
+            const n = countInCategory(cat.id);
+            const question = n
+                ? `Smazat kategorii „${cat.name}“?\n\n${n} ${plural(n, 'artikl zůstane', 'artikly zůstanou', 'artiklů zůstane')} zachován${n === 1 ? '' : 'y'}, jen bez kategorie.`
+                : `Smazat kategorii „${cat.name}“?`;
+            if (!confirm(question)) return;
+            state.categories = state.categories.filter(c => c.id !== cat.id);
+            state.articles.forEach(a => { if (a.categoryId === cat.id) a.categoryId = ''; });
+            showMsg('cat-msg', '✅ Kategorie byla smazána.', 'ok');
+        }
+        saveState();
+        refreshCategories();
+    });
+
+    document.getElementById('f-category').addEventListener('change', e => {
+        const input = document.getElementById('f-newcat');
+        input.hidden = e.target.value !== '__new';
+        if (!input.hidden) input.focus(); else input.value = '';
+    });
+    document.getElementById('f-newcat').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('f-note').focus(); }
+    });
+
+    document.getElementById('cat-filter').addEventListener('change', e => {
+        categoryFilter = e.target.value;
+        renderList();
+    });
+}
+
+function refreshCategories() {
+    renderCategorySelects();
+    renderCategoryManager();
+    renderList();
 }
 
 /* ---------- práce s datem ---------- */
@@ -756,6 +977,8 @@ function render() {
     document.getElementById('today-label').textContent = `${fmtWeekday(renderedForDay)} ${fmtDate(renderedForDay)}`;
     renderStats();
     renderAlert();
+    renderCategorySelects();
+    renderCategoryManager();
     renderList();
     renderLog();
     updateTabBadge();
@@ -815,13 +1038,17 @@ function byUrgency(x, y) {
 
 function matchesSearch(a, q) {
     if (!q) return true;
-    const hay = `${a.ean} ${a.number} ${a.name} ${a.note}`.toLowerCase();
+    const cat = catById(a.categoryId);
+    const hay = `${a.ean} ${a.number} ${a.name} ${a.note} ${cat ? cat.name : ''}`.toLowerCase();
     return hay.includes(q.toLowerCase());
 }
 
 function renderList() {
     const list = document.getElementById('list');
     let items = state.articles.filter(a => matchesSearch(a, searchQuery));
+
+    if (categoryFilter === 'none') items = items.filter(a => !catById(a.categoryId));
+    else if (categoryFilter !== 'all') items = items.filter(a => a.categoryId === categoryFilter);
 
     if (activeFilter === 'action') items = items.filter(needsAction);
     else if (activeFilter === 'due') items = items.filter(a => ['due', 'today'].includes(statusOf(a)));
@@ -861,6 +1088,7 @@ function itemHtml(a) {
             <div>
                 <div class="item-name">${esc(a.name)}</div>
                 <div class="item-ids">EAN ${esc(a.ean || '—')} · č. artiklu ${esc(a.number || '—')}${a.note ? ' · ' + esc(a.note) : ''}</div>
+                ${catChip(a)}
             </div>
             <span class="badge s-${st}">${STATUS_LABEL[st]}</span>
         </div>
@@ -989,7 +1217,12 @@ function submitArticle() {
     const worstDate = document.getElementById('f-date').value;
     const leadDays = parseInt(document.getElementById('f-lead').value, 10);
     const note = document.getElementById('f-note').value.trim();
+    const catChoice = document.getElementById('f-category').value;
+    const newCatName = document.getElementById('f-newcat').value.trim();
 
+    if (catChoice === '__new' && !newCatName) {
+        return showMsg('form-msg', 'Zadej název nové kategorie, nebo vyber „Bez kategorie“.', 'error');
+    }
     if (!ean || !number || !name || !worstDate) {
         return showMsg('form-msg', 'Vyplň EAN, číslo artiklu, název i nejhorší datum spotřeby.', 'error');
     }
@@ -997,10 +1230,14 @@ function submitArticle() {
         return showMsg('form-msg', 'Počet dní pro upozornění musí být alespoň 1.', 'error');
     }
 
+    const categoryId = catChoice === '__new'
+        ? createCategory(newCatName).id
+        : (catById(catChoice) ? catChoice : '');
+
     if (id) {
         const a = state.articles.find(x => x.id === id);
         if (!a) return showMsg('form-msg', 'Artikl už neexistuje.', 'error');
-        Object.assign(a, { ean, number, name, worstDate, leadDays, note });
+        Object.assign(a, { ean, number, name, worstDate, leadDays, note, categoryId });
         saveState();
         resetForm();
         render();
@@ -1015,6 +1252,7 @@ function submitArticle() {
             dup.worstDate = worstDate;
             dup.leadDays = leadDays;
             if (note) dup.note = note;
+            if (categoryId) dup.categoryId = categoryId;
             saveState();
             resetForm();
             render();
@@ -1023,17 +1261,21 @@ function submitArticle() {
         }
     }
 
-    state.articles.push(normalizeArticle({ ean, number, name, worstDate, leadDays, note }));
+    state.articles.push(normalizeArticle({ ean, number, name, worstDate, leadDays, note, categoryId }));
     saveState();
     resetForm();
     render();
-    showMsg('form-msg', `✅ Artikl „${name}“ byl přidán. Ohlásí se ${leadDays} ${plural(leadDays, 'den', 'dny', 'dní')} před koncem spotřeby.`, 'ok');
+    const cat = catById(categoryId);
+    showMsg('form-msg', `✅ Artikl „${name}“ byl přidán${cat ? ` do kategorie „${cat.name}“` : ''}. Ohlásí se ${leadDays} ${plural(leadDays, 'den', 'dny', 'dní')} před koncem spotřeby.`, 'ok');
     document.getElementById('f-ean').focus();
 }
 
 function resetForm() {
     document.getElementById('article-form').reset();
     document.getElementById('f-id').value = '';
+    document.getElementById('f-category').value = '';
+    document.getElementById('f-newcat').value = '';
+    document.getElementById('f-newcat').hidden = true;
     document.getElementById('f-lead').value = state.settings.defaultLead;
     document.getElementById('form-title').textContent = 'Nový artikl';
     document.getElementById('form-submit').textContent = 'Uložit artikl';
@@ -1051,6 +1293,9 @@ function editArticle(id) {
     document.getElementById('f-date').value = a.worstDate;
     document.getElementById('f-lead').value = a.leadDays;
     document.getElementById('f-note').value = a.note;
+    document.getElementById('f-category').value = catById(a.categoryId) ? a.categoryId : '';
+    document.getElementById('f-newcat').hidden = true;
+    document.getElementById('f-newcat').value = '';
     document.getElementById('form-title').textContent = 'Úprava artiklu';
     document.getElementById('form-submit').textContent = 'Uložit změny';
     showMsg('form-msg', '');
@@ -1290,11 +1535,11 @@ async function exportJson() {
 }
 
 async function exportCsv() {
-    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit dni predem', 'Stav', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
+    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Kategorie', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit dni predem', 'Stav', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
     const rows = state.articles.slice().sort(byUrgency).map(a => {
         const last = a.checks.length ? a.checks[a.checks.length - 1] : null;
         return [
-            a.ean, a.number, a.name, a.worstDate,
+            a.ean, a.number, a.name, (catById(a.categoryId) || { name: '' }).name, a.worstDate,
             daysLeftInclusive(a) === null ? '' : daysLeftInclusive(a),
             a.leadDays, STATUS_LABEL[statusOf(a)], a.checks.length,
             last ? fmtDateTime(last.at) : '',
@@ -1318,17 +1563,23 @@ function importJson(e) {
         try {
             const data = JSON.parse(String(reader.result));
             const incoming = Array.isArray(data.articles) ? data.articles.map(normalizeArticle) : [];
+            const incomingCats = Array.isArray(data.categories) ? data.categories.map(normalizeCategory) : [];
             if (incoming.length === 0 && !confirm('Záloha neobsahuje žádné artikly. Přesto pokračovat?')) return;
             const merge = state.articles.length > 0 &&
                 confirm(`Aktuálně máš ${state.articles.length} artiklů.\n\nOK = přidat artikly ze zálohy k nim\nZrušit = nahradit vše obsahem zálohy`);
             if (merge) {
+                // Kategorie ze zálohy spárujeme podle názvu, chybějící doplníme.
+                const catMap = {};
+                incomingCats.forEach(c => { catMap[c.id] = createCategory(c.name).id; });
                 const known = new Set(state.articles.map(a => a.id));
                 incoming.forEach(a => {
                     if (known.has(a.id)) a.id = newId();
+                    a.categoryId = catMap[a.categoryId] || '';
                     state.articles.push(a);
                 });
             } else {
                 state.articles = incoming;
+                state.categories = incomingCats;
                 state.settings = { ...state.settings, ...(data.settings || {}) };
                 state.notified = data.notified || {};
             }
@@ -1420,6 +1671,7 @@ function init() {
     initForm();
     initListEvents();
     initCheckModal();
+    initCategories();
     initSettings();
     document.getElementById('f-lead').value = state.settings.defaultLead;
     document.getElementById('f-date').min = '2000-01-01';
