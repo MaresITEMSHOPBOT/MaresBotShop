@@ -677,7 +677,7 @@ footer {
    Data se ukládají do localStorage tohoto prohlížeče.
    =================================================================== */
 
-const APP_VERSION = '2026-09-13.9';
+const APP_VERSION = '2026-09-13.11';
 const STORE_KEY = 'spotreba-data-v1';
 const THEME_KEY = 'spotreba-theme';
 const DEFAULT_LEAD = 7;
@@ -739,7 +739,9 @@ function normalizeArticle(a) {
         categoryId: a.categoryId || '',
         retiredAt: a.retiredAt || '',
         createdAt: a.createdAt || new Date().toISOString(),
-        checks: Array.isArray(a.checks) ? a.checks : []
+        // Data přicházející ze sdíleného úložiště jsou zmrazená, proto vlastní kopie –
+        // jinak by do historie kontrol nešlo nic přidat.
+        checks: Array.isArray(a.checks) ? a.checks.map(c => ({ ...c })) : []
     };
 }
 
@@ -1445,6 +1447,7 @@ function openCheck(id) {
     document.getElementById('step-newdate').hidden = true;
     document.getElementById('check-save').hidden = true;
     document.getElementById('check-newdate').value = '';
+    document.getElementById('check-newdate').disabled = false;   // po předchozí kontrole mohlo zůstat zamčené
     document.getElementById('check-nodate').checked = false;
     document.getElementById('check-note').value = '';
     showMsg('check-msg', '');
