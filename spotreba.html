@@ -568,6 +568,8 @@ footer {
             <h2>Synchronizace</h2>
             <p class="hint" id="sync-hint">Zjišťuji, jestli je k dispozici sdílené úložiště…</p>
             <div class="form-msg" id="sync-msg"></div>
+            <p class="hint" style="margin: 0.8rem 0 0;">Verze aplikace: <b id="app-version-settings">–</b>.
+                Pokud se chová jinak, než má, zavři a znovu otevři aplikaci – načte se nejnovější verze.</p>
         </div>
 
         <div class="card">
@@ -622,7 +624,7 @@ footer {
     </section>
 </div>
 
-<footer>Kontrola dat spotřeby artiklů · data zůstávají v tomto prohlížeči</footer>
+<footer>Kontrola dat spotřeby artiklů · verze <span id="app-version">–</span></footer>
 
 <!-- ===== MODÁL KONTROLY ===== -->
 <div class="overlay" id="check-overlay" hidden>
@@ -675,6 +677,7 @@ footer {
    Data se ukládají do localStorage tohoto prohlížeče.
    =================================================================== */
 
+const APP_VERSION = '2026-09-13.9';
 const STORE_KEY = 'spotreba-data-v1';
 const THEME_KEY = 'spotreba-theme';
 const DEFAULT_LEAD = 7;
@@ -1542,9 +1545,22 @@ function openNewDateStep() {
 }
 
 function saveCheck() {
+    try {
+        saveCheckInner();
+    } catch (e) {
+        // Aby uložení nikdy „jen tak nešlo“ – chybu je vidět rovnou v okně.
+        showMsg('check-msg', 'Kontrolu se nepodařilo uložit: ' + ((e && e.message) || e), 'error');
+    }
+}
+
+function saveCheckInner() {
     if (!checkCtx) return;
     const a = state.articles.find(x => x.id === checkCtx.id);
-    if (!a) return closeCheck();
+    if (!a) {
+        closeCheck();
+        render();
+        return showMsg('form-msg', 'Artikl už v seznamu není – kontrolu nešlo uložit.', 'error');
+    }
 
     const note = document.getElementById('check-note').value.trim();
 
@@ -2210,6 +2226,8 @@ function initDayWatcher() {
 }
 
 function init() {
+    document.getElementById('app-version').textContent = APP_VERSION;
+    document.getElementById('app-version-settings').textContent = APP_VERSION;
     initTheme();
     initTabs();
     initForm();
