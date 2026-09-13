@@ -1,38 +1,56 @@
-# Publikuje obsah repozitáře na GitHub Pages, aby šla aplikace
-# spotreba.html otevřít přes https a nainstalovat na plochu.
-name: Deploy to GitHub Pages
+# Udržuje větev gh-pages (kterou publikuje GitHub Pages) aktuální.
+# Kopíruje do ní jen soubory aplikace pro kontrolu dat spotřeby.
+name: Publish app to gh-pages
 
 on:
   push:
     branches: [claude/article-expiry-tracking-app-4tr5az]
+    paths:
+      - spotreba.html
+      - manifest.webmanifest
+      - sw.js
+      - 'icon-*.png'
+      - .github/workflows/pages.yml
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: gh-pages
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
-      # enablement: true zapne GitHub Pages, pokud ještě zapnuté nejsou.
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
+      - name: Připravit obsah stránky
+        run: |
+          mkdir -p site
+          cp spotreba.html manifest.webmanifest sw.js icon-*.png site/
+          touch site/.nojekyll
+          cat > site/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="cs">
+          <head>
+          <meta charset="UTF-8">
+          <meta http-equiv="refresh" content="0; url=spotreba.html">
+          <title>Kontrola dat spotřeby</title>
+          </head>
+          <body>
+          <p>Otevírám aplikaci… <a href="spotreba.html">Kontrola dat spotřeby</a></p>
+          </body>
+          </html>
+          HTML
 
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publikovat na gh-pages
+        run: |
+          cd site
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Publish app from ${GITHUB_SHA::7}"
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
