@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2b6cb0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Spotřeba">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Kontrola dat spotřeby</title>
 <style>
 :root {
@@ -555,6 +562,21 @@ footer {
                 <button class="btn-secondary" id="notif-btn">🔔 Povolit upozornění prohlížeče</button>
             </div>
             <div class="form-msg" id="s-msg"></div>
+        </div>
+
+        <div class="card">
+            <h2>Otevřít jako aplikaci</h2>
+            <p class="hint">Aplikaci si můžeš nainstalovat na plochu telefonu i na počítač – otevře se
+                ve vlastním okně bez adresního řádku a funguje i bez internetu.</p>
+            <div class="btn-row" id="install-row" hidden>
+                <button class="btn" id="install-btn">📲 Nainstalovat aplikaci</button>
+            </div>
+            <div class="form-msg" id="install-msg"></div>
+            <ul style="font-size: 0.88rem; margin: 0.6rem 0 0 1.2rem; color: var(--text-secondary);">
+                <li><b>Android / Chrome:</b> menu ⋮ → <i>Přidat na plochu</i> (nebo <i>Instalovat aplikaci</i>).</li>
+                <li><b>iPhone / Safari:</b> tlačítko Sdílet → <i>Přidat na plochu</i>.</li>
+                <li><b>Počítač / Chrome, Edge:</b> ikona instalace vpravo v adresním řádku.</li>
+            </ul>
         </div>
 
         <div class="card">
@@ -1588,6 +1610,50 @@ function notifyDue() {
     } catch { /* upozornění nelze zobrazit, aplikace funguje dál */ }
 }
 
+/* ---------- instalace jako aplikace ---------- */
+
+let installPrompt = null;
+
+function initInstall() {
+    // Hostovaná verze bez manifestu se neinstaluje – kartu jen popíšeme.
+    if (!document.querySelector('link[rel="manifest"]')) return;
+
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+        navigator.serviceWorker.register('sw.js').catch(() => {
+            // Bez service workeru aplikace funguje dál, jen nebude offline.
+        });
+    }
+
+    const row = document.getElementById('install-row');
+    const btn = document.getElementById('install-btn');
+
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        return showMsg('install-msg', '✅ Běží jako nainstalovaná aplikace.', 'ok');
+    }
+
+    window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
+        installPrompt = e;
+        row.hidden = false;
+    });
+
+    btn.addEventListener('click', async () => {
+        if (!installPrompt) return;
+        installPrompt.prompt();
+        const { outcome } = await installPrompt.userChoice;
+        installPrompt = null;
+        row.hidden = true;
+        showMsg('install-msg', outcome === 'accepted'
+            ? '✅ Aplikace se instaluje – najdeš ji mezi aplikacemi.'
+            : 'Instalace byla zrušena. Spustit ji jde i z menu prohlížeče.', outcome === 'accepted' ? 'ok' : '');
+    });
+
+    window.addEventListener('appinstalled', () => {
+        row.hidden = true;
+        showMsg('install-msg', '✅ Aplikace byla nainstalována.', 'ok');
+    });
+}
+
 /* ---------- nastavení a data ---------- */
 
 function initSettings() {
@@ -1794,6 +1860,7 @@ function init() {
     initCheckModal();
     initCategories();
     initSettings();
+    initInstall();
     document.getElementById('f-lead').value = state.settings.defaultLead;
     document.getElementById('f-date').min = '2000-01-01';
     render();

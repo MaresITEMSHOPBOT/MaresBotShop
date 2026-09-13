@@ -36,6 +36,21 @@ kontrole, export do JSON (záloha) i CSV (Excel) a import zálohy na jiné zař�
 - `index.html` + `app.js` + `data.js` + `styles.css` – studijní web s teorií, ABCD testy a otevřenými otázkami
 - `studium.html` – tentýž web zabalený do jediného souboru
 
+### Otevírání jako aplikace
+
+Aplikace je připravená jako PWA (`manifest.webmanifest`, `sw.js`, ikony), takže jde nainstalovat na
+plochu telefonu i na počítač a běží pak ve vlastním okně bez adresního řádku, i bez internetu.
+Podmínkou je, aby byla otevřená přes `https://` – nejjednodušeji přes GitHub Pages:
+
+1. v repozitáři **Settings → Pages**
+2. *Source*: **Deploy from a branch**, větev `claude/article-expiry-tracking-app-4tr5az`, složka `/ (root)`
+3. po chvíli běží na `https://maresitemshopbot.github.io/MaresBotShop/spotreba.html`
+4. v prohlížeči pak **Přidat na plochu / Instalovat aplikaci** (tlačítko je i v aplikaci
+   v Nastavení → *Otevřít jako aplikaci*)
+
+Bez instalace stačí soubor `spotreba.html` stáhnout a otevřít v prohlížeči – funguje i takto,
+jen bez vlastní ikony a okna.
+
 **Online verze:** aplikace je zveřejněná i jako hostovaná stránka, takže jde otevřít přímo v mobilu
 bez stahování souboru. Data se ukládají zvlášť v každém prohlížeči/zařízení – přenos mezi zařízeními
 se dělá exportem a importem zálohy.
