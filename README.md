@@ -21,6 +21,10 @@ Evidence artiklů a hlídání jejich data spotřeby. Stačí otevřít soubor `
    - nakonec se zadá **nové nejhorší datum spotřeby** (nebo „datum teď neznám“)
 4. Celá kontrola se uloží do historie a hlídání pokračuje s novým datem.
 
+**Upozornění u artiklu:** tlačítkem *⚠️ Upozornění* (nebo polem ve formuláři) lze k artiklu připsat
+krátkou poznámku, která se u něj vypíše žlutě i v hlášení nahoře – například „ověřit číslo artiklu“.
+Takové artikly jde vyfiltrovat chipem *⚠️ S upozorněním*; prázdný text upozornění zase odstraní.
+
 **Vyřazení z prodeje:** artikl, který se už neprodává, lze označit tlačítkem *Vyřadit z prodeje*
 (nebo rovnou při kontrole volbou „Vyřazeno z prodeje“). Přestane se hlídat a hlásit, ale zůstane
 uložený i s celou historií – najdeš ho pod filtrem *Vyřazené* a kdykoli ho lze vrátit do prodeje.

@@ -328,6 +328,22 @@ textarea { resize: vertical; min-height: 60px; }
 .badge.s-ok { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
 .badge.s-nodate, .badge.s-retired { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
 
+.item-info {
+    display: flex;
+    gap: 0.45rem;
+    align-items: flex-start;
+    margin-top: 0.55rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--warning);
+    background: var(--warning-bg);
+    color: var(--warning);
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+.item-info .icon { flex-shrink: 0; }
+
 .item-dates {
     display: flex;
     flex-wrap: wrap;
@@ -474,6 +490,7 @@ footer {
                 <button class="chip" data-filter="due">Ke kontrole</button>
                 <button class="chip" data-filter="expired">Prošlé</button>
                 <button class="chip" data-filter="ok">V pořádku</button>
+                <button class="chip" data-filter="info">⚠️ S upozorněním</button>
                 <button class="chip" data-filter="retired">📦 Vyřazené</button>
             </div>
             <select id="cat-filter" aria-label="Filtr podle kategorie">
@@ -513,7 +530,7 @@ footer {
                 <div class="field">
                     <label for="f-lead">Hlásit X dní před koncem *</label>
                     <input type="number" id="f-lead" min="1" max="365" step="1" value="7" required>
-                    <span class="note">7 = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.</span>
+                    <span class="note" id="lead-note">7 = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.</span>
                 </div>
                 <div class="field">
                     <label for="f-category">Kategorie</label>
@@ -527,6 +544,12 @@ footer {
                 <div class="field">
                     <label for="f-note">Poznámka</label>
                     <input type="text" id="f-note" placeholder="např. regál 12, chlazení">
+                    <span class="note">Drobný popis, zobrazí se šedě vedle čísel.</span>
+                </div>
+                <div class="field">
+                    <label for="f-info">Viditelné upozornění</label>
+                    <input type="text" id="f-info" placeholder="např. Pozor, zkontrolovat i v boxu">
+                    <span class="note">Vypíše se u artiklu žlutě, ať to nepřehlédneš.</span>
                 </div>
             </div>
             <div class="btn-row">
@@ -695,7 +718,7 @@ footer {
    Data se ukládají do localStorage tohoto prohlížeče.
    =================================================================== */
 
-const APP_VERSION = '2026-09-13.13';
+const APP_VERSION = '2026-09-13.15';
 const STORE_KEY = 'spotreba-data-v1';
 const THEME_KEY = 'spotreba-theme';
 const DEFAULT_LEAD = 7;
@@ -754,6 +777,7 @@ function normalizeArticle(a) {
         worstDate: a.worstDate || '',
         leadDays: Number(a.leadDays) > 0 ? Number(a.leadDays) : DEFAULT_LEAD,
         note: a.note || '',
+        info: a.info || '',
         categoryId: a.categoryId || '',
         retiredAt: a.retiredAt || '',
         createdAt: a.createdAt || new Date().toISOString(),
@@ -987,6 +1011,14 @@ function isRetired(article) {
     return !!article.retiredAt;
 }
 
+/** Datum, od kterého se artikl začne hlásit (počítá se včetně dnešního dne). */
+function alertFromDate(article) {
+    if (!article.worstDate) return '';
+    const d = parseISO(article.worstDate);
+    d.setDate(d.getDate() - (article.leadDays - 1));
+    return toISO(d);
+}
+
 function statusOf(article) {
     if (isRetired(article)) return 'retired';
     if (!article.worstDate) return 'nodate';
@@ -1103,7 +1135,8 @@ function renderAlert() {
     banner.classList.toggle('critical', hasCritical);
     const items = flagged.map(a =>
         `<li><b>${esc(a.name)}</b> (č. ${esc(a.number)}) – ${esc(fmtDate(a.worstDate))}, ${esc(leftText(a))}
-         <span class="badge s-${statusOf(a)}">${STATUS_LABEL[statusOf(a)]}</span></li>`
+         <span class="badge s-${statusOf(a)}">${STATUS_LABEL[statusOf(a)]}</span>
+         ${a.info ? `<br><span style="color:var(--warning);font-weight:700">⚠️ ${esc(a.info)}</span>` : ''}</li>`
     ).join('');
     banner.innerHTML = `
         <h2>${hasCritical ? '🚨' : '⚠️'} Ke kontrole: ${flagged.length} ${plural(flagged.length, 'artikl', 'artikly', 'artiklů')}</h2>
@@ -1123,7 +1156,7 @@ function byUrgency(x, y) {
 function matchesSearch(a, q) {
     if (!q) return true;
     const cat = catById(a.categoryId);
-    const hay = `${a.ean} ${a.number} ${a.name} ${a.note} ${cat ? cat.name : ''}`.toLowerCase();
+    const hay = `${a.ean} ${a.number} ${a.name} ${a.note} ${a.info} ${cat ? cat.name : ''}`.toLowerCase();
     return hay.includes(q.toLowerCase());
 }
 
@@ -1141,6 +1174,7 @@ function renderList() {
     else if (activeFilter === 'due') items = items.filter(a => ['due', 'today'].includes(statusOf(a)));
     else if (activeFilter === 'expired') items = items.filter(a => statusOf(a) === 'expired');
     else if (activeFilter === 'ok') items = items.filter(a => statusOf(a) === 'ok');
+    else if (activeFilter === 'info') items = items.filter(a => !!a.info);
 
     items.sort(byUrgency);
 
@@ -1149,7 +1183,9 @@ function renderList() {
             ? 'Zatím žádné artikly. Přidej první na záložce <b>➕ Přidat artikl</b>.'
             : (activeFilter === 'retired'
                 ? 'Žádný artikl není vyřazený z prodeje.'
-                : 'Žádný artikl neodpovídá filtru.')}</div>`;
+                : activeFilter === 'info'
+                    ? 'Žádný artikl nemá upozornění.'
+                    : 'Žádný artikl neodpovídá filtru.')}</div>`;
         return;
     }
 
@@ -1193,6 +1229,7 @@ function itemHtml(a) {
             </div>
             <span class="badge s-${st}">${STATUS_LABEL[st]}</span>
         </div>
+        ${a.info ? `<div class="item-info"><span class="icon">⚠️</span><span>${esc(a.info)}</span></div>` : ''}
         <div class="item-dates">
             <span>Nejhorší datum spotřeby: <b>${esc(fmtDate(a.worstDate))}</b></span>
             <span>${st === 'retired' ? 'vyřazeno ' + esc(fmtDateTime(a.retiredAt)) : esc(leftText(a))}</span>
@@ -1204,6 +1241,7 @@ function itemHtml(a) {
                 ? `<button class="btn" data-act="restore" data-id="${a.id}">↩️ Vrátit do prodeje</button>`
                 : `<button class="${needsAction(a) ? 'btn' : 'btn-secondary'}" data-act="check" data-id="${a.id}">🔍 Zkontrolovat</button>
                    <button class="btn-secondary" data-act="retire" data-id="${a.id}">📦 Vyřadit z prodeje</button>`}
+            <button class="btn-secondary" data-act="info" data-id="${a.id}">⚠️ ${a.info ? 'Upravit upozornění' : 'Upozornění'}</button>
             <button class="btn-secondary" data-act="edit" data-id="${a.id}">✏️ Upravit</button>
             <button class="btn-secondary" data-act="history" data-id="${a.id}">🕘 Historie (${a.checks.length})</button>
             <button class="btn-secondary" data-act="delete" data-id="${a.id}">🗑️ Smazat</button>
@@ -1297,6 +1335,22 @@ function initForm() {
         }
     });
     document.getElementById('f-ean').addEventListener('input', showEanHint);
+    document.getElementById('f-date').addEventListener('input', showLeadHint);
+    document.getElementById('f-lead').addEventListener('input', showLeadHint);
+}
+
+/** Ukáže rovnou ve formuláři, od kterého dne se artikl bude hlásit. */
+function showLeadHint() {
+    const note = document.getElementById('lead-note');
+    const date = document.getElementById('f-date').value;
+    const lead = parseInt(document.getElementById('f-lead').value, 10);
+    if (!date || !(lead >= 1)) {
+        note.innerHTML = 'Např. 7 = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.';
+        return;
+    }
+    const from = alertFromDate({ worstDate: date, leadDays: lead });
+    note.innerHTML = `Ohlásí se od <b>${esc(fmtDate(from))}</b> (${lead} ${plural(lead, 'den', 'dny', 'dní')}`
+        + ' před koncem spotřeby, včetně dneška).';
 }
 
 function showEanHint() {
@@ -1327,6 +1381,7 @@ async function submitArticle() {
     const worstDate = document.getElementById('f-date').value;
     const leadDays = parseInt(document.getElementById('f-lead').value, 10);
     const note = document.getElementById('f-note').value.trim();
+    const info = document.getElementById('f-info').value.trim();
     const catChoice = document.getElementById('f-category').value;
     const newCatName = document.getElementById('f-newcat').value.trim();
 
@@ -1347,7 +1402,7 @@ async function submitArticle() {
     if (id) {
         const a = state.articles.find(x => x.id === id);
         if (!a) return showMsg('form-msg', 'Artikl už neexistuje.', 'error');
-        Object.assign(a, { ean, number, name, worstDate, leadDays, note, categoryId });
+        Object.assign(a, { ean, number, name, worstDate, leadDays, note, info, categoryId });
         saveState();
         resetForm();
         render();
@@ -1365,6 +1420,7 @@ async function submitArticle() {
             dup.worstDate = worstDate;
             dup.leadDays = leadDays;
             if (note) dup.note = note;
+            if (info) dup.info = info;
             if (categoryId) dup.categoryId = categoryId;
             saveState();
             resetForm();
@@ -1374,7 +1430,7 @@ async function submitArticle() {
         }
     }
 
-    state.articles.push(normalizeArticle({ ean, number, name, worstDate, leadDays, note, categoryId }));
+    state.articles.push(normalizeArticle({ ean, number, name, worstDate, leadDays, note, info, categoryId }));
     saveState();
     resetForm();
     render();
@@ -1394,6 +1450,7 @@ function resetForm() {
     document.getElementById('form-submit').textContent = 'Uložit artikl';
     showMsg('form-msg', '');
     showEanHint();
+    showLeadHint();
 }
 
 function editArticle(id) {
@@ -1406,13 +1463,31 @@ function editArticle(id) {
     document.getElementById('f-date').value = a.worstDate;
     document.getElementById('f-lead').value = a.leadDays;
     document.getElementById('f-note').value = a.note;
+    document.getElementById('f-info').value = a.info;
     document.getElementById('f-category').value = catById(a.categoryId) ? a.categoryId : '';
     document.getElementById('f-newcat').hidden = true;
     document.getElementById('f-newcat').value = '';
+    showLeadHint();
     document.getElementById('form-title').textContent = 'Úprava artiklu';
     document.getElementById('form-submit').textContent = 'Uložit změny';
     showMsg('form-msg', '');
     showPanel('panel-add');
+}
+
+/** Krátké viditelné upozornění u artiklu – třeba „pozor, ověřit údaje“. */
+async function editInfo(id) {
+    let a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    const text = await askText(
+        `Upozornění u artiklu „${a.name}“.\n\nVypíše se u něj žlutě i v seznamu ke kontrole. Prázdné pole upozornění odstraní.`,
+        a.info,
+        { title: 'Upozornění u artiklu', okLabel: 'Uložit' });
+    if (text === null) return;
+    a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    a.info = text;
+    saveState();
+    render();
 }
 
 async function retireArticle(id) {
@@ -2132,13 +2207,13 @@ async function exportJson() {
 }
 
 async function exportCsv() {
-    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Kategorie', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit dni predem', 'Stav', 'Vyrazeno z prodeje', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
+    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Kategorie', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit dni predem', 'Hlasi se od', 'Upozorneni', 'Stav', 'Vyrazeno z prodeje', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
     const rows = state.articles.slice().sort(byUrgency).map(a => {
         const last = lastCheck(a);
         return [
             a.ean, a.number, a.name, (catById(a.categoryId) || { name: '' }).name, a.worstDate,
             daysLeftInclusive(a) === null ? '' : daysLeftInclusive(a),
-            a.leadDays, STATUS_LABEL[statusOf(a)], isRetired(a) ? 'ANO' : 'NE',
+            a.leadDays, alertFromDate(a), a.info, STATUS_LABEL[statusOf(a)], isRetired(a) ? 'ANO' : 'NE',
             a.checks.filter(c => !c.kind).length,
             last ? fmtDateTime(last.at) : '',
             last ? (last.present ? 'ANO' : 'NE') : '',
@@ -2287,6 +2362,7 @@ function initListEvents() {
         if (!btn) return;
         const { act, id } = btn.dataset;
         if (act === 'check') openCheck(id);
+        else if (act === 'info') editInfo(id);
         else if (act === 'retire') retireArticle(id);
         else if (act === 'restore') restoreArticle(id);
         else if (act === 'edit') editArticle(id);
