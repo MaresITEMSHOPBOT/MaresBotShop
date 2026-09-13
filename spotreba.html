@@ -370,6 +370,20 @@ textarea { resize: vertical; min-height: 60px; }
     font-size: 0.92rem;
 }
 
+/* ---- fotky a čtečka ---- */
+.item-photo {
+    width: 60px; height: 60px; object-fit: cover; border-radius: 8px;
+    border: 1px solid var(--border); cursor: zoom-in; flex-shrink: 0;
+}
+.photo-preview {
+    margin-top: 0.5rem; max-width: 160px; border-radius: 8px; border: 1px solid var(--border);
+}
+#scan-video {
+    width: 100%; max-height: 46vh; border-radius: 10px; background: #000; margin-bottom: 0.6rem;
+}
+#scan-preview { max-width: 100%; max-height: 30vh; border-radius: 10px; margin-top: 0.6rem; }
+#photo-view-img { max-width: 100%; max-height: 72vh; border-radius: 10px; }
+
 /* ---- modální okno kontroly ---- */
 .overlay {
     position: fixed;
@@ -507,6 +521,10 @@ footer {
         <form class="card" id="article-form" autocomplete="off">
             <h2 id="form-title">Nový artikl</h2>
             <p class="hint">Zadej EAN, číslo artiklu, název a nejhorší (nejbližší) datum spotřeby, které je na prodejně.</p>
+            <div class="btn-row" style="margin: 0 0 1rem;">
+                <button type="button" class="btn" id="scan-label-btn">🏷️ Načíst z cenovky</button>
+                <button type="button" class="btn-secondary" id="scan-ean-btn">📷 Skenovat EAN</button>
+            </div>
             <input type="hidden" id="f-id">
             <div class="form-grid">
                 <div class="field">
@@ -523,13 +541,23 @@ footer {
                     <input type="text" id="f-name" placeholder="např. Mléko polotučné 1 l" required>
                 </div>
                 <div class="field">
+                    <label for="f-price">Cena</label>
+                    <input type="number" id="f-price" min="0" step="0.01" inputmode="decimal" placeholder="např. 42.90">
+                </div>
+                <div class="field">
                     <label for="f-date">Nejhorší datum spotřeby *</label>
                     <input type="date" id="f-date" required>
                     <span class="note">Nejbližší datum, které se na prodejně nachází.</span>
                 </div>
                 <div class="field">
-                    <label for="f-lead">Hlásit X dní před koncem *</label>
-                    <input type="number" id="f-lead" min="1" max="365" step="1" value="7" required>
+                    <label for="f-lead">Hlásit předem *</label>
+                    <div style="display: flex; gap: 0.4rem;">
+                        <input type="number" id="f-lead" min="1" max="365" step="1" value="7" required style="flex: 1 1 auto;">
+                        <select id="f-lead-unit" style="flex: 0 0 auto; width: auto;">
+                            <option value="day">dní</option>
+                            <option value="month">měsíců</option>
+                        </select>
+                    </div>
                     <span class="note" id="lead-note">7 = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.</span>
                 </div>
                 <div class="field">
@@ -545,6 +573,14 @@ footer {
                     <label for="f-note">Poznámka</label>
                     <input type="text" id="f-note" placeholder="např. regál 12, chlazení">
                     <span class="note">Drobný popis, zobrazí se šedě vedle čísel.</span>
+                </div>
+                <div class="field">
+                    <label>Fotka artiklu</label>
+                    <div class="btn-row" style="margin-top: 0;">
+                        <button type="button" class="btn-secondary" id="photo-btn">📸 Přidat fotku</button>
+                        <button type="button" class="btn-secondary" id="photo-clear" hidden>Odebrat</button>
+                    </div>
+                    <img id="photo-preview" class="photo-preview" hidden alt="Fotka artiklu">
                 </div>
                 <div class="field">
                     <label for="f-info">Viditelné upozornění</label>
@@ -652,6 +688,38 @@ footer {
 
 <footer>Kontrola dat spotřeby artiklů · verze <span id="app-version">–</span></footer>
 
+<!-- ===== ČTEČKA CENOVEK A KÓDŮ ===== -->
+<div class="overlay" id="scan-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="scan-title">
+        <h2 id="scan-title">Načíst z cenovky</h2>
+        <div class="sub" id="scan-hint"></div>
+        <div id="scan-camera" hidden>
+            <video id="scan-video" playsinline muted></video>
+            <div class="btn-row" style="margin-top: 0;">
+                <button type="button" class="btn" id="scan-shot">📸 Vyfotit</button>
+            </div>
+        </div>
+        <div class="btn-row">
+            <label class="btn" for="scan-file" style="display: inline-flex; align-items: center;">📷 Vyfotit foťákem</label>
+            <input type="file" id="scan-file" accept="image/*" hidden>
+            <button type="button" class="btn-secondary" id="scan-cancel">Zavřít</button>
+        </div>
+        <img id="scan-preview" hidden alt="Načtená fotka">
+        <div class="form-msg" id="scan-msg"></div>
+    </div>
+</div>
+
+<!-- ===== PROHLÍŽENÍ FOTKY ===== -->
+<div class="overlay" id="photo-view-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+        <h2 id="photo-view-title">Fotka artiklu</h2>
+        <img id="photo-view-img" alt="Fotka artiklu">
+        <div class="btn-row">
+            <button type="button" class="btn-secondary" id="photo-view-close">Zavřít</button>
+        </div>
+    </div>
+</div>
+
 <!-- ===== POTVRZOVACÍ OKNO ===== -->
 <div class="overlay" id="ask-overlay" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ask-title">
@@ -718,7 +786,7 @@ footer {
    Data se ukládají do localStorage tohoto prohlížeče.
    =================================================================== */
 
-const APP_VERSION = '2026-09-13.15';
+const APP_VERSION = '2026-09-13.16';
 const STORE_KEY = 'spotreba-data-v1';
 const THEME_KEY = 'spotreba-theme';
 const DEFAULT_LEAD = 7;
@@ -775,7 +843,11 @@ function normalizeArticle(a) {
         number: String(a.number || ''),
         name: String(a.name || ''),
         worstDate: a.worstDate || '',
-        leadDays: Number(a.leadDays) > 0 ? Number(a.leadDays) : DEFAULT_LEAD,
+        leadValue: Number(a.leadValue) > 0 ? Number(a.leadValue)
+            : (Number(a.leadDays) > 0 ? Number(a.leadDays) : DEFAULT_LEAD),
+        leadUnit: a.leadUnit === 'month' ? 'month' : 'day',
+        price: a.price === 0 || Number(a.price) > 0 ? Number(a.price) : '',
+        photo: a.photo || '',
         note: a.note || '',
         info: a.info || '',
         categoryId: a.categoryId || '',
@@ -1011,11 +1083,33 @@ function isRetired(article) {
     return !!article.retiredAt;
 }
 
+/**
+ * Kolik dní před koncem spotřeby se artikl hlásí. U měsíců se počítá podle
+ * kalendáře od data spotřeby zpět – „1 M“ na cenovce znamená měsíc předem.
+ */
+function leadDaysOf(a) {
+    const value = Number(a.leadValue) > 0 ? Number(a.leadValue) : DEFAULT_LEAD;
+    if (a.leadUnit !== 'month') return value;
+    if (!a.worstDate) return value * 30;
+    const end = parseISO(a.worstDate);
+    const from = new Date(end.getFullYear(), end.getMonth() - value, end.getDate());
+    if (from.getDate() !== end.getDate()) from.setDate(0);   // kratší měsíc -> jeho poslední den
+    return dayDiff(toISO(from), a.worstDate) + 1;
+}
+
+/** Popis pro zobrazení, např. „2 měsíce“ nebo „7 dní“. */
+function leadText(a) {
+    const value = Number(a.leadValue) > 0 ? Number(a.leadValue) : DEFAULT_LEAD;
+    return a.leadUnit === 'month'
+        ? `${value} ${plural(value, 'měsíc', 'měsíce', 'měsíců')}`
+        : `${value} ${plural(value, 'den', 'dny', 'dní')}`;
+}
+
 /** Datum, od kterého se artikl začne hlásit (počítá se včetně dnešního dne). */
 function alertFromDate(article) {
     if (!article.worstDate) return '';
     const d = parseISO(article.worstDate);
-    d.setDate(d.getDate() - (article.leadDays - 1));
+    d.setDate(d.getDate() - (leadDaysOf(article) - 1));
     return toISO(d);
 }
 
@@ -1025,7 +1119,7 @@ function statusOf(article) {
     const diff = dayDiff(todayISO(), article.worstDate);
     if (diff < 0) return 'expired';
     if (diff === 0) return 'today';
-    return diff + 1 <= article.leadDays ? 'due' : 'ok';
+    return diff + 1 <= leadDaysOf(article) ? 'due' : 'ok';
 }
 
 const STATUS_LABEL = {
@@ -1227,13 +1321,17 @@ function itemHtml(a) {
                 <div class="item-ids">EAN ${esc(a.ean || '—')} · č. artiklu ${esc(a.number || '—')}${a.note ? ' · ' + esc(a.note) : ''}</div>
                 ${catChip(a)}
             </div>
-            <span class="badge s-${st}">${STATUS_LABEL[st]}</span>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                ${a.photo ? `<img class="item-photo" src="${a.photo}" alt="Fotka artiklu" data-act="photo" data-id="${a.id}">` : ''}
+                <span class="badge s-${st}">${STATUS_LABEL[st]}</span>
+            </div>
         </div>
         ${a.info ? `<div class="item-info"><span class="icon">⚠️</span><span>${esc(a.info)}</span></div>` : ''}
         <div class="item-dates">
             <span>Nejhorší datum spotřeby: <b>${esc(fmtDate(a.worstDate))}</b></span>
             <span>${st === 'retired' ? 'vyřazeno ' + esc(fmtDateTime(a.retiredAt)) : esc(leftText(a))}</span>
-            <span>Hlásit: <b>${a.leadDays} ${plural(a.leadDays, 'den', 'dny', 'dní')}</b> předem</span>
+            <span>Hlásit: <b>${esc(leadText(a))}</b> předem</span>
+            ${a.price === '' ? '' : `<span>Cena: <b>${esc(fmtPrice(a.price))}</b></span>`}
             <span>Poslední kontrola: <b>${last ? esc(fmtDateTime(last.at)) : 'nikdy'}</b></span>
         </div>
         <div class="item-actions">
@@ -1337,6 +1435,7 @@ function initForm() {
     document.getElementById('f-ean').addEventListener('input', showEanHint);
     document.getElementById('f-date').addEventListener('input', showLeadHint);
     document.getElementById('f-lead').addEventListener('input', showLeadHint);
+    document.getElementById('f-lead-unit').addEventListener('change', showLeadHint);
 }
 
 /** Ukáže rovnou ve formuláři, od kterého dne se artikl bude hlásit. */
@@ -1344,13 +1443,15 @@ function showLeadHint() {
     const note = document.getElementById('lead-note');
     const date = document.getElementById('f-date').value;
     const lead = parseInt(document.getElementById('f-lead').value, 10);
+    const unit = document.getElementById('f-lead-unit').value;
     if (!date || !(lead >= 1)) {
-        note.innerHTML = 'Např. 7 = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.';
+        note.innerHTML = 'Např. 7 dní = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.'
+            + ' Měsíce odpovídají značce na cenovce (1 M = měsíc předem).';
         return;
     }
-    const from = alertFromDate({ worstDate: date, leadDays: lead });
-    note.innerHTML = `Ohlásí se od <b>${esc(fmtDate(from))}</b> (${lead} ${plural(lead, 'den', 'dny', 'dní')}`
-        + ' před koncem spotřeby, včetně dneška).';
+    const article = { worstDate: date, leadValue: lead, leadUnit: unit };
+    note.innerHTML = `Ohlásí se od <b>${esc(fmtDate(alertFromDate(article)))}</b>`
+        + ` (${esc(leadText(article))} před koncem spotřeby).`;
 }
 
 function showEanHint() {
@@ -1379,7 +1480,10 @@ async function submitArticle() {
     const number = document.getElementById('f-number').value.trim();
     const name = document.getElementById('f-name').value.trim();
     const worstDate = document.getElementById('f-date').value;
-    const leadDays = parseInt(document.getElementById('f-lead').value, 10);
+    const leadValue = parseInt(document.getElementById('f-lead').value, 10);
+    const leadUnit = document.getElementById('f-lead-unit').value === 'month' ? 'month' : 'day';
+    const priceRaw = document.getElementById('f-price').value.trim().replace(',', '.');
+    const price = priceRaw === '' ? '' : Number(priceRaw);
     const note = document.getElementById('f-note').value.trim();
     const info = document.getElementById('f-info').value.trim();
     const catChoice = document.getElementById('f-category').value;
@@ -1391,8 +1495,11 @@ async function submitArticle() {
     if (!ean || !number || !name || !worstDate) {
         return showMsg('form-msg', 'Vyplň EAN, číslo artiklu, název i nejhorší datum spotřeby.', 'error');
     }
-    if (!(leadDays >= 1)) {
-        return showMsg('form-msg', 'Počet dní pro upozornění musí být alespoň 1.', 'error');
+    if (!(leadValue >= 1)) {
+        return showMsg('form-msg', 'Doba pro upozornění musí být alespoň 1.', 'error');
+    }
+    if (price !== '' && !(price >= 0)) {
+        return showMsg('form-msg', 'Cena musí být číslo.', 'error');
     }
 
     const categoryId = catChoice === '__new'
@@ -1402,7 +1509,7 @@ async function submitArticle() {
     if (id) {
         const a = state.articles.find(x => x.id === id);
         if (!a) return showMsg('form-msg', 'Artikl už neexistuje.', 'error');
-        Object.assign(a, { ean, number, name, worstDate, leadDays, note, info, categoryId });
+        Object.assign(a, { ean, number, name, worstDate, leadValue, leadUnit, price, note, info, categoryId, photo: pendingPhoto });
         saveState();
         resetForm();
         render();
@@ -1418,7 +1525,9 @@ async function submitArticle() {
         if (current) {
             const dup = current;
             dup.worstDate = worstDate;
-            dup.leadDays = leadDays;
+            dup.leadValue = leadValue;
+            dup.leadUnit = leadUnit;
+            if (price !== '') dup.price = price;
             if (note) dup.note = note;
             if (info) dup.info = info;
             if (categoryId) dup.categoryId = categoryId;
@@ -1430,12 +1539,15 @@ async function submitArticle() {
         }
     }
 
-    state.articles.push(normalizeArticle({ ean, number, name, worstDate, leadDays, note, info, categoryId }));
+    state.articles.push(normalizeArticle({ ean, number, name, worstDate, leadValue, leadUnit, price, note, info, categoryId, photo: pendingPhoto }));
+    pendingPhoto = '';
+    renderPhotoField();
     saveState();
     resetForm();
     render();
     const cat = catById(categoryId);
-    showMsg('form-msg', `✅ Artikl „${name}“ byl přidán${cat ? ` do kategorie „${cat.name}“` : ''}. Ohlásí se ${leadDays} ${plural(leadDays, 'den', 'dny', 'dní')} před koncem spotřeby.`, 'ok');
+    showMsg('form-msg', `✅ Artikl „${name}“ byl přidán${cat ? ` do kategorie „${cat.name}“` : ''}.`
+        + ` Ohlásí se ${leadText({ leadValue, leadUnit })} před koncem spotřeby.`, 'ok');
     document.getElementById('f-ean').focus();
 }
 
@@ -1445,7 +1557,9 @@ function resetForm() {
     document.getElementById('f-category').value = '';
     document.getElementById('f-newcat').value = '';
     document.getElementById('f-newcat').hidden = true;
+    setPendingPhoto('');
     document.getElementById('f-lead').value = state.settings.defaultLead;
+    document.getElementById('f-lead-unit').value = 'day';
     document.getElementById('form-title').textContent = 'Nový artikl';
     document.getElementById('form-submit').textContent = 'Uložit artikl';
     showMsg('form-msg', '');
@@ -1461,9 +1575,12 @@ function editArticle(id) {
     document.getElementById('f-number').value = a.number;
     document.getElementById('f-name').value = a.name;
     document.getElementById('f-date').value = a.worstDate;
-    document.getElementById('f-lead').value = a.leadDays;
+    document.getElementById('f-lead').value = a.leadValue;
+    document.getElementById('f-lead-unit').value = a.leadUnit;
+    document.getElementById('f-price').value = a.price === '' ? '' : a.price;
     document.getElementById('f-note').value = a.note;
     document.getElementById('f-info').value = a.info;
+    setPendingPhoto(a.photo);
     document.getElementById('f-category').value = catById(a.categoryId) ? a.categoryId : '';
     document.getElementById('f-newcat').hidden = true;
     document.getElementById('f-newcat').value = '';
@@ -2207,13 +2324,14 @@ async function exportJson() {
 }
 
 async function exportCsv() {
-    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Kategorie', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit dni predem', 'Hlasi se od', 'Upozorneni', 'Stav', 'Vyrazeno z prodeje', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
+    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Kategorie', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit predem', 'Hlasi se od', 'Cena', 'Upozorneni', 'Stav', 'Vyrazeno z prodeje', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
     const rows = state.articles.slice().sort(byUrgency).map(a => {
         const last = lastCheck(a);
         return [
             a.ean, a.number, a.name, (catById(a.categoryId) || { name: '' }).name, a.worstDate,
             daysLeftInclusive(a) === null ? '' : daysLeftInclusive(a),
-            a.leadDays, alertFromDate(a), a.info, STATUS_LABEL[statusOf(a)], isRetired(a) ? 'ANO' : 'NE',
+            leadText(a), alertFromDate(a), a.price === '' ? '' : a.price, a.info,
+            STATUS_LABEL[statusOf(a)], isRetired(a) ? 'ANO' : 'NE',
             a.checks.filter(c => !c.kind).length,
             last ? fmtDateTime(last.at) : '',
             last ? (last.present ? 'ANO' : 'NE') : '',
@@ -2269,6 +2387,342 @@ function importJson(e) {
     };
     reader.readAsText(file);
     e.target.value = '';
+}
+
+/* ---------- čtečka cenovek, čárových kódů a fotka artiklu ----------
+   Cenovka se čte z fotky (název, číslo artiklu, cena, značka slevy typu „2 M“),
+   EAN se skenuje zvlášť z čárového kódu na obalu – na cenovce bývá jiný kód. */
+
+const LABEL_PROMPT = `Na fotce je regálová cenovka z obchodu (často v češtině).
+Vyčti z ní údaje a odpověz POUZE jedním JSON objektem tohoto tvaru:
+{"nazev": string, "cena": number|null, "cislo_artiklu": string, "ean": string, "sleva": {"hodnota": number, "jednotka": "D"|"M"}|null}
+
+Vysvětlení polí:
+- nazev: celý název výrobku včetně doplňku a hmotnosti, např. "Milka s ořechy mléčná čokoláda 100 g"
+- cena: aktuální (nejnižší zobrazená) prodejní cena jako číslo, desetinná tečka; když ji nevidíš, null
+- cislo_artiklu: číslo artiklu tištěné na cenovce (obvykle 6 až 8 číslic, bývá u čárového kódu); NENÍ to EAN
+- ean: jen pokud jsou pod čárovým kódem čitelné číslice EAN (8 nebo 13 číslic), jinak prázdný řetězec
+- sleva: značka jako "2 M" nebo "10 D" – kolik času před koncem spotřeby se lepí sleva.
+  Jednotka "D" = dny, "M" = měsíce. Když na cenovce není, null.
+
+Vrať jen údaje, které na fotce opravdu vidíš; co chybí, nech prázdné nebo null.
+Příklad odpovědi: {"nazev":"Milka s ořechy mléčná čokoláda 100 g","cena":42.90,"cislo_artiklu":"6710942","ean":"","sleva":{"hodnota":2,"jednotka":"M"}}`;
+
+let scanMode = 'label';          // 'label' = cenovka, 'ean' = čárový kód, 'photo' = fotka artiklu
+let scanStream = null;
+let scanLoopTimer = null;
+let barcodeDetector = null;
+let pendingPhoto = '';           // fotka pro artikl, který se právě zakládá
+
+const SCAN_TITLES = {
+    label: 'Načíst z cenovky',
+    ean: 'Skenovat EAN',
+    photo: 'Fotka artiklu'
+};
+const SCAN_HINTS = {
+    label: 'Vyfoť regálovou cenovku. Vyčtu z ní název, číslo artiklu, cenu i značku slevy (např. 2 M = měsíc před koncem spotřeby).',
+    ean: 'Namiř foťák na čárový kód na obalu výrobku. Cenovka má vlastní kód, EAN je potřeba načíst přímo ze zboží.',
+    photo: 'Vyfoť výrobek. Fotka se uloží k artiklu, ať ho na prodejně poznáš.'
+};
+
+function openScan(mode) {
+    scanMode = mode;
+    document.getElementById('scan-title').textContent = SCAN_TITLES[mode];
+    document.getElementById('scan-hint').textContent = SCAN_HINTS[mode];
+    document.getElementById('scan-file').setAttribute('capture', 'environment');
+    document.getElementById('scan-preview').hidden = true;
+    document.getElementById('scan-overlay').hidden = false;
+    showMsg('scan-msg', '');
+    startCamera();
+}
+
+function closeScan() {
+    stopCamera();
+    document.getElementById('scan-overlay').hidden = true;
+}
+
+async function startCamera() {
+    const box = document.getElementById('scan-camera');
+    const video = document.getElementById('scan-video');
+    try {
+        scanStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+            audio: false
+        });
+        video.srcObject = scanStream;
+        await video.play();
+        box.hidden = false;
+        if (scanMode === 'ean') startBarcodeLoop();
+    } catch {
+        // Kamera není k dispozici (zakázaná v aplikaci) – zbývá vyfotit přes foťák telefonu.
+        box.hidden = true;
+        showMsg('scan-msg', 'Živý náhled není k dispozici, použij tlačítko Vyfotit – otevře se foťák telefonu.', '');
+    }
+}
+
+function stopCamera() {
+    clearTimeout(scanLoopTimer);
+    scanLoopTimer = null;
+    if (scanStream) {
+        scanStream.getTracks().forEach(t => t.stop());
+        scanStream = null;
+    }
+    const video = document.getElementById('scan-video');
+    if (video) video.srcObject = null;
+    document.getElementById('scan-camera').hidden = true;
+}
+
+/* ---- čárový kód ---- */
+
+async function getBarcodeDetector() {
+    if (barcodeDetector) return barcodeDetector;
+    if (!('BarcodeDetector' in window)) return null;
+    try {
+        barcodeDetector = new window.BarcodeDetector({
+            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128']
+        });
+        return barcodeDetector;
+    } catch {
+        return null;
+    }
+}
+
+/** Záložní čtečka kódů pro prohlížeče bez vestavěné podpory. */
+async function loadZxing() {
+    if (window.ZXing) return window.ZXing;
+    await new Promise((resolve, reject) => {
+        const tag = document.createElement('script');
+        tag.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+        tag.onload = resolve;
+        tag.onerror = reject;
+        document.head.appendChild(tag);
+    });
+    return window.ZXing;
+}
+
+async function decodeBarcode(source) {
+    const detector = await getBarcodeDetector();
+    if (detector) {
+        try {
+            const codes = await detector.detect(source);
+            if (codes && codes.length) return String(codes[0].rawValue || '');
+        } catch { /* zkusíme záložní čtečku */ }
+    }
+    if (source instanceof HTMLImageElement) {
+        try {
+            const ZXing = await loadZxing();
+            const reader = new ZXing.BrowserMultiFormatReader();
+            const result = await reader.decodeFromImageElement(source);
+            return result ? String(result.getText()) : '';
+        } catch { /* nepodařilo se přečíst */ }
+    }
+    return '';
+}
+
+function startBarcodeLoop() {
+    const video = document.getElementById('scan-video');
+    const tick = async () => {
+        if (!scanStream || scanMode !== 'ean') return;
+        if (video.readyState >= 2) {
+            const code = await decodeBarcode(video);
+            if (code) return useScannedEan(code);
+        }
+        scanLoopTimer = setTimeout(tick, 300);
+    };
+    tick();
+}
+
+function useScannedEan(code) {
+    document.getElementById('f-ean').value = code;
+    showEanHint();
+    closeScan();
+    showPanel('panel-add');
+    showMsg('form-msg', `✅ Načtený EAN: ${code}`, 'ok');
+    document.getElementById('f-number').focus();
+}
+
+/* ---- práce s obrázkem ---- */
+
+/** Zmenší fotku, ať se rychle posílá i ukládá. */
+function shrinkImage(file, maxSize, quality) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            canvas.toBlob(blob => blob ? resolve({ blob, dataUrl: canvas.toDataURL('image/jpeg', quality) })
+                : reject(new Error('obrázek se nepodařilo zpracovat')), 'image/jpeg', quality);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('obrázek se nepodařilo načíst')); };
+        img.src = url;
+    });
+}
+
+function captureFromVideo() {
+    const video = document.getElementById('scan-video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    return new Promise(resolve => canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.9));
+}
+
+async function handleScanImage(file) {
+    if (!file) return;
+    showMsg('scan-msg', 'Zpracovávám fotku…', '');
+
+    try {
+        if (scanMode === 'photo') {
+            const small = await shrinkImage(file, 720, 0.65);
+            setPendingPhoto(small.dataUrl);
+            closeScan();
+            showPanel('panel-add');
+            return showMsg('form-msg', '✅ Fotka artiklu přidána.', 'ok');
+        }
+
+        const big = await shrinkImage(file, 1600, 0.85);
+        const preview = document.getElementById('scan-preview');
+        preview.src = big.dataUrl;
+        preview.hidden = false;
+
+        if (scanMode === 'ean') {
+            await new Promise(r => { preview.complete ? r() : preview.onload = r; });
+            const code = await decodeBarcode(preview);
+            if (!code) {
+                return showMsg('scan-msg', 'Čárový kód se z fotky nepodařilo přečíst. Zkus to znovu z blízka a zostra,'
+                    + ' nebo EAN zadej ručně.', 'error');
+            }
+            return useScannedEan(code);
+        }
+
+        await readLabel(big.blob);
+    } catch (e) {
+        showMsg('scan-msg', 'Nepovedlo se: ' + ((e && e.message) || e), 'error');
+    }
+}
+
+/* ---- čtení cenovky ---- */
+
+async function readLabel(blob) {
+    const ask = window.claude && typeof window.claude.use === 'function'
+        ? await window.claude.use('sample').catch(() => null)
+        : null;
+    if (!ask) {
+        return showMsg('scan-msg', 'Čtení cenovky funguje jen ve verzi otevřené přes Claude. '
+            + 'Údaje můžeš zadat ručně.', 'error');
+    }
+    const limits = await ask.limits().catch(() => null);
+    if (!limits || !limits.images) {
+        return showMsg('scan-msg', 'Posílání fotek tady není povolené, údaje zadej ručně.', 'error');
+    }
+
+    showMsg('scan-msg', 'Čtu cenovku…', '');
+    let data;
+    try {
+        data = await ask.json(LABEL_PROMPT, { images: blob });
+    } catch (e) {
+        return showMsg('scan-msg', 'Cenovku se nepodařilo přečíst: ' + ((e && e.message) || e), 'error');
+    }
+    applyLabel(data || {});
+}
+
+function applyLabel(data) {
+    const filled = [];
+
+    const name = String(data.nazev || '').trim();
+    if (name) { document.getElementById('f-name').value = name; filled.push('název'); }
+
+    const number = String(data.cislo_artiklu || '').replace(/\D/g, '');
+    if (number) { document.getElementById('f-number').value = number; filled.push('číslo artiklu'); }
+
+    const price = Number(data.cena);
+    if (price > 0) { document.getElementById('f-price').value = price; filled.push('cena'); }
+
+    const ean = String(data.ean || '').replace(/\D/g, '');
+    if (ean.length === 8 || ean.length === 13) {
+        document.getElementById('f-ean').value = ean;
+        showEanHint();
+        filled.push('EAN');
+    }
+
+    const lead = data.sleva;
+    if (lead && Number(lead.hodnota) > 0) {
+        const unit = String(lead.jednotka || '').toUpperCase() === 'M' ? 'month' : 'day';
+        document.getElementById('f-lead').value = Number(lead.hodnota);
+        document.getElementById('f-lead-unit').value = unit;
+        showLeadHint();
+        filled.push(`sleva ${lead.hodnota} ${unit === 'month' ? 'měsíc' : 'den'}${unit === 'month' ? 'e' : ''} předem`);
+    }
+
+    closeScan();
+    showPanel('panel-add');
+    showMsg('form-msg', filled.length
+        ? `✅ Z cenovky načteno: ${filled.join(', ')}. Zkontroluj údaje, doplň EAN a datum spotřeby a ulož.`
+        : 'Z cenovky se nepodařilo nic přečíst, zadej údaje ručně.', filled.length ? 'ok' : 'error');
+    document.getElementById('f-ean').focus();
+}
+
+/* ---- fotka artiklu ---- */
+
+function setPendingPhoto(dataUrl) {
+    pendingPhoto = dataUrl || '';
+    renderPhotoField();
+}
+
+function renderPhotoField() {
+    const preview = document.getElementById('photo-preview');
+    preview.src = pendingPhoto || '';
+    preview.hidden = !pendingPhoto;
+    document.getElementById('photo-clear').hidden = !pendingPhoto;
+}
+
+function openPhotoView(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a || !a.photo) return;
+    document.getElementById('photo-view-img').src = a.photo;
+    document.getElementById('photo-view-title').textContent = a.name;
+    document.getElementById('photo-view-overlay').hidden = false;
+}
+
+function initScanner() {
+    document.getElementById('scan-label-btn').addEventListener('click', () => openScan('label'));
+    document.getElementById('scan-ean-btn').addEventListener('click', () => openScan('ean'));
+    document.getElementById('photo-btn').addEventListener('click', () => openScan('photo'));
+    document.getElementById('photo-clear').addEventListener('click', () => setPendingPhoto(''));
+
+    document.getElementById('scan-file').addEventListener('change', e => {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        handleScanImage(file);
+    });
+    document.getElementById('scan-shot').addEventListener('click', async () => {
+        const blob = await captureFromVideo();
+        if (blob) handleScanImage(blob);
+    });
+    document.getElementById('scan-cancel').addEventListener('click', closeScan);
+    document.getElementById('scan-overlay').addEventListener('click', e => {
+        if (e.target.id === 'scan-overlay') closeScan();
+    });
+
+    document.getElementById('photo-view-close').addEventListener('click', () => {
+        document.getElementById('photo-view-overlay').hidden = true;
+    });
+    document.getElementById('photo-view-overlay').addEventListener('click', e => {
+        if (e.target.id === 'photo-view-overlay') document.getElementById('photo-view-overlay').hidden = true;
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        if (!document.getElementById('scan-overlay').hidden) closeScan();
+        if (!document.getElementById('photo-view-overlay').hidden) {
+            document.getElementById('photo-view-overlay').hidden = true;
+        }
+    });
 }
 
 /* ---------- potvrzovací okno ----------
@@ -2340,6 +2794,11 @@ function esc(s) {
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 }
 
+function fmtPrice(value) {
+    if (value === '' || value === null || value === undefined) return '';
+    return Number(value).toFixed(2).replace('.', ',') + ' Kč';
+}
+
 function plural(n, one, few, many) {
     const abs = Math.abs(n);
     if (abs === 1) return one;
@@ -2358,6 +2817,8 @@ function showMsg(elId, text, kind) {
 
 function initListEvents() {
     document.getElementById('list').addEventListener('click', e => {
+        const photo = e.target.closest('img[data-act="photo"]');
+        if (photo) return openPhotoView(photo.dataset.id);
         const btn = e.target.closest('button[data-act]');
         if (!btn) return;
         const { act, id } = btn.dataset;
@@ -2415,6 +2876,7 @@ function init() {
     initListEvents();
     initCheckModal();
     initAsk();
+    initScanner();
     initCategories();
     initSettings();
     initInstall();

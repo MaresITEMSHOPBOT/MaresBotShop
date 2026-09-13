@@ -21,6 +21,15 @@ Evidence artiklů a hlídání jejich data spotřeby. Stačí otevřít soubor `
    - nakonec se zadá **nové nejhorší datum spotřeby** (nebo „datum teď neznám“)
 4. Celá kontrola se uloží do historie a hlídání pokračuje s novým datem.
 
+**Čtečka:** tlačítko *🏷️ Načíst z cenovky* vyfotí regálovou cenovku a vyčte z ní název, číslo artiklu,
+cenu i značku slevy („2 M“ = dva měsíce před koncem spotřeby se lepí sleva) – čtení zajišťuje Claude,
+takže funguje jen ve verzi otevřené přes Claude. Tlačítko *📷 Skenovat EAN* načte čárový kód z obalu
+(cenovka má vlastní kód, ne EAN); používá čtečku prohlížeče, jinak knihovnu ZXing z CDN.
+K artiklu lze přidat i **fotku** (*📸 Přidat fotku*), zobrazí se jako náhled v seznamu.
+
+**Hlásit předem** lze zadat ve dnech i v měsících. Měsíce se počítají podle kalendáře zpět od data
+spotřeby, takže „1 M“ u data 31. 10. znamená hlášení od 30. 9.
+
 **Upozornění u artiklu:** tlačítkem *⚠️ Upozornění* (nebo polem ve formuláři) lze k artiklu připsat
 krátkou poznámku, která se u něj vypíše žlutě i v hlášení nahoře – například „ověřit číslo artiklu“.
 Takové artikly jde vyfiltrovat chipem *⚠️ S upozorněním*; prázdný text upozornění zase odstraní.
