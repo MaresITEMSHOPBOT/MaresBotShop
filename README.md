@@ -51,6 +51,13 @@ Podmínkou je, aby byla otevřená přes `https://` – nejjednodušeji přes Gi
 Bez instalace stačí soubor `spotreba.html` stáhnout a otevřít v prohlížeči – funguje i takto,
 jen bez vlastní ikony a okna.
 
+### Synchronizace mezi zařízeními
+
+Ve verzi hostované u Claude se artikly, kategorie i historie kontrol ukládají do sdíleného úložiště,
+takže mobil i počítač vidí to samé. Artikly zadané dřív (jen v zařízení) se při připojení automaticky
+nahrají nahoru; artikly se stejným EAN a číslem artiklu se nezdvojí. Verze otevřená ze souboru nebo
+z GitHub Pages sdílené úložiště nemá – ukládá do zařízení a funguje offline, přenos přes export/import.
+
 **Online verze:** aplikace je zveřejněná i jako hostovaná stránka, takže jde otevřít přímo v mobilu
 bez stahování souboru. Data se ukládají zvlášť v každém prohlížeči/zařízení – přenos mezi zařízeními
 se dělá exportem a importem zálohy.

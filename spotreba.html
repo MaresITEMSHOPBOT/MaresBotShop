@@ -565,6 +565,12 @@ footer {
         </div>
 
         <div class="card">
+            <h2>Synchronizace</h2>
+            <p class="hint" id="sync-hint">Zjišťuji, jestli je k dispozici sdílené úložiště…</p>
+            <div class="form-msg" id="sync-msg"></div>
+        </div>
+
+        <div class="card">
             <h2>Otevřít jako aplikaci</h2>
             <p class="hint">Aplikaci si můžeš nainstalovat na plochu telefonu i na počítač – otevře se
                 ve vlastním okně bez adresního řádku a funguje i bez internetu.</p>
@@ -704,12 +710,18 @@ function loadState() {
     }
 }
 
-function saveState() {
+function saveLocal() {
     try {
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
     } catch (e) {
         showMsg('data-msg', 'Data se nepodařilo uložit do prohlížeče: ' + e.message, 'error');
     }
+}
+
+/** Uloží změnu do zařízení a (je-li zapnutá synchronizace) i do sdíleného úložiště. */
+function saveState() {
+    saveLocal();
+    schedulePush();
 }
 
 function normalizeArticle(a) {
@@ -1610,6 +1622,185 @@ function notifyDue() {
     } catch { /* upozornění nelze zobrazit, aplikace funguje dál */ }
 }
 
+/* ---------- synchronizace mezi zařízeními ----------
+   Když stránka běží v prostředí Claude, artikly se ukládají i do sdíleného
+   úložiště, takže mobil i počítač vidí to samé. Bez něj aplikace funguje
+   dál jen s daty v tomto zařízení. */
+
+const ARTICLES_COLLECTION = 'articles';
+
+let syncDb = null;
+let syncArticles = null;
+let syncMirror = {};                                  // id artiklu -> podoba v cloudu
+let syncMetaMirror = { categories: null, settings: null };
+let syncPushTimer = null;
+
+function setSyncStatus(kind, detail) {
+    const hint = document.getElementById('sync-hint');
+    if (!hint) return;
+    if (kind === 'local') {
+        hint.innerHTML = '📱 <b>Data jsou jen v tomto zařízení.</b> Na jiné zařízení je přeneseš'
+            + ' přes Export zálohy a Import níže.';
+        return showMsg('sync-msg', '');
+    }
+    if (kind === 'connecting') {
+        hint.textContent = 'Připojuji sdílené úložiště…';
+        return showMsg('sync-msg', '');
+    }
+    if (kind === 'error') {
+        hint.innerHTML = '📱 Sdílené úložiště se nepodařilo použít, data zůstávají v tomto zařízení.';
+        return showMsg('sync-msg', detail || '', 'error');
+    }
+    hint.innerHTML = '☁️ <b>Synchronizováno.</b> Artikly, kategorie i historie kontrol jsou stejné'
+        + ' na všech zařízeních, kde aplikaci otevřeš pod svým účtem.';
+    showMsg('sync-msg', '✅ Naposledy aktualizováno ' + detail, 'ok');
+}
+
+async function initSync() {
+    if (!(window.claude && typeof window.claude.use === 'function')) return setSyncStatus('local');
+
+    setSyncStatus('connecting');
+    let db = null;
+    try {
+        db = await window.claude.use('db');
+    } catch {
+        db = null;
+    }
+    if (!db) return setSyncStatus('local');
+
+    syncDb = db;
+    syncArticles = db.collection(ARTICLES_COLLECTION);
+    try {
+        await migrateLocalData();
+    } catch (e) {
+        return setSyncStatus('error', 'Data z tohoto zařízení se nepodařilo nahrát: ' + (e && e.message || ''));
+    }
+    subscribeToCloud();
+}
+
+/** Nahraje do sdíleného úložiště artikly, které zatím existují jen v tomto
+    zařízení – například zadané dřív, než se aplikace poprvé připojila. */
+async function migrateLocalData() {
+    const [articlesSnap, catSnap, settingsSnap] = await Promise.all([
+        syncArticles.get(),
+        syncDb.doc('meta/categories').get(),
+        syncDb.doc('meta/settings').get()
+    ]);
+
+    const remoteArticles = articlesSnap.docs.map(d => d.data()).filter(d => d && d.id).map(normalizeArticle);
+    const remoteCats = catSnap.exists && Array.isArray(catSnap.data().list)
+        ? catSnap.data().list.map(normalizeCategory)
+        : [];
+
+    // Kategorie se párují podle názvu, aby nevznikly dvojí „Chlazení“.
+    const mergedCats = remoteCats.slice();
+    const catIdMap = {};
+    state.categories.forEach(local => {
+        const hit = mergedCats.find(c => c.name.toLowerCase() === local.name.toLowerCase());
+        if (hit) {
+            catIdMap[local.id] = hit.id;
+        } else {
+            mergedCats.push(local);
+            catIdMap[local.id] = local.id;
+        }
+    });
+
+    // Artikly už v cloudu poznáme podle id nebo podle dvojice EAN + číslo artiklu.
+    const key = a => `${a.ean}|${a.number}`.toLowerCase();
+    const remoteIds = new Set(remoteArticles.map(a => a.id));
+    const remoteKeys = new Set(remoteArticles.map(key));
+    const toUpload = state.articles.filter(a => !remoteIds.has(a.id) && !remoteKeys.has(key(a)));
+
+    for (const a of toUpload) {
+        a.categoryId = catIdMap[a.categoryId] || '';
+        await syncArticles.doc(a.id).set(a);
+    }
+    const catsChanged = mergedCats.length !== remoteCats.length;
+    if (catsChanged) await syncDb.doc('meta/categories').set({ list: mergedCats });
+    if (!settingsSnap.exists) await syncDb.doc('meta/settings').set(state.settings);
+}
+
+function subscribeToCloud() {
+    syncArticles.onSnapshot(snap => {
+        const articles = snap.docs.map(d => d.data()).filter(d => d && d.id).map(normalizeArticle);
+        syncMirror = {};
+        articles.forEach(a => { syncMirror[a.id] = JSON.stringify(a); });
+        state.articles = articles;
+        saveLocal();
+        render();
+        setSyncStatus('ok', new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+    }, onSyncError);
+
+    syncDb.doc('meta/categories').onSnapshot(snap => {
+        const list = snap.exists && Array.isArray(snap.data().list) ? snap.data().list : null;
+        if (!list) return;
+        state.categories = list.map(normalizeCategory);
+        syncMetaMirror.categories = JSON.stringify(state.categories);
+        saveLocal();
+        render();
+    }, onSyncError);
+
+    syncDb.doc('meta/settings').onSnapshot(snap => {
+        if (!snap.exists) return;
+        state.settings = { ...state.settings, ...snap.data() };
+        syncMetaMirror.settings = JSON.stringify(state.settings);
+        saveLocal();
+        const lead = document.getElementById('s-lead');
+        if (lead) lead.value = state.settings.defaultLead;
+    }, onSyncError);
+}
+
+function onSyncError(e) {
+    setSyncStatus('error', (e && e.message) || 'Spojení se sdíleným úložištěm skončilo.');
+}
+
+function schedulePush() {
+    if (!syncArticles) return;
+    clearTimeout(syncPushTimer);
+    syncPushTimer = setTimeout(pushChanges, 300);
+}
+
+/** Odešle jen to, co se od poslední známé podoby v cloudu změnilo. */
+async function pushChanges() {
+    if (!syncArticles) return;
+    const writes = [];
+    const present = new Set();
+
+    state.articles.forEach(a => {
+        present.add(a.id);
+        const json = JSON.stringify(a);
+        if (syncMirror[a.id] !== json) {
+            syncMirror[a.id] = json;
+            writes.push(syncArticles.doc(a.id).set(a));
+        }
+    });
+    Object.keys(syncMirror).forEach(id => {
+        if (!present.has(id)) {
+            delete syncMirror[id];
+            writes.push(syncArticles.doc(id).delete());
+        }
+    });
+
+    const catsJson = JSON.stringify(state.categories);
+    if (catsJson !== syncMetaMirror.categories) {
+        syncMetaMirror.categories = catsJson;
+        writes.push(syncDb.doc('meta/categories').set({ list: state.categories }));
+    }
+    const settingsJson = JSON.stringify(state.settings);
+    if (settingsJson !== syncMetaMirror.settings) {
+        syncMetaMirror.settings = settingsJson;
+        writes.push(syncDb.doc('meta/settings').set(state.settings));
+    }
+
+    if (writes.length === 0) return;
+    try {
+        await Promise.all(writes);
+        setSyncStatus('ok', new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+    } catch (e) {
+        setSyncStatus('error', 'Změnu se nepodařilo odeslat: ' + ((e && e.message) || 'neznámá chyba'));
+    }
+}
+
 /* ---------- instalace jako aplikace ---------- */
 
 let installPrompt = null;
@@ -1866,6 +2057,7 @@ function init() {
     render();
     initNotifications();
     initDayWatcher();
+    initSync();
 }
 
 init();
