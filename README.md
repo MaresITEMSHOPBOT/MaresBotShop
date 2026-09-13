@@ -21,7 +21,9 @@ Evidence artiklů a hlídání jejich data spotřeby. Stačí otevřít soubor `
    - nakonec se zadá **nové nejhorší datum spotřeby** (nebo „datum teď neznám“)
 4. Celá kontrola se uloží do historie a hlídání pokračuje s novým datem.
 
-**Čtečka:** tlačítko *🏷️ Načíst z cenovky* vyfotí regálovou cenovku a vyčte z ní název, číslo artiklu,
+**Čtečka:** po otevření běží kamera rovnou v aplikaci a čárový kód se načte sám, jakmile na něj
+namíříš (vestavěná čtečka prohlížeče, jinak ZXing z CDN). Tlačítko *📷 Naskenovat artikl* nad seznamem
+podle kódu rovnou otevře kontrolu známého artiklu, u neznámého předvyplní formulář. Tlačítko *🏷️ Načíst z cenovky* vyfotí regálovou cenovku a vyčte z ní název, číslo artiklu,
 cenu i značku slevy („2 M“ = dva měsíce před koncem spotřeby se lepí sleva) – čtení zajišťuje Claude,
 takže funguje jen ve verzi otevřené přes Claude. Tlačítko *📷 Skenovat EAN* načte čárový kód z obalu
 (cenovka má vlastní kód, ne EAN); používá čtečku prohlížeče, jinak knihovnu ZXing z CDN.

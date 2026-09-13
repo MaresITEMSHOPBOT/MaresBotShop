@@ -378,9 +378,26 @@ textarea { resize: vertical; min-height: 60px; }
 .photo-preview {
     margin-top: 0.5rem; max-width: 160px; border-radius: 8px; border: 1px solid var(--border);
 }
+#scan-camera { position: relative; margin-bottom: 0.6rem; }
 #scan-video {
-    width: 100%; max-height: 46vh; border-radius: 10px; background: #000; margin-bottom: 0.6rem;
+    width: 100%; max-height: 52vh; border-radius: 10px; background: #000; display: block;
 }
+/* Rámeček hledáčku – ukazuje, kam namířit kód. */
+.scan-frame {
+    position: absolute; inset: 18% 8%;
+    border: 3px solid rgba(255, 255, 255, 0.9); border-radius: 12px; pointer-events: none;
+}
+.scan-frame::after {
+    content: ''; position: absolute; left: 6%; right: 6%; top: 50%;
+    height: 2px; background: var(--error); opacity: 0.85;
+}
+.scan-live {
+    position: absolute; left: 0.5rem; bottom: 0.5rem;
+    background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 0.78rem; font-weight: 600;
+    padding: 0.2rem 0.55rem; border-radius: 999px;
+}
+#scan-camera.found .scan-frame { border-color: #48bb78; }
+#scan-camera.found .scan-live { background: #2f855a; }
 #scan-preview { max-width: 100%; max-height: 30vh; border-radius: 10px; margin-top: 0.6rem; }
 #photo-view-img { max-width: 100%; max-height: 72vh; border-radius: 10px; }
 
@@ -510,6 +527,7 @@ footer {
             <select id="cat-filter" aria-label="Filtr podle kategorie">
                 <option value="all">Všechny kategorie</option>
             </select>
+            <button class="btn" id="scan-find-btn">📷 Naskenovat artikl</button>
             <button class="btn-secondary" id="print-btn">🖨️ Tisk seznamu</button>
         </div>
 
@@ -694,13 +712,17 @@ footer {
         <h2 id="scan-title">Načíst z cenovky</h2>
         <div class="sub" id="scan-hint"></div>
         <div id="scan-camera" hidden>
-            <video id="scan-video" playsinline muted></video>
-            <div class="btn-row" style="margin-top: 0;">
-                <button type="button" class="btn" id="scan-shot">📸 Vyfotit</button>
-            </div>
+            <video id="scan-video" playsinline muted autoplay></video>
+            <div class="scan-frame"></div>
+            <div class="scan-live" id="scan-live">Hledám kód…</div>
+        </div>
+        <div class="btn-row" id="scan-camera-actions" hidden>
+            <button type="button" class="btn" id="scan-shot">📸 Vyfotit teď</button>
+            <button type="button" class="btn-secondary" id="scan-torch" hidden>🔦 Přisvítit</button>
         </div>
         <div class="btn-row">
-            <label class="btn" for="scan-file" style="display: inline-flex; align-items: center;">📷 Vyfotit foťákem</label>
+            <button type="button" class="btn" id="scan-retry" hidden>📹 Zapnout kameru</button>
+            <label class="btn-secondary" for="scan-file" style="display: inline-flex; align-items: center;">📷 Vyfotit foťákem</label>
             <input type="file" id="scan-file" accept="image/*" hidden>
             <button type="button" class="btn-secondary" id="scan-cancel">Zavřít</button>
         </div>
@@ -786,7 +808,7 @@ footer {
    Data se ukládají do localStorage tohoto prohlížeče.
    =================================================================== */
 
-const APP_VERSION = '2026-09-13.16';
+const APP_VERSION = '2026-09-13.18';
 const STORE_KEY = 'spotreba-data-v1';
 const THEME_KEY = 'spotreba-theme';
 const DEFAULT_LEAD = 7;
@@ -2412,18 +2434,23 @@ let scanMode = 'label';          // 'label' = cenovka, 'ean' = čárový kód, '
 let scanStream = null;
 let scanLoopTimer = null;
 let barcodeDetector = null;
+let zxingReader = null;
 let pendingPhoto = '';           // fotka pro artikl, který se právě zakládá
 
 const SCAN_TITLES = {
     label: 'Načíst z cenovky',
     ean: 'Skenovat EAN',
+    find: 'Naskenovat artikl',
     photo: 'Fotka artiklu'
 };
 const SCAN_HINTS = {
-    label: 'Vyfoť regálovou cenovku. Vyčtu z ní název, číslo artiklu, cenu i značku slevy (např. 2 M = měsíc před koncem spotřeby).',
-    ean: 'Namiř foťák na čárový kód na obalu výrobku. Cenovka má vlastní kód, EAN je potřeba načíst přímo ze zboží.',
-    photo: 'Vyfoť výrobek. Fotka se uloží k artiklu, ať ho na prodejně poznáš.'
+    label: 'Namiř kameru na regálovou cenovku a klepni na Vyfotit teď. Vyčtu z ní název, číslo artiklu, cenu i značku slevy (např. 2 M = dva měsíce před koncem spotřeby).',
+    ean: 'Namiř kameru na čárový kód na obalu – načte se sám. Cenovka má vlastní kód, EAN je potřeba ze zboží.',
+    find: 'Namiř kameru na čárový kód zboží. Když artikl v seznamu je, rovnou otevřu jeho kontrolu; když není, založím nový.',
+    photo: 'Namiř kameru na výrobek a klepni na Vyfotit teď. Fotka se uloží k artiklu.'
 };
+
+const SCAN_SCANNING = ['ean', 'find'];
 
 function openScan(mode) {
     scanMode = mode;
@@ -2431,6 +2458,8 @@ function openScan(mode) {
     document.getElementById('scan-hint').textContent = SCAN_HINTS[mode];
     document.getElementById('scan-file').setAttribute('capture', 'environment');
     document.getElementById('scan-preview').hidden = true;
+    document.getElementById('scan-retry').hidden = true;
+    document.getElementById('scan-camera').classList.remove('found');
     document.getElementById('scan-overlay').hidden = false;
     showMsg('scan-msg', '');
     startCamera();
@@ -2443,26 +2472,73 @@ function closeScan() {
 
 async function startCamera() {
     const box = document.getElementById('scan-camera');
+    const actions = document.getElementById('scan-camera-actions');
     const video = document.getElementById('scan-video');
+    const live = document.getElementById('scan-live');
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        return cameraUnavailable('Tenhle prohlížeč neumí pustit kameru přímo v aplikaci.');
+    }
+
+    live.textContent = SCAN_SCANNING.includes(scanMode) ? 'Hledám kód…' : 'Kamera běží';
     try {
         scanStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' } },
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
             audio: false
         });
         video.srcObject = scanStream;
         await video.play();
         box.hidden = false;
-        if (scanMode === 'ean') startBarcodeLoop();
-    } catch {
-        // Kamera není k dispozici (zakázaná v aplikaci) – zbývá vyfotit přes foťák telefonu.
-        box.hidden = true;
-        showMsg('scan-msg', 'Živý náhled není k dispozici, použij tlačítko Vyfotit – otevře se foťák telefonu.', '');
+        actions.hidden = false;
+        document.getElementById('scan-retry').hidden = true;
+        showMsg('scan-msg', '');
+        setupTorch();
+        if (SCAN_SCANNING.includes(scanMode)) startLiveScan();
+    } catch (e) {
+        const name = (e && e.name) || '';
+        if (name === 'NotAllowedError' || name === 'SecurityError') {
+            cameraUnavailable('Kamera není povolená. Povol ji v prohlížeči u této stránky (ikona vlevo v adresním řádku)'
+                + ' a klepni na Zapnout kameru. V appce Claude bývá kamera zakázaná – nainstalovaná verze aplikace ji pustí.');
+        } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+            cameraUnavailable('Nenašel jsem zadní kameru.');
+        } else {
+            cameraUnavailable('Kameru se nepodařilo spustit' + (e && e.message ? ': ' + e.message : '.'));
+        }
     }
+}
+
+function cameraUnavailable(reason) {
+    document.getElementById('scan-camera').hidden = true;
+    document.getElementById('scan-camera-actions').hidden = true;
+    document.getElementById('scan-retry').hidden = false;
+    showMsg('scan-msg', reason + ' Zatím můžeš použít Vyfotit foťákem – funguje to stejně.', 'error');
+}
+
+/** Přisvícení, pokud ho zařízení umí. */
+async function setupTorch() {
+    const btn = document.getElementById('scan-torch');
+    btn.hidden = true;
+    const track = scanStream && scanStream.getVideoTracks()[0];
+    if (!track || !track.getCapabilities) return;
+    try {
+        if (!track.getCapabilities().torch) return;
+        btn.hidden = false;
+        btn.onclick = async () => {
+            const on = btn.dataset.on === '1';
+            await track.applyConstraints({ advanced: [{ torch: !on }] });
+            btn.dataset.on = on ? '0' : '1';
+            btn.textContent = on ? '🔦 Přisvítit' : '🔦 Zhasnout';
+        };
+    } catch { /* přisvícení není povinné */ }
 }
 
 function stopCamera() {
     clearTimeout(scanLoopTimer);
     scanLoopTimer = null;
+    if (zxingReader) {
+        try { zxingReader.reset(); } catch { /* už je zastavená */ }
+        zxingReader = null;
+    }
     if (scanStream) {
         scanStream.getTracks().forEach(t => t.stop());
         scanStream = null;
@@ -2470,6 +2546,8 @@ function stopCamera() {
     const video = document.getElementById('scan-video');
     if (video) video.srcObject = null;
     document.getElementById('scan-camera').hidden = true;
+    document.getElementById('scan-camera-actions').hidden = true;
+    document.getElementById('scan-torch').hidden = true;
 }
 
 /* ---- čárový kód ---- */
@@ -2519,26 +2597,92 @@ async function decodeBarcode(source) {
     return '';
 }
 
-function startBarcodeLoop() {
+/** Kód se hledá průběžně v obraze z kamery – stačí na něj mířit. */
+async function startLiveScan() {
     const video = document.getElementById('scan-video');
-    const tick = async () => {
-        if (!scanStream || scanMode !== 'ean') return;
-        if (video.readyState >= 2) {
-            const code = await decodeBarcode(video);
-            if (code) return useScannedEan(code);
-        }
-        scanLoopTimer = setTimeout(tick, 300);
-    };
-    tick();
+
+    if (await getBarcodeDetector()) {
+        const tick = async () => {
+            if (!scanStream || !SCAN_SCANNING.includes(scanMode)) return;
+            if (video.readyState >= 2) {
+                const code = await decodeBarcode(video);
+                if (code) return useScannedEan(code);
+            }
+            scanLoopTimer = setTimeout(tick, 250);
+        };
+        return tick();
+    }
+
+    // Prohlížeče bez vestavěné čtečky (např. iPhone) obsluhuje knihovna ZXing.
+    const live = document.getElementById('scan-live');
+    live.textContent = 'Spouštím čtečku…';
+    try {
+        const ZXing = await loadZxing();
+        zxingReader = new ZXing.BrowserMultiFormatReader();
+        zxingReader.decodeFromVideoElement(video, result => {
+            if (result && scanStream) useScannedEan(String(result.getText()));
+        });
+        live.textContent = 'Hledám kód…';
+    } catch {
+        live.textContent = 'Vyfoť kód tlačítkem';
+        showMsg('scan-msg', 'Živé čtení kódů se tu nepodařilo spustit (nejspíš není připojení).'
+            + ' Namiř kód a klepni na Vyfotit teď – přečte se z fotky.', '');
+    }
 }
 
 function useScannedEan(code) {
+    if (!code) return;
+    // Krátká zpětná vazba, ať je poznat, že se kód povedl.
+    document.getElementById('scan-camera').classList.add('found');
+    document.getElementById('scan-live').textContent = 'Načteno: ' + code;
+    if (navigator.vibrate) navigator.vibrate(60);
+
+    const mode = scanMode;
+    scanMode = 'done';                        // zastaví další hledání
+    setTimeout(() => {
+        closeScan();
+        if (mode === 'find') return openScannedArticle(code);
+        document.getElementById('f-ean').value = code;
+        showEanHint();
+        showPanel('panel-add');
+        showMsg('form-msg', `✅ Načtený EAN: ${code}`, 'ok');
+        document.getElementById('f-number').focus();
+    }, 350);
+}
+
+/** Po naskenování v seznamu: najít artikl, nebo rovnou nabídnout založení. */
+function openScannedArticle(code) {
+    const found = state.articles.find(a => a.ean === code);
+    if (!found) {
+        document.getElementById('f-ean').value = code;
+        showEanHint();
+        resetFormKeepEan(code);
+        showPanel('panel-add');
+        return showMsg('form-msg', `Artikl s EAN ${code} zatím nemáš. Doplň údaje – nebo načti cenovku.`, '');
+    }
+
+    searchQuery = '';
+    document.getElementById('search').value = '';
+    activeFilter = isRetired(found) ? 'retired' : 'all';
+    document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('active', c.dataset.filter === activeFilter));
+    categoryFilter = 'all';
+    showPanel('panel-list');
+    renderCategorySelects();
+    renderList();
+
+    const card = document.querySelector(`.item[data-id="${found.id}"]`);
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (isRetired(found)) {
+        return showMsg('form-msg', '', '');
+    }
+    openCheck(found.id);
+}
+
+/** Vyprázdní formulář, ale ponechá právě naskenovaný EAN. */
+function resetFormKeepEan(code) {
+    resetForm();
     document.getElementById('f-ean').value = code;
     showEanHint();
-    closeScan();
-    showPanel('panel-add');
-    showMsg('form-msg', `✅ Načtený EAN: ${code}`, 'ok');
-    document.getElementById('f-number').focus();
 }
 
 /* ---- práce s obrázkem ---- */
@@ -2693,6 +2837,8 @@ function initScanner() {
     document.getElementById('scan-label-btn').addEventListener('click', () => openScan('label'));
     document.getElementById('scan-ean-btn').addEventListener('click', () => openScan('ean'));
     document.getElementById('photo-btn').addEventListener('click', () => openScan('photo'));
+    document.getElementById('scan-find-btn').addEventListener('click', () => openScan('find'));
+    document.getElementById('scan-retry').addEventListener('click', startCamera);
     document.getElementById('photo-clear').addEventListener('click', () => setPendingPhoto(''));
 
     document.getElementById('scan-file').addEventListener('change', e => {
@@ -2703,6 +2849,16 @@ function initScanner() {
     document.getElementById('scan-shot').addEventListener('click', async () => {
         const blob = await captureFromVideo();
         if (blob) handleScanImage(blob);
+    });
+    // Klepnutí do obrazu zaostří na místo, kam uživatel mířil (kde to zařízení umí).
+    document.getElementById('scan-video').addEventListener('click', async () => {
+        const track = scanStream && scanStream.getVideoTracks()[0];
+        if (!track || !track.getCapabilities) return;
+        try {
+            if ((track.getCapabilities().focusMode || []).includes('single-shot')) {
+                await track.applyConstraints({ advanced: [{ focusMode: 'single-shot' }] });
+            }
+        } catch { /* ostření není povinné */ }
     });
     document.getElementById('scan-cancel').addEventListener('click', closeScan);
     document.getElementById('scan-overlay').addEventListener('click', e => {
