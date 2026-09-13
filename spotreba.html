@@ -1,0 +1,3424 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2b6cb0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Spotřeba">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Kontrola dat spotřeby</title>
+<style>
+:root {
+    --bg: #f5f7fa;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --text: #1a202c;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --accent: #3182ce;
+    --accent-hover: #2c5282;
+    --border: #e2e8f0;
+    --success: #2f855a;
+    --success-bg: #f0fff4;
+    --error: #c53030;
+    --error-bg: #fff5f5;
+    --warning: #b7791f;
+    --warning-bg: #fffaf0;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] {
+    --bg: #1a202c;
+    --bg-secondary: #2d3748;
+    --bg-card: #2d3748;
+    --text: #f7fafc;
+    --text-secondary: #cbd5e0;
+    --text-muted: #a0aec0;
+    --accent: #63b3ed;
+    --accent-hover: #90cdf4;
+    --border: #4a5568;
+    --success: #68d391;
+    --success-bg: #22543d;
+    --error: #fc8181;
+    --error-bg: #63171b;
+    --warning: #f6ad55;
+    --warning-bg: #5f370e;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Skrytý prvek musí zmizet i tam, kde má vlastní display (flex, grid). */
+[hidden] { display: none !important; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-text-size-adjust: 100%;
+}
+
+header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0.8rem 1rem;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+header h1 { font-size: 1.15rem; }
+header .today { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; }
+
+#theme-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--text);
+    flex-shrink: 0;
+}
+#theme-toggle:hover { border-color: var(--accent); }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+
+/* ---- záložky ---- */
+.tabs {
+    display: flex;
+    gap: 0.3rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.2rem;
+    overflow-x: auto;
+}
+.tab {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    margin-bottom: -2px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab .count {
+    display: inline-block;
+    background: var(--error);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.05rem 0.4rem;
+    margin-left: 0.25rem;
+    vertical-align: text-top;
+}
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ---- upozornění ---- */
+#alert-banner {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning);
+    border-left: 5px solid var(--warning);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1.2rem;
+}
+#alert-banner.critical { background: var(--error-bg); border-color: var(--error); border-left-color: var(--error); }
+#alert-banner h2 { font-size: 1rem; margin-bottom: 0.3rem; }
+#alert-banner ul { margin: 0.5rem 0 0 1.2rem; font-size: 0.9rem; }
+#alert-banner li { margin-bottom: 0.15rem; }
+
+/* ---- přehledové dlaždice ---- */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 1.2rem;
+}
+.stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 0.8rem;
+    box-shadow: var(--shadow);
+}
+.stat .value { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+.stat .label { font-size: 0.78rem; color: var(--text-muted); }
+.stat.due .value { color: var(--warning); }
+.stat.expired .value { color: var(--error); }
+.stat.ok .value { color: var(--success); }
+
+/* ---- nástrojová lišta ---- */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.toolbar input[type="search"] { flex: 1 1 200px; min-width: 0; }
+.filters { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.chip:hover { border-color: var(--accent); }
+.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+/* ---- formuláře ---- */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1rem;
+}
+.card > h2 { font-size: 1.05rem; margin-bottom: 0.2rem; }
+.card > .hint { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.9rem; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.8rem;
+}
+.field { display: flex; flex-direction: column; gap: 0.25rem; }
+.field label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); }
+.field .note { font-size: 0.75rem; color: var(--text-muted); }
+
+input, select, textarea {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text);
+    width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+textarea { resize: vertical; min-height: 60px; }
+
+.btn, .btn-secondary, .btn-danger, .btn-success {
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+.btn { background: var(--accent); color: #fff; }
+.btn:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--bg-secondary); color: var(--text); border-color: var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: var(--error); color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+
+.form-msg { font-size: 0.88rem; margin-top: 0.7rem; }
+.form-msg.error { color: var(--error); }
+.form-msg.ok { color: var(--success); }
+
+/* ---- seznam artiklů ---- */
+.group-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin: 1.2rem 0 0.5rem;
+    font-weight: 700;
+}
+.item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+    margin-bottom: 0.6rem;
+    box-shadow: var(--shadow);
+}
+.item.s-expired { border-left-color: var(--error); }
+.item.s-today { border-left-color: var(--error); }
+.item.s-due { border-left-color: var(--warning); }
+.item.s-ok { border-left-color: var(--success); }
+.item.s-nodate { border-left-color: var(--text-muted); }
+.item.s-retired { border-left-color: var(--text-muted); background: var(--bg); }
+.item.s-retired .item-name { color: var(--text-secondary); }
+
+.item-head { display: flex; justify-content: space-between; gap: 0.6rem; align-items: flex-start; flex-wrap: wrap; }
+.item-name { font-weight: 700; font-size: 1rem; }
+.item-ids { font-size: 0.8rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* ---- kategorie ---- */
+.cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    background: var(--bg);
+    white-space: nowrap;
+}
+.cat-chip::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--cat, var(--text-muted));
+    flex-shrink: 0;
+}
+.item-head .cat-chip { margin-top: 0.35rem; }
+.toolbar select { width: auto; flex: 0 1 auto; }
+
+.cat-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-row .cat-count { font-size: 0.8rem; color: var(--text-muted); margin-right: auto; }
+.cat-row button { font-size: 0.8rem; padding: 0.3rem 0.6rem; }
+.badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.badge.s-expired, .badge.s-today { background: var(--error-bg); color: var(--error); border: 1px solid var(--error); }
+.badge.s-due { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning); }
+.badge.s-ok { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+.badge.s-nodate, .badge.s-retired { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+
+.item-info {
+    display: flex;
+    gap: 0.45rem;
+    align-items: flex-start;
+    margin-top: 0.55rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--warning);
+    background: var(--warning-bg);
+    color: var(--warning);
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+.item-info .icon { flex-shrink: 0; }
+
+.item-dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.2rem;
+    margin-top: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+.item-dates b { color: var(--text); font-variant-numeric: tabular-nums; }
+.item-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.7rem; }
+.item-actions button { font-size: 0.85rem; padding: 0.4rem 0.75rem; }
+
+.item-history { margin-top: 0.7rem; border-top: 1px dashed var(--border); padding-top: 0.6rem; }
+.item-history ol { list-style: none; font-size: 0.85rem; }
+.item-history li { padding: 0.3rem 0; border-bottom: 1px dotted var(--border); color: var(--text-secondary); }
+.item-history li:last-child { border-bottom: none; }
+.yes { color: var(--success); font-weight: 700; }
+.no { color: var(--error); font-weight: 700; }
+
+.empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem 1rem;
+    font-size: 0.92rem;
+}
+
+/* ---- fotky a čtečka ---- */
+.item-photo {
+    width: 60px; height: 60px; object-fit: cover; border-radius: 8px;
+    border: 1px solid var(--border); cursor: zoom-in; flex-shrink: 0;
+}
+.photo-preview {
+    margin-top: 0.5rem; max-width: 160px; border-radius: 8px; border: 1px solid var(--border);
+}
+#scan-camera { position: relative; margin-bottom: 0.6rem; }
+#scan-video {
+    width: 100%; max-height: 52vh; border-radius: 10px; background: #000; display: block;
+}
+/* Rámeček hledáčku – ukazuje, kam namířit kód. */
+.scan-frame {
+    position: absolute; inset: 18% 8%;
+    border: 3px solid rgba(255, 255, 255, 0.9); border-radius: 12px; pointer-events: none;
+}
+.scan-frame::after {
+    content: ''; position: absolute; left: 6%; right: 6%; top: 50%;
+    height: 2px; background: var(--error); opacity: 0.85;
+}
+.scan-live {
+    position: absolute; left: 0.5rem; bottom: 0.5rem;
+    background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 0.78rem; font-weight: 600;
+    padding: 0.2rem 0.55rem; border-radius: 999px;
+}
+#scan-camera.found .scan-frame { border-color: #48bb78; }
+#scan-camera.found .scan-live { background: #2f855a; }
+#scan-preview { max-width: 100%; max-height: 30vh; border-radius: 10px; margin-top: 0.6rem; }
+#photo-view-img { max-width: 100%; max-height: 72vh; border-radius: 10px; }
+
+/* ---- modální okno kontroly ---- */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 200;
+}
+.overlay[hidden] { display: none !important; }
+.modal {
+    background: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 1.2rem;
+}
+.modal h2 { font-size: 1.1rem; margin-bottom: 0.2rem; }
+.modal .sub { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+.step { margin-bottom: 1rem; }
+.step .q { font-weight: 600; margin-bottom: 0.5rem; }
+.choice-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.choice {
+    flex: 1 1 130px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+}
+.choice:hover { border-color: var(--accent); }
+.choice.sel-yes { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+.choice.sel-no { border-color: var(--error); background: var(--error-bg); color: var(--error); }
+.choice.sel-alt { border-color: var(--text-muted); background: var(--bg); color: var(--text); }
+.step.done .q { color: var(--text-muted); }
+.checkline { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; margin-top: 0.6rem; }
+.checkline input { width: auto; }
+
+/* ---- historie ---- */
+.log-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.88rem;
+}
+.log-item .when { font-size: 0.78rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.log-item .what { margin-top: 0.15rem; }
+
+footer {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 520px) {
+    header h1 { font-size: 1rem; }
+    .container { padding: 0.8rem; }
+    .item-actions button { flex: 1 1 auto; }
+}
+
+@media print {
+    header, .tabs, .toolbar, .item-actions, footer, #theme-toggle, .stats { display: none !important; }
+    .item, .card { box-shadow: none; page-break-inside: avoid; }
+    body { background: #fff; color: #000; }
+}
+</style>
+</head>
+<body>
+<header>
+    <div class="header-content">
+        <div>
+            <h1>📅 Kontrola dat spotřeby</h1>
+            <div class="today">Dnes je <span id="today-label"></span></div>
+        </div>
+        <button id="theme-toggle" aria-label="Přepnout téma">🌙</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="tabs" role="tablist">
+        <button class="tab active" data-panel="panel-list">📋 Artikly</button>
+        <button class="tab" data-panel="panel-add">➕ Přidat artikl</button>
+        <button class="tab" data-panel="panel-log">🕘 Historie kontrol</button>
+        <button class="tab" data-panel="panel-settings">⚙️ Nastavení</button>
+    </div>
+
+    <!-- ===== PŘEHLED ARTIKLŮ ===== -->
+    <section id="panel-list" class="panel active">
+        <div id="alert-banner" hidden></div>
+
+        <div class="stats">
+            <div class="stat"><div class="value" id="stat-total">0</div><div class="label">Artiklů celkem</div></div>
+            <div class="stat due"><div class="value" id="stat-due">0</div><div class="label">Ke kontrole</div></div>
+            <div class="stat expired"><div class="value" id="stat-expired">0</div><div class="label">Prošlé datum</div></div>
+            <div class="stat ok"><div class="value" id="stat-ok">0</div><div class="label">V pořádku</div></div>
+            <div class="stat" id="stat-nodate-tile" hidden><div class="value" id="stat-nodate">0</div><div class="label">Chybí datum</div></div>
+            <div class="stat" id="stat-retired-tile" hidden><div class="value" id="stat-retired">0</div><div class="label">Vyřazené z prodeje</div></div>
+            <div class="stat"><div class="value" id="stat-checked-today">0</div><div class="label">Kontrol dnes</div></div>
+        </div>
+
+        <div class="toolbar">
+            <input type="search" id="search" placeholder="Hledat podle EAN, čísla artiklu nebo názvu…" autocomplete="off">
+            <div class="filters" id="filters">
+                <button class="chip active" data-filter="all">Vše</button>
+                <button class="chip" data-filter="action">Vyžaduje akci</button>
+                <button class="chip" data-filter="due">Ke kontrole</button>
+                <button class="chip" data-filter="expired">Prošlé</button>
+                <button class="chip" data-filter="ok">V pořádku</button>
+                <button class="chip" data-filter="info">⚠️ S upozorněním</button>
+                <button class="chip" data-filter="retired">📦 Vyřazené</button>
+            </div>
+            <select id="cat-filter" aria-label="Filtr podle kategorie">
+                <option value="all">Všechny kategorie</option>
+            </select>
+            <button class="btn" id="scan-find-btn">📷 Naskenovat artikl</button>
+            <button class="btn-secondary" id="print-btn">🖨️ Tisk seznamu</button>
+        </div>
+
+        <div id="list"></div>
+    </section>
+
+    <!-- ===== PŘIDAT / UPRAVIT ARTIKL ===== -->
+    <section id="panel-add" class="panel">
+        <form class="card" id="article-form" autocomplete="off">
+            <h2 id="form-title">Nový artikl</h2>
+            <p class="hint">Zadej EAN, číslo artiklu, název a nejhorší (nejbližší) datum spotřeby, které je na prodejně.</p>
+            <div class="btn-row" style="margin: 0 0 1rem;">
+                <button type="button" class="btn" id="scan-label-btn">🏷️ Načíst z cenovky</button>
+                <button type="button" class="btn-secondary" id="scan-ean-btn">📷 Skenovat EAN</button>
+            </div>
+            <input type="hidden" id="f-id">
+            <div class="form-grid">
+                <div class="field">
+                    <label for="f-ean">EAN *</label>
+                    <input type="text" id="f-ean" inputmode="numeric" placeholder="např. 8594001234567" required>
+                    <span class="note" id="ean-note">Lze načíst i čtečkou – Enter přeskočí na další pole.</span>
+                </div>
+                <div class="field">
+                    <label for="f-number">Číslo artiklu *</label>
+                    <input type="text" id="f-number" placeholder="např. 104523" required>
+                </div>
+                <div class="field">
+                    <label for="f-name">Název artiklu *</label>
+                    <input type="text" id="f-name" placeholder="např. Mléko polotučné 1 l" required>
+                </div>
+                <div class="field">
+                    <label for="f-price">Cena</label>
+                    <input type="number" id="f-price" min="0" step="0.01" inputmode="decimal" placeholder="např. 42.90">
+                </div>
+                <div class="field">
+                    <label for="f-date">Nejhorší datum spotřeby *</label>
+                    <input type="date" id="f-date" required>
+                    <span class="note">Nejbližší datum, které se na prodejně nachází.</span>
+                </div>
+                <div class="field">
+                    <label for="f-lead">Hlásit předem *</label>
+                    <div style="display: flex; gap: 0.4rem;">
+                        <input type="number" id="f-lead" min="1" max="365" step="1" value="7" required style="flex: 1 1 auto;">
+                        <select id="f-lead-unit" style="flex: 0 0 auto; width: auto;">
+                            <option value="day">dní</option>
+                            <option value="month">měsíců</option>
+                        </select>
+                    </div>
+                    <span class="note" id="lead-note">7 = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.</span>
+                </div>
+                <div class="field">
+                    <label for="f-category">Kategorie</label>
+                    <select id="f-category">
+                        <option value="">Bez kategorie</option>
+                        <option value="__new">➕ Vytvořit novou kategorii…</option>
+                    </select>
+                    <input type="text" id="f-newcat" placeholder="Název nové kategorie" hidden>
+                    <span class="note">Vlastní kategorie, např. „Chlazení“, „Pečivo“, „Regál 12“.</span>
+                </div>
+                <div class="field">
+                    <label for="f-note">Poznámka</label>
+                    <input type="text" id="f-note" placeholder="např. regál 12, chlazení">
+                    <span class="note">Drobný popis, zobrazí se šedě vedle čísel.</span>
+                </div>
+                <div class="field">
+                    <label>Fotka artiklu</label>
+                    <div class="btn-row" style="margin-top: 0;">
+                        <button type="button" class="btn-secondary" id="photo-btn">📸 Přidat fotku</button>
+                        <button type="button" class="btn-secondary" id="photo-clear" hidden>Odebrat</button>
+                    </div>
+                    <img id="photo-preview" class="photo-preview" hidden alt="Fotka artiklu">
+                </div>
+                <div class="field">
+                    <label for="f-info">Viditelné upozornění</label>
+                    <input type="text" id="f-info" placeholder="např. Pozor, zkontrolovat i v boxu">
+                    <span class="note">Vypíše se u artiklu žlutě, ať to nepřehlédneš.</span>
+                </div>
+            </div>
+            <div class="btn-row">
+                <button type="submit" class="btn" id="form-submit">Uložit artikl</button>
+                <button type="button" class="btn-secondary" id="form-reset">Vyprázdnit formulář</button>
+            </div>
+            <div class="form-msg" id="form-msg"></div>
+        </form>
+    </section>
+
+    <!-- ===== HISTORIE ===== -->
+    <section id="panel-log" class="panel">
+        <div class="card">
+            <h2>Historie kontrol</h2>
+            <p class="hint">Záznam všech provedených kontrol – zda zboží bylo na prodejně, zda byla nalepena sleva a jaké nové datum spotřeby bylo zadáno.</p>
+            <div class="toolbar">
+                <input type="search" id="log-search" placeholder="Hledat v historii…" autocomplete="off">
+            </div>
+            <div id="log-list"></div>
+        </div>
+    </section>
+
+    <!-- ===== NASTAVENÍ ===== -->
+    <section id="panel-settings" class="panel">
+        <div class="card">
+            <h2>Upozornění</h2>
+            <p class="hint">Aplikace hlásí artikl, jakmile do jeho data spotřeby zbývá nastavený počet dní včetně dnešního dne.</p>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="s-lead">Výchozí počet dní pro nové artikly</label>
+                    <input type="number" id="s-lead" min="1" max="365" step="1" value="7">
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="btn" id="s-save">Uložit nastavení</button>
+                <button class="btn-secondary" id="notif-btn">🔔 Povolit upozornění prohlížeče</button>
+            </div>
+            <div class="form-msg" id="s-msg"></div>
+        </div>
+
+        <div class="card">
+            <h2>Synchronizace</h2>
+            <p class="hint" id="sync-hint">Zjišťuji, jestli je k dispozici sdílené úložiště…</p>
+            <div class="form-msg" id="sync-msg"></div>
+
+            <div id="gist-box" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.9rem;">
+                <p class="hint" id="gist-state">Zatím nepřipojeno.</p>
+                <p class="hint">Sdílení mezi telefonem a počítačem i v nainstalované aplikaci – data se ukládají
+                    do soukromého gistu na tvém GitHubu. Token vytvoříš na github.com →
+                    Settings → Developer settings → Personal access tokens, s právem <b>Gists: read and write</b>.</p>
+                <div class="field">
+                    <label for="gist-token">GitHub token</label>
+                    <input type="password" id="gist-token" placeholder="github_pat_… nebo ghp_…" autocomplete="off">
+                    <span class="note">Token zůstane jen v tomto zařízení. Na dalším zařízení vlož ten samý.</span>
+                </div>
+                <div class="btn-row">
+                    <button class="btn" id="gist-connect">Připojit GitHub</button>
+                    <button class="btn-secondary" id="gist-sync-now" hidden>🔄 Synchronizovat teď</button>
+                    <button class="btn-secondary" id="gist-disconnect" hidden>Odpojit</button>
+                </div>
+                <div class="form-msg" id="gist-msg"></div>
+            </div>
+
+            <p class="hint" style="margin: 0.8rem 0 0;">Verze aplikace: <b id="app-version-settings">–</b>.
+                Pokud se chová jinak, než má, zavři a znovu otevři aplikaci – načte se nejnovější verze.</p>
+        </div>
+
+        <div class="card">
+            <h2>Otevřít jako aplikaci</h2>
+            <p class="hint">Aplikaci si můžeš nainstalovat na plochu telefonu i na počítač – otevře se
+                ve vlastním okně bez adresního řádku a funguje i bez internetu.</p>
+            <div class="btn-row" id="install-row" hidden>
+                <button class="btn" id="install-btn">📲 Nainstalovat aplikaci</button>
+            </div>
+            <div class="form-msg" id="install-msg"></div>
+            <ul style="font-size: 0.88rem; margin: 0.6rem 0 0 1.2rem; color: var(--text-secondary);">
+                <li><b>Android / Chrome:</b> menu ⋮ → <i>Přidat na plochu</i> (nebo <i>Instalovat aplikaci</i>).</li>
+                <li><b>iPhone / Safari:</b> tlačítko Sdílet → <i>Přidat na plochu</i>.</li>
+                <li><b>Počítač / Chrome, Edge:</b> ikona instalace vpravo v adresním řádku.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Kategorie</h2>
+            <p class="hint">Vlastní kategorie pro třídění artiklů. Novou lze vytvořit i přímo ve formuláři artiklu.</p>
+            <div class="toolbar">
+                <input type="text" id="cat-new" placeholder="Název nové kategorie, např. Chlazení" autocomplete="off">
+                <button class="btn" id="cat-add">Přidat kategorii</button>
+            </div>
+            <div id="cat-list"></div>
+            <div class="form-msg" id="cat-msg"></div>
+        </div>
+
+        <div class="card">
+            <h2>Data</h2>
+            <p class="hint">Artikly i historie kontrol se ukládají do tohoto prohlížeče (localStorage). Pro přenos na jiné zařízení použij export.</p>
+            <div class="btn-row">
+                <button class="btn-secondary" id="export-json">⬇️ Export (JSON záloha)</button>
+                <button class="btn-secondary" id="export-csv">⬇️ Export (CSV pro Excel)</button>
+                <button class="btn-secondary" id="import-btn">⬆️ Import ze zálohy</button>
+                <button class="btn-danger" id="wipe-btn">🗑️ Smazat všechna data</button>
+            </div>
+            <input type="file" id="import-file" accept=".json,application/json" hidden>
+            <div class="form-msg" id="data-msg"></div>
+        </div>
+
+        <div class="card">
+            <h2>Jak to funguje</h2>
+            <ol style="font-size: 0.9rem; margin-left: 1.2rem; color: var(--text-secondary);">
+                <li>Přidáš artikl: EAN, číslo artiklu, název, nejhorší datum spotřeby a počet dní (např. 7).</li>
+                <li>Jakmile do data spotřeby zbývá 7 dní <b>včetně dneška</b>, artikl se nahoře ohlásí jako „Ke kontrole“.</li>
+                <li>Klikneš na <b>Zkontrolovat</b> a odpovíš, zda je zboží s tímto datem na prodejně.</li>
+                <li>Pokud ano, potvrdíš, zda byla nalepena sleva.</li>
+                <li>Nakonec zadáš nové nejhorší datum spotřeby – kontrola artiklu tím pokračuje dál.</li>
+            </ol>
+        </div>
+    </section>
+</div>
+
+<footer>Kontrola dat spotřeby artiklů · verze <span id="app-version">–</span></footer>
+
+<!-- ===== ČTEČKA CENOVEK A KÓDŮ ===== -->
+<div class="overlay" id="scan-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="scan-title">
+        <h2 id="scan-title">Načíst z cenovky</h2>
+        <div class="sub" id="scan-hint"></div>
+        <div id="scan-camera" hidden>
+            <video id="scan-video" playsinline muted autoplay></video>
+            <div class="scan-frame"></div>
+            <div class="scan-live" id="scan-live">Hledám kód…</div>
+        </div>
+        <div class="btn-row" id="scan-camera-actions" hidden>
+            <button type="button" class="btn" id="scan-shot">📸 Vyfotit teď</button>
+            <button type="button" class="btn-secondary" id="scan-torch" hidden>🔦 Přisvítit</button>
+        </div>
+        <div class="btn-row">
+            <button type="button" class="btn" id="scan-retry" hidden>📹 Zapnout kameru</button>
+            <label class="btn-secondary" for="scan-file" style="display: inline-flex; align-items: center;">📷 Vyfotit foťákem</label>
+            <input type="file" id="scan-file" accept="image/*" hidden>
+            <button type="button" class="btn-secondary" id="scan-cancel">Zavřít</button>
+        </div>
+        <img id="scan-preview" hidden alt="Načtená fotka">
+        <div class="form-msg" id="scan-msg"></div>
+    </div>
+</div>
+
+<!-- ===== PROHLÍŽENÍ FOTKY ===== -->
+<div class="overlay" id="photo-view-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+        <h2 id="photo-view-title">Fotka artiklu</h2>
+        <img id="photo-view-img" alt="Fotka artiklu">
+        <div class="btn-row">
+            <button type="button" class="btn-secondary" id="photo-view-close">Zavřít</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== POTVRZOVACÍ OKNO ===== -->
+<div class="overlay" id="ask-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ask-title">
+        <h2 id="ask-title">Potvrzení</h2>
+        <div class="sub" id="ask-message"></div>
+        <div class="field" id="ask-input-field" hidden>
+            <input type="text" id="ask-input" autocomplete="off">
+        </div>
+        <div class="btn-row">
+            <button type="button" class="btn" id="ask-ok">Potvrdit</button>
+            <button type="button" class="btn-secondary" id="ask-cancel">Zrušit</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODÁL KONTROLY ===== -->
+<div class="overlay" id="check-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="check-title">
+        <h2 id="check-title">Kontrola artiklu</h2>
+        <div class="sub" id="check-sub"></div>
+
+        <div class="step" id="step-present">
+            <div class="q" id="q-present">1. Je na prodejně zboží s tímto datem spotřeby?</div>
+            <div class="choice-row">
+                <button type="button" class="choice" id="present-yes">✅ Ano, je tam</button>
+                <button type="button" class="choice" id="present-no">❌ Ne, není tam</button>
+                <button type="button" class="choice" id="present-retired">📦 Vyřazeno z prodeje</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-discount" hidden>
+            <div class="q">2. Byla nalepena sleva?</div>
+            <div class="choice-row">
+                <button type="button" class="choice" id="disc-yes">🏷️ Ano, sleva nalepena</button>
+                <button type="button" class="choice" id="disc-no">🚫 Ne, bez slevy</button>
+            </div>
+        </div>
+
+        <div class="step" id="step-newdate" hidden>
+            <div class="q" id="q-newdate">3. Nové nejhorší datum spotřeby</div>
+            <div id="newdate-fields">
+                <div class="field">
+                    <input type="date" id="check-newdate">
+                    <span class="note">Nejbližší datum spotřeby, které na prodejně zůstává.</span>
+                </div>
+                <label class="checkline"><input type="checkbox" id="check-nodate"> Nové datum teď neznám / artikl nemáme</label>
+            </div>
+            <div class="field" style="margin-top: 0.6rem;">
+                <label for="check-note" id="check-note-label">Poznámka ke kontrole</label>
+                <input type="text" id="check-note" placeholder="nepovinné">
+            </div>
+        </div>
+
+        <div class="form-msg error" id="check-msg"></div>
+        <div class="btn-row">
+            <button type="button" class="btn" id="check-save" hidden>Uložit kontrolu</button>
+            <button type="button" class="btn-secondary" id="check-cancel">Zrušit</button>
+        </div>
+    </div>
+</div>
+<script>
+/* ===================================================================
+   Kontrola dat spotřeby artiklů
+   Data se ukládají do localStorage tohoto prohlížeče.
+   =================================================================== */
+
+const APP_VERSION = '2026-09-13.21';
+const STORE_KEY = 'spotreba-data-v1';
+const THEME_KEY = 'spotreba-theme';
+const DEFAULT_LEAD = 7;
+
+let state = loadState();
+let activeFilter = 'all';
+let categoryFilter = 'all';
+let searchQuery = '';
+let logQuery = '';
+let expandedHistory = {};
+let renderedForDay = null;
+
+/* ---------- ukládání ---------- */
+
+function emptyState() {
+    return { articles: [], categories: [], settings: { defaultLead: DEFAULT_LEAD }, settingsAt: '', deleted: [], notified: {} };
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORE_KEY);
+        if (!raw) return emptyState();
+        const parsed = JSON.parse(raw);
+        const base = emptyState();
+        return {
+            articles: Array.isArray(parsed.articles) ? parsed.articles.map(normalizeArticle) : base.articles,
+            categories: Array.isArray(parsed.categories) ? parsed.categories.map(normalizeCategory) : base.categories,
+            settings: { ...base.settings, ...(parsed.settings || {}) },
+            settingsAt: parsed.settingsAt || '',
+            deleted: Array.isArray(parsed.deleted) ? parsed.deleted : [],
+            notified: parsed.notified || {}
+        };
+    } catch {
+        return emptyState();
+    }
+}
+
+function saveLocal() {
+    try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    } catch (e) {
+        showMsg('data-msg', 'Data se nepodařilo uložit do prohlížeče: ' + e.message, 'error');
+    }
+}
+
+/** Uloží změnu do zařízení a (je-li zapnutá synchronizace) i do sdíleného úložiště. */
+function saveState() {
+    saveLocal();
+    schedulePush();
+    gistSchedulePush();
+}
+
+function normalizeArticle(a) {
+    return {
+        id: a.id || newId(),
+        ean: String(a.ean || ''),
+        number: String(a.number || ''),
+        name: String(a.name || ''),
+        worstDate: a.worstDate || '',
+        leadValue: Number(a.leadValue) > 0 ? Number(a.leadValue)
+            : (Number(a.leadDays) > 0 ? Number(a.leadDays) : DEFAULT_LEAD),
+        leadUnit: a.leadUnit === 'month' ? 'month' : 'day',
+        price: a.price === 0 || Number(a.price) > 0 ? Number(a.price) : '',
+        photo: a.photo || '',
+        note: a.note || '',
+        info: a.info || '',
+        categoryId: a.categoryId || '',
+        retiredAt: a.retiredAt || '',
+        createdAt: a.createdAt || new Date().toISOString(),
+        updatedAt: a.updatedAt || a.createdAt || new Date().toISOString(),
+        // Data přicházející ze sdíleného úložiště jsou zmrazená, proto vlastní kopie –
+        // jinak by do historie kontrol nešlo nic přidat.
+        checks: Array.isArray(a.checks) ? a.checks.map(c => ({ ...c })) : []
+    };
+}
+
+function newId() {
+    return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+/* ---------- kategorie ---------- */
+
+const CAT_COLORS = ['#3182ce', '#38a169', '#d69e2e', '#dd6b20', '#d53f8c', '#805ad5', '#319795', '#718096'];
+
+function normalizeCategory(c) {
+    return {
+        id: c.id || ('c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7)),
+        name: String(c.name || '').trim() || 'Kategorie',
+        color: c.color || CAT_COLORS[0]
+    };
+}
+
+function sortedCategories() {
+    return state.categories.slice().sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+}
+
+function catById(id) {
+    return state.categories.find(c => c.id === id) || null;
+}
+
+function findCategoryByName(name) {
+    const needle = name.trim().toLowerCase();
+    return state.categories.find(c => c.name.toLowerCase() === needle) || null;
+}
+
+/** Vytvoří kategorii; pokud stejný název existuje, vrátí ji beze změny. */
+function createCategory(name) {
+    const clean = String(name || '').trim();
+    if (!clean) return null;
+    const existing = findCategoryByName(clean);
+    if (existing) return existing;
+    const cat = normalizeCategory({ name: clean, color: CAT_COLORS[state.categories.length % CAT_COLORS.length] });
+    state.categories.push(cat);
+    return cat;
+}
+
+/** Počítá jen artikly, které jsou v aktuálním seznamu vidět (prodej vs. vyřazené). */
+function visibleArticles() {
+    return state.articles.filter(a => isRetired(a) === (activeFilter === 'retired'));
+}
+
+function countInCategory(id) {
+    return visibleArticles().filter(a => (a.categoryId || '') === id).length;
+}
+
+function catChip(a) {
+    const cat = catById(a.categoryId);
+    if (!cat) return '';
+    return `<span class="cat-chip" style="--cat:${esc(cat.color)}">${esc(cat.name)}</span>`;
+}
+
+function renderCategorySelects() {
+    const cats = sortedCategories();
+
+    const form = document.getElementById('f-category');
+    const keepForm = form.value;
+    form.innerHTML = '<option value="">Bez kategorie</option>'
+        + cats.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')
+        + '<option value="__new">➕ Vytvořit novou kategorii…</option>';
+    form.value = optionExists(form, keepForm) ? keepForm : '';
+
+    const filter = document.getElementById('cat-filter');
+    const keepFilter = filter.value;
+    filter.innerHTML = `<option value="all">Všechny kategorie (${visibleArticles().length})</option>`
+        + cats.map(c => `<option value="${c.id}">${esc(c.name)} (${countInCategory(c.id)})</option>`).join('')
+        + `<option value="none">Bez kategorie (${countInCategory('')})</option>`;
+    filter.value = optionExists(filter, keepFilter) ? keepFilter : 'all';
+    categoryFilter = filter.value;
+}
+
+function optionExists(select, value) {
+    return Array.from(select.options).some(o => o.value === value);
+}
+
+function renderCategoryManager() {
+    const box = document.getElementById('cat-list');
+    const cats = sortedCategories();
+    if (cats.length === 0) {
+        box.innerHTML = '<div class="empty">Zatím žádná kategorie. Vytvoř ji výše nebo rovnou ve formuláři artiklu.</div>';
+        return;
+    }
+    box.innerHTML = cats.map(c => {
+        const n = countInCategory(c.id);
+        return `<div class="cat-row">
+            <span class="cat-chip" style="--cat:${esc(c.color)}">${esc(c.name)}</span>
+            <span class="cat-count">${n} ${plural(n, 'artikl', 'artikly', 'artiklů')}</span>
+            <button class="btn-secondary" data-cat-act="rename" data-id="${c.id}">✏️ Přejmenovat</button>
+            <button class="btn-secondary" data-cat-act="color" data-id="${c.id}">🎨 Barva</button>
+            <button class="btn-secondary" data-cat-act="delete" data-id="${c.id}">🗑️ Smazat</button>
+        </div>`;
+    }).join('');
+}
+
+function initCategories() {
+    document.getElementById('cat-add').addEventListener('click', () => {
+        const input = document.getElementById('cat-new');
+        const name = input.value.trim();
+        if (!name) return showMsg('cat-msg', 'Zadej název kategorie.', 'error');
+        if (findCategoryByName(name)) return showMsg('cat-msg', `Kategorie „${name}“ už existuje.`, 'error');
+        createCategory(name);
+        saveState();
+        input.value = '';
+        refreshCategories();
+        showMsg('cat-msg', `✅ Kategorie „${name}“ byla vytvořena.`, 'ok');
+    });
+    document.getElementById('cat-new').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('cat-add').click(); }
+    });
+
+    document.getElementById('cat-list').addEventListener('click', async e => {
+        const btn = e.target.closest('button[data-cat-act]');
+        if (!btn) return;
+        let cat = catById(btn.dataset.id);
+        if (!cat) return;
+
+        if (btn.dataset.catAct === 'rename') {
+            const name = await askText('Nový název kategorie:', cat.name, { title: 'Přejmenovat kategorii', okLabel: 'Přejmenovat' });
+            if (name === null) return;
+            cat = catById(btn.dataset.id);
+            if (!cat) return;
+            const clean = name.trim();
+            if (!clean) return showMsg('cat-msg', 'Název nesmí být prázdný.', 'error');
+            const clash = findCategoryByName(clean);
+            if (clash && clash.id !== cat.id) return showMsg('cat-msg', `Kategorie „${clean}“ už existuje.`, 'error');
+            cat.name = clean;
+            showMsg('cat-msg', '✅ Kategorie byla přejmenována.', 'ok');
+        } else if (btn.dataset.catAct === 'color') {
+            const i = CAT_COLORS.indexOf(cat.color);
+            cat.color = CAT_COLORS[(i + 1) % CAT_COLORS.length];
+            showMsg('cat-msg', '');
+        } else {
+            const n = countInCategory(cat.id);
+            const question = n
+                ? `Smazat kategorii „${cat.name}“?\n\n${n} ${plural(n, 'artikl zůstane', 'artikly zůstanou', 'artiklů zůstane')} zachován${n === 1 ? '' : 'y'}, jen bez kategorie.`
+                : `Smazat kategorii „${cat.name}“?`;
+            if (!await askConfirm(question, { title: 'Smazat kategorii', okLabel: 'Smazat', danger: true })) return;
+            if (!catById(cat.id)) return;
+            state.categories = state.categories.filter(c => c.id !== cat.id);
+            state.articles.forEach(a => { if (a.categoryId === cat.id) a.categoryId = ''; });
+            showMsg('cat-msg', '✅ Kategorie byla smazána.', 'ok');
+        }
+        saveState();
+        refreshCategories();
+    });
+
+    document.getElementById('f-category').addEventListener('change', e => {
+        const input = document.getElementById('f-newcat');
+        input.hidden = e.target.value !== '__new';
+        if (!input.hidden) input.focus(); else input.value = '';
+    });
+    document.getElementById('f-newcat').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('f-note').focus(); }
+    });
+
+    document.getElementById('cat-filter').addEventListener('change', e => {
+        categoryFilter = e.target.value;
+        renderList();
+    });
+}
+
+function refreshCategories() {
+    renderCategorySelects();
+    renderCategoryManager();
+    renderList();
+}
+
+/* ---------- práce s datem ---------- */
+
+function todayISO() {
+    const d = new Date();
+    return toISO(d);
+}
+
+function toISO(d) {
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function parseISO(iso) {
+    const [y, m, d] = String(iso).split('-').map(Number);
+    return new Date(y, (m || 1) - 1, d || 1);
+}
+
+/** Počet celých dní mezi dvěma ISO daty (to - from). */
+function dayDiff(fromISO, toISOStr) {
+    const ms = parseISO(toISOStr) - parseISO(fromISO);
+    return Math.round(ms / 86400000);
+}
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = parseISO(iso);
+    return `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()}`;
+}
+
+function fmtDateTime(isoTs) {
+    const d = new Date(isoTs);
+    const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()} ${time}`;
+}
+
+function fmtWeekday(iso) {
+    const names = ['nedělí', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
+    return names[parseISO(iso).getDay()];
+}
+
+/**
+ * Zbývající dny včetně dneška: datum spotřeby dnes = 1 den.
+ * Artikl se hlásí, jakmile je tato hodnota <= nastavený počet dní.
+ */
+function daysLeftInclusive(article) {
+    if (!article.worstDate) return null;
+    return dayDiff(todayISO(), article.worstDate) + 1;
+}
+
+function isRetired(article) {
+    return !!article.retiredAt;
+}
+
+/**
+ * Kolik dní před koncem spotřeby se artikl hlásí. U měsíců se počítá podle
+ * kalendáře od data spotřeby zpět – „1 M“ na cenovce znamená měsíc předem.
+ */
+function leadDaysOf(a) {
+    const value = Number(a.leadValue) > 0 ? Number(a.leadValue) : DEFAULT_LEAD;
+    if (a.leadUnit !== 'month') return value;
+    if (!a.worstDate) return value * 30;
+    const end = parseISO(a.worstDate);
+    const from = new Date(end.getFullYear(), end.getMonth() - value, end.getDate());
+    if (from.getDate() !== end.getDate()) from.setDate(0);   // kratší měsíc -> jeho poslední den
+    return dayDiff(toISO(from), a.worstDate) + 1;
+}
+
+/** Popis pro zobrazení, např. „2 měsíce“ nebo „7 dní“. */
+function leadText(a) {
+    const value = Number(a.leadValue) > 0 ? Number(a.leadValue) : DEFAULT_LEAD;
+    return a.leadUnit === 'month'
+        ? `${value} ${plural(value, 'měsíc', 'měsíce', 'měsíců')}`
+        : `${value} ${plural(value, 'den', 'dny', 'dní')}`;
+}
+
+/** Datum, od kterého se artikl začne hlásit (počítá se včetně dnešního dne). */
+function alertFromDate(article) {
+    if (!article.worstDate) return '';
+    const d = parseISO(article.worstDate);
+    d.setDate(d.getDate() - (leadDaysOf(article) - 1));
+    return toISO(d);
+}
+
+function statusOf(article) {
+    if (isRetired(article)) return 'retired';
+    if (!article.worstDate) return 'nodate';
+    const diff = dayDiff(todayISO(), article.worstDate);
+    if (diff < 0) return 'expired';
+    if (diff === 0) return 'today';
+    return diff + 1 <= leadDaysOf(article) ? 'due' : 'ok';
+}
+
+const STATUS_LABEL = {
+    expired: 'Prošlé datum',
+    today: 'Končí dnes',
+    due: 'Ke kontrole',
+    ok: 'V pořádku',
+    nodate: 'Chybí datum',
+    retired: 'Vyřazeno z prodeje'
+};
+
+/** Vyřazené artikly se nehlídají – nepočítají se do hlášení ani do kontrol. */
+function needsAction(article) {
+    return !['ok', 'retired'].includes(statusOf(article));
+}
+
+function leftText(article) {
+    const left = daysLeftInclusive(article);
+    if (left === null) return 'není zadané datum spotřeby';
+    if (left < 0) return `prošlo před ${Math.abs(left) + 1} dny`;
+    if (left === 0) return 'prošlo včera';
+    if (left === 1) return 'poslední den (dnes)';
+    return `zbývá ${left} dní včetně dneška`;
+}
+
+/* ---------- téma ---------- */
+
+function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        localStorage.setItem(THEME_KEY, next);
+    });
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+/* ---------- záložky ---------- */
+
+function initTabs() {
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => showPanel(tab.dataset.panel));
+    });
+}
+
+function showPanel(panelId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.panel === panelId));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === panelId));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- vykreslení přehledu ---------- */
+
+function render() {
+    renderedForDay = todayISO();
+    document.getElementById('today-label').textContent = `${fmtWeekday(renderedForDay)} ${fmtDate(renderedForDay)}`;
+    renderStats();
+    renderAlert();
+    renderCategorySelects();
+    renderCategoryManager();
+    renderList();
+    renderLog();
+    updateTabBadge();
+    updateTitle();
+}
+
+function renderStats() {
+    const a = state.articles;
+    const count = st => a.filter(x => st.includes(statusOf(x))).length;
+    document.getElementById('stat-total').textContent = a.length;
+    document.getElementById('stat-due').textContent = count(['due', 'today']);
+    document.getElementById('stat-expired').textContent = count(['expired']);
+    document.getElementById('stat-ok').textContent = count(['ok']);
+    const noDate = count(['nodate']);
+    document.getElementById('stat-nodate').textContent = noDate;
+    document.getElementById('stat-nodate-tile').hidden = noDate === 0;
+    const retired = count(['retired']);
+    document.getElementById('stat-retired').textContent = retired;
+    document.getElementById('stat-retired-tile').hidden = retired === 0;
+    document.getElementById('stat-checked-today').textContent = checksToday().length;
+}
+
+function checksToday() {
+    const today = todayISO();
+    const out = [];
+    state.articles.forEach(a => a.checks.forEach(c => {
+        if (c.at && c.at.slice(0, 10) === today && !c.kind) out.push({ article: a, check: c });
+    }));
+    return out;
+}
+
+function renderAlert() {
+    const banner = document.getElementById('alert-banner');
+    const flagged = state.articles.filter(needsAction).sort(byUrgency);
+    if (flagged.length === 0) {
+        banner.hidden = true;
+        return;
+    }
+    const hasCritical = flagged.some(a => ['expired', 'today'].includes(statusOf(a)));
+    banner.hidden = false;
+    banner.classList.toggle('critical', hasCritical);
+    const items = flagged.map(a =>
+        `<li><b>${esc(a.name)}</b> (č. ${esc(a.number)}) – ${esc(fmtDate(a.worstDate))}, ${esc(leftText(a))}
+         <span class="badge s-${statusOf(a)}">${STATUS_LABEL[statusOf(a)]}</span>
+         ${a.info ? `<br><span style="color:var(--warning);font-weight:700">⚠️ ${esc(a.info)}</span>` : ''}</li>`
+    ).join('');
+    banner.innerHTML = `
+        <h2>${hasCritical ? '🚨' : '⚠️'} Ke kontrole: ${flagged.length} ${plural(flagged.length, 'artikl', 'artikly', 'artiklů')}</h2>
+        <div style="font-size:0.88rem;color:var(--text-secondary)">Zkontroluj zboží na prodejně a zaznamenej výsledek.</div>
+        <ul>${items}</ul>`;
+}
+
+function byUrgency(x, y) {
+    const rank = { expired: 0, today: 1, due: 2, nodate: 3, ok: 4, retired: 5 };
+    const r = rank[statusOf(x)] - rank[statusOf(y)];
+    if (r !== 0) return r;
+    if (!x.worstDate) return 1;
+    if (!y.worstDate) return -1;
+    return x.worstDate.localeCompare(y.worstDate) || x.name.localeCompare(y.name, 'cs');
+}
+
+function matchesSearch(a, q) {
+    if (!q) return true;
+    const cat = catById(a.categoryId);
+    const hay = `${a.ean} ${a.number} ${a.name} ${a.note} ${a.info} ${cat ? cat.name : ''}`.toLowerCase();
+    return hay.includes(q.toLowerCase());
+}
+
+function renderList() {
+    const list = document.getElementById('list');
+    let items = state.articles.filter(a => matchesSearch(a, searchQuery));
+
+    if (categoryFilter === 'none') items = items.filter(a => !catById(a.categoryId));
+    else if (categoryFilter !== 'all') items = items.filter(a => a.categoryId === categoryFilter);
+
+    // Vyřazené artikly se v běžném seznamu nezobrazují, mají vlastní filtr.
+    items = items.filter(a => isRetired(a) === (activeFilter === 'retired'));
+
+    if (activeFilter === 'action') items = items.filter(needsAction);
+    else if (activeFilter === 'due') items = items.filter(a => ['due', 'today'].includes(statusOf(a)));
+    else if (activeFilter === 'expired') items = items.filter(a => statusOf(a) === 'expired');
+    else if (activeFilter === 'ok') items = items.filter(a => statusOf(a) === 'ok');
+    else if (activeFilter === 'info') items = items.filter(a => !!a.info);
+
+    items.sort(byUrgency);
+
+    if (items.length === 0) {
+        list.innerHTML = `<div class="empty">${state.articles.length === 0
+            ? 'Zatím žádné artikly. Přidej první na záložce <b>➕ Přidat artikl</b>.'
+            : (activeFilter === 'retired'
+                ? 'Žádný artikl není vyřazený z prodeje.'
+                : activeFilter === 'info'
+                    ? 'Žádný artikl nemá upozornění.'
+                    : 'Žádný artikl neodpovídá filtru.')}</div>`;
+        return;
+    }
+
+    if (activeFilter === 'retired') {
+        list.innerHTML = `<div class="group-title">Vyřazeno z prodeje (${items.length})</div>`
+            + items.map(itemHtml).join('');
+        return;
+    }
+
+    const action = items.filter(needsAction);
+    const fine = items.filter(a => !needsAction(a));
+    let html = '';
+    if (action.length) {
+        html += `<div class="group-title">Vyžaduje kontrolu (${action.length})</div>`;
+        html += action.map(itemHtml).join('');
+    }
+    if (fine.length) {
+        html += `<div class="group-title">V pořádku (${fine.length})</div>`;
+        html += fine.map(itemHtml).join('');
+    }
+    list.innerHTML = html;
+}
+
+/** Poslední skutečná kontrola – záznamy o vyřazení a vrácení se do ní nepočítají. */
+function lastCheck(a) {
+    const checks = a.checks.filter(c => !c.kind);
+    return checks.length ? checks[checks.length - 1] : null;
+}
+
+function itemHtml(a) {
+    const st = statusOf(a);
+    const last = lastCheck(a);
+    const open = !!expandedHistory[a.id];
+    return `
+    <div class="item s-${st}" data-id="${a.id}">
+        <div class="item-head">
+            <div>
+                <div class="item-name">${esc(a.name)}</div>
+                <div class="item-ids">EAN ${esc(a.ean || '—')} · č. artiklu ${esc(a.number || '—')}${a.note ? ' · ' + esc(a.note) : ''}</div>
+                ${catChip(a)}
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                ${a.photo ? `<img class="item-photo" src="${a.photo}" alt="Fotka artiklu" data-act="photo" data-id="${a.id}">` : ''}
+                <span class="badge s-${st}">${STATUS_LABEL[st]}</span>
+            </div>
+        </div>
+        ${a.info ? `<div class="item-info"><span class="icon">⚠️</span><span>${esc(a.info)}</span></div>` : ''}
+        <div class="item-dates">
+            <span>Nejhorší datum spotřeby: <b>${esc(fmtDate(a.worstDate))}</b></span>
+            <span>${st === 'retired' ? 'vyřazeno ' + esc(fmtDateTime(a.retiredAt)) : esc(leftText(a))}</span>
+            <span>Hlásit: <b>${esc(leadText(a))}</b> předem</span>
+            ${a.price === '' ? '' : `<span>Cena: <b>${esc(fmtPrice(a.price))}</b></span>`}
+            <span>Poslední kontrola: <b>${last ? esc(fmtDateTime(last.at)) : 'nikdy'}</b></span>
+        </div>
+        <div class="item-actions">
+            ${st === 'retired'
+                ? `<button class="btn" data-act="restore" data-id="${a.id}">↩️ Vrátit do prodeje</button>`
+                : `<button class="${needsAction(a) ? 'btn' : 'btn-secondary'}" data-act="check" data-id="${a.id}">🔍 Zkontrolovat</button>
+                   <button class="btn-secondary" data-act="retire" data-id="${a.id}">📦 Vyřadit z prodeje</button>`}
+            <button class="btn-secondary" data-act="info" data-id="${a.id}">⚠️ ${a.info ? 'Upravit upozornění' : 'Upozornění'}</button>
+            <button class="btn-secondary" data-act="edit" data-id="${a.id}">✏️ Upravit</button>
+            <button class="btn-secondary" data-act="history" data-id="${a.id}">🕘 Historie (${a.checks.length})</button>
+            <button class="btn-secondary" data-act="delete" data-id="${a.id}">🗑️ Smazat</button>
+        </div>
+        ${open ? historyHtml(a) : ''}
+    </div>`;
+}
+
+function historyHtml(a) {
+    if (a.checks.length === 0) {
+        return '<div class="item-history"><i style="font-size:0.85rem;color:var(--text-muted)">Žádná kontrola zatím nebyla provedena.</i></div>';
+    }
+    const rows = a.checks.slice().reverse().map(c => `<li>${checkSentence(c)}</li>`).join('');
+    return `<div class="item-history"><ol>${rows}</ol></div>`;
+}
+
+function checkSentence(c) {
+    if (c.kind === 'retired' || c.kind === 'restored') {
+        const what = c.kind === 'retired'
+            ? 'artikl <b>vyřazen z prodeje</b>'
+            : 'artikl <b>vrácen do prodeje</b>';
+        return `<b>${esc(fmtDateTime(c.at))}</b> – ${what}${c.note ? ', pozn.: ' + esc(c.note) : ''}`;
+    }
+    const parts = [`<b>${esc(fmtDateTime(c.at))}</b> – kontrola data ${esc(fmtDate(c.checkedDate))}:`];
+    parts.push(c.present
+        ? 'zboží na prodejně <span class="yes">ANO</span>'
+        : 'zboží na prodejně <span class="no">NE</span>');
+    if (c.present) {
+        parts.push(c.discount
+            ? 'sleva <span class="yes">NALEPENA</span>'
+            : 'sleva <span class="no">NENALEPENA</span>');
+    }
+    parts.push(c.newDate
+        ? `nové datum <b>${esc(fmtDate(c.newDate))}</b>`
+        : 'nové datum <i>nezadáno</i>');
+    if (c.note) parts.push(`pozn.: ${esc(c.note)}`);
+    return parts.join(', ').replace(':,', ':');
+}
+
+function updateTabBadge() {
+    const tab = document.querySelector('.tab[data-panel="panel-list"]');
+    const n = state.articles.filter(needsAction).length;
+    tab.innerHTML = '📋 Artikly' + (n ? ` <span class="count">${n}</span>` : '');
+}
+
+function updateTitle() {
+    const n = state.articles.filter(needsAction).length;
+    document.title = (n ? `(${n}) ` : '') + 'Kontrola dat spotřeby';
+}
+
+/* ---------- historie kontrol (globální) ---------- */
+
+function renderLog() {
+    const box = document.getElementById('log-list');
+    const all = [];
+    state.articles.forEach(a => a.checks.forEach(c => all.push({ a, c })));
+    all.sort((x, y) => y.c.at.localeCompare(x.c.at));
+
+    const q = logQuery.toLowerCase();
+    const filtered = q
+        ? all.filter(({ a }) => `${a.ean} ${a.number} ${a.name}`.toLowerCase().includes(q))
+        : all;
+
+    if (filtered.length === 0) {
+        box.innerHTML = `<div class="empty">${all.length === 0 ? 'Zatím nebyla provedena žádná kontrola.' : 'Nic nenalezeno.'}</div>`;
+        return;
+    }
+    box.innerHTML = filtered.map(({ a, c }) => `
+        <div class="log-item">
+            <div class="when">${esc(fmtDateTime(c.at))}</div>
+            <div><b>${esc(a.name)}</b> <span class="item-ids">EAN ${esc(a.ean)} · č. ${esc(a.number)}</span></div>
+            <div class="what">${checkSentence(c).replace(/^<b>[^<]*<\/b> – /, '')}</div>
+        </div>`).join('');
+}
+
+/* ---------- formulář artiklu ---------- */
+
+function initForm() {
+    const form = document.getElementById('article-form');
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        submitArticle();
+    });
+    document.getElementById('form-reset').addEventListener('click', resetForm);
+
+    // Čtečka EAN typicky odešle Enter – přeskočíme na další pole místo odeslání.
+    document.getElementById('f-ean').addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('f-number').focus();
+        }
+    });
+    document.getElementById('f-ean').addEventListener('input', showEanHint);
+    document.getElementById('f-date').addEventListener('input', showLeadHint);
+    document.getElementById('f-lead').addEventListener('input', showLeadHint);
+    document.getElementById('f-lead-unit').addEventListener('change', showLeadHint);
+}
+
+/** Ukáže rovnou ve formuláři, od kterého dne se artikl bude hlásit. */
+function showLeadHint() {
+    const note = document.getElementById('lead-note');
+    const date = document.getElementById('f-date').value;
+    const lead = parseInt(document.getElementById('f-lead').value, 10);
+    const unit = document.getElementById('f-lead-unit').value;
+    if (!date || !(lead >= 1)) {
+        note.innerHTML = 'Např. 7 dní = ohlásí se, když do data spotřeby zbývá 7 dní <b>včetně dneška</b>.'
+            + ' Měsíce odpovídají značce na cenovce (1 M = měsíc předem).';
+        return;
+    }
+    const article = { worstDate: date, leadValue: lead, leadUnit: unit };
+    note.innerHTML = `Ohlásí se od <b>${esc(fmtDate(alertFromDate(article)))}</b>`
+        + ` (${esc(leadText(article))} před koncem spotřeby).`;
+}
+
+function showEanHint() {
+    const ean = document.getElementById('f-ean').value.trim();
+    const note = document.getElementById('ean-note');
+    if (ean && /^\d{8}$|^\d{13}$/.test(ean) && !validEanChecksum(ean)) {
+        note.textContent = '⚠️ Kontrolní číslice EAN nesouhlasí – zkontroluj zadání (uložit lze i tak).';
+        note.style.color = 'var(--warning)';
+    } else {
+        note.textContent = 'Lze načíst i čtečkou – Enter přeskočí na další pole.';
+        note.style.color = '';
+    }
+}
+
+function validEanChecksum(code) {
+    const digits = code.split('').map(Number);
+    const check = digits.pop();
+    let sum = 0;
+    digits.reverse().forEach((d, i) => { sum += d * (i % 2 === 0 ? 3 : 1); });
+    return (10 - (sum % 10)) % 10 === check;
+}
+
+async function submitArticle() {
+    const id = document.getElementById('f-id').value;
+    const ean = document.getElementById('f-ean').value.trim();
+    const number = document.getElementById('f-number').value.trim();
+    const name = document.getElementById('f-name').value.trim();
+    const worstDate = document.getElementById('f-date').value;
+    const leadValue = parseInt(document.getElementById('f-lead').value, 10);
+    const leadUnit = document.getElementById('f-lead-unit').value === 'month' ? 'month' : 'day';
+    const priceRaw = document.getElementById('f-price').value.trim().replace(',', '.');
+    const price = priceRaw === '' ? '' : Number(priceRaw);
+    const note = document.getElementById('f-note').value.trim();
+    const info = document.getElementById('f-info').value.trim();
+    const catChoice = document.getElementById('f-category').value;
+    const newCatName = document.getElementById('f-newcat').value.trim();
+
+    if (catChoice === '__new' && !newCatName) {
+        return showMsg('form-msg', 'Zadej název nové kategorie, nebo vyber „Bez kategorie“.', 'error');
+    }
+    if (!ean || !number || !name || !worstDate) {
+        return showMsg('form-msg', 'Vyplň EAN, číslo artiklu, název i nejhorší datum spotřeby.', 'error');
+    }
+    if (!(leadValue >= 1)) {
+        return showMsg('form-msg', 'Doba pro upozornění musí být alespoň 1.', 'error');
+    }
+    if (price !== '' && !(price >= 0)) {
+        return showMsg('form-msg', 'Cena musí být číslo.', 'error');
+    }
+
+    const categoryId = catChoice === '__new'
+        ? createCategory(newCatName).id
+        : (catById(catChoice) ? catChoice : '');
+
+    if (id) {
+        const a = state.articles.find(x => x.id === id);
+        if (!a) return showMsg('form-msg', 'Artikl už neexistuje.', 'error');
+        Object.assign(a, { ean, number, name, worstDate, leadValue, leadUnit, price, note, info, categoryId, photo: pendingPhoto });
+        touch(a);
+        saveState();
+        resetForm();
+        render();
+        showPanel('panel-list');
+        return showMsg('form-msg', '', 'ok');
+    }
+
+    const dup = state.articles.find(x => x.ean === ean || (x.number && x.number === number));
+    if (dup) {
+        const ok = await askConfirm(`Artikl s tímto EAN nebo číslem už existuje:\n\n${dup.name} (${fmtDate(dup.worstDate)})\n\nChceš u něj jen změnit nejhorší datum spotřeby?`,
+            { title: 'Artikl už existuje', okLabel: 'Změnit datum' });
+        const current = ok ? state.articles.find(x => x.id === dup.id) : null;
+        if (current) {
+            const dup = current;
+            dup.worstDate = worstDate;
+            dup.leadValue = leadValue;
+            dup.leadUnit = leadUnit;
+            if (price !== '') dup.price = price;
+            if (note) dup.note = note;
+            if (info) dup.info = info;
+            if (categoryId) dup.categoryId = categoryId;
+            touch(dup);
+            saveState();
+            resetForm();
+            render();
+            showPanel('panel-list');
+            return;
+        }
+    }
+
+    state.articles.push(touch(normalizeArticle({ ean, number, name, worstDate, leadValue, leadUnit, price, note, info, categoryId, photo: pendingPhoto })));
+    pendingPhoto = '';
+    renderPhotoField();
+    saveState();
+    resetForm();
+    render();
+    const cat = catById(categoryId);
+    showMsg('form-msg', `✅ Artikl „${name}“ byl přidán${cat ? ` do kategorie „${cat.name}“` : ''}.`
+        + ` Ohlásí se ${leadText({ leadValue, leadUnit })} před koncem spotřeby.`, 'ok');
+    document.getElementById('f-ean').focus();
+}
+
+function resetForm() {
+    document.getElementById('article-form').reset();
+    document.getElementById('f-id').value = '';
+    document.getElementById('f-category').value = '';
+    document.getElementById('f-newcat').value = '';
+    document.getElementById('f-newcat').hidden = true;
+    setPendingPhoto('');
+    document.getElementById('f-lead').value = state.settings.defaultLead;
+    document.getElementById('f-lead-unit').value = 'day';
+    document.getElementById('form-title').textContent = 'Nový artikl';
+    document.getElementById('form-submit').textContent = 'Uložit artikl';
+    showMsg('form-msg', '');
+    showEanHint();
+    showLeadHint();
+}
+
+function editArticle(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    document.getElementById('f-id').value = a.id;
+    document.getElementById('f-ean').value = a.ean;
+    document.getElementById('f-number').value = a.number;
+    document.getElementById('f-name').value = a.name;
+    document.getElementById('f-date').value = a.worstDate;
+    document.getElementById('f-lead').value = a.leadValue;
+    document.getElementById('f-lead-unit').value = a.leadUnit;
+    document.getElementById('f-price').value = a.price === '' ? '' : a.price;
+    document.getElementById('f-note').value = a.note;
+    document.getElementById('f-info').value = a.info;
+    setPendingPhoto(a.photo);
+    document.getElementById('f-category').value = catById(a.categoryId) ? a.categoryId : '';
+    document.getElementById('f-newcat').hidden = true;
+    document.getElementById('f-newcat').value = '';
+    showLeadHint();
+    document.getElementById('form-title').textContent = 'Úprava artiklu';
+    document.getElementById('form-submit').textContent = 'Uložit změny';
+    showMsg('form-msg', '');
+    showPanel('panel-add');
+}
+
+/** Krátké viditelné upozornění u artiklu – třeba „pozor, ověřit údaje“. */
+async function editInfo(id) {
+    let a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    const text = await askText(
+        `Upozornění u artiklu „${a.name}“.\n\nVypíše se u něj žlutě i v seznamu ke kontrole. Prázdné pole upozornění odstraní.`,
+        a.info,
+        { title: 'Upozornění u artiklu', okLabel: 'Uložit' });
+    if (text === null) return;
+    a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    a.info = text;
+    touch(a);
+    saveState();
+    render();
+}
+
+async function retireArticle(id) {
+    let a = state.articles.find(x => x.id === id);
+    if (!a || isRetired(a)) return;
+    const ok = await askConfirm(`Označit artikl „${a.name}“ jako vyřazený z prodeje?\n\nPřestane se hlídat a hlásit, ale zůstane uložený i s celou historií kontrol. Kdykoli ho lze vrátit do prodeje.`,
+        { title: 'Vyřadit z prodeje', okLabel: 'Vyřadit' });
+    if (!ok) return;
+    // Během potvrzování mohla dorazit aktualizace z cloudu a seznam se obnovit.
+    a = state.articles.find(x => x.id === id);
+    if (!a || isRetired(a)) return;
+    a.retiredAt = new Date().toISOString();
+    a.checks.push({ kind: 'retired', at: a.retiredAt, note: '' });
+    touch(a);
+    delete state.notified[a.id];
+    saveState();
+    render();
+}
+
+async function restoreArticle(id) {
+    let a = state.articles.find(x => x.id === id);
+    if (!a || !isRetired(a)) return;
+    const ok = await askConfirm(`Vrátit artikl „${a.name}“ zpět do prodeje?\n\nZačne se opět hlídat. Pokud u něj chybí datum spotřeby, doplň ho přes Upravit nebo Zkontrolovat.`,
+        { title: 'Vrátit do prodeje', okLabel: 'Vrátit do prodeje' });
+    if (!ok) return;
+    a = state.articles.find(x => x.id === id);
+    if (!a || !isRetired(a)) return;
+    a.retiredAt = '';
+    a.checks.push({ kind: 'restored', at: new Date().toISOString(), note: '' });
+    touch(a);
+    saveState();
+    render();
+}
+
+async function deleteArticle(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    const ok = await askConfirm(`Smazat artikl „${a.name}“ i s historií kontrol?\n\nTuto akci nelze vzít zpět.`,
+        { title: 'Smazat artikl', okLabel: 'Smazat', danger: true });
+    if (!ok) return;
+    const gone = state.articles.find(x => x.id === id);
+    if (!gone) return;
+    recordDeletion(gone);
+    state.articles = state.articles.filter(x => x.id !== id);
+    delete state.notified[id];
+    saveState();
+    render();
+}
+
+/* ---------- kontrola artiklu ---------- */
+
+let checkCtx = null;
+
+function openCheck(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a) return;
+    checkCtx = { id: a.id, present: null, discount: null, retire: false };
+
+    document.getElementById('check-sub').innerHTML =
+        `<b>${esc(a.name)}</b><br>EAN ${esc(a.ean)} · č. artiklu ${esc(a.number)}<br>
+         Kontrolované datum spotřeby: <b>${esc(fmtDate(a.worstDate))}</b> (${esc(leftText(a))})`;
+    document.getElementById('q-present').textContent =
+        `1. Je na prodejně zboží s datem spotřeby ${fmtDate(a.worstDate)} nebo horším?`;
+
+    ['present-yes', 'present-no', 'present-retired', 'disc-yes', 'disc-no'].forEach(btnId => {
+        document.getElementById(btnId).classList.remove('sel-yes', 'sel-no', 'sel-alt');
+    });
+    resetNewDateStep();
+    document.getElementById('step-present').classList.remove('done');
+    document.getElementById('step-discount').hidden = true;
+    document.getElementById('step-discount').classList.remove('done');
+    document.getElementById('step-newdate').hidden = true;
+    document.getElementById('check-save').hidden = true;
+    document.getElementById('check-newdate').value = '';
+    document.getElementById('check-newdate').disabled = false;   // po předchozí kontrole mohlo zůstat zamčené
+    document.getElementById('check-nodate').checked = false;
+    document.getElementById('check-note').value = '';
+    showMsg('check-msg', '');
+    document.getElementById('check-overlay').hidden = false;
+}
+
+function closeCheck() {
+    document.getElementById('check-overlay').hidden = true;
+    checkCtx = null;
+}
+
+function initCheckModal() {
+    document.getElementById('present-yes').addEventListener('click', () => setPresent(true));
+    document.getElementById('present-no').addEventListener('click', () => setPresent(false));
+    document.getElementById('present-retired').addEventListener('click', setRetiredChoice);
+    document.getElementById('disc-yes').addEventListener('click', () => setDiscount(true));
+    document.getElementById('disc-no').addEventListener('click', () => setDiscount(false));
+    document.getElementById('check-cancel').addEventListener('click', closeCheck);
+    document.getElementById('check-save').addEventListener('click', saveCheck);
+    document.getElementById('check-nodate').addEventListener('change', e => {
+        const input = document.getElementById('check-newdate');
+        input.disabled = e.target.checked;
+        if (e.target.checked) input.value = '';
+    });
+    document.getElementById('check-overlay').addEventListener('click', e => {
+        if (e.target.id === 'check-overlay') closeCheck();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !document.getElementById('check-overlay').hidden) closeCheck();
+    });
+}
+
+function setPresent(present) {
+    if (!checkCtx) return;
+    checkCtx.present = present;
+    checkCtx.retire = false;
+    resetNewDateStep();
+    document.getElementById('present-yes').classList.toggle('sel-yes', present);
+    document.getElementById('present-no').classList.toggle('sel-no', !present);
+    document.getElementById('present-retired').classList.remove('sel-alt');
+    document.getElementById('step-present').classList.add('done');
+
+    if (present) {
+        document.getElementById('step-discount').hidden = false;
+        document.getElementById('step-newdate').hidden = true;
+        document.getElementById('check-save').hidden = true;
+    } else {
+        // Zboží s tímto datem už na prodejně není – sleva se neřeší, jen nové datum.
+        checkCtx.discount = null;
+        document.getElementById('step-discount').hidden = true;
+        openNewDateStep();
+    }
+}
+
+function setDiscount(discount) {
+    if (!checkCtx) return;
+    checkCtx.discount = discount;
+    document.getElementById('disc-yes').classList.toggle('sel-yes', discount);
+    document.getElementById('disc-no').classList.toggle('sel-no', !discount);
+    document.getElementById('step-discount').classList.add('done');
+    openNewDateStep();
+}
+
+/** Artikl se během kontroly ukázal jako vyřazený z prodeje – nové datum se neřeší. */
+function setRetiredChoice() {
+    if (!checkCtx) return;
+    checkCtx.present = false;
+    checkCtx.discount = null;
+    checkCtx.retire = true;
+    document.getElementById('present-yes').classList.remove('sel-yes');
+    document.getElementById('present-no').classList.remove('sel-no');
+    document.getElementById('present-retired').classList.add('sel-alt');
+    document.getElementById('step-present').classList.add('done');
+    document.getElementById('step-discount').hidden = true;
+
+    document.getElementById('step-newdate').hidden = false;
+    document.getElementById('newdate-fields').hidden = true;
+    document.getElementById('q-newdate').textContent = '2. Vyřazení artiklu z prodeje';
+    document.getElementById('check-note-label').textContent = 'Důvod vyřazení (nepovinné)';
+    document.getElementById('check-save').textContent = '📦 Vyřadit z prodeje';
+    document.getElementById('check-save').hidden = false;
+    document.getElementById('check-note').focus();
+}
+
+function resetNewDateStep() {
+    document.getElementById('newdate-fields').hidden = false;
+    document.getElementById('check-note-label').textContent = 'Poznámka ke kontrole';
+    document.getElementById('check-save').textContent = 'Uložit kontrolu';
+}
+
+function openNewDateStep() {
+    const step = document.getElementById('step-newdate');
+    step.hidden = false;
+    document.getElementById('q-newdate').textContent =
+        (checkCtx.present ? '3.' : '2.') + ' Nové nejhorší datum spotřeby';
+    document.getElementById('check-save').hidden = false;
+    document.getElementById('check-newdate').focus();
+}
+
+function saveCheck() {
+    try {
+        saveCheckInner();
+    } catch (e) {
+        // Aby uložení nikdy „jen tak nešlo“ – chybu je vidět rovnou v okně.
+        showMsg('check-msg', 'Kontrolu se nepodařilo uložit: ' + ((e && e.message) || e), 'error');
+    }
+}
+
+function saveCheckInner() {
+    if (!checkCtx) return;
+    const a = state.articles.find(x => x.id === checkCtx.id);
+    if (!a) {
+        closeCheck();
+        render();
+        return showMsg('form-msg', 'Artikl už v seznamu není – kontrolu nešlo uložit.', 'error');
+    }
+
+    const note = document.getElementById('check-note').value.trim();
+
+    if (checkCtx.retire) {
+        const at = new Date().toISOString();
+        a.checks.push({ kind: 'retired', at, checkedDate: a.worstDate, note });
+        a.retiredAt = at;
+        touch(a);
+        delete state.notified[a.id];
+        saveState();
+        closeCheck();
+        render();
+        showPanel('panel-list');
+        return;
+    }
+
+    const noDate = document.getElementById('check-nodate').checked;
+    const newDate = document.getElementById('check-newdate').value;
+    if (!noDate && !newDate) {
+        return showMsg('check-msg', 'Zadej nové nejhorší datum spotřeby, nebo zaškrtni „Nové datum teď neznám“.', 'error');
+    }
+
+    a.checks.push({
+        at: new Date().toISOString(),
+        checkedDate: a.worstDate,
+        present: checkCtx.present,
+        discount: checkCtx.discount,
+        newDate: noDate ? '' : newDate,
+        note
+    });
+    a.worstDate = noDate ? '' : newDate;
+    touch(a);
+    delete state.notified[a.id];
+    saveState();
+    closeCheck();
+    render();
+    showPanel('panel-list');
+}
+
+/* ---------- upozornění prohlížeče ---------- */
+
+function initNotifications() {
+    document.getElementById('notif-btn').addEventListener('click', () => {
+        if (!('Notification' in window)) {
+            return showMsg('s-msg', 'Tento prohlížeč upozornění nepodporuje. Artikly ke kontrole se i tak zobrazí v aplikaci nahoře.', 'error');
+        }
+        Notification.requestPermission().then(p => {
+            showMsg('s-msg', p === 'granted'
+                ? '✅ Upozornění povolena.'
+                : 'Upozornění nebyla povolena – hlášení uvidíš přímo v aplikaci.', p === 'granted' ? 'ok' : 'error');
+            if (p === 'granted') notifyDue();
+        });
+    });
+    notifyDue();
+}
+
+function notifyDue() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const today = todayISO();
+    const due = state.articles.filter(a => {
+        if (!needsAction(a) || statusOf(a) === 'nodate') return false;
+        if (state.notified[a.id] === today) return false;
+        return !a.checks.some(c => c.at.slice(0, 10) === today);
+    });
+    if (due.length === 0) return;
+
+    const title = due.length === 1
+        ? `Kontrola spotřeby: ${due[0].name}`
+        : `Ke kontrole je ${due.length} ${plural(due.length, 'artikl', 'artikly', 'artiklů')}`;
+    const body = due.slice(0, 5)
+        .map(a => `${a.name} – ${fmtDate(a.worstDate)} (${leftText(a)})`)
+        .join('\n') + (due.length > 5 ? `\n… a další ${due.length - 5}` : '');
+    try {
+        new Notification(title, { body, tag: 'spotreba-' + today });
+        due.forEach(a => { state.notified[a.id] = today; });
+        saveState();
+    } catch { /* upozornění nelze zobrazit, aplikace funguje dál */ }
+}
+
+/* ---------- synchronizace mezi zařízeními ----------
+   Když stránka běží v prostředí Claude, artikly se ukládají i do sdíleného
+   úložiště, takže mobil i počítač vidí to samé. Bez něj aplikace funguje
+   dál jen s daty v tomto zařízení.
+
+   Pravidla, aby se změna nikdy neztratila:
+   - syncMirror drží podobu, kterou má cloud;
+   - pendingWrites / pendingDeletes drží, co jsme změnili tady a cloud to
+     ještě nepotvrdil – zapisují se hned při změně, ne až při odesílání;
+   - příchozí snímek z cloudu nikdy nepřepíše nepotvrzenou změnu. */
+
+const ARTICLES_COLLECTION = 'articles';
+const TOMBSTONES_COLLECTION = 'deleted';
+const TOMBSTONE_DAYS = 180;
+const KNOWN_IDS_KEY = 'spotreba-sync-known-ids';
+
+let syncDb = null;
+let syncArticles = null;
+let syncMirror = {};                                  // id artiklu -> podoba v cloudu
+let syncMetaMirror = { categories: null, settings: null };
+let pendingWrites = {};                               // id artiklu -> podoba, která má být v cloudu
+let pendingDeletes = new Set();
+let pendingMeta = { categories: null, settings: null };
+let syncPushTimer = null;
+
+/** Artikly, které toto zařízení už někdy vidělo v cloudu. Když takový artikl
+    v cloudu chybí, byl smazaný na jiném zařízení – nesmí se nahrát zpátky. */
+let knownRemoteIds = loadKnownIds();
+
+/** Artikl poznáme podle dvojice EAN + číslo artiklu. */
+function articleKey(a) {
+    return `${a.ean}|${a.number}`.toLowerCase();
+}
+
+/** Porovnávací podoba dat: pořadí klíčů se mezi zařízeními a úložištěm liší,
+    takže se klíče seřadí – jinak by se pořád dokola posílaly stejné změny. */
+function stableJson(value) {
+    if (Array.isArray(value)) return '[' + value.map(stableJson).join(',') + ']';
+    if (value && typeof value === 'object') {
+        return '{' + Object.keys(value).sort()
+            .map(k => JSON.stringify(k) + ':' + stableJson(value[k])).join(',') + '}';
+    }
+    return JSON.stringify(value === undefined ? null : value);
+}
+
+function safeParse(json) {
+    try {
+        return JSON.parse(json);
+    } catch {
+        return null;
+    }
+}
+
+function loadKnownIds() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(KNOWN_IDS_KEY) || '[]');
+        return new Set(Array.isArray(raw) ? raw : []);
+    } catch {
+        return new Set();
+    }
+}
+
+function rememberRemoteIds(ids) {
+    let added = false;
+    ids.forEach(id => { if (!knownRemoteIds.has(id)) { knownRemoteIds.add(id); added = true; } });
+    if (!added) return;
+    try {
+        localStorage.setItem(KNOWN_IDS_KEY, JSON.stringify([...knownRemoteIds].slice(-5000)));
+    } catch { /* seznam id je jen pomocný, bez něj se nic nerozbije */ }
+}
+
+function setSyncStatus(kind, detail) {
+    const hint = document.getElementById('sync-hint');
+    if (!hint) return;
+    if (kind === 'local') {
+        hint.innerHTML = '📱 <b>Data jsou jen v tomto zařízení.</b> Na jiné zařízení je přeneseš'
+            + ' přes Export zálohy a Import níže.';
+        return showMsg('sync-msg', '');
+    }
+    if (kind === 'connecting') {
+        hint.textContent = 'Připojuji sdílené úložiště…';
+        return showMsg('sync-msg', '');
+    }
+    if (kind === 'error') {
+        hint.innerHTML = '☁️ Sdílené úložiště se právě nedaří použít. Změny zůstávají uložené'
+            + ' v tomto zařízení a odešlou se, jakmile to půjde.';
+        return showMsg('sync-msg', detail || '', 'error');
+    }
+    hint.innerHTML = '☁️ <b>Synchronizováno.</b> Artikly, kategorie i historie kontrol jsou stejné'
+        + ' na všech zařízeních, kde aplikaci otevřeš pod svým účtem.';
+    showMsg('sync-msg', '✅ Naposledy uloženo ' + detail, 'ok');
+}
+
+async function initSync() {
+    if (!(window.claude && typeof window.claude.use === 'function')) return setSyncStatus('local');
+
+    setSyncStatus('connecting');
+    let db = null;
+    try {
+        db = await window.claude.use('db');
+    } catch {
+        db = null;
+    }
+    if (!db) return setSyncStatus('local');
+
+    syncDb = db;
+    syncArticles = db.collection(ARTICLES_COLLECTION);
+    try {
+        await migrateLocalData();
+    } catch (e) {
+        return setSyncStatus('error', 'Data z tohoto zařízení se nepodařilo nahrát: ' + ((e && e.message) || ''));
+    }
+    subscribeToCloud();
+}
+
+/** Nahraje do sdíleného úložiště artikly, které zatím existují jen v tomto
+    zařízení – například zadané dřív, než se aplikace poprvé připojila. */
+async function migrateLocalData() {
+    const [articlesSnap, catSnap, settingsSnap, tombSnap] = await Promise.all([
+        syncArticles.get(),
+        syncDb.doc('meta/categories').get(),
+        syncDb.doc('meta/settings').get(),
+        syncDb.collection(TOMBSTONES_COLLECTION).get()
+    ]);
+
+    const remoteArticles = articlesSnap.docs.map(d => d.data()).filter(d => d && d.id).map(normalizeArticle);
+    const remoteCats = catSnap.exists && Array.isArray(catSnap.data().list)
+        ? catSnap.data().list.map(normalizeCategory)
+        : [];
+
+    // Kategorie se párují podle názvu, aby nevznikly dvojí „Chlazení“.
+    const mergedCats = remoteCats.slice();
+    const catIdMap = {};
+    state.categories.forEach(local => {
+        const hit = mergedCats.find(c => c.name.toLowerCase() === local.name.toLowerCase());
+        if (hit) {
+            catIdMap[local.id] = hit.id;
+        } else {
+            mergedCats.push(local);
+            catIdMap[local.id] = local.id;
+        }
+    });
+
+    const remoteIds = new Set(remoteArticles.map(a => a.id));
+    const remoteKeys = new Set(remoteArticles.map(articleKey));
+    const localOnly = state.articles.filter(a => !remoteIds.has(a.id));
+
+    // Záznamy o smazání drží smazané artikly smazané i pro zařízení,
+    // které o smazání nevědělo (bylo zrovna vypnuté).
+    const tombs = tombSnap.docs.map(d => d.data()).filter(Boolean);
+    const tombIds = new Set(tombs.map(t => t.id));
+    const tombKeys = new Set(tombs.map(t => t.key).filter(Boolean));
+    pruneTombstones(tombs);
+
+    // Nahrává se jen to, co v cloudu nikdy nebylo a co nikdo nesmazal.
+    const toUpload = localOnly.filter(a => !knownRemoteIds.has(a.id)
+        && !remoteKeys.has(articleKey(a))
+        && !tombIds.has(a.id)
+        && !tombKeys.has(articleKey(a)));
+
+    // Co v cloudu bylo a teď chybí, někdo smazal na jiném zařízení.
+    const uploading = new Set(toUpload.map(a => a.id));
+    const dropped = localOnly.filter(a => !uploading.has(a.id));
+    if (dropped.length) {
+        const goneIds = new Set(dropped.map(a => a.id));
+        state.articles = state.articles.filter(a => !goneIds.has(a.id));
+        saveLocal();
+    }
+    rememberRemoteIds([...remoteIds]);
+
+    for (const a of toUpload) {
+        a.categoryId = catIdMap[a.categoryId] || '';
+        await syncArticles.doc(a.id).set(a);
+    }
+    if (mergedCats.length !== remoteCats.length) await syncDb.doc('meta/categories').set({ list: mergedCats });
+    if (!settingsSnap.exists) await syncDb.doc('meta/settings').set(state.settings);
+}
+
+/** Staré záznamy o smazání se po čase uklidí, aby se úložiště nezaplňovalo. */
+function pruneTombstones(tombs) {
+    const cutoff = Date.now() - TOMBSTONE_DAYS * 86400000;
+    tombs
+        .filter(t => t.id && Date.parse(t.at || '') < cutoff)
+        .slice(0, 20)
+        .forEach(t => syncDb.doc(`${TOMBSTONES_COLLECTION}/${t.id}`).delete().catch(() => {}));
+}
+
+function subscribeToCloud() {
+    syncArticles.onSnapshot(snap => {
+        applyRemoteArticles(snap.docs.map(d => d.data()).filter(d => d && d.id).map(normalizeArticle));
+    }, onSyncError);
+
+    syncDb.doc('meta/categories').onSnapshot(snap => {
+        const list = snap.exists && Array.isArray(snap.data().list) ? snap.data().list.map(normalizeCategory) : null;
+        if (!list) return;
+        syncMetaMirror.categories = stableJson(list);
+        if (pendingMeta.categories) {
+            if (pendingMeta.categories !== syncMetaMirror.categories) return schedulePush();
+            pendingMeta.categories = null;
+        }
+        state.categories = list;
+        saveLocal();
+        render();
+    }, onSyncError);
+
+    syncDb.doc('meta/settings').onSnapshot(snap => {
+        if (!snap.exists) return;
+        const settings = { ...state.settings, ...snap.data() };
+        syncMetaMirror.settings = stableJson(settings);
+        if (pendingMeta.settings) {
+            if (pendingMeta.settings !== syncMetaMirror.settings) return schedulePush();
+            pendingMeta.settings = null;
+        }
+        state.settings = settings;
+        saveLocal();
+        const lead = document.getElementById('s-lead');
+        if (lead) lead.value = state.settings.defaultLead;
+    }, onSyncError);
+}
+
+/**
+ * Převezme stav z cloudu. Změny, které jsme právě udělali a cloud je ještě
+ * nepotvrdil, mají přednost – jinak by zmizela právě uložená kontrola nebo
+ * by se vrátil smazaný artikl.
+ */
+function applyRemoteArticles(remote) {
+    rememberRemoteIds(remote.map(a => a.id));
+
+    syncMirror = {};
+    remote.forEach(a => { syncMirror[a.id] = stableJson(a); });
+
+    const byId = new Map(remote.map(a => [a.id, a]));
+
+    pendingDeletes.forEach(id => {
+        if (syncMirror[id]) byId.delete(id);        // smazání cloud ještě nepotvrdil
+        else pendingDeletes.delete(id);             // potvrzeno, artikl je pryč
+    });
+
+    Object.keys(pendingWrites).forEach(id => {
+        if (syncMirror[id] === pendingWrites[id]) {
+            delete pendingWrites[id];               // cloud má naši verzi
+            return;
+        }
+        const mine = safeParse(pendingWrites[id]);
+        if (mine) byId.set(id, normalizeArticle(mine));
+    });
+
+    state.articles = [...byId.values()];
+    saveLocal();
+    render();
+    setSyncStatus('ok', new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+    if (hasPendingChanges()) schedulePush();        // dopošle, co cloud ještě nemá
+}
+
+function hasPendingChanges() {
+    return Object.keys(pendingWrites).length > 0 || pendingDeletes.size > 0
+        || !!pendingMeta.categories || !!pendingMeta.settings;
+}
+
+function onSyncError(e) {
+    setSyncStatus('error', (e && e.message) || 'Spojení se sdíleným úložištěm skončilo.');
+}
+
+function schedulePush() {
+    if (!syncArticles) return;
+    markPendingChanges();                           // hned, ať to snímek z cloudu nepřepíše
+    // Odeslání se jen naplánuje; další volání ho nesmí odsouvat, jinak by
+    // se při častých aktualizacích z cloudu neodeslalo nikdy.
+    if (syncPushTimer) return;
+    syncPushTimer = setTimeout(() => {
+        syncPushTimer = null;
+        pushChanges();
+    }, 300);
+}
+
+/** Poznamená, co se právě změnilo oproti podobě v cloudu. */
+function markPendingChanges() {
+    const present = new Set();
+
+    state.articles.forEach(a => {
+        present.add(a.id);
+        const json = stableJson(a);
+        if (syncMirror[a.id] !== json) {
+            pendingWrites[a.id] = json;
+            pendingDeletes.delete(a.id);
+        }
+    });
+
+    Object.keys(syncMirror).forEach(id => {
+        if (!present.has(id)) pendingDeletes.add(id);
+    });
+    Object.keys(pendingWrites).forEach(id => {
+        if (!present.has(id)) delete pendingWrites[id];
+    });
+
+    const catsJson = stableJson(state.categories);
+    if (catsJson !== syncMetaMirror.categories) pendingMeta.categories = catsJson;
+    const settingsJson = stableJson(state.settings);
+    if (settingsJson !== syncMetaMirror.settings) pendingMeta.settings = settingsJson;
+}
+
+/** Odešle do cloudu vše, co tam ještě není. */
+async function pushChanges() {
+    if (!syncArticles) return;
+    const writes = [];
+
+    Object.keys(pendingWrites).forEach(id => {
+        const json = pendingWrites[id];
+        if (syncMirror[id] === json) { delete pendingWrites[id]; return; }
+        const article = safeParse(json);
+        if (!article) { delete pendingWrites[id]; return; }
+        writes.push(syncArticles.doc(id).set(article).then(() => { syncMirror[id] = json; }));
+    });
+
+    pendingDeletes.forEach(id => {
+        const previous = safeParse(syncMirror[id] || '');
+        writes.push(syncArticles.doc(id).delete().then(() => { delete syncMirror[id]; }));
+        writes.push(syncDb.doc(`${TOMBSTONES_COLLECTION}/${id}`).set({
+            id,
+            key: previous ? articleKey(previous) : '',
+            at: new Date().toISOString()
+        }).catch(() => {}));
+    });
+
+    if (pendingMeta.categories) {
+        const json = pendingMeta.categories;
+        writes.push(syncDb.doc('meta/categories').set({ list: state.categories })
+            .then(() => { syncMetaMirror.categories = json; }));
+    }
+    if (pendingMeta.settings) {
+        const json = pendingMeta.settings;
+        writes.push(syncDb.doc('meta/settings').set(state.settings)
+            .then(() => { syncMetaMirror.settings = json; }));
+    }
+
+    if (writes.length === 0) return;
+    try {
+        await Promise.all(writes);
+        setSyncStatus('ok', new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+    } catch (e) {
+        setSyncStatus('error', 'Změna se zatím neodeslala: ' + ((e && e.message) || 'neznámá chyba'));
+        setTimeout(() => { if (hasPendingChanges()) pushChanges(); }, 3000);
+    }
+}
+
+/* ---------- synchronizace přes GitHub (pro nainstalovanou aplikaci) ----------
+   Verze otevřená přes Claude má vlastní sdílené úložiště. Nainstalovaná
+   aplikace k němu nemá přístup, takže si data ukládá do soukromého gistu
+   na GitHubu – stačí jednou vložit token a mobil i počítač vidí to samé. */
+
+const GIST_TOKEN_KEY = 'spotreba-gist-token';
+const GIST_ID_KEY = 'spotreba-gist-id';
+const GIST_FILE = 'kontrola-spotreby.json';
+const GIST_DESCRIPTION = 'Kontrola dat spotřeby – data aplikace';
+const GIST_POLL_MS = 30000;
+
+let gistToken = localStorage.getItem(GIST_TOKEN_KEY) || '';
+let gistId = localStorage.getItem(GIST_ID_KEY) || '';
+let gistPushTimer = null;
+let gistPollTimer = null;
+let gistBusy = false;
+
+function gistActive() {
+    return !!(gistToken && gistId);
+}
+
+/** Zaznamená, že se artikl právě změnil – podle toho se pozná novější verze. */
+function touch(article) {
+    article.updatedAt = new Date().toISOString();
+    return article;
+}
+
+/** Poznámka o smazání, aby se artikl nevrátil z druhého zařízení. */
+function recordDeletion(article) {
+    if (!Array.isArray(state.deleted)) state.deleted = [];
+    state.deleted = state.deleted.filter(t => t.id !== article.id);
+    state.deleted.push({ id: article.id, key: articleKey(article), at: new Date().toISOString() });
+    if (state.deleted.length > 500) state.deleted = state.deleted.slice(-500);
+}
+
+async function gistRequest(path, options = {}) {
+    const response = await fetch('https://api.github.com' + path, {
+        ...options,
+        headers: {
+            Authorization: 'Bearer ' + gistToken,
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            ...(options.body ? { 'Content-Type': 'application/json' } : {})
+        }
+    });
+    if (!response.ok) {
+        const detail = response.status === 401 ? 'token neplatí nebo nemá právo na gisty'
+            : response.status === 403 ? 'GitHub odmítl požadavek (limit nebo chybějící oprávnění)'
+            : 'GitHub odpověděl ' + response.status;
+        throw new Error(detail);
+    }
+    return response.json();
+}
+
+function snapshotForGist() {
+    return {
+        version: 1,
+        articles: state.articles,
+        categories: state.categories,
+        settings: state.settings,
+        settingsAt: state.settingsAt || '',
+        deleted: state.deleted || [],
+        savedAt: new Date().toISOString()
+    };
+}
+
+/** Najde existující gist s daty aplikace, nebo založí nový. */
+async function gistConnect(token) {
+    gistToken = token;
+    const list = await gistRequest('/gists?per_page=100');
+    const found = list.find(g => g.description === GIST_DESCRIPTION);
+
+    if (found) {
+        gistId = found.id;
+    } else {
+        const created = await gistRequest('/gists', {
+            method: 'POST',
+            body: JSON.stringify({
+                description: GIST_DESCRIPTION,
+                public: false,
+                files: { [GIST_FILE]: { content: JSON.stringify(snapshotForGist(), null, 1) } }
+            })
+        });
+        gistId = created.id;
+    }
+
+    localStorage.setItem(GIST_TOKEN_KEY, gistToken);
+    localStorage.setItem(GIST_ID_KEY, gistId);
+    await gistPull();
+    gistSchedulePush();
+    startGistPolling();
+    renderGistStatus();
+}
+
+function gistDisconnect() {
+    gistToken = '';
+    gistId = '';
+    localStorage.removeItem(GIST_TOKEN_KEY);
+    localStorage.removeItem(GIST_ID_KEY);
+    clearInterval(gistPollTimer);
+    gistPollTimer = null;
+    renderGistStatus();
+}
+
+async function gistPull() {
+    if (!gistActive()) return;
+    const gist = await gistRequest('/gists/' + gistId);
+    const file = gist.files && gist.files[GIST_FILE];
+    if (!file) return;
+    let content = file.content;
+    if (file.truncated && file.raw_url) content = await fetch(file.raw_url).then(r => r.text());
+    const data = safeParse(content || '{}');
+    if (data) mergeSnapshot(data);
+}
+
+async function gistPush() {
+    if (!gistActive() || gistBusy) return;
+    gistBusy = true;
+    try {
+        await gistRequest('/gists/' + gistId, {
+            method: 'PATCH',
+            body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(snapshotForGist(), null, 1) } } })
+        });
+        showMsg('gist-msg', '✅ Uloženo na GitHub ' + new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }), 'ok');
+    } catch (e) {
+        showMsg('gist-msg', 'Data se nepodařilo odeslat: ' + ((e && e.message) || e) + ' – zkusím to znovu.', 'error');
+        setTimeout(gistSchedulePush, 5000);
+    } finally {
+        gistBusy = false;
+    }
+}
+
+function gistSchedulePush() {
+    if (!gistActive()) return;
+    clearTimeout(gistPushTimer);
+    gistPushTimer = setTimeout(gistPush, 1500);
+}
+
+function startGistPolling() {
+    clearInterval(gistPollTimer);
+    gistPollTimer = setInterval(() => {
+        if (document.hidden) return;
+        gistPull().catch(() => { /* výpadek sítě řeší další pokus */ });
+    }, GIST_POLL_MS);
+}
+
+/**
+ * Spojí data z GitHubu s tím, co je v zařízení. U artiklu vyhrává novější
+ * změna, smazané artikly zůstanou smazané.
+ */
+function mergeSnapshot(remote) {
+    const stamp = v => Date.parse(v || '') || 0;
+
+    const tombs = new Map();
+    [...(remote.deleted || []), ...(state.deleted || [])].forEach(t => {
+        if (!t || !t.id) return;
+        const known = tombs.get(t.id);
+        if (!known || stamp(t.at) > stamp(known.at)) tombs.set(t.id, t);
+    });
+
+    const byId = new Map();
+    (remote.articles || []).forEach(a => {
+        if (a && a.id) byId.set(a.id, normalizeArticle(a));
+    });
+    state.articles.forEach(local => {
+        const theirs = byId.get(local.id);
+        if (!theirs || stamp(local.updatedAt) >= stamp(theirs.updatedAt)) byId.set(local.id, local);
+    });
+    tombs.forEach((t, id) => {
+        const article = byId.get(id);
+        if (article && stamp(t.at) >= stamp(article.updatedAt)) byId.delete(id);
+    });
+
+    // Kategorie: sjednotit podle id a podle názvu, ať nevzniknou dvojí.
+    const cats = new Map();
+    [...(remote.categories || []).map(normalizeCategory), ...state.categories].forEach(c => {
+        const sameName = [...cats.values()].find(x => x.name.toLowerCase() === c.name.toLowerCase());
+        if (sameName) return;
+        cats.set(c.id, c);
+    });
+
+    if (stamp(remote.settingsAt) > stamp(state.settingsAt)) {
+        state.settings = { ...state.settings, ...(remote.settings || {}) };
+        state.settingsAt = remote.settingsAt;
+        const lead = document.getElementById('s-lead');
+        if (lead) lead.value = state.settings.defaultLead;
+    }
+
+    state.articles = [...byId.values()];
+    state.categories = [...cats.values()];
+    state.deleted = [...tombs.values()].slice(-500);
+    saveLocal();
+    render();
+    renderGistStatus();
+}
+
+function renderGistStatus() {
+    const box = document.getElementById('gist-box');
+    if (!box) return;
+    const connected = gistActive();
+    document.getElementById('gist-connect').hidden = connected;
+    document.getElementById('gist-token').parentElement.hidden = connected;
+    document.getElementById('gist-disconnect').hidden = !connected;
+    document.getElementById('gist-sync-now').hidden = !connected;
+    document.getElementById('gist-state').innerHTML = connected
+        ? '☁️ <b>Připojeno k GitHubu.</b> Artikly se sdílejí se všemi zařízeními, kde vložíš stejný token.'
+        : 'Zatím nepřipojeno – data zůstávají jen v tomto zařízení.';
+}
+
+function initGistSync() {
+    if (!Array.isArray(state.deleted)) state.deleted = [];
+
+    // Ve verzi otevřené přes Claude běží vlastní sdílené úložiště a volání
+    // GitHubu je tam stejně zakázané – nabízíme ho jen v nainstalované aplikaci.
+    if (window.claude && typeof window.claude.use === 'function') {
+        const box = document.getElementById('gist-box');
+        box.innerHTML = '<p class="hint">Sdílení přes GitHub se nabízí v nainstalované aplikaci'
+            + ' (https://maresitemshopbot.github.io/MaresBotShop/). Tady se data sdílejí přes Claude.</p>';
+        return;
+    }
+
+    document.getElementById('gist-connect').addEventListener('click', async () => {
+        const token = document.getElementById('gist-token').value.trim();
+        if (!token) return showMsg('gist-msg', 'Vlož token z GitHubu.', 'error');
+        showMsg('gist-msg', 'Připojuji…', '');
+        try {
+            await gistConnect(token);
+            document.getElementById('gist-token').value = '';
+            showMsg('gist-msg', '✅ Připojeno. Data se sdílejí přes tvůj GitHub účet.', 'ok');
+        } catch (e) {
+            gistToken = '';
+            showMsg('gist-msg', 'Připojení se nepovedlo: ' + ((e && e.message) || e), 'error');
+        }
+    });
+
+    document.getElementById('gist-disconnect').addEventListener('click', async () => {
+        const ok = await askConfirm('Odpojit tohle zařízení od GitHubu?\n\nData v zařízení zůstanou, jen se přestanou sdílet.',
+            { title: 'Odpojit synchronizaci', okLabel: 'Odpojit' });
+        if (!ok) return;
+        gistDisconnect();
+        showMsg('gist-msg', 'Odpojeno.', '');
+    });
+
+    document.getElementById('gist-sync-now').addEventListener('click', async () => {
+        showMsg('gist-msg', 'Synchronizuji…', '');
+        try {
+            await gistPull();
+            await gistPush();
+        } catch (e) {
+            showMsg('gist-msg', 'Nepovedlo se: ' + ((e && e.message) || e), 'error');
+        }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && gistActive()) gistPull().catch(() => {});
+    });
+
+    renderGistStatus();
+    if (gistActive()) {
+        gistPull().catch(e => showMsg('gist-msg', 'Data z GitHubu se teď nenačetla: ' + ((e && e.message) || e), 'error'));
+        startGistPolling();
+    }
+}
+
+/* ---------- instalace jako aplikace ---------- */
+
+let installPrompt = null;
+
+function initInstall() {
+    // Hostovaná verze bez manifestu se neinstaluje – kartu jen popíšeme.
+    if (!document.querySelector('link[rel="manifest"]')) return;
+
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+        navigator.serviceWorker.register('sw.js').catch(() => {
+            // Bez service workeru aplikace funguje dál, jen nebude offline.
+        });
+    }
+
+    const row = document.getElementById('install-row');
+    const btn = document.getElementById('install-btn');
+
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        return showMsg('install-msg', '✅ Běží jako nainstalovaná aplikace.', 'ok');
+    }
+
+    window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
+        installPrompt = e;
+        row.hidden = false;
+    });
+
+    btn.addEventListener('click', async () => {
+        if (!installPrompt) return;
+        installPrompt.prompt();
+        const { outcome } = await installPrompt.userChoice;
+        installPrompt = null;
+        row.hidden = true;
+        showMsg('install-msg', outcome === 'accepted'
+            ? '✅ Aplikace se instaluje – najdeš ji mezi aplikacemi.'
+            : 'Instalace byla zrušena. Spustit ji jde i z menu prohlížeče.', outcome === 'accepted' ? 'ok' : '');
+    });
+
+    window.addEventListener('appinstalled', () => {
+        row.hidden = true;
+        showMsg('install-msg', '✅ Aplikace byla nainstalována.', 'ok');
+    });
+}
+
+/* ---------- nastavení a data ---------- */
+
+function initSettings() {
+    document.getElementById('s-lead').value = state.settings.defaultLead;
+    document.getElementById('s-save').addEventListener('click', () => {
+        const v = parseInt(document.getElementById('s-lead').value, 10);
+        if (!(v >= 1)) return showMsg('s-msg', 'Počet dní musí být alespoň 1.', 'error');
+        state.settings.defaultLead = v;
+        state.settingsAt = new Date().toISOString();
+        saveState();
+        document.getElementById('f-lead').value = v;
+        showMsg('s-msg', `✅ Nové artikly se budou hlásit ${v} ${plural(v, 'den', 'dny', 'dní')} před koncem spotřeby.`, 'ok');
+    });
+
+    document.getElementById('export-json').addEventListener('click', exportJson);
+    document.getElementById('export-csv').addEventListener('click', exportCsv);
+    document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+    document.getElementById('import-file').addEventListener('change', importJson);
+    document.getElementById('wipe-btn').addEventListener('click', async () => {
+        const ok = await askConfirm('Opravdu smazat všechny artikly i historii kontrol?\n\nTuto akci nelze vzít zpět.',
+            { title: 'Smazat všechna data', okLabel: 'Smazat vše', danger: true });
+        if (!ok) return;
+        state = emptyState();
+        saveState();
+        resetForm();
+        render();
+        showMsg('data-msg', 'Všechna data byla smazána.', 'ok');
+    });
+}
+
+async function download(filename, content, type) {
+    const blob = new Blob([content], { type });
+
+    // Na hostované stránce se soubor předává přes potvrzení prohlížeče,
+    // v lokálním souboru (file://) stačí obyčejný odkaz ke stažení.
+    const saver = window.claude && typeof window.claude.use === 'function'
+        ? await window.claude.use('downloads').catch(() => null)
+        : null;
+    if (saver) {
+        try {
+            await saver.save({ filename, data: blob });
+            return true;
+        } catch (err) {
+            showMsg('data-msg', (err && err.code) === 'declined'
+                ? 'Uložení souboru bylo zrušeno.'
+                : 'Soubor se nepodařilo uložit: ' + ((err && err.message) || 'neznámá chyba'), 'error');
+            return false;
+        }
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
+}
+
+async function exportJson() {
+    const saved = await download(`spotreba-zaloha-${todayISO()}.json`, JSON.stringify(state, null, 2), 'application/json');
+    if (saved) showMsg('data-msg', '✅ Záloha byla vyexportována.', 'ok');
+}
+
+async function exportCsv() {
+    const head = ['EAN', 'Cislo artiklu', 'Nazev', 'Kategorie', 'Nejhorsi datum spotreby', 'Zbyva dni vcetne dneska', 'Hlasit predem', 'Hlasi se od', 'Cena', 'Upozorneni', 'Stav', 'Vyrazeno z prodeje', 'Pocet kontrol', 'Posledni kontrola', 'Zbozi na prodejne', 'Sleva nalepena', 'Poznamka'];
+    const rows = state.articles.slice().sort(byUrgency).map(a => {
+        const last = lastCheck(a);
+        return [
+            a.ean, a.number, a.name, (catById(a.categoryId) || { name: '' }).name, a.worstDate,
+            daysLeftInclusive(a) === null ? '' : daysLeftInclusive(a),
+            leadText(a), alertFromDate(a), a.price === '' ? '' : a.price, a.info,
+            STATUS_LABEL[statusOf(a)], isRetired(a) ? 'ANO' : 'NE',
+            a.checks.filter(c => !c.kind).length,
+            last ? fmtDateTime(last.at) : '',
+            last ? (last.present ? 'ANO' : 'NE') : '',
+            last ? (last.present ? (last.discount ? 'ANO' : 'NE') : '') : '',
+            a.note
+        ];
+    });
+    const csv = [head, ...rows]
+        .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
+        .join('\r\n');
+    const saved = await download(`spotreba-artikly-${todayISO()}.csv`, '﻿' + csv, 'text/csv;charset=utf-8');
+    if (saved) showMsg('data-msg', '✅ CSV pro Excel bylo vyexportováno.', 'ok');
+}
+
+function importJson(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+        try {
+            const data = JSON.parse(String(reader.result));
+            const incoming = Array.isArray(data.articles) ? data.articles.map(normalizeArticle) : [];
+            const incomingCats = Array.isArray(data.categories) ? data.categories.map(normalizeCategory) : [];
+            if (incoming.length === 0 && !await askConfirm('Záloha neobsahuje žádné artikly. Přesto pokračovat?',
+                { title: 'Import zálohy' })) return;
+            const merge = state.articles.length > 0 && await askConfirm(
+                `Aktuálně máš ${state.articles.length} artiklů.\n\nPřidat artikly ze zálohy k nim, nebo jimi všechno nahradit?`,
+                { title: 'Import zálohy', okLabel: 'Přidat k stávajícím' });
+            if (merge) {
+                // Kategorie ze zálohy spárujeme podle názvu, chybějící doplníme.
+                const catMap = {};
+                incomingCats.forEach(c => { catMap[c.id] = createCategory(c.name).id; });
+                const known = new Set(state.articles.map(a => a.id));
+                incoming.forEach(a => {
+                    if (known.has(a.id)) a.id = newId();
+                    a.categoryId = catMap[a.categoryId] || '';
+                    state.articles.push(a);
+                });
+            } else {
+                state.articles = incoming;
+                state.categories = incomingCats;
+                state.settings = { ...state.settings, ...(data.settings || {}) };
+                state.notified = data.notified || {};
+            }
+            saveState();
+            document.getElementById('s-lead').value = state.settings.defaultLead;
+            resetForm();
+            render();
+            showMsg('data-msg', `✅ Import hotov – načteno ${incoming.length} artiklů.`, 'ok');
+        } catch (err) {
+            showMsg('data-msg', 'Import se nepodařil: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+}
+
+/* ---------- čtečka cenovek, čárových kódů a fotka artiklu ----------
+   Cenovka se čte z fotky (název, číslo artiklu, cena, značka slevy typu „2 M“),
+   EAN se skenuje zvlášť z čárového kódu na obalu – na cenovce bývá jiný kód. */
+
+const LABEL_PROMPT = `Na fotce je regálová cenovka z obchodu (často v češtině).
+Vyčti z ní údaje a odpověz POUZE jedním JSON objektem tohoto tvaru:
+{"nazev": string, "cena": number|null, "cislo_artiklu": string, "ean": string, "sleva": {"hodnota": number, "jednotka": "D"|"M"}|null}
+
+Vysvětlení polí:
+- nazev: celý název výrobku včetně doplňku a hmotnosti, např. "Milka s ořechy mléčná čokoláda 100 g"
+- cena: aktuální (nejnižší zobrazená) prodejní cena jako číslo, desetinná tečka; když ji nevidíš, null
+- cislo_artiklu: číslo artiklu tištěné na cenovce (obvykle 6 až 8 číslic, bývá u čárového kódu); NENÍ to EAN
+- ean: jen pokud jsou pod čárovým kódem čitelné číslice EAN (8 nebo 13 číslic), jinak prázdný řetězec
+- sleva: značka jako "2 M" nebo "10 D" – kolik času před koncem spotřeby se lepí sleva.
+  Jednotka "D" = dny, "M" = měsíce. Když na cenovce není, null.
+
+Vrať jen údaje, které na fotce opravdu vidíš; co chybí, nech prázdné nebo null.
+Příklad odpovědi: {"nazev":"Milka s ořechy mléčná čokoláda 100 g","cena":42.90,"cislo_artiklu":"6710942","ean":"","sleva":{"hodnota":2,"jednotka":"M"}}`;
+
+let scanMode = 'label';          // 'label' = cenovka, 'ean' = čárový kód, 'photo' = fotka artiklu
+let scanStream = null;
+let scanLoopTimer = null;
+let barcodeDetector = null;
+let zxingReader = null;
+let pendingPhoto = '';           // fotka pro artikl, který se právě zakládá
+
+const SCAN_TITLES = {
+    label: 'Načíst z cenovky',
+    ean: 'Skenovat EAN',
+    find: 'Naskenovat artikl',
+    photo: 'Fotka artiklu'
+};
+const SCAN_HINTS = {
+    label: 'Namiř kameru na regálovou cenovku a klepni na Vyfotit teď. Vyčtu z ní název, číslo artiklu, cenu i značku slevy (např. 2 M = dva měsíce před koncem spotřeby).',
+    ean: 'Namiř kameru na čárový kód na obalu – načte se sám. Cenovka má vlastní kód, EAN je potřeba ze zboží.',
+    find: 'Namiř kameru na čárový kód zboží. Když artikl v seznamu je, rovnou otevřu jeho kontrolu; když není, založím nový.',
+    photo: 'Namiř kameru na výrobek a klepni na Vyfotit teď. Fotka se uloží k artiklu.'
+};
+
+const SCAN_SCANNING = ['ean', 'find'];
+
+function openScan(mode) {
+    scanMode = mode;
+    document.getElementById('scan-title').textContent = SCAN_TITLES[mode];
+    document.getElementById('scan-hint').textContent = SCAN_HINTS[mode];
+    document.getElementById('scan-file').setAttribute('capture', 'environment');
+    document.getElementById('scan-preview').hidden = true;
+    document.getElementById('scan-retry').hidden = true;
+    document.getElementById('scan-camera').classList.remove('found');
+    document.getElementById('scan-overlay').hidden = false;
+    showMsg('scan-msg', '');
+    startCamera();
+}
+
+function closeScan() {
+    stopCamera();
+    document.getElementById('scan-overlay').hidden = true;
+}
+
+async function startCamera() {
+    const box = document.getElementById('scan-camera');
+    const actions = document.getElementById('scan-camera-actions');
+    const video = document.getElementById('scan-video');
+    const live = document.getElementById('scan-live');
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        return cameraUnavailable('Tenhle prohlížeč neumí pustit kameru přímo v aplikaci.');
+    }
+
+    live.textContent = SCAN_SCANNING.includes(scanMode) ? 'Hledám kód…' : 'Kamera běží';
+    try {
+        scanStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false
+        });
+        video.srcObject = scanStream;
+        await video.play();
+        box.hidden = false;
+        actions.hidden = false;
+        document.getElementById('scan-retry').hidden = true;
+        showMsg('scan-msg', '');
+        setupTorch();
+        if (SCAN_SCANNING.includes(scanMode)) startLiveScan();
+    } catch (e) {
+        const name = (e && e.name) || '';
+        if (name === 'NotAllowedError' || name === 'SecurityError') {
+            cameraUnavailable('Kamera není povolená. Povol ji v prohlížeči u této stránky (ikona vlevo v adresním řádku)'
+                + ' a klepni na Zapnout kameru. V appce Claude bývá kamera zakázaná – nainstalovaná verze aplikace ji pustí.');
+        } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+            cameraUnavailable('Nenašel jsem zadní kameru.');
+        } else {
+            cameraUnavailable('Kameru se nepodařilo spustit' + (e && e.message ? ': ' + e.message : '.'));
+        }
+    }
+}
+
+function cameraUnavailable(reason) {
+    document.getElementById('scan-camera').hidden = true;
+    document.getElementById('scan-camera-actions').hidden = true;
+    document.getElementById('scan-retry').hidden = false;
+    showMsg('scan-msg', reason + ' Zatím můžeš použít Vyfotit foťákem – funguje to stejně.', 'error');
+}
+
+/** Přisvícení, pokud ho zařízení umí. */
+async function setupTorch() {
+    const btn = document.getElementById('scan-torch');
+    btn.hidden = true;
+    const track = scanStream && scanStream.getVideoTracks()[0];
+    if (!track || !track.getCapabilities) return;
+    try {
+        if (!track.getCapabilities().torch) return;
+        btn.hidden = false;
+        btn.onclick = async () => {
+            const on = btn.dataset.on === '1';
+            await track.applyConstraints({ advanced: [{ torch: !on }] });
+            btn.dataset.on = on ? '0' : '1';
+            btn.textContent = on ? '🔦 Přisvítit' : '🔦 Zhasnout';
+        };
+    } catch { /* přisvícení není povinné */ }
+}
+
+function stopCamera() {
+    clearTimeout(scanLoopTimer);
+    scanLoopTimer = null;
+    if (zxingReader) {
+        try { zxingReader.reset(); } catch { /* už je zastavená */ }
+        zxingReader = null;
+    }
+    if (scanStream) {
+        scanStream.getTracks().forEach(t => t.stop());
+        scanStream = null;
+    }
+    const video = document.getElementById('scan-video');
+    if (video) video.srcObject = null;
+    document.getElementById('scan-camera').hidden = true;
+    document.getElementById('scan-camera-actions').hidden = true;
+    document.getElementById('scan-torch').hidden = true;
+}
+
+/* ---- čárový kód ---- */
+
+async function getBarcodeDetector() {
+    if (barcodeDetector) return barcodeDetector;
+    if (!('BarcodeDetector' in window)) return null;
+    try {
+        barcodeDetector = new window.BarcodeDetector({
+            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128']
+        });
+        return barcodeDetector;
+    } catch {
+        return null;
+    }
+}
+
+/** Záložní čtečka kódů pro prohlížeče bez vestavěné podpory. */
+async function loadZxing() {
+    if (window.ZXing) return window.ZXing;
+    await new Promise((resolve, reject) => {
+        const tag = document.createElement('script');
+        tag.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+        tag.onload = resolve;
+        tag.onerror = reject;
+        document.head.appendChild(tag);
+    });
+    return window.ZXing;
+}
+
+async function decodeBarcode(source) {
+    const detector = await getBarcodeDetector();
+    if (detector) {
+        try {
+            const codes = await detector.detect(source);
+            if (codes && codes.length) return String(codes[0].rawValue || '');
+        } catch { /* zkusíme záložní čtečku */ }
+    }
+    if (source instanceof HTMLImageElement) {
+        try {
+            const ZXing = await loadZxing();
+            const reader = new ZXing.BrowserMultiFormatReader();
+            const result = await reader.decodeFromImageElement(source);
+            return result ? String(result.getText()) : '';
+        } catch { /* nepodařilo se přečíst */ }
+    }
+    return '';
+}
+
+/** Kód se hledá průběžně v obraze z kamery – stačí na něj mířit. */
+async function startLiveScan() {
+    const video = document.getElementById('scan-video');
+
+    if (await getBarcodeDetector()) {
+        const tick = async () => {
+            if (!scanStream || !SCAN_SCANNING.includes(scanMode)) return;
+            if (video.readyState >= 2) {
+                const code = await decodeBarcode(video);
+                if (code) return useScannedEan(code);
+            }
+            scanLoopTimer = setTimeout(tick, 250);
+        };
+        return tick();
+    }
+
+    // Prohlížeče bez vestavěné čtečky (např. iPhone) obsluhuje knihovna ZXing.
+    const live = document.getElementById('scan-live');
+    live.textContent = 'Spouštím čtečku…';
+    try {
+        const ZXing = await loadZxing();
+        zxingReader = new ZXing.BrowserMultiFormatReader();
+        zxingReader.decodeFromVideoElement(video, result => {
+            if (result && scanStream) useScannedEan(String(result.getText()));
+        });
+        live.textContent = 'Hledám kód…';
+    } catch {
+        live.textContent = 'Vyfoť kód tlačítkem';
+        showMsg('scan-msg', 'Živé čtení kódů se tu nepodařilo spustit (nejspíš není připojení).'
+            + ' Namiř kód a klepni na Vyfotit teď – přečte se z fotky.', '');
+    }
+}
+
+function useScannedEan(code) {
+    if (!code) return;
+    // Krátká zpětná vazba, ať je poznat, že se kód povedl.
+    document.getElementById('scan-camera').classList.add('found');
+    document.getElementById('scan-live').textContent = 'Načteno: ' + code;
+    if (navigator.vibrate) navigator.vibrate(60);
+
+    const mode = scanMode;
+    scanMode = 'done';                        // zastaví další hledání
+    setTimeout(() => {
+        closeScan();
+        if (mode === 'find') return openScannedArticle(code);
+        document.getElementById('f-ean').value = code;
+        showEanHint();
+        showPanel('panel-add');
+        showMsg('form-msg', `✅ Načtený EAN: ${code}`, 'ok');
+        document.getElementById('f-number').focus();
+    }, 350);
+}
+
+/** Po naskenování v seznamu: najít artikl, nebo rovnou nabídnout založení. */
+function openScannedArticle(code) {
+    const found = state.articles.find(a => a.ean === code);
+    if (!found) {
+        document.getElementById('f-ean').value = code;
+        showEanHint();
+        resetFormKeepEan(code);
+        showPanel('panel-add');
+        return showMsg('form-msg', `Artikl s EAN ${code} zatím nemáš. Doplň údaje – nebo načti cenovku.`, '');
+    }
+
+    searchQuery = '';
+    document.getElementById('search').value = '';
+    activeFilter = isRetired(found) ? 'retired' : 'all';
+    document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('active', c.dataset.filter === activeFilter));
+    categoryFilter = 'all';
+    showPanel('panel-list');
+    renderCategorySelects();
+    renderList();
+
+    const card = document.querySelector(`.item[data-id="${found.id}"]`);
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (isRetired(found)) {
+        return showMsg('form-msg', '', '');
+    }
+    openCheck(found.id);
+}
+
+/** Vyprázdní formulář, ale ponechá právě naskenovaný EAN. */
+function resetFormKeepEan(code) {
+    resetForm();
+    document.getElementById('f-ean').value = code;
+    showEanHint();
+}
+
+/* ---- práce s obrázkem ---- */
+
+/** Zmenší fotku, ať se rychle posílá i ukládá. */
+function shrinkImage(file, maxSize, quality) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            canvas.toBlob(blob => blob ? resolve({ blob, dataUrl: canvas.toDataURL('image/jpeg', quality) })
+                : reject(new Error('obrázek se nepodařilo zpracovat')), 'image/jpeg', quality);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('obrázek se nepodařilo načíst')); };
+        img.src = url;
+    });
+}
+
+function captureFromVideo() {
+    const video = document.getElementById('scan-video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    return new Promise(resolve => canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.9));
+}
+
+async function handleScanImage(file) {
+    if (!file) return;
+    showMsg('scan-msg', 'Zpracovávám fotku…', '');
+
+    try {
+        if (scanMode === 'photo') {
+            const small = await shrinkImage(file, 720, 0.65);
+            setPendingPhoto(small.dataUrl);
+            closeScan();
+            showPanel('panel-add');
+            return showMsg('form-msg', '✅ Fotka artiklu přidána.', 'ok');
+        }
+
+        const big = await shrinkImage(file, 1600, 0.85);
+        const preview = document.getElementById('scan-preview');
+        preview.src = big.dataUrl;
+        preview.hidden = false;
+
+        if (scanMode === 'ean') {
+            await new Promise(r => { preview.complete ? r() : preview.onload = r; });
+            const code = await decodeBarcode(preview);
+            if (!code) {
+                return showMsg('scan-msg', 'Čárový kód se z fotky nepodařilo přečíst. Zkus to znovu z blízka a zostra,'
+                    + ' nebo EAN zadej ručně.', 'error');
+            }
+            return useScannedEan(code);
+        }
+
+        await readLabel(big.blob);
+    } catch (e) {
+        showMsg('scan-msg', 'Nepovedlo se: ' + ((e && e.message) || e), 'error');
+    }
+}
+
+/* ---- čtení cenovky ---- */
+
+async function readLabel(blob) {
+    const ask = window.claude && typeof window.claude.use === 'function'
+        ? await window.claude.use('sample').catch(() => null)
+        : null;
+    const limits = ask ? await ask.limits().catch(() => null) : null;
+
+    if (ask && limits && limits.images) {
+        showMsg('scan-msg', 'Čtu cenovku…', '');
+        try {
+            return applyLabel(await ask.json(LABEL_PROMPT, { images: blob }) || {});
+        } catch (e) {
+            showMsg('scan-msg', 'Přes Claude to nešlo (' + ((e && e.message) || e) + '), zkusím to přímo v telefonu…', '');
+        }
+    }
+    // Nainstalovaná aplikace čte cenovku sama, rozpoznáním textu v telefonu.
+    await readLabelOnDevice(blob);
+}
+
+/** Rozpoznání textu přímo v zařízení (knihovna Tesseract). */
+async function readLabelOnDevice(blob) {
+    showMsg('scan-msg', 'Připravuji čtečku textu (poprvé chvíli trvá)…', '');
+    let worker;
+    try {
+        const Tesseract = await loadTesseract();
+        worker = await Tesseract.createWorker('ces', 1, {
+            langPath: 'https://tessdata.projectnaptha.com/4.0.0_fast',
+            logger: m => {
+                if (m && m.status === 'recognizing text') {
+                    showMsg('scan-msg', `Čtu cenovku… ${Math.round((m.progress || 0) * 100)} %`, '');
+                }
+            }
+        });
+        const result = await worker.recognize(blob);
+        await worker.terminate();
+        worker = null;
+        applyLabel(parseLabelText((result && result.data) || {}));
+    } catch (e) {
+        if (worker) { try { await worker.terminate(); } catch { /* nevadí */ } }
+        showMsg('scan-msg', 'Cenovku se nepodařilo přečíst: ' + ((e && e.message) || e)
+            + '. Zadej údaje ručně.', 'error');
+    }
+}
+
+async function loadTesseract() {
+    if (window.Tesseract) return window.Tesseract;
+    await new Promise((resolve, reject) => {
+        const tag = document.createElement('script');
+        tag.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+        tag.onload = resolve;
+        tag.onerror = () => reject(new Error('čtečku textu se nepodařilo stáhnout'));
+        document.head.appendChild(tag);
+    });
+    return window.Tesseract;
+}
+
+/**
+ * Z rozpoznaného textu cenovky vytáhne název, cenu, číslo artiklu a značku
+ * slevy. Cena je ta napsaná největším písmem, číslo artiklu bývá dole u kódu.
+ */
+function parseLabelText(data) {
+    const text = String(data.text || '');
+    const words = Array.isArray(data.words) ? data.words : [];
+    const height = w => (w.bbox ? w.bbox.y1 - w.bbox.y0 : 0);
+    const out = { nazev: '', cena: null, cislo_artiklu: '', ean: '', sleva: null };
+
+    const priceWords = words.filter(w => /^\d{1,4}[.,]\d{2}$/.test(String(w.text || '').trim()));
+    if (priceWords.length) {
+        priceWords.sort((a, b) => height(b) - height(a));
+        out.cena = Number(String(priceWords[0].text).trim().replace(',', '.'));
+    } else {
+        const m = text.match(/(\d{1,4})[.,](\d{2})\b/);
+        if (m) out.cena = Number(m[1] + '.' + m[2]);
+    }
+
+    const lead = text.match(/\b(\d{1,2})\s*([DM])\b/);
+    if (lead) out.sleva = { hodnota: Number(lead[1]), jednotka: lead[2].toUpperCase() };
+
+    const numberWords = words
+        .filter(w => /^\d{6,8}$/.test(String(w.text || '').trim()))
+        .sort((a, b) => (b.bbox ? b.bbox.y0 : 0) - (a.bbox ? a.bbox.y0 : 0));
+    if (numberWords.length) {
+        out.cislo_artiklu = String(numberWords[0].text).trim();
+    } else {
+        const candidates = text.match(/\b\d{6,8}\b/g) || [];
+        if (candidates.length) out.cislo_artiklu = candidates[candidates.length - 1];
+    }
+
+    const ean = text.match(/\b(\d{13}|\d{8})\b/);
+    if (ean) out.ean = ean[1];
+
+    const lines = text.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 1 && /[A-Za-zÁ-Žá-ž]/.test(l))
+        .filter(l => !/^\d/.test(l) && !/^(levnější|akce|novinka|cena)$/i.test(l));
+    out.nazev = lines.slice(0, 3).join(' ').replace(/\s+/g, ' ').trim();
+
+    return out;
+}
+
+function applyLabel(data) {
+    const filled = [];
+
+    const name = String(data.nazev || '').trim();
+    if (name) { document.getElementById('f-name').value = name; filled.push('název'); }
+
+    const number = String(data.cislo_artiklu || '').replace(/\D/g, '');
+    if (number) { document.getElementById('f-number').value = number; filled.push('číslo artiklu'); }
+
+    const price = Number(data.cena);
+    if (price > 0) { document.getElementById('f-price').value = price; filled.push('cena'); }
+
+    const ean = String(data.ean || '').replace(/\D/g, '');
+    if (ean.length === 8 || ean.length === 13) {
+        document.getElementById('f-ean').value = ean;
+        showEanHint();
+        filled.push('EAN');
+    }
+
+    const lead = data.sleva;
+    if (lead && Number(lead.hodnota) > 0) {
+        const unit = String(lead.jednotka || '').toUpperCase() === 'M' ? 'month' : 'day';
+        document.getElementById('f-lead').value = Number(lead.hodnota);
+        document.getElementById('f-lead-unit').value = unit;
+        showLeadHint();
+        filled.push(`sleva ${lead.hodnota} ${unit === 'month' ? 'měsíc' : 'den'}${unit === 'month' ? 'e' : ''} předem`);
+    }
+
+    closeScan();
+    showPanel('panel-add');
+    showMsg('form-msg', filled.length
+        ? `✅ Z cenovky načteno: ${filled.join(', ')}. Zkontroluj údaje, doplň EAN a datum spotřeby a ulož.`
+        : 'Z cenovky se nepodařilo nic přečíst, zadej údaje ručně.', filled.length ? 'ok' : 'error');
+    document.getElementById('f-ean').focus();
+}
+
+/* ---- fotka artiklu ---- */
+
+function setPendingPhoto(dataUrl) {
+    pendingPhoto = dataUrl || '';
+    renderPhotoField();
+}
+
+function renderPhotoField() {
+    const preview = document.getElementById('photo-preview');
+    preview.src = pendingPhoto || '';
+    preview.hidden = !pendingPhoto;
+    document.getElementById('photo-clear').hidden = !pendingPhoto;
+}
+
+function openPhotoView(id) {
+    const a = state.articles.find(x => x.id === id);
+    if (!a || !a.photo) return;
+    document.getElementById('photo-view-img').src = a.photo;
+    document.getElementById('photo-view-title').textContent = a.name;
+    document.getElementById('photo-view-overlay').hidden = false;
+}
+
+function initScanner() {
+    document.getElementById('scan-label-btn').addEventListener('click', () => openScan('label'));
+    document.getElementById('scan-ean-btn').addEventListener('click', () => openScan('ean'));
+    document.getElementById('photo-btn').addEventListener('click', () => openScan('photo'));
+    document.getElementById('scan-find-btn').addEventListener('click', () => openScan('find'));
+    document.getElementById('scan-retry').addEventListener('click', startCamera);
+    document.getElementById('photo-clear').addEventListener('click', () => setPendingPhoto(''));
+
+    document.getElementById('scan-file').addEventListener('change', e => {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        handleScanImage(file);
+    });
+    document.getElementById('scan-shot').addEventListener('click', async () => {
+        const blob = await captureFromVideo();
+        if (blob) handleScanImage(blob);
+    });
+    // Klepnutí do obrazu zaostří na místo, kam uživatel mířil (kde to zařízení umí).
+    document.getElementById('scan-video').addEventListener('click', async () => {
+        const track = scanStream && scanStream.getVideoTracks()[0];
+        if (!track || !track.getCapabilities) return;
+        try {
+            if ((track.getCapabilities().focusMode || []).includes('single-shot')) {
+                await track.applyConstraints({ advanced: [{ focusMode: 'single-shot' }] });
+            }
+        } catch { /* ostření není povinné */ }
+    });
+    document.getElementById('scan-cancel').addEventListener('click', closeScan);
+    document.getElementById('scan-overlay').addEventListener('click', e => {
+        if (e.target.id === 'scan-overlay') closeScan();
+    });
+
+    document.getElementById('photo-view-close').addEventListener('click', () => {
+        document.getElementById('photo-view-overlay').hidden = true;
+    });
+    document.getElementById('photo-view-overlay').addEventListener('click', e => {
+        if (e.target.id === 'photo-view-overlay') document.getElementById('photo-view-overlay').hidden = true;
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        if (!document.getElementById('scan-overlay').hidden) closeScan();
+        if (!document.getElementById('photo-view-overlay').hidden) {
+            document.getElementById('photo-view-overlay').hidden = true;
+        }
+    });
+}
+
+/* ---------- potvrzovací okno ----------
+   Systémové confirm() / prompt() bývají v aplikacích a na mobilu blokované
+   (tiše vrátí „ne“), takže se ptáme vlastním oknem. */
+
+let askResolve = null;
+
+function openAsk({ title, message, okLabel, danger, input }) {
+    return new Promise(resolve => {
+        askResolve = resolve;
+        document.getElementById('ask-title').textContent = title || 'Potvrzení';
+        document.getElementById('ask-message').innerHTML = esc(message).replace(/\n/g, '<br>');
+
+        const field = document.getElementById('ask-input-field');
+        const inputEl = document.getElementById('ask-input');
+        field.hidden = input === undefined;
+        inputEl.value = input || '';
+
+        const okBtn = document.getElementById('ask-ok');
+        okBtn.textContent = okLabel || 'Potvrdit';
+        okBtn.className = danger ? 'btn-danger' : 'btn';
+
+        document.getElementById('ask-overlay').hidden = false;
+        setTimeout(() => (field.hidden ? okBtn : inputEl).focus(), 30);
+    });
+}
+
+function closeAsk(value) {
+    document.getElementById('ask-overlay').hidden = true;
+    const resolve = askResolve;
+    askResolve = null;
+    if (resolve) resolve(value);
+}
+
+/** Ano/ne dotaz; vrátí true jen při potvrzení. */
+function askConfirm(message, options = {}) {
+    return openAsk({ ...options, message });
+}
+
+/** Dotaz na text; vrátí zadaný text, nebo null při zrušení. */
+function askText(message, defaultValue, options = {}) {
+    return openAsk({ ...options, message, input: defaultValue || '' });
+}
+
+function initAsk() {
+    const inputField = document.getElementById('ask-input-field');
+    const inputEl = document.getElementById('ask-input');
+    const confirmed = () => (inputField.hidden ? true : inputEl.value.trim());
+    const cancelled = () => (inputField.hidden ? false : null);
+
+    document.getElementById('ask-ok').addEventListener('click', () => closeAsk(confirmed()));
+    document.getElementById('ask-cancel').addEventListener('click', () => closeAsk(cancelled()));
+    document.getElementById('ask-overlay').addEventListener('click', e => {
+        if (e.target.id === 'ask-overlay') closeAsk(cancelled());
+    });
+    inputEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); closeAsk(confirmed()); }
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !document.getElementById('ask-overlay').hidden) closeAsk(cancelled());
+    });
+}
+
+/* ---------- pomocné ---------- */
+
+function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, ch =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function fmtPrice(value) {
+    if (value === '' || value === null || value === undefined) return '';
+    return Number(value).toFixed(2).replace('.', ',') + ' Kč';
+}
+
+function plural(n, one, few, many) {
+    const abs = Math.abs(n);
+    if (abs === 1) return one;
+    if (abs >= 2 && abs <= 4) return few;
+    return many;
+}
+
+function showMsg(elId, text, kind) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'form-msg' + (kind ? ' ' + kind : '');
+}
+
+/* ---------- inicializace ---------- */
+
+function initListEvents() {
+    document.getElementById('list').addEventListener('click', e => {
+        const photo = e.target.closest('img[data-act="photo"]');
+        if (photo) return openPhotoView(photo.dataset.id);
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        const { act, id } = btn.dataset;
+        if (act === 'check') openCheck(id);
+        else if (act === 'info') editInfo(id);
+        else if (act === 'retire') retireArticle(id);
+        else if (act === 'restore') restoreArticle(id);
+        else if (act === 'edit') editArticle(id);
+        else if (act === 'delete') deleteArticle(id);
+        else if (act === 'history') {
+            expandedHistory[id] = !expandedHistory[id];
+            renderList();
+        }
+    });
+
+    document.getElementById('search').addEventListener('input', e => {
+        searchQuery = e.target.value.trim();
+        renderList();
+    });
+    document.getElementById('log-search').addEventListener('input', e => {
+        logQuery = e.target.value.trim();
+        renderLog();
+    });
+    document.getElementById('filters').addEventListener('click', e => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        activeFilter = chip.dataset.filter;
+        document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('active', c === chip));
+        renderCategorySelects();
+        renderList();
+    });
+    document.getElementById('print-btn').addEventListener('click', () => window.print());
+}
+
+function initDayWatcher() {
+    // Po změně dne (nebo vrácení k záložce) se stavy přepočítají a znovu ohlásí.
+    const check = () => {
+        if (renderedForDay !== todayISO()) {
+            render();
+            notifyDue();
+        }
+    };
+    setInterval(check, 60000);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) { check(); notifyDue(); }
+    });
+}
+
+function init() {
+    document.getElementById('app-version').textContent = APP_VERSION;
+    document.getElementById('app-version-settings').textContent = APP_VERSION;
+    initTheme();
+    initTabs();
+    initForm();
+    initListEvents();
+    initCheckModal();
+    initAsk();
+    initScanner();
+    initCategories();
+    initSettings();
+    initInstall();
+    document.getElementById('f-lead').value = state.settings.defaultLead;
+    document.getElementById('f-date').min = '2000-01-01';
+    render();
+    initNotifications();
+    initDayWatcher();
+    initSync();
+    initGistSync();
+}
+
+init();
+</script>
+</body>
+</html>
