@@ -21,6 +21,10 @@ Evidence artiklů a hlídání jejich data spotřeby. Stačí otevřít soubor `
    - nakonec se zadá **nové nejhorší datum spotřeby** (nebo „datum teď neznám“)
 4. Celá kontrola se uloží do historie a hlídání pokračuje s novým datem.
 
+**Čtení cenovky bez Claude:** nainstalovaná aplikace rozpozná text přímo v telefonu (Tesseract z CDN,
+česky) a vytáhne z cenovky název, číslo artiklu, cenu i značku slevy. Cena se bere ta psaná největším
+písmem, takže přeškrtnutá původní cena nevyhraje.
+
 **Čtečka:** po otevření běží kamera rovnou v aplikaci a čárový kód se načte sám, jakmile na něj
 namíříš (vestavěná čtečka prohlížeče, jinak ZXing z CDN). Tlačítko *📷 Naskenovat artikl* nad seznamem
 podle kódu rovnou otevře kontrolu známého artiklu, u neznámého předvyplní formulář. Tlačítko *🏷️ Načíst z cenovky* vyfotí regálovou cenovku a vyčte z ní název, číslo artiklu,
@@ -65,6 +69,13 @@ Podmínkou je, aby byla otevřená přes `https://` – nejjednodušeji přes Gi
 
 Bez instalace stačí soubor `spotreba.html` stáhnout a otevřít v prohlížeči – funguje i takto,
 jen bez vlastní ikony a okna.
+
+### Synchronizace v nainstalované aplikaci (GitHub)
+
+Nainstalovaná verze (GitHub Pages, kamera funguje) sdílí data přes soukromý **gist** na GitHubu:
+v Nastavení → Synchronizace vlož token s právem *Gists: read and write*. Aplikace si sama najde nebo
+založí gist `kontrola-spotreby.json` a drží ho aktuální; token zůstává jen v daném zařízení, na
+dalším vložíš ten samý. U artiklu vyhrává novější změna, smazané artikly drží zvlášť seznam smazání.
 
 ### Synchronizace mezi zařízeními
 
