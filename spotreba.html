@@ -54,6 +54,9 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Skrytý prvek musí zmizet i tam, kde má vlastní display (flex, grid). */
+[hidden] { display: none !important; }
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 16px;
@@ -626,6 +629,21 @@ footer {
 
 <footer>Kontrola dat spotřeby artiklů · verze <span id="app-version">–</span></footer>
 
+<!-- ===== POTVRZOVACÍ OKNO ===== -->
+<div class="overlay" id="ask-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ask-title">
+        <h2 id="ask-title">Potvrzení</h2>
+        <div class="sub" id="ask-message"></div>
+        <div class="field" id="ask-input-field" hidden>
+            <input type="text" id="ask-input" autocomplete="off">
+        </div>
+        <div class="btn-row">
+            <button type="button" class="btn" id="ask-ok">Potvrdit</button>
+            <button type="button" class="btn-secondary" id="ask-cancel">Zrušit</button>
+        </div>
+    </div>
+</div>
+
 <!-- ===== MODÁL KONTROLY ===== -->
 <div class="overlay" id="check-overlay" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="check-title">
@@ -677,7 +695,7 @@ footer {
    Data se ukládají do localStorage tohoto prohlížeče.
    =================================================================== */
 
-const APP_VERSION = '2026-09-13.11';
+const APP_VERSION = '2026-09-13.13';
 const STORE_KEY = 'spotreba-data-v1';
 const THEME_KEY = 'spotreba-theme';
 const DEFAULT_LEAD = 7;
@@ -858,15 +876,17 @@ function initCategories() {
         if (e.key === 'Enter') { e.preventDefault(); document.getElementById('cat-add').click(); }
     });
 
-    document.getElementById('cat-list').addEventListener('click', e => {
+    document.getElementById('cat-list').addEventListener('click', async e => {
         const btn = e.target.closest('button[data-cat-act]');
         if (!btn) return;
-        const cat = catById(btn.dataset.id);
+        let cat = catById(btn.dataset.id);
         if (!cat) return;
 
         if (btn.dataset.catAct === 'rename') {
-            const name = prompt('Nový název kategorie:', cat.name);
+            const name = await askText('Nový název kategorie:', cat.name, { title: 'Přejmenovat kategorii', okLabel: 'Přejmenovat' });
             if (name === null) return;
+            cat = catById(btn.dataset.id);
+            if (!cat) return;
             const clean = name.trim();
             if (!clean) return showMsg('cat-msg', 'Název nesmí být prázdný.', 'error');
             const clash = findCategoryByName(clean);
@@ -882,7 +902,8 @@ function initCategories() {
             const question = n
                 ? `Smazat kategorii „${cat.name}“?\n\n${n} ${plural(n, 'artikl zůstane', 'artikly zůstanou', 'artiklů zůstane')} zachován${n === 1 ? '' : 'y'}, jen bez kategorie.`
                 : `Smazat kategorii „${cat.name}“?`;
-            if (!confirm(question)) return;
+            if (!await askConfirm(question, { title: 'Smazat kategorii', okLabel: 'Smazat', danger: true })) return;
+            if (!catById(cat.id)) return;
             state.categories = state.categories.filter(c => c.id !== cat.id);
             state.articles.forEach(a => { if (a.categoryId === cat.id) a.categoryId = ''; });
             showMsg('cat-msg', '✅ Kategorie byla smazána.', 'ok');
@@ -1298,7 +1319,7 @@ function validEanChecksum(code) {
     return (10 - (sum % 10)) % 10 === check;
 }
 
-function submitArticle() {
+async function submitArticle() {
     const id = document.getElementById('f-id').value;
     const ean = document.getElementById('f-ean').value.trim();
     const number = document.getElementById('f-number').value.trim();
@@ -1336,8 +1357,11 @@ function submitArticle() {
 
     const dup = state.articles.find(x => x.ean === ean || (x.number && x.number === number));
     if (dup) {
-        const ok = confirm(`Artikl s tímto EAN / číslem už existuje:\n\n${dup.name} (${fmtDate(dup.worstDate)})\n\nChceš u něj jen změnit nejhorší datum spotřeby?`);
-        if (ok) {
+        const ok = await askConfirm(`Artikl s tímto EAN nebo číslem už existuje:\n\n${dup.name} (${fmtDate(dup.worstDate)})\n\nChceš u něj jen změnit nejhorší datum spotřeby?`,
+            { title: 'Artikl už existuje', okLabel: 'Změnit datum' });
+        const current = ok ? state.articles.find(x => x.id === dup.id) : null;
+        if (current) {
+            const dup = current;
             dup.worstDate = worstDate;
             dup.leadDays = leadDays;
             if (note) dup.note = note;
@@ -1391,10 +1415,15 @@ function editArticle(id) {
     showPanel('panel-add');
 }
 
-function retireArticle(id) {
-    const a = state.articles.find(x => x.id === id);
+async function retireArticle(id) {
+    let a = state.articles.find(x => x.id === id);
     if (!a || isRetired(a)) return;
-    if (!confirm(`Označit artikl „${a.name}“ jako vyřazený z prodeje?\n\nPřestane se hlídat a hlásit, ale zůstane uložený i s celou historií kontrol. Kdykoli ho lze vrátit do prodeje.`)) return;
+    const ok = await askConfirm(`Označit artikl „${a.name}“ jako vyřazený z prodeje?\n\nPřestane se hlídat a hlásit, ale zůstane uložený i s celou historií kontrol. Kdykoli ho lze vrátit do prodeje.`,
+        { title: 'Vyřadit z prodeje', okLabel: 'Vyřadit' });
+    if (!ok) return;
+    // Během potvrzování mohla dorazit aktualizace z cloudu a seznam se obnovit.
+    a = state.articles.find(x => x.id === id);
+    if (!a || isRetired(a)) return;
     a.retiredAt = new Date().toISOString();
     a.checks.push({ kind: 'retired', at: a.retiredAt, note: '' });
     delete state.notified[a.id];
@@ -1402,20 +1431,27 @@ function retireArticle(id) {
     render();
 }
 
-function restoreArticle(id) {
-    const a = state.articles.find(x => x.id === id);
+async function restoreArticle(id) {
+    let a = state.articles.find(x => x.id === id);
     if (!a || !isRetired(a)) return;
-    if (!confirm(`Vrátit artikl „${a.name}“ zpět do prodeje?\n\nZačne se opět hlídat. Pokud u něj chybí datum spotřeby, doplň ho přes Upravit nebo Zkontrolovat.`)) return;
+    const ok = await askConfirm(`Vrátit artikl „${a.name}“ zpět do prodeje?\n\nZačne se opět hlídat. Pokud u něj chybí datum spotřeby, doplň ho přes Upravit nebo Zkontrolovat.`,
+        { title: 'Vrátit do prodeje', okLabel: 'Vrátit do prodeje' });
+    if (!ok) return;
+    a = state.articles.find(x => x.id === id);
+    if (!a || !isRetired(a)) return;
     a.retiredAt = '';
     a.checks.push({ kind: 'restored', at: new Date().toISOString(), note: '' });
     saveState();
     render();
 }
 
-function deleteArticle(id) {
+async function deleteArticle(id) {
     const a = state.articles.find(x => x.id === id);
     if (!a) return;
-    if (!confirm(`Smazat artikl „${a.name}“ i s historií kontrol?`)) return;
+    const ok = await askConfirm(`Smazat artikl „${a.name}“ i s historií kontrol?\n\nTuto akci nelze vzít zpět.`,
+        { title: 'Smazat artikl', okLabel: 'Smazat', danger: true });
+    if (!ok) return;
+    if (!state.articles.some(x => x.id === id)) return;
     state.articles = state.articles.filter(x => x.id !== id);
     delete state.notified[id];
     saveState();
@@ -2047,8 +2083,10 @@ function initSettings() {
     document.getElementById('export-csv').addEventListener('click', exportCsv);
     document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
     document.getElementById('import-file').addEventListener('change', importJson);
-    document.getElementById('wipe-btn').addEventListener('click', () => {
-        if (!confirm('Opravdu smazat všechny artikly i historii kontrol? Tuto akci nelze vzít zpět.')) return;
+    document.getElementById('wipe-btn').addEventListener('click', async () => {
+        const ok = await askConfirm('Opravdu smazat všechny artikly i historii kontrol?\n\nTuto akci nelze vzít zpět.',
+            { title: 'Smazat všechna data', okLabel: 'Smazat vše', danger: true });
+        if (!ok) return;
         state = emptyState();
         saveState();
         resetForm();
@@ -2119,14 +2157,16 @@ function importJson(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
         try {
             const data = JSON.parse(String(reader.result));
             const incoming = Array.isArray(data.articles) ? data.articles.map(normalizeArticle) : [];
             const incomingCats = Array.isArray(data.categories) ? data.categories.map(normalizeCategory) : [];
-            if (incoming.length === 0 && !confirm('Záloha neobsahuje žádné artikly. Přesto pokračovat?')) return;
-            const merge = state.articles.length > 0 &&
-                confirm(`Aktuálně máš ${state.articles.length} artiklů.\n\nOK = přidat artikly ze zálohy k nim\nZrušit = nahradit vše obsahem zálohy`);
+            if (incoming.length === 0 && !await askConfirm('Záloha neobsahuje žádné artikly. Přesto pokračovat?',
+                { title: 'Import zálohy' })) return;
+            const merge = state.articles.length > 0 && await askConfirm(
+                `Aktuálně máš ${state.articles.length} artiklů.\n\nPřidat artikly ze zálohy k nim, nebo jimi všechno nahradit?`,
+                { title: 'Import zálohy', okLabel: 'Přidat k stávajícím' });
             if (merge) {
                 // Kategorie ze zálohy spárujeme podle názvu, chybějící doplníme.
                 const catMap = {};
@@ -2154,6 +2194,68 @@ function importJson(e) {
     };
     reader.readAsText(file);
     e.target.value = '';
+}
+
+/* ---------- potvrzovací okno ----------
+   Systémové confirm() / prompt() bývají v aplikacích a na mobilu blokované
+   (tiše vrátí „ne“), takže se ptáme vlastním oknem. */
+
+let askResolve = null;
+
+function openAsk({ title, message, okLabel, danger, input }) {
+    return new Promise(resolve => {
+        askResolve = resolve;
+        document.getElementById('ask-title').textContent = title || 'Potvrzení';
+        document.getElementById('ask-message').innerHTML = esc(message).replace(/\n/g, '<br>');
+
+        const field = document.getElementById('ask-input-field');
+        const inputEl = document.getElementById('ask-input');
+        field.hidden = input === undefined;
+        inputEl.value = input || '';
+
+        const okBtn = document.getElementById('ask-ok');
+        okBtn.textContent = okLabel || 'Potvrdit';
+        okBtn.className = danger ? 'btn-danger' : 'btn';
+
+        document.getElementById('ask-overlay').hidden = false;
+        setTimeout(() => (field.hidden ? okBtn : inputEl).focus(), 30);
+    });
+}
+
+function closeAsk(value) {
+    document.getElementById('ask-overlay').hidden = true;
+    const resolve = askResolve;
+    askResolve = null;
+    if (resolve) resolve(value);
+}
+
+/** Ano/ne dotaz; vrátí true jen při potvrzení. */
+function askConfirm(message, options = {}) {
+    return openAsk({ ...options, message });
+}
+
+/** Dotaz na text; vrátí zadaný text, nebo null při zrušení. */
+function askText(message, defaultValue, options = {}) {
+    return openAsk({ ...options, message, input: defaultValue || '' });
+}
+
+function initAsk() {
+    const inputField = document.getElementById('ask-input-field');
+    const inputEl = document.getElementById('ask-input');
+    const confirmed = () => (inputField.hidden ? true : inputEl.value.trim());
+    const cancelled = () => (inputField.hidden ? false : null);
+
+    document.getElementById('ask-ok').addEventListener('click', () => closeAsk(confirmed()));
+    document.getElementById('ask-cancel').addEventListener('click', () => closeAsk(cancelled()));
+    document.getElementById('ask-overlay').addEventListener('click', e => {
+        if (e.target.id === 'ask-overlay') closeAsk(cancelled());
+    });
+    inputEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); closeAsk(confirmed()); }
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !document.getElementById('ask-overlay').hidden) closeAsk(cancelled());
+    });
 }
 
 /* ---------- pomocné ---------- */
@@ -2236,6 +2338,7 @@ function init() {
     initForm();
     initListEvents();
     initCheckModal();
+    initAsk();
     initCategories();
     initSettings();
     initInstall();
