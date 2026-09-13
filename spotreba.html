@@ -1625,29 +1625,55 @@ function notifyDue() {
 /* ---------- synchronizace mezi zařízeními ----------
    Když stránka běží v prostředí Claude, artikly se ukládají i do sdíleného
    úložiště, takže mobil i počítač vidí to samé. Bez něj aplikace funguje
-   dál jen s daty v tomto zařízení. */
+   dál jen s daty v tomto zařízení.
+
+   Pravidla, aby se změna nikdy neztratila:
+   - syncMirror drží podobu, kterou má cloud;
+   - pendingWrites / pendingDeletes drží, co jsme změnili tady a cloud to
+     ještě nepotvrdil – zapisují se hned při změně, ne až při odesílání;
+   - příchozí snímek z cloudu nikdy nepřepíše nepotvrzenou změnu. */
 
 const ARTICLES_COLLECTION = 'articles';
 const TOMBSTONES_COLLECTION = 'deleted';
 const TOMBSTONE_DAYS = 180;
 const KNOWN_IDS_KEY = 'spotreba-sync-known-ids';
 
+let syncDb = null;
+let syncArticles = null;
+let syncMirror = {};                                  // id artiklu -> podoba v cloudu
+let syncMetaMirror = { categories: null, settings: null };
+let pendingWrites = {};                               // id artiklu -> podoba, která má být v cloudu
+let pendingDeletes = new Set();
+let pendingMeta = { categories: null, settings: null };
+let syncPushTimer = null;
+
+/** Artikly, které toto zařízení už někdy vidělo v cloudu. Když takový artikl
+    v cloudu chybí, byl smazaný na jiném zařízení – nesmí se nahrát zpátky. */
+let knownRemoteIds = loadKnownIds();
+
 /** Artikl poznáme podle dvojice EAN + číslo artiklu. */
 function articleKey(a) {
     return `${a.ean}|${a.number}`.toLowerCase();
 }
 
-let syncDb = null;
-let syncArticles = null;
-let syncMirror = {};                                  // id artiklu -> podoba v cloudu
-let syncMetaMirror = { categories: null, settings: null };
-let syncPushTimer = null;
-let pendingWrites = {};                               // odeslané změny čekající na potvrzení
-let pendingDeletes = new Set();                       // odeslaná smazání čekající na potvrzení
+/** Porovnávací podoba dat: pořadí klíčů se mezi zařízeními a úložištěm liší,
+    takže se klíče seřadí – jinak by se pořád dokola posílaly stejné změny. */
+function stableJson(value) {
+    if (Array.isArray(value)) return '[' + value.map(stableJson).join(',') + ']';
+    if (value && typeof value === 'object') {
+        return '{' + Object.keys(value).sort()
+            .map(k => JSON.stringify(k) + ':' + stableJson(value[k])).join(',') + '}';
+    }
+    return JSON.stringify(value === undefined ? null : value);
+}
 
-/** Artikly, které toto zařízení už někdy vidělo v cloudu. Když takový artikl
-    v cloudu chybí, byl smazaný na jiném zařízení – nesmí se nahrát zpátky. */
-let knownRemoteIds = loadKnownIds();
+function safeParse(json) {
+    try {
+        return JSON.parse(json);
+    } catch {
+        return null;
+    }
+}
 
 function loadKnownIds() {
     try {
@@ -1680,12 +1706,13 @@ function setSyncStatus(kind, detail) {
         return showMsg('sync-msg', '');
     }
     if (kind === 'error') {
-        hint.innerHTML = '📱 Sdílené úložiště se nepodařilo použít, data zůstávají v tomto zařízení.';
+        hint.innerHTML = '☁️ Sdílené úložiště se právě nedaří použít. Změny zůstávají uložené'
+            + ' v tomto zařízení a odešlou se, jakmile to půjde.';
         return showMsg('sync-msg', detail || '', 'error');
     }
     hint.innerHTML = '☁️ <b>Synchronizováno.</b> Artikly, kategorie i historie kontrol jsou stejné'
         + ' na všech zařízeních, kde aplikaci otevřeš pod svým účtem.';
-    showMsg('sync-msg', '✅ Naposledy aktualizováno ' + detail, 'ok');
+    showMsg('sync-msg', '✅ Naposledy uloženo ' + detail, 'ok');
 }
 
 async function initSync() {
@@ -1705,7 +1732,7 @@ async function initSync() {
     try {
         await migrateLocalData();
     } catch (e) {
-        return setSyncStatus('error', 'Data z tohoto zařízení se nepodařilo nahrát: ' + (e && e.message || ''));
+        return setSyncStatus('error', 'Data z tohoto zařízení se nepodařilo nahrát: ' + ((e && e.message) || ''));
     }
     subscribeToCloud();
 }
@@ -1738,7 +1765,6 @@ async function migrateLocalData() {
         }
     });
 
-    // Artikly už v cloudu poznáme podle id nebo podle dvojice EAN + číslo artiklu.
     const remoteIds = new Set(remoteArticles.map(a => a.id));
     const remoteKeys = new Set(remoteArticles.map(articleKey));
     const localOnly = state.articles.filter(a => !remoteIds.has(a.id));
@@ -1755,6 +1781,8 @@ async function migrateLocalData() {
         && !remoteKeys.has(articleKey(a))
         && !tombIds.has(a.id)
         && !tombKeys.has(articleKey(a)));
+
+    // Co v cloudu bylo a teď chybí, někdo smazal na jiném zařízení.
     const uploading = new Set(toUpload.map(a => a.id));
     const dropped = localOnly.filter(a => !uploading.has(a.id));
     if (dropped.length) {
@@ -1768,8 +1796,7 @@ async function migrateLocalData() {
         a.categoryId = catIdMap[a.categoryId] || '';
         await syncArticles.doc(a.id).set(a);
     }
-    const catsChanged = mergedCats.length !== remoteCats.length;
-    if (catsChanged) await syncDb.doc('meta/categories').set({ list: mergedCats });
+    if (mergedCats.length !== remoteCats.length) await syncDb.doc('meta/categories').set({ list: mergedCats });
     if (!settingsSnap.exists) await syncDb.doc('meta/settings').set(state.settings);
 }
 
@@ -1784,24 +1811,31 @@ function pruneTombstones(tombs) {
 
 function subscribeToCloud() {
     syncArticles.onSnapshot(snap => {
-        const remote = snap.docs.map(d => d.data()).filter(d => d && d.id).map(normalizeArticle);
-        applyRemoteArticles(remote);
-        setSyncStatus('ok', new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+        applyRemoteArticles(snap.docs.map(d => d.data()).filter(d => d && d.id).map(normalizeArticle));
     }, onSyncError);
 
     syncDb.doc('meta/categories').onSnapshot(snap => {
-        const list = snap.exists && Array.isArray(snap.data().list) ? snap.data().list : null;
+        const list = snap.exists && Array.isArray(snap.data().list) ? snap.data().list.map(normalizeCategory) : null;
         if (!list) return;
-        state.categories = list.map(normalizeCategory);
-        syncMetaMirror.categories = JSON.stringify(state.categories);
+        syncMetaMirror.categories = stableJson(list);
+        if (pendingMeta.categories) {
+            if (pendingMeta.categories !== syncMetaMirror.categories) return schedulePush();
+            pendingMeta.categories = null;
+        }
+        state.categories = list;
         saveLocal();
         render();
     }, onSyncError);
 
     syncDb.doc('meta/settings').onSnapshot(snap => {
         if (!snap.exists) return;
-        state.settings = { ...state.settings, ...snap.data() };
-        syncMetaMirror.settings = JSON.stringify(state.settings);
+        const settings = { ...state.settings, ...snap.data() };
+        syncMetaMirror.settings = stableJson(settings);
+        if (pendingMeta.settings) {
+            if (pendingMeta.settings !== syncMetaMirror.settings) return schedulePush();
+            pendingMeta.settings = null;
+        }
+        state.settings = settings;
         saveLocal();
         const lead = document.getElementById('s-lead');
         if (lead) lead.value = state.settings.defaultLead;
@@ -1809,98 +1843,118 @@ function subscribeToCloud() {
 }
 
 /**
- * Převezme stav z cloudu. Změny, které jsme právě odeslali a cloud je ještě
- * nepotvrdil, mají přednost – jinak by se smazaný artikl vrátil zpět.
+ * Převezme stav z cloudu. Změny, které jsme právě udělali a cloud je ještě
+ * nepotvrdil, mají přednost – jinak by zmizela právě uložená kontrola nebo
+ * by se vrátil smazaný artikl.
  */
 function applyRemoteArticles(remote) {
     rememberRemoteIds(remote.map(a => a.id));
+
+    syncMirror = {};
+    remote.forEach(a => { syncMirror[a.id] = stableJson(a); });
+
     const byId = new Map(remote.map(a => [a.id, a]));
 
     pendingDeletes.forEach(id => {
-        if (byId.has(id)) byId.delete(id);      // smazání ještě nedorazilo, artikl nevracíme
-        else pendingDeletes.delete(id);         // cloud smazání potvrdil
+        if (syncMirror[id]) byId.delete(id);        // smazání cloud ještě nepotvrdil
+        else pendingDeletes.delete(id);             // potvrzeno, artikl je pryč
     });
 
     Object.keys(pendingWrites).forEach(id => {
-        const mine = pendingWrites[id];
-        const theirs = byId.get(id);
-        if (theirs && JSON.stringify(theirs) === mine) delete pendingWrites[id];
-        else byId.set(id, normalizeArticle(JSON.parse(mine)));
+        if (syncMirror[id] === pendingWrites[id]) {
+            delete pendingWrites[id];               // cloud má naši verzi
+            return;
+        }
+        const mine = safeParse(pendingWrites[id]);
+        if (mine) byId.set(id, normalizeArticle(mine));
     });
 
-    const articles = [...byId.values()];
-    syncMirror = {};
-    articles.forEach(a => { syncMirror[a.id] = JSON.stringify(a); });
-    state.articles = articles;
+    state.articles = [...byId.values()];
     saveLocal();
     render();
+    setSyncStatus('ok', new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+    if (hasPendingChanges()) schedulePush();        // dopošle, co cloud ještě nemá
+}
+
+function hasPendingChanges() {
+    return Object.keys(pendingWrites).length > 0 || pendingDeletes.size > 0
+        || !!pendingMeta.categories || !!pendingMeta.settings;
 }
 
 function onSyncError(e) {
     setSyncStatus('error', (e && e.message) || 'Spojení se sdíleným úložištěm skončilo.');
 }
 
-function safeParse(json) {
-    try {
-        return JSON.parse(json);
-    } catch {
-        return null;
-    }
-}
-
 function schedulePush() {
     if (!syncArticles) return;
-    clearTimeout(syncPushTimer);
-    syncPushTimer = setTimeout(pushChanges, 300);
+    markPendingChanges();                           // hned, ať to snímek z cloudu nepřepíše
+    // Odeslání se jen naplánuje; další volání ho nesmí odsouvat, jinak by
+    // se při častých aktualizacích z cloudu neodeslalo nikdy.
+    if (syncPushTimer) return;
+    syncPushTimer = setTimeout(() => {
+        syncPushTimer = null;
+        pushChanges();
+    }, 300);
 }
 
-/** Odešle jen to, co se od poslední známé podoby v cloudu změnilo. */
-async function pushChanges() {
-    if (!syncArticles) return;
-    const writes = [];
+/** Poznamená, co se právě změnilo oproti podobě v cloudu. */
+function markPendingChanges() {
     const present = new Set();
 
     state.articles.forEach(a => {
         present.add(a.id);
-        const json = JSON.stringify(a);
+        const json = stableJson(a);
         if (syncMirror[a.id] !== json) {
-            syncMirror[a.id] = json;
             pendingWrites[a.id] = json;
             pendingDeletes.delete(a.id);
-            writes.push(syncArticles.doc(a.id).set(a).catch(err => {
-                delete pendingWrites[a.id];
-                delete syncMirror[a.id];                 // příště se zkusí znovu
-                throw err;
-            }));
-        }
-    });
-    Object.keys(syncMirror).forEach(id => {
-        if (!present.has(id)) {
-            const previous = safeParse(syncMirror[id]);
-            delete syncMirror[id];
-            delete pendingWrites[id];
-            pendingDeletes.add(id);
-            writes.push(syncArticles.doc(id).delete().catch(err => {
-                pendingDeletes.delete(id);
-                throw err;
-            }));
-            writes.push(syncDb.doc(`${TOMBSTONES_COLLECTION}/${id}`).set({
-                id,
-                key: previous ? articleKey(previous) : '',
-                at: new Date().toISOString()
-            }).catch(() => {}));
         }
     });
 
-    const catsJson = JSON.stringify(state.categories);
-    if (catsJson !== syncMetaMirror.categories) {
-        syncMetaMirror.categories = catsJson;
-        writes.push(syncDb.doc('meta/categories').set({ list: state.categories }));
+    Object.keys(syncMirror).forEach(id => {
+        if (!present.has(id)) pendingDeletes.add(id);
+    });
+    Object.keys(pendingWrites).forEach(id => {
+        if (!present.has(id)) delete pendingWrites[id];
+    });
+
+    const catsJson = stableJson(state.categories);
+    if (catsJson !== syncMetaMirror.categories) pendingMeta.categories = catsJson;
+    const settingsJson = stableJson(state.settings);
+    if (settingsJson !== syncMetaMirror.settings) pendingMeta.settings = settingsJson;
+}
+
+/** Odešle do cloudu vše, co tam ještě není. */
+async function pushChanges() {
+    if (!syncArticles) return;
+    const writes = [];
+
+    Object.keys(pendingWrites).forEach(id => {
+        const json = pendingWrites[id];
+        if (syncMirror[id] === json) { delete pendingWrites[id]; return; }
+        const article = safeParse(json);
+        if (!article) { delete pendingWrites[id]; return; }
+        writes.push(syncArticles.doc(id).set(article).then(() => { syncMirror[id] = json; }));
+    });
+
+    pendingDeletes.forEach(id => {
+        const previous = safeParse(syncMirror[id] || '');
+        writes.push(syncArticles.doc(id).delete().then(() => { delete syncMirror[id]; }));
+        writes.push(syncDb.doc(`${TOMBSTONES_COLLECTION}/${id}`).set({
+            id,
+            key: previous ? articleKey(previous) : '',
+            at: new Date().toISOString()
+        }).catch(() => {}));
+    });
+
+    if (pendingMeta.categories) {
+        const json = pendingMeta.categories;
+        writes.push(syncDb.doc('meta/categories').set({ list: state.categories })
+            .then(() => { syncMetaMirror.categories = json; }));
     }
-    const settingsJson = JSON.stringify(state.settings);
-    if (settingsJson !== syncMetaMirror.settings) {
-        syncMetaMirror.settings = settingsJson;
-        writes.push(syncDb.doc('meta/settings').set(state.settings));
+    if (pendingMeta.settings) {
+        const json = pendingMeta.settings;
+        writes.push(syncDb.doc('meta/settings').set(state.settings)
+            .then(() => { syncMetaMirror.settings = json; }));
     }
 
     if (writes.length === 0) return;
@@ -1908,7 +1962,8 @@ async function pushChanges() {
         await Promise.all(writes);
         setSyncStatus('ok', new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
     } catch (e) {
-        setSyncStatus('error', 'Změnu se nepodařilo odeslat: ' + ((e && e.message) || 'neznámá chyba'));
+        setSyncStatus('error', 'Změna se zatím neodeslala: ' + ((e && e.message) || 'neznámá chyba'));
+        setTimeout(() => { if (hasPendingChanges()) pushChanges(); }, 3000);
     }
 }
 
