@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 510 240" width="510" height="240" role="img" aria-label="Billboard ZÍTRA – Stát, který funguje">
+  <title>ZÍTRA – billboard 5100 × 2400 mm</title>
+  <defs><clipPath id="bb"><rect width="510" height="240"/></clipPath><style>.h{font-family:Inter,'Helvetica Neue',Arial,sans-serif;font-weight:800}.b{font-family:Inter,'Helvetica Neue',Arial,sans-serif;font-weight:400}.m{font-family:Inter,'Helvetica Neue',Arial,sans-serif;font-weight:600}</style></defs>
+  <g clip-path="url(#bb)">
+    <rect width="510" height="240" fill="#0B2545"/>
+    <circle cx="470" cy="240" r="150" fill="#12A594" opacity="0.16"/>
+    <circle cx="470" cy="240" r="96" fill="#12A594" opacity="0.20"/>
+    <text class="h" font-size="44" fill="#F7F4ED" letter-spacing="-0.6">
+      <tspan x="40" y="104">STÁT, KTERÝ</tspan><tspan x="40" y="154" fill="#FFB020">FUNGUJE.</tspan>
+    </text>
+    <rect x="40" y="176" width="64" height="4" fill="#12A594"/>
+    <text x="40" y="206" class="m" font-size="15" fill="#C9D3E0">Volby 2026 · zitra.cz</text>
+    <g transform="translate(392,24) scale(0.33)"><rect width="128" height="128" rx="30" fill="#0B2545"/><path d="M64 83 A17 17 0 0 1 98 83 Z" fill="#FFB020"/><g fill="#F7F4ED"><rect x="24" y="28" width="80" height="14" rx="2"/><polygon points="80,42 104,42 48,86 24,86"/><rect x="24" y="86" width="80" height="14" rx="2"/></g></g>
+    <text x="470" y="82" text-anchor="end" class="h" font-size="30" fill="#F7F4ED">ZÍTRA</text>
+  </g>
+</svg>

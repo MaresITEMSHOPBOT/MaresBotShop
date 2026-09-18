@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 230" width="280" height="230" role="img" aria-label="ZÍTRA – stát, který funguje">
+  <title>ZÍTRA – vertikální logo</title>
+  <g transform="translate(76,0)">
+    <rect width="128" height="128" rx="30" fill="#0B2545"/>
+    <path d="M64 83 A17 17 0 0 1 98 83 Z" fill="#FFB020"/>
+    <g fill="#F7F4ED">
+      <rect x="24" y="28" width="80" height="14" rx="2"/>
+      <polygon points="80,42 104,42 48,86 24,86"/>
+      <rect x="24" y="86" width="80" height="14" rx="2"/>
+    </g>
+  </g>
+  <text x="140" y="188" text-anchor="middle" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="58" font-weight="800" letter-spacing="2" fill="#0B2545">ZÍTRA</text>
+  <text x="140" y="214" text-anchor="middle" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="3.6" fill="#6B7785">STÁT, KTERÝ FUNGUJE</text>
+</svg>

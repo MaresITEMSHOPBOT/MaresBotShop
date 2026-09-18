@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 594 841" width="594" height="841" role="img" aria-label="Plakát ZÍTRA – Úřad, z gauče.">
+  <title>ZÍTRA – plakát A1 – VOLBY 2026 · PROGRAM Č. 3</title>
+  <defs><clipPath id="r3"><rect width="594" height="841"/></clipPath>
+    <style>
+      .h { font-family: Inter, 'Helvetica Neue', Arial, sans-serif; font-weight: 800; }
+      .b { font-family: Inter, 'Helvetica Neue', Arial, sans-serif; font-weight: 400; }
+      .m { font-family: Inter, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; }
+    </style>
+  </defs>
+  <g clip-path="url(#r3)">
+    <rect width="594" height="841" fill="#0B2545"/>
+    <circle cx="560" cy="150" r="230" fill="#12A594" opacity="0.13"/>
+    <circle cx="560" cy="150" r="150" fill="#12A594" opacity="0.13"/>
+    <text x="56" y="112" class="m" font-size="18" letter-spacing="5" fill="#FFB020">VOLBY 2026 · PROGRAM Č. 3</text>
+    <text class="h" font-size="68" fill="#F7F4ED" letter-spacing="-1"><tspan x="56" y="232">Úřad,</tspan><tspan x="56" y="308">který vyřídíte</tspan><tspan x="56" y="384" fill="#FFB020">z gauče.</tspan></text>
+    <rect x="56" y="430" width="88" height="5" fill="#12A594"/>
+    <text class="b" font-size="23" fill="#C9D3E0"><tspan x="56" y="486">Stát se nesmí ptát na to, co už o vás ví.</tspan><tspan x="56" y="520">Každá agenda online do konce volebního období.</tspan><tspan x="56" y="554">Mlčení úřadu do lhůty = souhlas.</tspan></text>
+    <text class="m" font-size="26" fill="#F7F4ED"><tspan x="56" y="632">Váš čas je taky veřejný</tspan><tspan x="56" y="666">rozpočet.</tspan></text>
+    <rect x="0" y="706" width="594" height="135" fill="#FFB020"/>
+    <g transform="translate(56,738) scale(0.55)">
+      <rect width="128" height="128" rx="30" fill="#0B2545"/>
+      <path d="M64 83 A17 17 0 0 1 98 83 Z" fill="#FFB020"/>
+      <g fill="#F7F4ED">
+        <rect x="24" y="28" width="80" height="14" rx="2"/>
+        <polygon points="80,42 104,42 48,86 24,86"/>
+        <rect x="24" y="86" width="80" height="14" rx="2"/>
+      </g>
+    </g>
+    <text x="146" y="782" class="h" font-size="44" letter-spacing="1" fill="#0B2545">ZÍTRA</text>
+    <text x="148" y="806" class="m" font-size="14" letter-spacing="3.4" fill="#0B2545" opacity="0.72">STÁT, KTERÝ FUNGUJE</text>
+    <text x="538" y="790" text-anchor="end" class="m" font-size="24" fill="#0B2545">zitra.cz</text>
+  </g>
+</svg>

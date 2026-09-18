@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="ZÍTRA – značka bez podkladu">
+  <title>ZÍTRA – značka bez podkladu</title>
+  <path d="M64 83 A17 17 0 0 1 98 83 Z" fill="#FFB020"/>
+  <g fill="#0B2545">
+    <rect x="24" y="28" width="80" height="14" rx="2"/>
+    <polygon points="80,42 104,42 48,86 24,86"/>
+    <rect x="24" y="86" width="80" height="14" rx="2"/>
+  </g>
+</svg>

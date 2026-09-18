@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZÍTRA — brand book</title>
+<link rel="icon" href="logo/favicon.svg">
+<style>
+  :root{
+    --noc:#0B2545; --usvit:#FFB020; --signal:#12A594; --papir:#F7F4ED;
+    --grafit:#15181C; --kour:#6B7785; --plocha:#122F55;
+    --bg:#F7F4ED; --fg:#15181C; --muted:#6B7785; --card:#FFFFFF; --line:#E2DDD1;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0A1320; --fg:#EDF1F6; --muted:#93A1B3; --card:#122031; --line:#1F3147;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0A1320; --fg:#EDF1F6; --muted:#93A1B3; --card:#122031; --line:#1F3147;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 Inter,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+  header{background:var(--noc);color:var(--papir);padding:56px 0 48px;position:relative;overflow:hidden}
+  header::after{content:"";position:absolute;right:-90px;top:-90px;width:330px;height:330px;
+    border-radius:50%;background:var(--signal);opacity:.13}
+  header .wrap{position:relative;z-index:1}
+  header img{width:min(360px,72vw);height:auto;display:block}
+  .kicker{font-size:12px;font-weight:600;letter-spacing:4px;color:var(--usvit);margin:0 0 20px}
+  h1{font-size:clamp(30px,6vw,52px);font-weight:800;letter-spacing:-1.5px;line-height:1.08;margin:28px 0 10px}
+  h1 em{font-style:normal;color:var(--usvit)}
+  header p{color:#C9D3E0;max-width:56ch;margin:0}
+  .note{margin:28px 0 0;padding:14px 16px;border-left:4px solid var(--usvit);
+    background:rgba(255,176,32,.10);color:#E6ECF4;font-size:14px;max-width:70ch;border-radius:0 8px 8px 0}
+  section{padding:56px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:clamp(22px,3.4vw,30px);font-weight:800;letter-spacing:-.6px;margin:0 0 6px}
+  .sub{color:var(--muted);margin:0 0 28px;max-width:62ch}
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+  .g2{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  figure .frame{flex:1;display:flex;align-items:center;justify-content:center;padding:18px;min-height:150px;background:#fff}
+  figure .frame.dark{background:var(--noc)}
+  figure img{max-width:100%;height:auto;display:block}
+  figcaption{padding:10px 14px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .swatches{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .sw{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+  .sw .chip{height:78px}
+  .sw b{display:block;padding:10px 12px 0;font-size:14px}
+  .sw span{display:block;padding:0 12px 12px;font-size:12px;color:var(--muted);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .pillars{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+  .p{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--usvit);
+    border-radius:12px;padding:16px 18px}
+  .p b{display:block;font-size:17px;margin-bottom:4px}
+  .p span{color:var(--muted);font-size:14px}
+  .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .links a{display:inline-block;padding:11px 18px;border-radius:999px;text-decoration:none;
+    font-weight:600;font-size:15px;background:var(--noc);color:var(--papir)}
+  .links a.alt{background:var(--usvit);color:var(--noc)}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  footer{padding:36px 0;color:var(--muted);font-size:13px}
+  @media (max-width:520px){ figure .frame{min-height:120px;padding:12px} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="kicker">BRAND BOOK · FIKTIVNÍ KONCEPT</p>
+    <img src="logo/logo-horizontalni-claim-inverze.svg" alt="ZÍTRA — stát, který funguje">
+    <h1>Ne převrat.<br><em>Oprava.</em></h1>
+    <p>Hnutí pro lidi, kteří nechtějí jinou ideologii — chtějí, aby lhůty, fronty
+       a formuláře přestaly být národním sportem.</p>
+    <p class="note"><strong>Pozor:</strong> ZÍTRA je smyšlené hnutí vytvořené jako ukázka
+       značky a programové práce. Není registrovaným politickým subjektem a nezastupuje
+       ani nenapodobuje žádnou skutečnou stranu, hnutí ani osobu.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>Pět pilířů</h2>
+    <p class="sub">Každý pilíř má v programu číslo, termín a zdroj financování.</p>
+    <div class="pillars">
+      <div class="p"><b>01 · Bydlení</b><span>150 000 nájemních bytů do 10 let, povolení do 90 dnů.</span></div>
+      <div class="p"><b>02 · Energie</b><span>Oddělení ceny elektřiny od plynu, Dukovany bez odkladů.</span></div>
+      <div class="p"><b>03 · Zdraví</b><span>Lékař do 30 minut, objednání online s garantovanou lhůtou.</span></div>
+      <div class="p"><b>04 · Stát</b><span>Každá agenda online, mlčení úřadu = souhlas.</span></div>
+      <div class="p"><b>05 · Bezpečí</b><span>2 % HDP na obranu v zákoně, odolná infrastruktura.</span></div>
+    </div>
+    <div class="links">
+      <a class="alt" href="PROGRAM.md">Celý program</a>
+      <a href="STRATEGIE.md">Strategie</a>
+      <a href="BRAND.md">Manuál značky</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Značka</h2>
+    <p class="sub">Písmeno <strong>Z</strong> a <strong>východ slunce</strong> v jednom:
+       spodní břevno je zároveň horizont. Nový den postavený na pevné lince.</p>
+    <div class="grid g4">
+      <figure><div class="frame"><img src="logo/znacka.svg" alt="Základní značka" width="150"></div><figcaption>znacka.svg</figcaption></figure>
+      <figure><div class="frame"><img src="logo/znacka-transparent.svg" alt="Značka bez podkladu" width="150"></div><figcaption>znacka-transparent.svg</figcaption></figure>
+      <figure><div class="frame"><img src="logo/znacka-mono-cerna.svg" alt="Mono černá" width="150"></div><figcaption>znacka-mono-cerna.svg</figcaption></figure>
+      <figure><div class="frame dark"><img src="logo/znacka-mono-bila.svg" alt="Mono bílá" width="150"></div><figcaption>znacka-mono-bila.svg</figcaption></figure>
+      <figure><div class="frame"><img src="logo/logo-horizontalni.svg" alt="Horizontální logo"></div><figcaption>logo-horizontalni.svg</figcaption></figure>
+      <figure><div class="frame"><img src="logo/logo-horizontalni-claim.svg" alt="Horizontální logo s claimem"></div><figcaption>logo-horizontalni-claim.svg</figcaption></figure>
+      <figure><div class="frame"><img src="logo/logo-vertikalni.svg" alt="Vertikální logo" width="200"></div><figcaption>logo-vertikalni.svg</figcaption></figure>
+      <figure><div class="frame dark"><img src="logo/logo-horizontalni-inverze.svg" alt="Horizontální logo, inverze"></div><figcaption>logo-horizontalni-inverze.svg</figcaption></figure>
+      <figure><div class="frame dark"><img src="logo/logo-horizontalni-claim-inverze.svg" alt="Horizontální logo s claimem, inverze"></div><figcaption>logo-horizontalni-claim-inverze.svg</figcaption></figure>
+      <figure><div class="frame"><img src="logo/favicon.svg" alt="Favicon" width="64"></div><figcaption>favicon.svg</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Barvy</h2>
+    <p class="sub">Pravidlo 60 / 30 / 10 — Úsvit je vykřičník, ne výplň.
+       Všechny textové kombinace splňují WCAG AA.</p>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#0B2545"></div><b>Půlnoc</b><span>#0B2545</span></div>
+      <div class="sw"><div class="chip" style="background:#FFB020"></div><b>Úsvit</b><span>#FFB020</span></div>
+      <div class="sw"><div class="chip" style="background:#12A594"></div><b>Signál</b><span>#12A594</span></div>
+      <div class="sw"><div class="chip" style="background:#F7F4ED"></div><b>Papír</b><span>#F7F4ED</span></div>
+      <div class="sw"><div class="chip" style="background:#122F55"></div><b>Modrá plocha</b><span>#122F55</span></div>
+      <div class="sw"><div class="chip" style="background:#6B7785"></div><b>Kouř</b><span>#6B7785</span></div>
+      <div class="sw"><div class="chip" style="background:#15181C"></div><b>Grafit</b><span>#15181C</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Kampaňová grafika</h2>
+    <p class="sub">Devět hotových vektorových šablon. Texty jsou živé — dají se přepsat.</p>
+    <div class="grid g3">
+      <figure><div class="frame"><img src="grafika/plakat-a1-bydleni.svg" alt="Plakát Bydlení"></div><figcaption>plakat-a1-bydleni.svg · A1</figcaption></figure>
+      <figure><div class="frame"><img src="grafika/plakat-a1-energie.svg" alt="Plakát Energie"></div><figcaption>plakat-a1-energie.svg · A1</figcaption></figure>
+      <figure><div class="frame"><img src="grafika/plakat-a1-urad.svg" alt="Plakát Úřad"></div><figcaption>plakat-a1-urad.svg · A1</figcaption></figure>
+      <figure><div class="frame"><img src="grafika/social-ctverec-1080.svg" alt="Příspěvek na sociální sítě"></div><figcaption>social-ctverec-1080.svg · 1080×1080</figcaption></figure>
+      <figure><div class="frame"><img src="grafika/social-story-1080x1920.svg" alt="Story"></div><figcaption>social-story-1080x1920.svg · 1080×1920</figcaption></figure>
+      <figure><div class="frame"><img src="grafika/letak-a5-predni.svg" alt="Leták, líc"></div><figcaption>letak-a5-predni.svg · A5</figcaption></figure>
+      <figure><div class="frame"><img src="grafika/letak-a5-zadni.svg" alt="Leták, rub"></div><figcaption>letak-a5-zadni.svg · A5</figcaption></figure>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <figure><div class="frame"><img src="grafika/billboard-5x2.svg" alt="Billboard"></div><figcaption>billboard-5x2.svg · 5100×2400 mm</figcaption></figure>
+      <figure><div class="frame"><img src="grafika/vizitka.svg" alt="Vizitka"></div><figcaption>vizitka.svg · 85×55 mm</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Jak se pozná, že jsme selhali</h2>
+    <p class="sub">Tabulka, kterou podle konceptu hnutí zveřejňuje a čtvrtletně aktualizuje.</p>
+    <table>
+      <tr><th>Ukazatel</th><th>Cíl na konci období</th></tr>
+      <tr><td>Medián doby stavebního povolení</td><td>do 90 dnů</td></tr>
+      <tr><td>Nové nájemní byty se státní podporou</td><td>60 000 zahájených</td></tr>
+      <tr><td>Agendy státu dostupné plně online</td><td>100 %</td></tr>
+      <tr><td>Počet povinných hlášení pro firmy</td><td>−300</td></tr>
+      <tr><td>Podíl obcí bez praktického lékaře</td><td>pod 3 %</td></tr>
+      <tr><td>Výdaje na obranu</td><td>2 % HDP</td></tr>
+      <tr><td>Strukturální saldo rozpočtu</td><td>vyrovnané</td></tr>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    ZÍTRA · stát, který funguje · fiktivní koncept značky a programu, nikoli reálný politický subjekt
+  </div>
+</footer>
+
+</body>
+</html>
