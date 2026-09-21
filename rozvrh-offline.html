@@ -1,0 +1,2370 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rozvrh a poznámky</title>
+    <style>:root {
+    --bg: #f5f7fa;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --text: #1a202c;
+    --text-secondary: #4a5568;
+    --accent: #3182ce;
+    --accent-hover: #2c5282;
+    --border: #e2e8f0;
+    --success: #38a169;
+    --error: #e53e3e;
+    --warning: #d69e2e;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] {
+    --bg: #1a202c;
+    --bg-secondary: #2d3748;
+    --bg-card: #2d3748;
+    --text: #f7fafc;
+    --text-secondary: #cbd5e0;
+    --accent: #63b3ed;
+    --accent-hover: #90cdf4;
+    --border: #4a5568;
+    --success: #68d391;
+    --error: #fc8181;
+    --warning: #f6ad55;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    transition: background 0.3s, color 0.3s;
+}
+
+header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    font-size: 1.4rem;
+    color: var(--text);
+}
+
+#theme-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.2s;
+}
+
+#theme-toggle:hover {
+    background: var(--bg);
+    transform: scale(1.05);
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+.sidebar {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+.sidebar h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+#topic-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 2rem;
+}
+
+.topic-link {
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    color: var(--text);
+    background: none;
+    text-align: left;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.topic-link:hover {
+    background: var(--bg);
+    border-color: var(--border);
+}
+
+.topic-link.active {
+    background: var(--accent);
+    color: white;
+    font-weight: 500;
+}
+
+.topic-link .topic-icon {
+    font-size: 1.1rem;
+}
+
+.progress-box {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+}
+
+.progress-box h3 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+#progress-stats {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.3rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--success);
+    transition: width 0.3s;
+}
+
+main {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    min-height: 600px;
+}
+
+.welcome h2 {
+    margin-bottom: 1rem;
+    color: var(--accent);
+}
+
+.welcome p {
+    margin-bottom: 1rem;
+}
+
+.welcome ul {
+    margin: 1rem 0 1.5rem 1.5rem;
+}
+
+.welcome li {
+    margin-bottom: 0.5rem;
+}
+
+.topic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.topic-card {
+    padding: 1.2rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.topic-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.topic-card-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.topic-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+}
+
+.topic-card p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.topic-card-stats {
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--border);
+}
+
+.topic-card-stat-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.4rem;
+}
+
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.topic-content h2 {
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+}
+
+.topic-meta {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 0.7rem 1.3rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 500;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.theory-section {
+    line-height: 1.8;
+}
+
+.theory-section h3 {
+    color: var(--accent);
+    margin: 1.5rem 0 0.7rem 0;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.theory-section h4 {
+    margin: 1.2rem 0 0.5rem 0;
+    color: var(--text);
+}
+
+.theory-section p {
+    margin-bottom: 1rem;
+}
+
+.theory-section ul, .theory-section ol {
+    margin: 0.7rem 0 1rem 1.5rem;
+}
+
+.theory-section li {
+    margin-bottom: 0.4rem;
+}
+
+.theory-section strong {
+    color: var(--accent);
+}
+
+.callout {
+    background: var(--bg);
+    border-left: 4px solid var(--accent);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.callout.tip {
+    border-color: var(--success);
+}
+
+.callout.warning {
+    border-color: var(--warning);
+}
+
+.callout-title {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.question-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.question-number {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.question-text {
+    font-weight: 500;
+    margin-bottom: 1rem;
+    font-size: 1.05rem;
+}
+
+.answer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.answer-option {
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: var(--bg-card);
+}
+
+.answer-option:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: var(--bg);
+}
+
+.answer-option.selected {
+    border-color: var(--accent);
+    background: var(--bg);
+}
+
+.answer-option.correct {
+    background: rgba(56, 161, 105, 0.15);
+    border-color: var(--success);
+}
+
+.answer-option.incorrect {
+    background: rgba(229, 62, 62, 0.15);
+    border-color: var(--error);
+}
+
+.answer-option.disabled {
+    cursor: default;
+}
+
+.answer-letter {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.answer-option.correct .answer-letter {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+}
+
+.answer-option.incorrect .answer-letter {
+    background: var(--error);
+    color: white;
+    border-color: var(--error);
+}
+
+.explanation {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background: var(--bg-card);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+}
+
+.explanation-title {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.open-question {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.open-question textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 1rem;
+    margin: 0.7rem 0;
+    resize: vertical;
+}
+
+.open-question textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    background: var(--accent-hover);
+}
+
+.btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.btn-secondary:hover {
+    background: var(--border);
+}
+
+.sample-answer {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-card);
+    border-left: 3px solid var(--success);
+    border-radius: 0 8px 8px 0;
+    display: none;
+}
+
+.sample-answer.show {
+    display: block;
+}
+
+.sample-answer-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--success);
+}
+
+.test-summary {
+    background: var(--bg);
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    border: 2px solid var(--accent);
+}
+
+.test-summary h3 {
+    margin-bottom: 0.5rem;
+}
+
+.score {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+kbd {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+    margin: 0 0.1rem;
+}
+
+footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+}
+
+@media (max-width: 900px) {
+    .container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+
+    .sidebar {
+        position: static;
+        max-height: none;
+    }
+
+    header h1 {
+        font-size: 1.1rem;
+    }
+
+    main {
+        padding: 1.2rem;
+    }
+
+    .tabs {
+        gap: 0;
+    }
+
+    .tab-btn {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Rozvrh a poznámky - doplňkové styly (navazuje na styles.css) */
+
+/* .btn-secondary má v styles.css width: 100% (kvůli tlačítku v sidebaru
+   studijní příručky) - v téhle aplikaci chceme tlačítka vedle sebe. */
+header .btn-secondary,
+.app-container .btn-secondary {
+    width: auto;
+    flex-shrink: 0;
+}
+
+header .row-actions {
+    flex-wrap: nowrap;
+    align-items: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+header .row-actions a.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text);
+}
+
+.app-container {
+    max-width: 1500px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+.view-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 1.5rem;
+}
+
+.next-class-box {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.next-class-box h3 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.next-class-name {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.next-class-countdown {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.view {
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.view.active {
+    display: block;
+}
+
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.view-header h2 {
+    color: var(--accent);
+}
+
+.view-header .muted {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* ---------- Rozvrh ---------- */
+
+.schedule {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.schedule-head,
+.schedule-row {
+    display: grid;
+    grid-template-columns: 56px repeat(13, minmax(0, 1fr));
+}
+
+.schedule-head {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+}
+
+.schedule-head > div {
+    padding: 0.5rem 0.2rem;
+    font-size: 0.68rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-weight: 600;
+    border-left: 1px solid var(--border);
+}
+
+.schedule-head > div:first-child {
+    border-left: none;
+}
+
+.schedule-row {
+    border-bottom: 1px solid var(--border);
+    min-height: 64px;
+    position: relative;
+}
+
+.schedule-row:last-child {
+    border-bottom: none;
+}
+
+.schedule-row.today {
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.day-label {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.schedule-row.today .day-label {
+    color: var(--accent);
+}
+
+.slot-grid {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: repeat(13, minmax(0, 1fr));
+    pointer-events: none;
+}
+
+.slot-grid > div {
+    border-left: 1px solid var(--border);
+}
+
+.lesson {
+    grid-row: 1;
+    margin: 4px 3px;
+    padding: 0.4rem 0.3rem;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    text-align: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+}
+
+.lesson:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    z-index: 2;
+}
+
+.lesson.prednaska {
+    background: color-mix(in srgb, var(--success) 22%, var(--bg-card));
+    border: 2px solid var(--success);
+}
+
+.lesson.cviceni {
+    background: color-mix(in srgb, var(--accent) 14%, var(--bg-card));
+    border: 2px dashed var(--accent);
+}
+
+.lesson-room {
+    font-weight: 700;
+    display: block;
+}
+
+.lesson-name {
+    display: block;
+    margin: 0.15rem 0;
+}
+
+.lesson-teacher {
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: 0.68rem;
+}
+
+.lesson-badge {
+    display: inline-block;
+    min-width: 18px;
+    padding: 0 4px;
+    margin-left: 0.2rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+}
+
+.empty-day {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    padding-left: 0.8rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.legend {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.legend-swatch {
+    width: 18px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+.legend-swatch.prednaska {
+    background: color-mix(in srgb, var(--success) 22%, var(--bg-card));
+    border: 2px solid var(--success);
+}
+
+.legend-swatch.cviceni {
+    background: color-mix(in srgb, var(--accent) 14%, var(--bg-card));
+    border: 2px dashed var(--accent);
+}
+
+/* ---------- Karty předmětů ---------- */
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.course-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--accent);
+    border-radius: 10px;
+    padding: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.course-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.course-card h3 {
+    font-size: 0.98rem;
+    margin: 0.4rem 0 0.2rem 0;
+}
+
+.course-card .course-code {
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.course-card .course-meta {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.course-card-footer {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+/* ---------- Poznámky ---------- */
+
+.notes-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.notes-list {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.note-item {
+    padding: 0.8rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 4px solid transparent;
+}
+
+.note-item:last-child {
+    border-bottom: none;
+}
+
+.note-item:hover {
+    background: var(--bg);
+}
+
+.note-item.active {
+    background: var(--bg);
+    border-left-color: var(--accent);
+}
+
+.note-item-title {
+    font-weight: 600;
+    font-size: 0.92rem;
+    display: block;
+    margin-bottom: 0.2rem;
+    word-break: break-word;
+}
+
+.note-item-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.note-editor {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    background: var(--bg);
+}
+
+.field {
+    margin-bottom: 0.9rem;
+}
+
+.field label {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="search"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+textarea {
+    min-height: 260px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+}
+
+.editor-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 0.8rem;
+}
+
+.save-state {
+    font-size: 0.8rem;
+    color: var(--success);
+    margin-left: auto;
+}
+
+.notes-filters {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.notes-filters input[type="search"] {
+    flex: 1 1 160px;
+}
+
+.notes-filters select {
+    flex: 1 1 160px;
+}
+
+.note-preview {
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+    padding-top: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.note-preview h3 {
+    color: var(--accent);
+    font-size: 1.05rem;
+    margin: 0.8rem 0 0.4rem 0;
+}
+
+.note-preview ul {
+    margin: 0.4rem 0 0.8rem 1.4rem;
+}
+
+.note-preview code {
+    background: var(--bg-secondary);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+}
+
+/* ---------- Úkoly ---------- */
+
+.task-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 0.6rem;
+    align-items: end;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.task-group-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    font-weight: 700;
+    margin: 1.4rem 0 0.6rem 0;
+}
+
+.task {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 0.8rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.task.overdue { border-left-color: var(--error); }
+.task.soon { border-left-color: var(--warning); }
+.task.done { opacity: 0.55; }
+.task.done .task-title { text-decoration: line-through; }
+
+.task input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 0.25rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.task-body { flex: 1; min-width: 0; }
+
+.task-title {
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.task-meta {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-top: 0.2rem;
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.task-due.overdue { color: var(--error); font-weight: 600; }
+.task-due.soon { color: var(--warning); font-weight: 600; }
+
+/* ---------- Přehled ---------- */
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.today-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.today-item {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.8rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.today-item.now {
+    border-color: var(--success);
+    box-shadow: 0 0 0 1px var(--success);
+}
+
+.today-time {
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    color: var(--accent);
+}
+
+.today-info { flex: 1; min-width: 0; }
+
+.today-name { font-weight: 500; }
+
+.today-sub {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.pill {
+    display: inline-block;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.pill.now {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+}
+
+.empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+}
+
+.row-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 1000px) {
+    .app-container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+
+    .sidebar {
+        position: static;
+        max-height: none;
+    }
+
+    .notes-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .notes-list {
+        max-height: 320px;
+    }
+
+    .schedule-head {
+        display: none;
+    }
+
+    .schedule-row {
+        display: block;
+        padding: 0.6rem;
+    }
+
+    .day-label {
+        justify-content: flex-start;
+        background: none;
+        border: none;
+        padding: 0 0 0.4rem 0;
+    }
+
+    .slot-grid {
+        display: none;
+    }
+
+    .lesson {
+        margin: 0 0 0.5rem 0;
+        text-align: left;
+        font-size: 0.85rem;
+        padding: 0.7rem 0.8rem;
+    }
+
+    .empty-day {
+        display: block;
+        padding: 0 0 0.4rem 0;
+    }
+
+    .task-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media print {
+    header, .sidebar, .view-header .row-actions, footer { display: none !important; }
+    .app-container { display: block; padding: 0; }
+    main { box-shadow: none; padding: 0; }
+}
+</style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>📅 Rozvrh a poznámky</h1>
+            <div class="row-actions">
+                <button id="theme-toggle" aria-label="Přepnout téma">🌙</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <h2>Zobrazení</h2>
+            <nav class="view-nav" id="view-nav">
+                <button class="topic-link" data-view="prehled"><span class="topic-icon">🏠</span> Přehled</button>
+                <button class="topic-link" data-view="rozvrh"><span class="topic-icon">📅</span> Rozvrh</button>
+                <button class="topic-link" data-view="predmety"><span class="topic-icon">🎓</span> Předměty</button>
+                <button class="topic-link" data-view="poznamky"><span class="topic-icon">📝</span> Poznámky</button>
+                <button class="topic-link" data-view="ukoly"><span class="topic-icon">✅</span> Úkoly</button>
+            </nav>
+
+            <div class="next-class-box">
+                <h3>Další hodina</h3>
+                <div id="next-class"></div>
+            </div>
+
+            <div class="next-class-box" style="margin-top: 1rem;">
+                <h3>Data</h3>
+                <div class="row-actions">
+                    <button id="export-btn" class="btn-secondary">⬇️ Export</button>
+                    <button id="import-btn" class="btn-secondary">⬆️ Import</button>
+                </div>
+                <input type="file" id="import-file" accept="application/json" hidden>
+                <p style="margin-top: 0.6rem; font-size: 0.78rem;">Vše se ukládá jen do tohoto prohlížeče.</p>
+            </div>
+        </aside>
+
+        <main>
+            <!-- Přehled -->
+            <section class="view" id="view-prehled">
+                <div class="view-header">
+                    <div>
+                        <h2>Přehled</h2>
+                        <span class="muted" id="today-label"></span>
+                    </div>
+                </div>
+                <div class="stat-grid" id="stat-grid"></div>
+
+                <h3 class="task-group-title">Dnešní výuka</h3>
+                <div class="today-list" id="today-list"></div>
+
+                <h3 class="task-group-title">Nejbližší úkoly</h3>
+                <div id="upcoming-tasks"></div>
+
+                <h3 class="task-group-title">Poslední poznámky</h3>
+                <div id="recent-notes"></div>
+            </section>
+
+            <!-- Rozvrh -->
+            <section class="view" id="view-rozvrh">
+                <div class="view-header">
+                    <div>
+                        <h2>Týdenní rozvrh</h2>
+                        <span class="muted">Klikni na hodinu – otevře se předmět s poznámkami a úkoly.</span>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn-secondary" onclick="window.print()">🖨️ Tisk</button>
+                    </div>
+                </div>
+                <div class="schedule" id="schedule"></div>
+                <div class="legend">
+                    <span class="legend-item"><span class="legend-swatch prednaska"></span> Přednáška</span>
+                    <span class="legend-item"><span class="legend-swatch cviceni"></span> Cvičení / seminář</span>
+                    <span class="legend-item"><span class="lesson-badge">N</span> počet poznámek</span>
+                </div>
+            </section>
+
+            <!-- Předměty -->
+            <section class="view" id="view-predmety">
+                <div class="view-header">
+                    <div>
+                        <h2 id="predmety-title">Předměty</h2>
+                        <span class="muted" id="predmety-sub"></span>
+                    </div>
+                    <div class="row-actions" id="predmety-actions"></div>
+                </div>
+                <div id="predmety-body"></div>
+            </section>
+
+            <!-- Poznámky -->
+            <section class="view" id="view-poznamky">
+                <div class="view-header">
+                    <div>
+                        <h2>Poznámky</h2>
+                        <span class="muted">Ukládá se automaticky. Podporuje ## nadpisy, **tučné**, - odrážky.</span>
+                    </div>
+                    <div class="row-actions">
+                        <button id="new-note-btn" class="btn">➕ Nová poznámka</button>
+                    </div>
+                </div>
+                <div class="notes-layout">
+                    <div>
+                        <div class="notes-filters">
+                            <input type="search" id="note-search" placeholder="🔍 Hledat…">
+                            <select id="note-filter-course"></select>
+                        </div>
+                        <div class="notes-list" id="notes-list"></div>
+                    </div>
+                    <div id="note-editor-wrap"></div>
+                </div>
+            </section>
+
+            <!-- Úkoly -->
+            <section class="view" id="view-ukoly">
+                <div class="view-header">
+                    <div>
+                        <h2>Úkoly a termíny</h2>
+                        <span class="muted">Zápočty, seminárky, odevzdávky, zkoušky.</span>
+                    </div>
+                    <div class="row-actions">
+                        <button id="clear-done-btn" class="btn-secondary">🧹 Smazat hotové</button>
+                    </div>
+                </div>
+                <form class="task-form" id="task-form">
+                    <div class="field" style="margin: 0;">
+                        <label for="task-title">Úkol</label>
+                        <input type="text" id="task-title" placeholder="Např. Odevzdat případovku" required>
+                    </div>
+                    <div class="field" style="margin: 0;">
+                        <label for="task-course">Předmět</label>
+                        <select id="task-course"></select>
+                    </div>
+                    <div class="field" style="margin: 0;">
+                        <label for="task-due">Termín</label>
+                        <input type="date" id="task-due">
+                    </div>
+                    <button type="submit" class="btn">Přidat</button>
+                </form>
+                <div id="task-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p>Osobní rozvrh a poznámky · data zůstávají v prohlížeči</p>
+    </footer>
+
+    <script>// Rozvrh a předměty - zdrojová data (InSIS, osobní rozvrh Adam Mareš)
+
+const TIME_SLOTS = [
+    '08:15-09:00',
+    '09:15-10:00',
+    '10:00-10:45',
+    '11:00-11:45',
+    '11:45-12:30',
+    '12:45-13:30',
+    '13:30-14:15',
+    '14:30-15:15',
+    '15:15-16:00',
+    '16:15-17:00',
+    '17:00-17:45',
+    '18:00-18:45',
+    '18:45-19:30'
+];
+
+const DAYS = [
+    { id: 'po', short: 'Po', name: 'Pondělí', dow: 1 },
+    { id: 'ut', short: 'Út', name: 'Úterý', dow: 2 },
+    { id: 'st', short: 'St', name: 'Středa', dow: 3 },
+    { id: 'ct', short: 'Čt', name: 'Čtvrtek', dow: 4 },
+    { id: 'pa', short: 'Pá', name: 'Pátek', dow: 5 }
+];
+
+// type: 'prednaska' (zeleně) | 'cviceni' (modře, čárkovaně) - podle barvy v InSIS
+// note: číslo v horním indexu u názvu v InSIS (odkaz na poznámku rozvrhu)
+const COURSES = [
+    {
+        id: '1DP049',
+        code: '1DP049',
+        name: 'Cvičná firma',
+        teacher: 'K. Berková',
+        icon: '🏢',
+        color: '#0ea5e9'
+    },
+    {
+        id: '3PO310',
+        code: '3PO310',
+        name: 'Freelancing a digitální nomádství',
+        teacher: 'M. Hrubošová',
+        icon: '🌍',
+        color: '#8b5cf6'
+    },
+    {
+        id: '2RO106',
+        code: '2RO106',
+        name: 'Francouzština pro ekonomy – středně pokročilá úroveň 2 (B1)',
+        teacher: 'F. M. Baudy',
+        icon: '🇫🇷',
+        color: '#ec4899'
+    },
+    {
+        id: '3MG300',
+        code: '3MG300',
+        name: 'Sociální média a PR',
+        teacher: 'J. Kovářová',
+        icon: '📣',
+        color: '#f59e0b'
+    },
+    {
+        id: '3MG303',
+        code: '3MG303',
+        name: 'Umělá inteligence v marketingu a komunikaci firem',
+        teacher: 'V. Klement',
+        icon: '🤖',
+        color: '#10b981'
+    },
+    {
+        id: '3MG322',
+        code: '3MG322',
+        name: 'Marketing malých a středních podniků',
+        teacher: 'M. Procházková',
+        icon: '📈',
+        color: '#ef4444'
+    },
+    {
+        id: '5FI404',
+        code: '5FI404',
+        name: 'Kognitivní věda',
+        teacher: 'M. Vacura',
+        icon: '🧠',
+        color: '#6366f1'
+    }
+];
+
+// from/to = index prvního a posledního bloku v TIME_SLOTS (včetně)
+const SCHEDULE = [
+    { courseId: '1DP049', day: 'ut', from: 1,  to: 2,  room: 'SB 105', type: 'cviceni',   note: 1 },
+    { courseId: '3PO310', day: 'ut', from: 7,  to: 8,  room: 'RB 107', type: 'cviceni',   note: 1 },
+    { courseId: '2RO106', day: 'ut', from: 9,  to: 10, room: 'SB 328', type: 'cviceni',   note: 1 },
+    { courseId: '3MG300', day: 'ut', from: 11, to: 12, room: 'NB A',   type: 'prednaska', note: 1 },
+    { courseId: '3MG303', day: 'st', from: 1,  to: 2,  room: 'NB B',   type: 'prednaska', note: 2 },
+    { courseId: '3MG322', day: 'st', from: 3,  to: 4,  room: 'SB 412', type: 'prednaska', note: 2 },
+    { courseId: '3MG322', day: 'st', from: 5,  to: 6,  room: 'SB 412', type: 'cviceni',   note: 2 },
+    { courseId: '5FI404', day: 'st', from: 9,  to: 12, room: 'SB 236', type: 'prednaska', note: 2 }
+];
+</script>
+    <script>const STORAGE_KEY = 'rozvrh-notes-app';
+
+let store = loadStore();
+let state = {
+    view: 'prehled',
+    course: null,
+    noteId: null,
+    search: '',
+    filterCourse: 'all'
+};
+let saveTimer = null;
+
+/* ---------- Ukládání ---------- */
+
+function loadStore() {
+    const empty = { notes: [], tasks: [], version: 1 };
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return empty;
+        const parsed = JSON.parse(saved);
+        return {
+            notes: Array.isArray(parsed.notes) ? parsed.notes : [],
+            tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+            version: 1
+        };
+    } catch {
+        return empty;
+    }
+}
+
+function saveStore() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    } catch {}
+}
+
+function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+/* ---------- Pomocné funkce ---------- */
+
+function escapeHtml(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function courseById(id) {
+    return COURSES.find(c => c.id === id) || null;
+}
+
+function courseLabel(id) {
+    const c = courseById(id);
+    return c ? `${c.icon} ${c.code} ${c.name}` : 'Bez předmětu';
+}
+
+function dayById(id) {
+    return DAYS.find(d => d.id === id);
+}
+
+function slotStart(index) {
+    return TIME_SLOTS[index].split('-')[0];
+}
+
+function slotEnd(index) {
+    return TIME_SLOTS[index].split('-')[1];
+}
+
+function lessonTime(entry) {
+    return `${slotStart(entry.from)}–${slotEnd(entry.to)}`;
+}
+
+function toMinutes(hhmm) {
+    const [h, m] = hhmm.split(':').map(Number);
+    return h * 60 + m;
+}
+
+function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + (iso.length === 10 ? 'T00:00:00' : ''));
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric' });
+}
+
+function formatDateTime(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function daysUntil(iso) {
+    const due = new Date(iso + 'T00:00:00');
+    const now = new Date(todayISO() + 'T00:00:00');
+    return Math.round((due - now) / 86400000);
+}
+
+function dueClass(task) {
+    if (task.done || !task.due) return '';
+    const diff = daysUntil(task.due);
+    if (diff < 0) return 'overdue';
+    if (diff <= 3) return 'soon';
+    return '';
+}
+
+function dueText(task) {
+    if (!task.due) return 'bez termínu';
+    const diff = daysUntil(task.due);
+    if (diff === 0) return `dnes (${formatDate(task.due)})`;
+    if (diff === 1) return `zítra (${formatDate(task.due)})`;
+    if (diff < 0) return `po termínu o ${Math.abs(diff)} dní (${formatDate(task.due)})`;
+    return `za ${diff} dní (${formatDate(task.due)})`;
+}
+
+function lessonsForDay(dayId) {
+    return SCHEDULE.filter(e => e.day === dayId).sort((a, b) => a.from - b.from);
+}
+
+function lessonsForCourse(courseId) {
+    return SCHEDULE.filter(e => e.courseId === courseId).sort((a, b) => {
+        const d = DAYS.findIndex(x => x.id === a.day) - DAYS.findIndex(x => x.id === b.day);
+        return d !== 0 ? d : a.from - b.from;
+    });
+}
+
+function notesForCourse(courseId) {
+    return store.notes.filter(n => n.courseId === courseId);
+}
+
+function tasksForCourse(courseId) {
+    return store.tasks.filter(t => t.courseId === courseId);
+}
+
+/* ---------- Jednoduchý markdown ---------- */
+
+function renderMarkdown(text) {
+    const lines = escapeHtml(text).split('\n');
+    let html = '';
+    let inList = false;
+
+    const inline = s => s
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    lines.forEach(raw => {
+        const line = raw.trimEnd();
+        const listMatch = line.match(/^\s*[-*]\s+(.*)$/);
+        if (listMatch) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += `<li>${inline(listMatch[1])}</li>`;
+            return;
+        }
+        if (inList) { html += '</ul>'; inList = false; }
+
+        const heading = line.match(/^(#{1,4})\s+(.*)$/);
+        if (heading) {
+            html += `<h3>${inline(heading[2])}</h3>`;
+        } else if (line === '') {
+            html += '';
+        } else {
+            html += `<p>${inline(line)}</p>`;
+        }
+    });
+    if (inList) html += '</ul>';
+    return html || '<p class="muted">Zatím prázdné…</p>';
+}
+
+/* ---------- Téma ---------- */
+
+function initTheme() {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('theme-toggle').textContent = saved === 'dark' ? '☀️' : '🌙';
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+});
+
+/* ---------- Navigace ---------- */
+
+function showView(view, opts = {}) {
+    state.view = view;
+    if (opts.course !== undefined) state.course = opts.course;
+
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(`view-${view}`).classList.add('active');
+    document.querySelectorAll('#view-nav .topic-link').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === view);
+    });
+
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('#view-nav .topic-link').forEach(btn => {
+    btn.addEventListener('click', () => showView(btn.dataset.view, { course: null }));
+});
+
+/* ---------- Render: rozvrh ---------- */
+
+function renderSchedule() {
+    const el = document.getElementById('schedule');
+    const todayDow = new Date().getDay();
+
+    let html = '<div class="schedule-head"><div>Den</div>' +
+        TIME_SLOTS.map(t => `<div>${t.replace('-', '–')}</div>`).join('') + '</div>';
+
+    DAYS.forEach(day => {
+        const lessons = lessonsForDay(day.id);
+        html += `<div class="schedule-row${day.dow === todayDow ? ' today' : ''}">`;
+        html += `<div class="day-label">${day.short}</div>`;
+        html += '<div class="slot-grid">' + TIME_SLOTS.map(() => '<div></div>').join('') + '</div>';
+
+        if (!lessons.length) {
+            html += '<div class="empty-day">volno</div>';
+        }
+
+        lessons.forEach(entry => {
+            const c = courseById(entry.courseId);
+            const noteCount = notesForCourse(entry.courseId).length;
+            html += `<div class="lesson ${entry.type}" style="grid-column: ${entry.from + 2} / ${entry.to + 3};"
+                        data-course="${entry.courseId}" title="${escapeHtml(c.name)} · ${lessonTime(entry)} · ${escapeHtml(entry.room)}">
+                        <span class="lesson-room">${escapeHtml(entry.room)}</span>
+                        <span class="lesson-name">${c.icon} ${escapeHtml(c.code)} ${escapeHtml(c.name)}${noteCount ? `<span class="lesson-badge">${noteCount}</span>` : ''}</span>
+                        <span class="lesson-teacher">${escapeHtml(c.teacher)} · ${lessonTime(entry)}</span>
+                    </div>`;
+        });
+        html += '</div>';
+    });
+
+    el.innerHTML = html;
+    el.querySelectorAll('.lesson').forEach(node => {
+        node.addEventListener('click', () => showView('predmety', { course: node.dataset.course }));
+    });
+}
+
+/* ---------- Render: předměty ---------- */
+
+function renderCourses() {
+    const body = document.getElementById('predmety-body');
+    const actions = document.getElementById('predmety-actions');
+    const title = document.getElementById('predmety-title');
+    const sub = document.getElementById('predmety-sub');
+
+    if (!state.course) {
+        title.textContent = 'Předměty';
+        sub.textContent = `${COURSES.length} zapsaných předmětů v tomto semestru`;
+        actions.innerHTML = '';
+        body.innerHTML = '<div class="course-grid">' + COURSES.map(c => {
+            const lessons = lessonsForCourse(c.id);
+            const notes = notesForCourse(c.id).length;
+            const open = tasksForCourse(c.id).filter(t => !t.done).length;
+            return `<div class="course-card" data-course="${c.id}" style="border-left-color: ${c.color};">
+                <div style="font-size: 1.6rem;">${c.icon}</div>
+                <span class="course-code">${escapeHtml(c.code)}</span>
+                <h3>${escapeHtml(c.name)}</h3>
+                <div class="course-meta">👩‍🏫 ${escapeHtml(c.teacher)}</div>
+                <div class="course-meta">${lessons.map(l => `${dayById(l.day).short} ${lessonTime(l)} · ${escapeHtml(l.room)}`).join('<br>')}</div>
+                <div class="course-card-footer">
+                    <span>📝 ${notes} poznámek</span>
+                    <span>✅ ${open} otevřených úkolů</span>
+                </div>
+            </div>`;
+        }).join('') + '</div>';
+
+        body.querySelectorAll('.course-card').forEach(card => {
+            card.addEventListener('click', () => showView('predmety', { course: card.dataset.course }));
+        });
+        return;
+    }
+
+    const c = courseById(state.course);
+    const lessons = lessonsForCourse(c.id);
+    const notes = notesForCourse(c.id).sort((a, b) => b.updated.localeCompare(a.updated));
+    const tasks = tasksForCourse(c.id).filter(t => !t.done);
+
+    title.innerHTML = `${c.icon} ${escapeHtml(c.name)}`;
+    sub.textContent = `${c.code} · ${c.teacher}`;
+    actions.innerHTML = '<button class="btn-secondary" id="back-courses">← Všechny předměty</button>' +
+        '<button class="btn" id="course-new-note">➕ Poznámka k předmětu</button>';
+
+    body.innerHTML = `
+        <h3 class="task-group-title">Termíny v rozvrhu</h3>
+        <div class="today-list">
+            ${lessons.map(l => `<div class="today-item">
+                <span class="today-time">${dayById(l.day).name}<br>${lessonTime(l)}</span>
+                <div class="today-info">
+                    <div class="today-name">${escapeHtml(l.room)}</div>
+                    <div class="today-sub">${l.type === 'prednaska' ? 'Přednáška' : 'Cvičení / seminář'}</div>
+                </div>
+            </div>`).join('')}
+        </div>
+
+        <h3 class="task-group-title">Otevřené úkoly (${tasks.length})</h3>
+        ${tasks.length ? tasks.map(renderTaskRow).join('') : '<div class="empty-state">Žádné otevřené úkoly.</div>'}
+
+        <h3 class="task-group-title">Poznámky (${notes.length})</h3>
+        ${notes.length ? notes.map(n => `<div class="task" data-note="${n.id}" style="cursor: pointer;">
+            <div class="task-body">
+                <div class="task-title">${escapeHtml(n.title || 'Bez názvu')}</div>
+                <div class="task-meta"><span>Upraveno ${formatDateTime(n.updated)}</span></div>
+            </div>
+        </div>`).join('') : '<div class="empty-state">Zatím žádné poznámky k tomuto předmětu.</div>'}
+    `;
+
+    document.getElementById('back-courses').addEventListener('click', () => showView('predmety', { course: null }));
+    document.getElementById('course-new-note').addEventListener('click', () => createNote(c.id));
+    body.querySelectorAll('[data-note]').forEach(node => {
+        node.addEventListener('click', () => openNote(node.dataset.note));
+    });
+    bindTaskRows(body);
+}
+
+/* ---------- Render: poznámky ---------- */
+
+function createNote(courseId) {
+    const note = {
+        id: uid(),
+        courseId: courseId || (state.course || (COURSES[0] && COURSES[0].id) || ''),
+        title: '',
+        body: '',
+        created: new Date().toISOString(),
+        updated: new Date().toISOString()
+    };
+    store.notes.unshift(note);
+    saveStore();
+    openNote(note.id);
+}
+
+function openNote(id) {
+    state.noteId = id;
+    showView('poznamky');
+    const input = document.getElementById('note-title');
+    if (input) input.focus();
+}
+
+function visibleNotes() {
+    const q = state.search.trim().toLowerCase();
+    return store.notes
+        .filter(n => state.filterCourse === 'all' || n.courseId === state.filterCourse)
+        .filter(n => !q || (n.title + ' ' + n.body).toLowerCase().includes(q))
+        .sort((a, b) => b.updated.localeCompare(a.updated));
+}
+
+function renderNotes() {
+    const notes = visibleNotes();
+    if (notes.length && !notes.some(n => n.id === state.noteId)) {
+        state.noteId = notes[0].id;
+    }
+    if (!notes.length) state.noteId = null;
+
+    renderNotesList();
+    renderNoteEditor();
+}
+
+// Samostatně, aby se při automatickém ukládání nepřekresloval editor (a nemizel kurzor)
+function renderNotesList() {
+    const listEl = document.getElementById('notes-list');
+    const notes = visibleNotes();
+
+    listEl.innerHTML = notes.length ? notes.map(n => {
+        const c = courseById(n.courseId);
+        return `<div class="note-item${n.id === state.noteId ? ' active' : ''}" data-id="${n.id}">
+            <span class="note-item-title">${escapeHtml(n.title || 'Bez názvu')}</span>
+            <span class="note-item-meta">
+                <span>${c ? c.icon + ' ' + escapeHtml(c.code) : '—'}</span>
+                <span>${formatDateTime(n.updated)}</span>
+            </span>
+        </div>`;
+    }).join('') : '<div class="empty-state" style="border: none;">Žádné poznámky.</div>';
+
+    listEl.querySelectorAll('.note-item').forEach(item => {
+        item.addEventListener('click', () => {
+            state.noteId = item.dataset.id;
+            renderNotes();
+        });
+    });
+}
+
+function renderNoteEditor() {
+    const wrap = document.getElementById('note-editor-wrap');
+    const note = store.notes.find(n => n.id === state.noteId);
+
+    if (!note) {
+        wrap.innerHTML = '<div class="empty-state">Vyber poznámku vlevo, nebo vytvoř novou tlačítkem <strong>➕ Nová poznámka</strong>.</div>';
+        return;
+    }
+
+    wrap.innerHTML = `
+        <div class="note-editor">
+            <div class="field">
+                <label for="note-title">Název</label>
+                <input type="text" id="note-title" value="${escapeHtml(note.title)}" placeholder="Např. Přednáška 3 – segmentace trhu">
+            </div>
+            <div class="field">
+                <label for="note-course">Předmět</label>
+                <select id="note-course">${COURSES.map(c =>
+                    `<option value="${c.id}"${c.id === note.courseId ? ' selected' : ''}>${c.icon} ${escapeHtml(c.code)} – ${escapeHtml(c.name)}</option>`
+                ).join('')}</select>
+            </div>
+            <div class="field">
+                <label for="note-body">Text poznámky</label>
+                <textarea id="note-body" placeholder="## Nadpis&#10;- odrážka&#10;**důležité**">${escapeHtml(note.body)}</textarea>
+            </div>
+            <div class="editor-toolbar">
+                <button class="btn-secondary" id="note-preview-btn">👁️ Náhled</button>
+                <button class="btn-secondary" id="note-delete-btn">🗑️ Smazat</button>
+                <span class="save-state" id="save-state">Vytvořeno ${formatDateTime(note.created)}</span>
+            </div>
+            <div class="note-preview" id="note-preview" hidden></div>
+        </div>
+    `;
+
+    const titleEl = document.getElementById('note-title');
+    const bodyEl = document.getElementById('note-body');
+    const courseEl = document.getElementById('note-course');
+    const previewEl = document.getElementById('note-preview');
+
+    const touch = () => {
+        note.title = titleEl.value;
+        note.body = bodyEl.value;
+        note.courseId = courseEl.value;
+        note.updated = new Date().toISOString();
+        document.getElementById('save-state').textContent = 'Uloženo ✓';
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+            saveStore();
+            renderNotesList();
+        }, 800);
+    };
+
+    titleEl.addEventListener('input', touch);
+    bodyEl.addEventListener('input', touch);
+    courseEl.addEventListener('change', () => { touch(); saveStore(); renderNotesList(); });
+
+    document.getElementById('note-preview-btn').addEventListener('click', () => {
+        if (previewEl.hidden) {
+            previewEl.innerHTML = renderMarkdown(bodyEl.value);
+            previewEl.hidden = false;
+        } else {
+            previewEl.hidden = true;
+        }
+    });
+
+    document.getElementById('note-delete-btn').addEventListener('click', () => {
+        if (!confirm('Opravdu smazat tuto poznámku?')) return;
+        store.notes = store.notes.filter(n => n.id !== note.id);
+        state.noteId = null;
+        saveStore();
+        renderNotes();
+        renderNextClass();
+    });
+}
+
+/* ---------- Render: úkoly ---------- */
+
+function renderTaskRow(task) {
+    const c = courseById(task.courseId);
+    const cls = dueClass(task);
+    return `<div class="task ${cls}${task.done ? ' done' : ''}" data-task="${task.id}">
+        <input type="checkbox" ${task.done ? 'checked' : ''} data-toggle="${task.id}" aria-label="Hotovo">
+        <div class="task-body">
+            <div class="task-title">${escapeHtml(task.title)}</div>
+            <div class="task-meta">
+                <span>${c ? c.icon + ' ' + escapeHtml(c.code) : '📌 obecné'}</span>
+                <span class="task-due ${cls}">${dueText(task)}</span>
+            </div>
+        </div>
+        <button class="btn-secondary" data-delete="${task.id}" aria-label="Smazat">✕</button>
+    </div>`;
+}
+
+function bindTaskRows(root) {
+    root.querySelectorAll('[data-toggle]').forEach(box => {
+        box.addEventListener('change', () => {
+            const task = store.tasks.find(t => t.id === box.dataset.toggle);
+            if (!task) return;
+            task.done = box.checked;
+            saveStore();
+            render();
+        });
+    });
+    root.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            store.tasks = store.tasks.filter(t => t.id !== btn.dataset.delete);
+            saveStore();
+            render();
+        });
+    });
+}
+
+function sortedTasks() {
+    return [...store.tasks].sort((a, b) => {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        if (!a.due) return 1;
+        if (!b.due) return -1;
+        return a.due.localeCompare(b.due);
+    });
+}
+
+function renderTasks() {
+    const el = document.getElementById('task-list');
+    const tasks = sortedTasks();
+    const open = tasks.filter(t => !t.done);
+    const done = tasks.filter(t => t.done);
+
+    el.innerHTML = `
+        <h3 class="task-group-title">K vyřízení (${open.length})</h3>
+        ${open.length ? open.map(renderTaskRow).join('') : '<div class="empty-state">Nic nečeká. 🎉</div>'}
+        ${done.length ? `<h3 class="task-group-title">Hotovo (${done.length})</h3>${done.map(renderTaskRow).join('')}` : ''}
+    `;
+    bindTaskRows(el);
+}
+
+document.getElementById('task-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const title = document.getElementById('task-title');
+    const course = document.getElementById('task-course');
+    const due = document.getElementById('task-due');
+    if (!title.value.trim()) return;
+
+    store.tasks.push({
+        id: uid(),
+        title: title.value.trim(),
+        courseId: course.value === 'none' ? '' : course.value,
+        due: due.value || '',
+        done: false,
+        created: new Date().toISOString()
+    });
+    saveStore();
+    title.value = '';
+    due.value = '';
+    render();
+});
+
+document.getElementById('clear-done-btn').addEventListener('click', () => {
+    const done = store.tasks.filter(t => t.done).length;
+    if (!done) return alert('Žádné hotové úkoly ke smazání.');
+    if (!confirm(`Smazat ${done} hotových úkolů?`)) return;
+    store.tasks = store.tasks.filter(t => !t.done);
+    saveStore();
+    render();
+});
+
+/* ---------- Render: přehled ---------- */
+
+function nextLesson(from = new Date()) {
+    const nowDow = from.getDay();
+    const nowMin = from.getHours() * 60 + from.getMinutes();
+
+    for (let offset = 0; offset < 8; offset++) {
+        const dow = (nowDow + offset) % 7;
+        const day = DAYS.find(d => d.dow === dow);
+        if (!day) continue;
+        const lessons = lessonsForDay(day.id);
+        for (const entry of lessons) {
+            const start = toMinutes(slotStart(entry.from));
+            if (offset > 0 || start > nowMin) {
+                return { entry, day, offset, start };
+            }
+        }
+    }
+    return null;
+}
+
+function renderNextClass() {
+    const el = document.getElementById('next-class');
+    const now = new Date();
+    const current = currentLesson(now);
+
+    if (current) {
+        const c = courseById(current.courseId);
+        const endsIn = toMinutes(slotEnd(current.to)) - (now.getHours() * 60 + now.getMinutes());
+        el.innerHTML = `<span class="pill now">Právě teď</span>
+            <span class="next-class-name" style="margin-top: 0.4rem;">${c.icon} ${escapeHtml(c.name)}</span>
+            ${escapeHtml(current.room)} · ${lessonTime(current)}<br>
+            <span class="next-class-countdown">konec za ${endsIn} min</span>`;
+        return;
+    }
+
+    const next = nextLesson(now);
+    if (!next) {
+        el.innerHTML = 'Tento týden už nic. 🎉';
+        return;
+    }
+    const c = courseById(next.entry.courseId);
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    let when;
+    if (next.offset === 0) {
+        const mins = next.start - nowMin;
+        when = mins >= 60 ? `za ${Math.floor(mins / 60)} h ${mins % 60} min` : `za ${mins} min`;
+    } else if (next.offset === 1) {
+        when = 'zítra';
+    } else {
+        when = next.day.name.toLowerCase();
+    }
+
+    el.innerHTML = `<span class="next-class-name">${c.icon} ${escapeHtml(c.name)}</span>
+        ${escapeHtml(next.entry.room)} · ${next.day.short} ${lessonTime(next.entry)}<br>
+        <span class="next-class-countdown">${when}</span>`;
+}
+
+function currentLesson(now = new Date()) {
+    const day = DAYS.find(d => d.dow === now.getDay());
+    if (!day) return null;
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    return lessonsForDay(day.id).find(e =>
+        nowMin >= toMinutes(slotStart(e.from)) && nowMin <= toMinutes(slotEnd(e.to))
+    ) || null;
+}
+
+function renderDashboard() {
+    const now = new Date();
+    document.getElementById('today-label').textContent =
+        now.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    const openTasks = store.tasks.filter(t => !t.done);
+    const overdue = openTasks.filter(t => t.due && daysUntil(t.due) < 0).length;
+    const weekHours = SCHEDULE.reduce((sum, e) =>
+        sum + (toMinutes(slotEnd(e.to)) - toMinutes(slotStart(e.from))) / 60, 0);
+
+    document.getElementById('stat-grid').innerHTML = `
+        <div class="stat"><div class="stat-value">${COURSES.length}</div><div class="stat-label">předmětů</div></div>
+        <div class="stat"><div class="stat-value">${weekHours.toFixed(1)}</div><div class="stat-label">hodin výuky týdně</div></div>
+        <div class="stat"><div class="stat-value">${store.notes.length}</div><div class="stat-label">poznámek</div></div>
+        <div class="stat"><div class="stat-value">${openTasks.length}</div><div class="stat-label">otevřených úkolů</div></div>
+        <div class="stat"><div class="stat-value" style="color: ${overdue ? 'var(--error)' : 'var(--success)'};">${overdue}</div><div class="stat-label">po termínu</div></div>
+    `;
+
+    const day = DAYS.find(d => d.dow === now.getDay());
+    const todayLessons = day ? lessonsForDay(day.id) : [];
+    const current = currentLesson(now);
+    document.getElementById('today-list').innerHTML = todayLessons.length
+        ? todayLessons.map(e => {
+            const c = courseById(e.courseId);
+            const isNow = current === e;
+            return `<div class="today-item${isNow ? ' now' : ''}" data-course="${e.courseId}" style="cursor: pointer;">
+                <span class="today-time">${lessonTime(e)}</span>
+                <div class="today-info">
+                    <div class="today-name">${c.icon} ${escapeHtml(c.name)} ${isNow ? '<span class="pill now">teď</span>' : ''}</div>
+                    <div class="today-sub">${escapeHtml(e.room)} · ${escapeHtml(c.teacher)} · ${e.type === 'prednaska' ? 'přednáška' : 'cvičení'}</div>
+                </div>
+            </div>`;
+        }).join('')
+        : '<div class="empty-state">Dnes žádná výuka. Volno! 🎉</div>';
+
+    document.querySelectorAll('#today-list [data-course]').forEach(node => {
+        node.addEventListener('click', () => showView('predmety', { course: node.dataset.course }));
+    });
+
+    const upcoming = sortedTasks().filter(t => !t.done).slice(0, 5);
+    const upEl = document.getElementById('upcoming-tasks');
+    upEl.innerHTML = upcoming.length
+        ? upcoming.map(renderTaskRow).join('')
+        : '<div class="empty-state">Žádné úkoly. Přidej je v sekci ✅ Úkoly.</div>';
+    bindTaskRows(upEl);
+
+    const recent = [...store.notes].sort((a, b) => b.updated.localeCompare(a.updated)).slice(0, 4);
+    const recentEl = document.getElementById('recent-notes');
+    recentEl.innerHTML = recent.length
+        ? recent.map(n => {
+            const c = courseById(n.courseId);
+            return `<div class="task" data-note="${n.id}" style="cursor: pointer;">
+                <div class="task-body">
+                    <div class="task-title">${escapeHtml(n.title || 'Bez názvu')}</div>
+                    <div class="task-meta">
+                        <span>${c ? c.icon + ' ' + escapeHtml(c.code) : '—'}</span>
+                        <span>${formatDateTime(n.updated)}</span>
+                    </div>
+                </div>
+            </div>`;
+        }).join('')
+        : '<div class="empty-state">Zatím žádné poznámky. Začni v sekci 📝 Poznámky.</div>';
+
+    recentEl.querySelectorAll('[data-note]').forEach(node => {
+        node.addEventListener('click', () => openNote(node.dataset.note));
+    });
+}
+
+/* ---------- Export / import ---------- */
+
+document.getElementById('export-btn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `rozvrh-poznamky-${todayISO()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('import-btn').addEventListener('click', () => {
+    document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const data = JSON.parse(reader.result);
+            const notes = Array.isArray(data.notes) ? data.notes : [];
+            const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+            if (!confirm(`Načíst ${notes.length} poznámek a ${tasks.length} úkolů? Současná data budou nahrazena.`)) return;
+            store = { notes, tasks, version: 1 };
+            saveStore();
+            state.noteId = null;
+            render();
+            alert('Data načtena ✓');
+        } catch {
+            alert('Soubor se nepodařilo načíst – není to platný JSON export.');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});
+
+/* ---------- Filtry poznámek ---------- */
+
+function fillCourseSelects() {
+    const filter = document.getElementById('note-filter-course');
+    filter.innerHTML = '<option value="all">Všechny předměty</option>' +
+        COURSES.map(c => `<option value="${c.id}">${c.icon} ${escapeHtml(c.code)}</option>`).join('');
+
+    const taskCourse = document.getElementById('task-course');
+    taskCourse.innerHTML = COURSES.map(c => `<option value="${c.id}">${c.icon} ${escapeHtml(c.code)}</option>`).join('') +
+        '<option value="none">📌 Obecné</option>';
+}
+
+document.getElementById('note-search').addEventListener('input', e => {
+    state.search = e.target.value;
+    renderNotes();
+});
+
+document.getElementById('note-filter-course').addEventListener('change', e => {
+    state.filterCourse = e.target.value;
+    renderNotes();
+});
+
+document.getElementById('new-note-btn').addEventListener('click', () => createNote(
+    state.filterCourse !== 'all' ? state.filterCourse : null
+));
+
+/* ---------- Klávesové zkratky ---------- */
+
+document.addEventListener('keydown', e => {
+    const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+    if (typing && !(e.key === 'Escape')) return;
+
+    if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        createNote(state.course);
+    } else if (e.key === '/') {
+        e.preventDefault();
+        showView('poznamky');
+        document.getElementById('note-search').focus();
+    } else if (e.key === 'Escape') {
+        e.target.blur();
+    }
+});
+
+/* ---------- Start ---------- */
+
+function render() {
+    renderNextClass();
+    if (state.view === 'prehled') renderDashboard();
+    if (state.view === 'rozvrh') renderSchedule();
+    if (state.view === 'predmety') renderCourses();
+    if (state.view === 'poznamky') renderNotes();
+    if (state.view === 'ukoly') renderTasks();
+}
+
+initTheme();
+fillCourseSelects();
+showView('prehled');
+setInterval(renderNextClass, 30000);
+</script>
+</body>
+</html>

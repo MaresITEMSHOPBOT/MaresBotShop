@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rozvrh a poznámky</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="rozvrh.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>📅 Rozvrh a poznámky</h1>
+            <div class="row-actions">
+                <a href="index.html" class="btn-secondary" style="text-decoration: none;">📚 Studijní materiály</a>
+                <button id="theme-toggle" aria-label="Přepnout téma">🌙</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <h2>Zobrazení</h2>
+            <nav class="view-nav" id="view-nav">
+                <button class="topic-link" data-view="prehled"><span class="topic-icon">🏠</span> Přehled</button>
+                <button class="topic-link" data-view="rozvrh"><span class="topic-icon">📅</span> Rozvrh</button>
+                <button class="topic-link" data-view="predmety"><span class="topic-icon">🎓</span> Předměty</button>
+                <button class="topic-link" data-view="poznamky"><span class="topic-icon">📝</span> Poznámky</button>
+                <button class="topic-link" data-view="ukoly"><span class="topic-icon">✅</span> Úkoly</button>
+            </nav>
+
+            <div class="next-class-box">
+                <h3>Další hodina</h3>
+                <div id="next-class"></div>
+            </div>
+
+            <div class="next-class-box" style="margin-top: 1rem;">
+                <h3>Data</h3>
+                <div class="row-actions">
+                    <button id="export-btn" class="btn-secondary">⬇️ Export</button>
+                    <button id="import-btn" class="btn-secondary">⬆️ Import</button>
+                </div>
+                <input type="file" id="import-file" accept="application/json" hidden>
+                <p style="margin-top: 0.6rem; font-size: 0.78rem;">Vše se ukládá jen do tohoto prohlížeče.</p>
+            </div>
+        </aside>
+
+        <main>
+            <!-- Přehled -->
+            <section class="view" id="view-prehled">
+                <div class="view-header">
+                    <div>
+                        <h2>Přehled</h2>
+                        <span class="muted" id="today-label"></span>
+                    </div>
+                </div>
+                <div class="stat-grid" id="stat-grid"></div>
+
+                <h3 class="task-group-title">Dnešní výuka</h3>
+                <div class="today-list" id="today-list"></div>
+
+                <h3 class="task-group-title">Nejbližší úkoly</h3>
+                <div id="upcoming-tasks"></div>
+
+                <h3 class="task-group-title">Poslední poznámky</h3>
+                <div id="recent-notes"></div>
+            </section>
+
+            <!-- Rozvrh -->
+            <section class="view" id="view-rozvrh">
+                <div class="view-header">
+                    <div>
+                        <h2>Týdenní rozvrh</h2>
+                        <span class="muted">Klikni na hodinu – otevře se předmět s poznámkami a úkoly.</span>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn-secondary" onclick="window.print()">🖨️ Tisk</button>
+                    </div>
+                </div>
+                <div class="schedule" id="schedule"></div>
+                <div class="legend">
+                    <span class="legend-item"><span class="legend-swatch prednaska"></span> Přednáška</span>
+                    <span class="legend-item"><span class="legend-swatch cviceni"></span> Cvičení / seminář</span>
+                    <span class="legend-item"><span class="lesson-badge">N</span> počet poznámek</span>
+                </div>
+            </section>
+
+            <!-- Předměty -->
+            <section class="view" id="view-predmety">
+                <div class="view-header">
+                    <div>
+                        <h2 id="predmety-title">Předměty</h2>
+                        <span class="muted" id="predmety-sub"></span>
+                    </div>
+                    <div class="row-actions" id="predmety-actions"></div>
+                </div>
+                <div id="predmety-body"></div>
+            </section>
+
+            <!-- Poznámky -->
+            <section class="view" id="view-poznamky">
+                <div class="view-header">
+                    <div>
+                        <h2>Poznámky</h2>
+                        <span class="muted">Ukládá se automaticky. Podporuje ## nadpisy, **tučné**, - odrážky.</span>
+                    </div>
+                    <div class="row-actions">
+                        <button id="new-note-btn" class="btn">➕ Nová poznámka</button>
+                    </div>
+                </div>
+                <div class="notes-layout">
+                    <div>
+                        <div class="notes-filters">
+                            <input type="search" id="note-search" placeholder="🔍 Hledat…">
+                            <select id="note-filter-course"></select>
+                        </div>
+                        <div class="notes-list" id="notes-list"></div>
+                    </div>
+                    <div id="note-editor-wrap"></div>
+                </div>
+            </section>
+
+            <!-- Úkoly -->
+            <section class="view" id="view-ukoly">
+                <div class="view-header">
+                    <div>
+                        <h2>Úkoly a termíny</h2>
+                        <span class="muted">Zápočty, seminárky, odevzdávky, zkoušky.</span>
+                    </div>
+                    <div class="row-actions">
+                        <button id="clear-done-btn" class="btn-secondary">🧹 Smazat hotové</button>
+                    </div>
+                </div>
+                <form class="task-form" id="task-form">
+                    <div class="field" style="margin: 0;">
+                        <label for="task-title">Úkol</label>
+                        <input type="text" id="task-title" placeholder="Např. Odevzdat případovku" required>
+                    </div>
+                    <div class="field" style="margin: 0;">
+                        <label for="task-course">Předmět</label>
+                        <select id="task-course"></select>
+                    </div>
+                    <div class="field" style="margin: 0;">
+                        <label for="task-due">Termín</label>
+                        <input type="date" id="task-due">
+                    </div>
+                    <button type="submit" class="btn">Přidat</button>
+                </form>
+                <div id="task-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p>Osobní rozvrh a poznámky · data zůstávají v prohlížeči</p>
+    </footer>
+
+    <script src="rozvrh-data.js"></script>
+    <script src="rozvrh.js"></script>
+</body>
+</html>

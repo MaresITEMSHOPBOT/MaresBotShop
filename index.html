@@ -10,7 +10,10 @@
     <header>
         <div class="header-content">
             <h1>📚 Organizační chování - Studijní příprava</h1>
-            <button id="theme-toggle" aria-label="Přepnout téma">🌙</button>
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;">
+                <a href="rozvrh.html" class="btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; width: auto; white-space: nowrap; color: var(--text);">📅 Rozvrh a poznámky</a>
+                <button id="theme-toggle" aria-label="Přepnout téma">🌙</button>
+            </div>
         </div>
     </header>
 
@@ -43,6 +46,7 @@
                         <li><strong>Souhrnný test:</strong> tlačítkem v levém menu spustíte 30 náhodných otázek napříč všemi tématy</li>
                         <li><strong>Tmavý režim:</strong> ikona vpravo nahoře</li>
                         <li><strong>Pokrok:</strong> ukládá se automaticky do prohlížeče</li>
+                        <li><strong>Rozvrh a poznámky:</strong> tlačítkem vpravo nahoře otevřete týdenní rozvrh s poznámkami a úkoly</li>
                     </ul>
                 </div>
                 <div class="topic-grid" id="topic-grid"></div>
