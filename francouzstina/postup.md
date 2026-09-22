@@ -439,6 +439,31 @@ Platí i **přes mezeru mezi slovy**, což byl studentův hlavní slepý bod:
 3. italien / italienne — přepis obou
 4. `Mon enfant a onze ans` — u každého `n` určit nosovka / n
 
-### Zbývá z úkolu 6
-7. Opravit: `Je vais a Paris et je n´ai pas de probleme.` (2 přízvuky)
-8. „Bydlím v Praze, nemám auto, ale mám kolo." (une voiture, un vélo, mais)
+### Výsledek úkolu 6, body 7–8
+| Otázka | Hodnocení |
+|---|---|
+| Opravit 2 přízvuky | ✅ 2/2 — našel `a`→`à` i `probleme`→`problème` |
+| „Bydlím v Praze, nemám auto, ale mám kolo" | ⚠️ struktura ✅, ale členy: psal `pas la voiture` (má být **`pas de voiture`**) a `le vélo` (má být **`un vélo`**); opět chybí `à` |
+
+Správně: **J'habite à Prague, je n'ai pas de voiture, mais j'ai un vélo.**
+
+### Nová slabina: volba členu
+Zaveden rozhodovací postup:
+1. Zápor u `avoir` / `il y a`? → **de** (Je n'ai pas **de** voiture.)
+2. Konkrétní známá věc, nebo pojem obecně? → **le / la / les**
+   (Le vélo est noir. / J'aime **le** café.)
+3. Jinak jedna z mnoha, poprvé zmíněná → **un / une / des** (J'ai **un** vélo.)
+
+Rychlý test pro krok 2: dá se česky doplnit „ten/ta/to"? Ano → le/la.
+
+### Stále opakovaná chyba
+`à` bez čárky — potřetí. Student pravidlo **umí vysvětlit**, ale nepíše ho.
+
+### Čeká na vyhodnocení: cvičení na nosovky
+1. bon / bonne — kde se jazyk dotkne
+2. un livre / un enfant — kde je slyšet „n"
+3. italien / italienne — přepis
+4. `Mon enfant a onze ans` — u každého `n` nosovka / n
+
+### Další lekce (připraveno)
+Budoucí čas `aller` + infinitiv (je vais manger) — staví na už zvládnutém `aller`.
