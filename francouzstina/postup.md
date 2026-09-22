@@ -12,7 +12,8 @@ Student: Adam (rodný jazyk čeština)
 | 1 | Výslovnost + pozdravy + představení se | 2026-09-21 | ✅ probráno, úkol splněn |
 | 2 | Sloveso **être** + osobní zájmena + zápor | 2026-09-21 | ✅ probráno, úkol 5/7 |
 | 3 | Rod, členy, sloveso **avoir**, čísla 0-20 | 2026-09-22 | ✅ probráno, úkol 6/8 |
-| 4 | Slovesa na **-ER** + `pas de` | 2026-09-22 | 🔄 úkol zadán |
+| 4 | Slovesa na **-ER** + `pas de` | 2026-09-22 | ✅ probráno, úkol 4/9 |
+| 5 | **Konsolidace** — elize, přízvuky, koncovky, němé množné číslo | 2026-09-22 | 🔄 úkol zadán |
 
 ---
 
@@ -254,13 +255,85 @@ Elize: j'aime, j'habite, j'étudie, j'écoute (němé `h` se chová jako samohl�
 - Il y a des problèmes. → Il n'y a **pas de** problèmes.
 - ⚠️ Určitý člen se NEMĚNÍ: Je n'aime pas **le** café.
 
-### Zadaný úkol 4 (čeká na vyhodnocení)
-1. Vyčasovat `habiter`
-2. Které 4 tvary `travailler` znějí stejně
-3. „Bydlím v Praze a pracuji v Brně."
-4. „Máme rádi kávu."
-5. Zápor: J'ai une voiture.
-6. Zápor: J'aime le chocolat. (past — určitý člen se nemění)
-7. Opakování: mám hlad / mám žízeň
-8. Opakování rodu: problème, table, livre, voiture
-9. Výslovnost: kolik `n` v `Nous mangeons un grand sandwich`
+### Výsledek úkolu 4 — 4/9 (slabší, proto následuje konsolidace)
+| Otázka | Hodnocení |
+|---|---|
+| Vyčasovat `habiter` | 4/6 — **prohodil `tu` a `il`**: psal `tu habite` / `il habites` |
+| 4 stejně znějící tvary `travailler` | ❌ uvedl `vous` místo `il`; navíc použil parler |
+| „Bydlím v Praze a pracuji v Brně" | ❌ `Je habitez` (chybí elize + špatná osoba), `á` místo `à`, velké `Je` po `et` |
+| „Máme rádi kávu" | ✅ Nous aimons le café. |
+| Zápor: voiture | ⚠️ `pas de` ✅, ale psal `J n'ai` místo **`Je n'ai`** |
+| Zápor: chocolat (past) | ✅ past ustál — `le` nechal beze změny; opět `J` místo `Je` |
+| mám hlad / mám žízeň | ❌ **podruhé nevěděl** |
+| Rod (4 slova) | 3/4 — `problème` **potřetí** špatně jako ženský |
+| Kolik `n` v `Nous mangeons un grand sandwich` | ❌ — odpověď: **0 slyšených z 5 napsaných** |
+
+### Odpovědi na studentovy otázky (lekce 4)
+**Proč se nečte `-es` v `parles`:** dvě stará pravidla za sebou — koncové `s`
+není v CRFL (mlčí) a koncové `-e` je němé.
+
+**Proč se nečte `-ent` v `parlent`:** NOVÉ pravidlo — slovesná koncovka `-ent`
+ve 3. os. mn. č. je celá němá. Pozor: `-ent` mlčí **jen jako slovesná koncovka**;
+jinde je to nosovka (souvent *suvá*, comment *komá*).
+
+**`il parle` × `ils parlent`:** ve výslovnosti **žádný rozdíl** (*il parl*).
+Výjimka — sloveso na samohlásku spustí liaison:
+`il habite` *il‑abit* × `ils habitent` *il‑**z**‑abit*. Stejný mechanismus
+jako `il est` × `ils ont`.
+
+**Proč `problèmes` = `problème`:** koncové `-s` množného čísla je vždy němé.
+**Francouzské množné číslo je v mluvě neviditelné** — rozlišuje ho jen člen
+(*lö livr* × *lé livr*). Proto je člen povinný: nese rod i číslo, které
+podstatné jméno ztratilo.
+
+---
+
+## Lekce 5 — Konsolidace (bez nové gramatiky)
+
+Zavedena kvůli čtyřem opakovaně se vracejícím chybám.
+
+### Pravidlo elize — přesně
+Elidují se jen: `je, me, te, se, le, la, ne, de, que, ce`
+a jen když hned následuje samohláska nebo němé `h`.
+- je + ai → **j'ai**
+- je + ne + ai → **je n'ai** (`je` zůstává, protože po něm stojí souhláska `n`!)
+- Student chyboval `J n'ai` — elize se řídí bezprostředně následujícím slovem.
+
+### Přízvuky — kam která čárka
+| znak | kde | příklad |
+|---|---|---|
+| é (aigu) | **jen na `e`** | café, étudiant |
+| è à ù (grave) | e, a, u | problème, à, où |
+| ê â î ô û (stříška) | kdekoli | être, hôtel |
+| ç (cedilla) | jen c | français |
+
+**Francouzština nemá `á`, `í`, `ú`, `ý`.** Student opakovaně píše `á` místo `à`.
+
+### Koncovky -ER: co je slyšet
+| osoba | koncovka | slyšíš? |
+|---|---|---|
+| je | -e | ne |
+| tu | **-es** | ne |
+| il/elle | -e | ne |
+| nous | -ons | **ano** *ó* |
+| vous | -ez | **ano** *é* |
+| ils/elles | -ent | ne |
+
+Pomůcka pro studenta: **`tu` má vždy `-s`** (tu parles, tu as, tu es, tu habites).
+
+### Natvrdo k zapamatování
+- **J'ai faim.** (*žé fen*) = mám hlad — pomůcka: faim ↔ famine
+- **J'ai soif.** (*žé soaf*) = mám žízeň — pomůcka: soaf ↔ soda
+- **UN problème** — mužský rod, `è` nikoli `é`
+- Koncové `-e` **neříká o rodu nic**: un livre, un problème, un homme,
+  un groupe, un verre, un arbre — všechna mužská
+
+### Zadaný úkol 5 (čeká na vyhodnocení)
+1. J'ai ___ (hlad) / J'ai ___ (žízeň)
+2. ___ problème + správný přízvuk
+3. Koncovky `aimer` v 6 osobách
+4. Které tvary jsou slyšet jinak
+5. Opravit: `Je n´ai pas de probléme et je habite á Praha.` (3 chyby)
+6. Výslovnost `il travaille` × `ils travaillent`; `il aime` × `ils aiment`
+7. Slyšitelný rozdíl `le livre` × `les livres`
+8. Kolik `n` v `Mon ami Antoine a un enfant.` (záludná — pozor na liaison)
