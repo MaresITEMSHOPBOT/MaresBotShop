@@ -13,7 +13,8 @@ Student: Adam (rodný jazyk čeština)
 | 2 | Sloveso **être** + osobní zájmena + zápor | 2026-09-21 | ✅ probráno, úkol 5/7 |
 | 3 | Rod, členy, sloveso **avoir**, čísla 0-20 | 2026-09-22 | ✅ probráno, úkol 6/8 |
 | 4 | Slovesa na **-ER** + `pas de` | 2026-09-22 | ✅ probráno, úkol 4/9 |
-| 5 | **Konsolidace** — elize, přízvuky, koncovky, němé množné číslo | 2026-09-22 | 🔄 úkol zadán |
+| 5 | **Konsolidace** — elize, přízvuky, koncovky, němé množné číslo | 2026-09-22 | ✅ probráno, úkol 5,5/8 |
+| 6 | Rozpad nosovky + sloveso **aller** + `à` | 2026-09-22 | 🔄 úkol zadán |
 
 ---
 
@@ -328,12 +329,67 @@ Pomůcka pro studenta: **`tu` má vždy `-s`** (tu parles, tu as, tu es, tu habi
 - Koncové `-e` **neříká o rodu nic**: un livre, un problème, un homme,
   un groupe, un verre, un arbre — všechna mužská
 
-### Zadaný úkol 5 (čeká na vyhodnocení)
-1. J'ai ___ (hlad) / J'ai ___ (žízeň)
-2. ___ problème + správný přízvuk
-3. Koncovky `aimer` v 6 osobách
-4. Které tvary jsou slyšet jinak
-5. Opravit: `Je n´ai pas de probléme et je habite á Praha.` (3 chyby)
-6. Výslovnost `il travaille` × `ils travaillent`; `il aime` × `ils aiment`
-7. Slyšitelný rozdíl `le livre` × `les livres`
-8. Kolik `n` v `Mon ami Antoine a un enfant.` (záludná — pozor na liaison)
+### Výsledek úkolu 5 — 5,5/8 (zlepšení oproti lekci 4)
+| Otázka | Hodnocení |
+|---|---|
+| J'ai faim / J'ai soif | ✅✅ **poprvé bez zaváhání** (zadáno potřetí) |
+| `___ problème` | ✅ **un** — poprvé správný rod; ⚠️ chybí `è` |
+| Koncovky `aimer` | ✅ všech 6 správně (napsal navíc 7. tvar omylem) |
+| Které tvary slyšet jinak | ✅ nous aimons, vous aimez |
+| Oprava věty (3 chyby) | 2/3 — našel elizi i směr čárky u `à`, minul `probléme`→`problème` |
+| il travaille × ils travaillent / il aime × ils aiment | 0,5 — první dvojice ✅ neliší se; **druhá ❌ liší** (*il‑em* × *il‑**z**‑em*) |
+| le livre × les livres | ❌ rozdíl je **jen v samohlásce členu**: *lö* × *lé*; podstatné jméno zní stejně |
+| Kolik `n` v `Mon ami Antoine a un enfant` | 1/3 — správně `mon ami`; minul `Antoine` a `un enfant`. Odpověď: **3 z 6** |
+
+---
+
+## Lekce 6 — Rozpad nosovky + `aller`
+
+### JEDNO pravidlo pro nosovky
+> `n` / `m` tvoří nosovku **pouze** když po něm následuje souhláska nebo konec slova.
+> Jinak je to obyčejné `n` a předchozí samohláska zní normálně.
+
+Nosovka se rozpadne, když následuje:
+| spouštěč | příklad |
+|---|---|
+| samohláska | `un ami` → *ö**n**‑ami* |
+| němé `e` | `une`, `bonne`, `Antoine` |
+| zdvojené `nn`/`mm` | `bonne` *bon*, `homme` *om* |
+
+Minimální páry: un *ö* × une *ün* · bon *bó* × bonne *bon* ·
+américain *ameriké* × américaine *ameriken* · italien *italjé* × italienne *italjen*
+
+**Stejný mechanismus jako `français`/`française`** (lekce 2) — přidané `-e`
+probudí spící souhlásku, tam `s`, tady `n`.
+
+### Sloveso ALLER (jít / jet) — nepravidelné
+| osoba | tvar | výslovnost |
+|---|---|---|
+| je | **vais** | žö ve |
+| tu | **vas** | tü va |
+| il / elle | **va** | il va |
+| nous | **allons** | nuz‑aló |
+| vous | **allez** | vuz‑alé |
+| ils / elles | **vont** | il vó |
+
+⚠️ Trojice k rozlišení: `ils vont` (jdou) × `ils ont` (mají) × `ils sont` (jsou)
+
+### `aller` + `à`
+- Je vais **à** Paris. — Jedu do Paříže.
+- Nous allons **à** Prague. — Jedeme do Prahy.
+- Stejné `à` znamená i „v": `J'habite **à** Prague.`
+- `Ça va ?` je vlastně `aller` — doslova „jde to?"
+
+### Opravy / poznámky
+- **Prague**, ne „Praha" (chyba v zadání lektora)
+- `à` = v/do × `a` = (on) má — čárka mění význam
+
+### Zadaný úkol 6 (čeká na vyhodnocení)
+1. Přepis + počet `n`: un, une, bon, bonne, italien, italienne
+2. Kolik `n` v `Mon enfant a onze ans`
+3. Vyčasovat `aller`
+4. „Jedu do Paříže."
+5. „Jdeme do hotelu."
+6. `ils vont` × `ils ont` × `ils sont` — výslovnost i význam
+7. Opravit: `Je vais a Paris et je n´ai pas de probleme.` (2 přízvuky)
+8. „Bydlím v Praze, nemám auto, ale mám kolo." (une voiture, un vélo, mais)
