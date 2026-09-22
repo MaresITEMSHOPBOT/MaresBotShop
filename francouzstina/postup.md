@@ -14,7 +14,8 @@ Student: Adam (rodný jazyk čeština)
 | 3 | Rod, členy, sloveso **avoir**, čísla 0-20 | 2026-09-22 | ✅ probráno, úkol 6/8 |
 | 4 | Slovesa na **-ER** + `pas de` | 2026-09-22 | ✅ probráno, úkol 4/9 |
 | 5 | **Konsolidace** — elize, přízvuky, koncovky, němé množné číslo | 2026-09-22 | ✅ probráno, úkol 5,5/8 |
-| 6 | Rozpad nosovky + sloveso **aller** + `à` | 2026-09-22 | 🔄 body 3–6 hotovy; nosovky přeučeny |
+| 6 | Rozpad nosovky + sloveso **aller** + `à` | 2026-09-22 | ✅ uzavřeno — nosovky zvládnuty |
+| 7 | **Budoucí čas** `aller` + infinitiv | 2026-09-22 | 🔄 úkol zadán |
 
 ---
 
@@ -459,11 +460,65 @@ Rychlý test pro krok 2: dá se česky doplnit „ten/ta/to"? Ano → le/la.
 ### Stále opakovaná chyba
 `à` bez čárky — potřetí. Student pravidlo **umí vysvětlit**, ale nepíše ho.
 
-### Čeká na vyhodnocení: cvičení na nosovky
-1. bon / bonne — kde se jazyk dotkne
-2. un livre / un enfant — kde je slyšet „n"
-3. italien / italienne — přepis
-4. `Mon enfant a onze ans` — u každého `n` nosovka / n
+### ✅ Cvičení na nosovky — 3/3, pravidlo zvládnuto
+| Otázka | Odpověď studenta | |
+|---|---|---|
+| bon / bonne — kde dotek | bonne | ✅ |
+| un livre / un enfant — kde slyšet n | un enfant | ✅ |
+| italien / italienne | italjé / italjen | ✅ |
+| `Mon enfant a onze ans` | nedokončeno — prošli společně | — |
 
-### Další lekce (připraveno)
-Budoucí čas `aller` + infinitiv (je vais manger) — staví na už zvládnutém `aller`.
+`Mon enfant a onze ans.` = *mo**n**-áfá a óz á* → **5 napsaných `n`, 1 slyšené**
+(jen `mon enfant`, protože následuje samohláska). Kdyby `mon vélo`, `n` zmlkne.
+
+**Fyzikální výklad nosovek zabral** tam, kde tabulkový selhal. Uchovat metodu:
+dotek jazyka / test zacpaného nosu / jediná otázka „co je hned za `n`".
+
+---
+
+## Lekce 7 — Budoucí čas (futur proche)
+
+### Tvoření
+> **`aller` (vyčasované) + INFINITIV**
+
+| | |
+|---|---|
+| je **vais** manger | budu jíst |
+| tu **vas** parler | budeš mluvit |
+| il **va** travailler | bude pracovat |
+| nous **allons** habiter | budeme bydlet |
+| vous **allez** regarder | budete se dívat |
+| ils **vont** étudier | budou studovat |
+
+**Druhé sloveso se NEČASUJE**, zůstává v infinitivu. Časuje se jen `aller`.
+❌ `Je vais parle` · ✅ `Je vais parler`
+
+### Zápor
+`ne … pas` obklopí **jen vyčasované `aller`**, ne infinitiv:
+- Je **ne** vais **pas** manger.
+- Nous **n'**allons **pas** travailler. (elize — `allons` začíná samohláskou)
+- Ils **ne** vont **pas** étudier.
+
+### Časové výrazy
+| francouzsky | výslovnost | česky |
+|---|---|---|
+| aujourd'hui | ožurdüi | dnes |
+| demain | dömen | zítra |
+| ce soir | sö soár | dnes večer |
+| ce week-end | sö uikend | tento víkend |
+| la semaine prochaine | la sömen prošen | příští týden |
+| maintenant | mentöná | teď |
+
+Propojení s nosovkami: `demain` = nosovka (*dömen*, `in` na konci),
+`semaine` = `n` + němé `e` → `n` se ozve.
+
+### Zadaný úkol 7 (čeká na vyhodnocení)
+1. „Budu jíst."
+2. „Zítra budeme pracovat."
+3. Zápor: Je vais manger.
+4. Zápor: Nous allons étudier. (elize)
+5. Najít chybu: `Ils vont travaillent.`
+6. „Dnes večer budu studovat francouzštinu, ale zítra nebudu pracovat."
+7. Opakování členů: J'ai ___ vélo / Je n'ai pas ___ voiture / J'aime ___ café
+8. Opakování nosovek: kolik `n` v `Demain, mon ami va venir`
+9. Opakování přízvuku: „Jedu do Paříže" (hlídat `à`)
