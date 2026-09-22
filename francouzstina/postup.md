@@ -15,7 +15,8 @@ Student: Adam (rodný jazyk čeština)
 | 4 | Slovesa na **-ER** + `pas de` | 2026-09-22 | ✅ probráno, úkol 4/9 |
 | 5 | **Konsolidace** — elize, přízvuky, koncovky, němé množné číslo | 2026-09-22 | ✅ probráno, úkol 5,5/8 |
 | 6 | Rozpad nosovky + sloveso **aller** + `à` | 2026-09-22 | ✅ uzavřeno — nosovky zvládnuty |
-| 7 | **Budoucí čas** `aller` + infinitiv | 2026-09-22 | 🔄 úkol zadán |
+| 7 | **Budoucí čas** `aller` + infinitiv | 2026-09-22 | ✅ probráno, úkol 6/9 |
+| 7b | Členy přeučeny přes češtinu (žádný / jeden / ten) | 2026-09-22 | 🔄 cvičení zadáno |
 
 ---
 
@@ -512,13 +513,51 @@ dotek jazyka / test zacpaného nosu / jediná otázka „co je hned za `n`".
 Propojení s nosovkami: `demain` = nosovka (*dömen*, `in` na konci),
 `semaine` = `n` + němé `e` → `n` se ozve.
 
-### Zadaný úkol 7 (čeká na vyhodnocení)
-1. „Budu jíst."
-2. „Zítra budeme pracovat."
-3. Zápor: Je vais manger.
-4. Zápor: Nous allons étudier. (elize)
-5. Najít chybu: `Ils vont travaillent.`
-6. „Dnes večer budu studovat francouzštinu, ale zítra nebudu pracovat."
-7. Opakování členů: J'ai ___ vélo / Je n'ai pas ___ voiture / J'aime ___ café
-8. Opakování nosovek: kolik `n` v `Demain, mon ami va venir`
-9. Opakování přízvuku: „Jedu do Paříže" (hlídat `à`)
+### Výsledek úkolu 7 — 6/9
+| Otázka | Hodnocení |
+|---|---|
+| „Budu jíst" | ✅ Je vais manger. |
+| „Zítra budeme pracovat" | ❌ `nous avons` místo **`nous allons`** (2. záměna aller/avoir) |
+| Zápor: Je ne vais pas manger | ✅ |
+| Zápor: Nous n'allons pas étudier | ✅ elize i pozice `pas` |
+| Chyba v `Ils vont travaillent` | ✅ opravil na infinitiv `travailler` |
+| Souvětí ce soir / demain | ✅ struktura bezchybná; ⚠️ `Ajourd'hui` (+ nadbytečné), velké `Je`, `francais` bez `ç` |
+| Členy (3 položky) | ❌ 1/3 — **stejné chyby jako minule** (`le vélo`, `pas la voiture`) |
+| Nosovky v `Demain, mon ami va venir` | ⚠️ počet ✅ 2, ale určil `demain` místo `venir`; slyšet je **mon** a **venir** |
+| „Jedu do Paříže" | ✅✅ **`Je vais à Paris`** — počtvrté zadáno, poprvé s `à` |
+
+### Pomůcka: aller × avoir
+Kmen zůstává z infinitivu: **all**er → **all**ons / **all**ez · **av**oir → **av**ons / **av**ez
+
+---
+
+## Lekce 7b — Členy přeučeny přes češtinu
+
+Rozhodovací strom z lekce 6 **nezabral** (student udělal 2× stejnou chybu).
+Nový přístup: navázat na česká slova, protože čeština členy nemá a pravidlo
+nemá na co navázat.
+
+> ### Doplň si v duchu české slovo:
+> | české slovo | francouzský člen |
+> |---|---|
+> | **„žádný"** | **de** (jen v záporu u avoir / il y a) |
+> | **„jeden / nějaký"** | **un / une** |
+> | **„ten / ta / to"** | **le / la** |
+
+Příklady:
+- „Nemám **žádné** auto." → Je n'ai **pas de** voiture.
+- „Mám **jedno** kolo." → J'ai **un** vélo.
+- „**To** kolo je černé." → **Le** vélo est noir.
+- „Mám rád kávu (obecně)" → J'aime **le** café.
+
+Test na studentově chybě: „Mám ten kolo"? nesmysl. „Mám jedno kolo"? jde ✅
+→ **J'ai un vélo.**
+
+### Zadané cvičení na členy (čeká na vyhodnocení)
+1. J'ai ___ vélo. 2. Je n'ai pas ___ vélo. 3. ___ vélo est noir.
+4. Il y a ___ problème. 5. Il n'y a pas ___ problème. 6. J'aime ___ chocolat.
+7. Je n'ai pas ___ voiture. 8. Tu as ___ voiture ?
+
+### Další lekce (připraveno)
+Tázací slova — où, quand, pourquoi, comment, qui, que — aby se student
+uměl i ptát, nejen odpovídat.
