@@ -16,7 +16,8 @@ Student: Adam (rodný jazyk čeština)
 | 5 | **Konsolidace** — elize, přízvuky, koncovky, němé množné číslo | 2026-09-22 | ✅ probráno, úkol 5,5/8 |
 | 6 | Rozpad nosovky + sloveso **aller** + `à` | 2026-09-22 | ✅ uzavřeno — nosovky zvládnuty |
 | 7 | **Budoucí čas** `aller` + infinitiv | 2026-09-22 | ✅ probráno, úkol 6/9 |
-| 7b | Členy přeučeny přes češtinu (žádný / jeden / ten) | 2026-09-22 | 🔄 cvičení zadáno |
+| 7b | Členy přeučeny přes češtinu (žádný / jeden / ten) | 2026-09-22 | ✅ 5/8 — typ členu zvládnut, zbývá rod |
+| 8 | **Tázací slova** + skládání otázky | 2026-09-22 | 🔄 úkol zadán |
 
 ---
 
@@ -553,11 +554,79 @@ Příklady:
 Test na studentově chybě: „Mám ten kolo"? nesmysl. „Mám jedno kolo"? jde ✅
 → **J'ai un vélo.**
 
-### Zadané cvičení na členy (čeká na vyhodnocení)
-1. J'ai ___ vélo. 2. Je n'ai pas ___ vélo. 3. ___ vélo est noir.
-4. Il y a ___ problème. 5. Il n'y a pas ___ problème. 6. J'aime ___ chocolat.
-7. Je n'ai pas ___ voiture. 8. Tu as ___ voiture ?
+### Výsledek cvičení na členy — 5/8 čistě (minule 1/3)
+| # | Odpověď | |
+|---|---|---|
+| 1 | J'ai un vélo. | ✅ |
+| 2 | Je n'ai pas de vélo. | ✅ |
+| 3 | Le vélo est noir. | ✅ |
+| 4 | `une` problème | ⚠️ typ členu ✅, **rod ❌** → `un problème` |
+| 5 | pas de problème | ✅ (překlep `n'ya a` → `n'y a`) |
+| 6 | J'aime le chocolat. | ✅ |
+| 7 | pas **un** voiture | ❌ → `pas de voiture` |
+| 8 | `le` voiture | ❌ → `une voiture` (`le voiture` nemůže existovat — ž. rod) |
 
-### Další lekce (připraveno)
-Tázací slova — où, quand, pourquoi, comment, qui, que — aby se student
-uměl i ptát, nejen odpovídat.
+### 📊 Diagnóza: problém se přesunul
+| | před přeučením | po přeučení |
+|---|---|---|
+| typ členu (de/un/le) | 1/3 | **6/8** ✅ |
+| **rod** (un×une, le×la) | — | **2 chyby** |
+
+Přístup „žádný / jeden / ten" **funguje** — udržet ho.
+Zbývající chyba už není pravidlo k pochopení, ale slovíčka k naučení.
+
+### Základní slovník s rody (zadán k naučení)
+| mužský `un` | ženský `une` |
+|---|---|
+| un problème ⚠️ (4× chybně) | une voiture |
+| un livre | une table |
+| un vélo | une maison (dům) |
+| un café | une question |
+| un hôtel | une ville (město) |
+| un ami | une amie |
+| un enfant | une femme |
+| un homme | une semaine |
+
+---
+
+## Lekce 8 — Tázací slova
+
+| francouzsky | výslovnost | česky |
+|---|---|---|
+| **où** | u | kde / kam |
+| **quand** | ká | kdy |
+| **comment** | komá | jak |
+| **pourquoi** | purkoá | proč |
+| **parce que** | pars kö | protože |
+| **combien** | kombjé | kolik |
+| **qui** | ki | kdo |
+| **qu'est-ce que** | kes kö | co |
+
+(quand, comment, combien = nosovky, `n` se neslyší)
+
+### Vzorec otázky
+> **tázací slovo + `est-ce que` + podmět + sloveso**
+
+- Où est-ce que tu habites ?
+- Quand est-ce que tu vas travailler ?
+- Pourquoi est-ce que tu étudies le français ?
+- Comment est-ce qu'il va ? (elize před samohláskou)
+- Combien de livres est-ce que tu as ?
+
+**Hovorová zkratka:** vynechat `est-ce que` a dát tázací slovo na konec —
+`Tu habites où ?` · `Tu vas travailler quand ?`
+
+### Odpověď
+— Pourquoi est-ce que tu vas à Paris ?
+— **Parce que** j'ai un ami à Paris.
+
+### Zadaný úkol 8 (čeká na vyhodnocení)
+1. „Kde bydlíš?" (est-ce que)
+2. „Kdy budeš pracovat?"
+3. „Proč studuješ francouzštinu?"
+4. Odpověď na 3 přes `parce que`
+5. „Jak se máš?" (hovorově — z lekce 1)
+6. Rody: ___ voiture, ___ problème, ___ maison, ___ livre
+7. Členy: Je n'ai pas ___ maison, mais j'ai ___ vélo.
+8. Nosovky: kolik `n` v `Quand est-ce que ton ami va venir ?`
+9. „Nemám žádné auto, protože bydlím v Praze."
