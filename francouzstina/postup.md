@@ -11,7 +11,8 @@ Student: Adam (rodný jazyk čeština)
 |---|---|---|---|
 | 1 | Výslovnost + pozdravy + představení se | 2026-09-21 | ✅ probráno, úkol splněn |
 | 2 | Sloveso **être** + osobní zájmena + zápor | 2026-09-21 | ✅ probráno, úkol 5/7 |
-| 3 | Rod, členy, sloveso **avoir**, čísla 0-20 | 2026-09-22 | 🔄 úkol zadán |
+| 3 | Rod, členy, sloveso **avoir**, čísla 0-20 | 2026-09-22 | ✅ probráno, úkol 6/8 |
+| 4 | Slovesa na **-ER** + `pas de` | 2026-09-22 | 🔄 úkol zadán |
 
 ---
 
@@ -192,12 +193,74 @@ Neměnná, pro j. i mn. číslo: `Il y a un problème.` / `Il y a trois étudian
 ### Pravopisné pravidlo navíc
 Francouzština píše **mezeru před** `?` `!` `:` `;` → `Ça va ?`
 
-### Zadaný úkol 3 (čeká na vyhodnocení)
-1. un/une: voiture, livre, table, problème
-2. le/la/l': chien, voiture, hôtel, table
-3. Vyčasovat `avoir` zpaměti
-4. „Je mi 18 let."
-5. „Mám hlad a žízeň."
-6. „Jsou tam čtyři studenti."
-7. Rozdíl `ils sont` × `ils ont`
-8. Cílené na slabiny: `Il est français, il a trente ans.` — kolik `n` je slyšet
+### Výsledek úkolu 3 — 6/8
+| Otázka | Hodnocení |
+|---|---|
+| un/une (4 slova) | 3/4 — `un problème` napsal jako `une` (spletlo ho koncové -e) |
+| le/la/l' (4 slova) | ✅ 4/4 včetně `l'hôtel` |
+| Vyčasovat `avoir` | ✅ 6/6 zpaměti bez chyby |
+| „Je mi 18 let" | ✅ J'ai 18 ans. |
+| „Mám hlad a žízeň" | ❌ napsal `jamais` (= nikdy); správně **J'ai faim et soif.** |
+| „Jsou tam čtyři studenti" | ✅ (chybí é v étudiants) |
+| ils sont × ils ont | ✅ i významy i liaison *z* |
+| Kolik `n` je slyšet | ❌ nedokončeno — odpověď: **0 slyšených ze 3 napsaných** |
+
+### Doplňující výklad: CRFL vs. merci
+Student si pletl dvě nezávislá pravidla. Vysvětleno jako dvě otázky:
+1. **KDE písmeno stojí** — uprostřed = čte se vždy; na konci = mlčí, kromě C-R-F-L
+2. **JAKÝ zvuk dělá** — např. `c` před a/o/u = *k*, před e/i/y = *s*, `ç` = vždy *s*
+
+`merci` končí na samohlásku → CRFL se vůbec nezapíná; `r` i `c` jsou uvnitř,
+takže se čtou, a `c` zní *s* kvůli následujícímu `i` → *mersí*.
+
+### Doplňující výklad: nosovky
+`Il est français, il a trente ans.` = 3 napsaná `n`, **0 vyslovených**.
+`n` v nosovce není souhláska, jen znosoví předchozí samohlásku.
+Výjimka: následuje-li samohláska, nosovka se rozpadne → `un ami` = *ön‑**n**ami*.
+
+### Slovíčka k zopakování
+- **faim** (fen) = hlad ≠ **jamais** (žamé) = nikdy
+- **soif** (soaf) = žízeň
+- `-e` na konci NEZNAMENÁ ženský rod: un problème, un livre, un homme, un groupe
+- Stříška `^` = vypadlé `s`: hôtel/hostel, forêt/forest, île/island
+
+---
+
+## Lekce 4 — Slovesa na `-ER` + `pas de`
+
+### Vzor časování (parler)
+| osoba | tvar | výslovnost |
+|---|---|---|
+| je | parl**e** | parl |
+| tu | parl**es** | parl |
+| il / elle | parl**e** | parl |
+| nous | parl**ons** | parl**ó** |
+| vous | parl**ez** | parl**é** |
+| ils / elles | parl**ent** | parl |
+
+**Klíč:** čtyři tvary (je/tu/il/ils) znějí IDENTICKY, protože koncovky
+`-e`, `-es`, `-ent` jsou němé (navazuje na pravidlo koncových souhlásek).
+→ Proto je zájmeno jediným nositelem informace o osobě a nikdy se nevynechává.
+
+### Slovesa
+parler (mluvit), habiter (bydlet), travailler (pracovat), aimer (mít rád),
+étudier (studovat), regarder (dívat se), écouter (poslouchat), manger (jíst),
+chercher (hledat), donner (dávat)
+
+Elize: j'aime, j'habite, j'étudie, j'écoute (němé `h` se chová jako samohláska)
+
+### Zápor: `un/une/des` → `de`
+- J'ai un chien. → Je n'ai **pas de** chien.
+- Il y a des problèmes. → Il n'y a **pas de** problèmes.
+- ⚠️ Určitý člen se NEMĚNÍ: Je n'aime pas **le** café.
+
+### Zadaný úkol 4 (čeká na vyhodnocení)
+1. Vyčasovat `habiter`
+2. Které 4 tvary `travailler` znějí stejně
+3. „Bydlím v Praze a pracuji v Brně."
+4. „Máme rádi kávu."
+5. Zápor: J'ai une voiture.
+6. Zápor: J'aime le chocolat. (past — určitý člen se nemění)
+7. Opakování: mám hlad / mám žízeň
+8. Opakování rodu: problème, table, livre, voiture
+9. Výslovnost: kolik `n` v `Nous mangeons un grand sandwich`
