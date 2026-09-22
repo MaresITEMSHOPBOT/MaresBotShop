@@ -14,7 +14,7 @@ Student: Adam (rodný jazyk čeština)
 | 3 | Rod, členy, sloveso **avoir**, čísla 0-20 | 2026-09-22 | ✅ probráno, úkol 6/8 |
 | 4 | Slovesa na **-ER** + `pas de` | 2026-09-22 | ✅ probráno, úkol 4/9 |
 | 5 | **Konsolidace** — elize, přízvuky, koncovky, němé množné číslo | 2026-09-22 | ✅ probráno, úkol 5,5/8 |
-| 6 | Rozpad nosovky + sloveso **aller** + `à` | 2026-09-22 | 🔄 úkol zadán |
+| 6 | Rozpad nosovky + sloveso **aller** + `à` | 2026-09-22 | 🔄 body 3–6 hotovy; nosovky přeučeny |
 
 ---
 
@@ -384,12 +384,61 @@ probudí spící souhlásku, tam `s`, tady `n`.
 - **Prague**, ne „Praha" (chyba v zadání lektora)
 - `à` = v/do × `a` = (on) má — čárka mění význam
 
-### Zadaný úkol 6 (čeká na vyhodnocení)
-1. Přepis + počet `n`: un, une, bon, bonne, italien, italienne
-2. Kolik `n` v `Mon enfant a onze ans`
-3. Vyčasovat `aller`
-4. „Jedu do Paříže."
-5. „Jdeme do hotelu."
-6. `ils vont` × `ils ont` × `ils sont` — výslovnost i význam
+### Průběžný výsledek úkolu 6 (body 3–6)
+| Otázka | Hodnocení |
+|---|---|
+| Vyčasovat `aller` | 5/6 — napsal `vous avez` místo **`vous allez`** (záměna s avoir) |
+| „Jedu do Paříže" | ⚠️ `Je vais a Paris` — chybí `à` |
+| „Jdeme do hotelu" | ⚠️ elize `l'` ✅ správně; chybí `à` a stříška v `hôtel` |
+| vont / ont / sont | 2/3 — `ils vont` přeložil jako „mají"; je to **„jdou/jedou"** |
+
+Body 1, 2, 7, 8 nedokončeny — student uvedl, že nosovkám vůbec nerozumí.
+
+---
+
+## ⚠️ Přeučení nosovek (student výslovně požádal — tabulkový výklad nefungoval)
+
+Nový přístup: fyzikální, ne tabulkový.
+
+**Proč je to těžké:** čeština tento zvuk nemá. Nejde o pravidlo, ale o zvuk,
+který student nikdy nevyslovil.
+
+**Jádro výkladu:**
+1. Obyčejné `n` = **špička jazyka se dotkne dásně** za horními zuby.
+2. Nosovka = jazyk **leží dole, dotek nepřijde**, vzduch jde i nosem.
+3. → `n` v nosovce **není zvuk, je to značka**: „předchozí samohlásku pusť nosem".
+   (Analogie: české `ě` taky není samostatný zvuk, mění okolí.)
+
+**Ověřovací test:** zacpat si nos prsty.
+- obyčejné „á" → jde to normálně
+- nosovka → zvuk se zadrhne / změní
+Když se nic nezmění, student dělá pořád jen české „á".
+
+**Čtyři nosovky:**
+| napsáno | zvuk | příklad |
+|---|---|---|
+| an, am, en, em | ã (á do nosu) | grand, France |
+| on, om | õ (ó do nosu) | bon, mon |
+| in, im, ain, ein | ẽ (e do nosu) | vin, pain |
+| un, um | œ̃ (ö do nosu) | un, brun |
+
+**JEDNA rozhodovací otázka:**
+> Co je hned ZA tím `n`?
+> **samohláska (a, e, i, o, u, y — i němé `e`)** → opravdové `n`, jazyk se dotkne
+> **souhláska nebo konec slova** → nosovka, jazyk leží
+
+Platí i **přes mezeru mezi slovy**, což byl studentův hlavní slepý bod:
+- un **g**arçon → *ö garsó* (souhláska → nosovka)
+- un **a**mi → *ö**n**-ami* (samohláska → n se ozve)
+- un **e**nfant → *ö**n**-áfá*
+- mon **a**mi → *mo**n**-ami*
+
+### Zadané cvičení na nosovky (čeká na vyhodnocení)
+1. bon / bonne — kde se jazyk dotkne
+2. un livre / un enfant — kde je slyšet „n"
+3. italien / italienne — přepis obou
+4. `Mon enfant a onze ans` — u každého `n` určit nosovka / n
+
+### Zbývá z úkolu 6
 7. Opravit: `Je vais a Paris et je n´ai pas de probleme.` (2 přízvuky)
 8. „Bydlím v Praze, nemám auto, ale mám kolo." (une voiture, un vélo, mais)
